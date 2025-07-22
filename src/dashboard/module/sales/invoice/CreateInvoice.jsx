@@ -6,8 +6,6 @@ import {
   Button,
   Typography,
   Select,
-  Row,
-  Col,
   Divider,
   InputNumber,
   DatePicker,
@@ -21,13 +19,10 @@ import {
   FiUser,
   FiCalendar,
   FiHash,
-  FiDollarSign,
   FiPlus,
   FiTrash2,
   FiPackage,
   FiPhone,
-  FiMail,
-  FiLock,
   FiCreditCard,
 } from "react-icons/fi";
 import dayjs from "dayjs";
@@ -69,10 +64,10 @@ const CreateInvoice = ({
   const [customerForm] = Form.useForm();
   const [createCustomer] = useCreateCustomerMutation();
   const [selectedCurrency, setSelectedCurrency] = useState("₹");
-  const [selectedCurrencyId, setSelectedCurrencyId] = useState(null); // INR currency ID
-  const [isTaxEnabled, setIsTaxEnabled] = useState(true); // Enable tax by default
+  const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
+  const [isTaxEnabled, setIsTaxEnabled] = useState(true);
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
-  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true); // Set to true by default
+  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("customer");
   const { data: contactsData } = useGetContactsQuery();
   const loggedInUser = useSelector(selectCurrentUser);
@@ -83,53 +78,11 @@ const CreateInvoice = ({
       limit: 100,
     });
 
-  // console.log(productsData, "productsData");
-
-  // const id = loggedInUser?.id;
   const { data: invoicesData, error } = useGetInvoicesQuery();
-  const invoices = (invoicesData?.data || []).filter(
-    (invoice) => invoice.client_id === loggedInUser?.id
-  );
-
-  // console.log(invoices, "invoices");
-  const getNextInvoiceNumber = () => {
-    // If no invoices exist or invoices array is empty, start from 1
-    if (!invoices || invoices.length === 0) {
-      return "S-INV-#1";
-    }
-
-    // Filter invoices based on client_id match with either related_id or loggedInUser's client_id
-    const filteredInvoices = invoices.filter(
-      (invoice) =>
-        invoice.client_id === loggedInUser?.client_id ||
-        invoice.client_id === loggedInUser?.id
-    );
-
-    if (filteredInvoices.length === 0) {
-      return "S-INV-#1";
-    }
-
-    // Find the highest invoice number from filtered invoices
-    let highestNumber = 0;
-    filteredInvoices.forEach((invoice) => {
-      if (invoice.salesInvoiceNumber) {
-        // Extract number from invoice number format "S-INV-#X"
-        const numberPart = invoice.salesInvoiceNumber.split("#")[1];
-        const currentNumber = parseInt(numberPart);
-        if (!isNaN(currentNumber) && currentNumber > highestNumber) {
-          highestNumber = currentNumber;
-        }
-      }
-    });
-
-    // Return next invoice number
-    return `S-INV-#${highestNumber + 1}`;
-  };
 
   const contacts = contactsData?.data;
   const companyAccounts = companyAccountsData?.data;
 
-  // Fetch currencies
   const { data: currenciesData, isLoading: currenciesLoading } =
     useGetAllCurrenciesQuery({
       page: 1,
@@ -153,7 +106,6 @@ const CreateInvoice = ({
     const price = Number(item.unit_price) || 0;
     const itemAmount = quantity * price;
 
-    // Calculate discount first
     const itemDiscount = Number(item.discount || 0);
     const itemDiscountType = item.discount_type || "percentage";
     let itemDiscountAmount = 0;
@@ -164,7 +116,6 @@ const CreateInvoice = ({
       itemDiscountAmount = itemDiscount;
     }
 
-    // Calculate tax on amount after discount
     const amountAfterDiscount = itemAmount - itemDiscountAmount;
     const taxRate = Number(item.tax_percentage) || 0;
 
@@ -178,7 +129,6 @@ const CreateInvoice = ({
     const price = Number(item.unit_price) || 0;
     const itemAmount = quantity * price;
 
-    // Calculate discount first
     const itemDiscount = Number(item.discount || 0);
     const itemDiscountType = item.discount_type || "percentage";
     let itemDiscountAmount = 0;
@@ -189,13 +139,10 @@ const CreateInvoice = ({
       itemDiscountAmount = itemDiscount;
     }
 
-    // Calculate amount after discount
     const amountAfterDiscount = itemAmount - itemDiscountAmount;
 
-    // Calculate tax on discounted amount only if tax is enabled
     const taxAmount = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
 
-    // Final total: discounted amount + tax (if enabled)
     return amountAfterDiscount + taxAmount;
   };
 
@@ -214,7 +161,6 @@ const CreateInvoice = ({
       const itemAmount = quantity * price;
       subTotal += itemAmount;
 
-      // Calculate item discount
       const itemDiscount = Number(item.discount || 0);
       const itemDiscountType = item.discount_type || "percentage";
       let itemDiscountAmount = 0;
@@ -227,7 +173,6 @@ const CreateInvoice = ({
 
       totalDiscount += itemDiscountAmount;
 
-      // Only add tax if tax is enabled
       if (isTaxEnabled && item.tax_percentage) {
         const amountAfterDiscount = itemAmount - itemDiscountAmount;
         const taxRate = Number(item.tax_percentage) || 0;
@@ -236,10 +181,8 @@ const CreateInvoice = ({
       }
     });
 
-    // Calculate total amount including or excluding tax based on toggle
     const totalAmount = subTotal - totalDiscount + (isTaxEnabled ? totalTax : 0);
 
-    // Update form values
     form.setFieldsValue({
       subtotal: subTotal.toFixed(2),
       tax: isTaxEnabled ? totalTax.toFixed(2) : "0.00",
@@ -247,35 +190,30 @@ const CreateInvoice = ({
       total: totalAmount.toFixed(2),
     });
 
-    // Update individual item amounts
     const updatedItems = items.map((item) => {
-      // Calculate item level values
       const quantity = Number(item.quantity) || 0;
       const price = Number(item.unit_price) || 0;
       const itemSubtotal = quantity * price;
-      
-      // Calculate discount
+
       const itemDiscount = Number(item.discount || 0);
       const itemDiscountType = item.discount_type || "percentage";
       let itemDiscountAmount = 0;
-      
+
       if (itemDiscountType === "percentage") {
         itemDiscountAmount = (itemSubtotal * itemDiscount) / 100;
       } else {
         itemDiscountAmount = itemDiscount;
       }
-      
-      // Calculate tax only if enabled
+
       let itemTaxAmount = 0;
       if (isTaxEnabled && item.tax_percentage) {
         const amountAfterDiscount = itemSubtotal - itemDiscountAmount;
         const taxRate = Number(item.tax_percentage) || 0;
         itemTaxAmount = (amountAfterDiscount * taxRate) / 100;
       }
-      
-      // Final amount
+
       const itemTotal = itemSubtotal - itemDiscountAmount + itemTaxAmount;
-      
+
       return {
         ...item,
         amount: itemTotal.toFixed(2),
@@ -290,7 +228,6 @@ const CreateInvoice = ({
     try {
       setLoading(true);
 
-      // Format items for backend
       const formattedItems = values.items?.map((item) => {
         const itemTaxAmount = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
         return {
@@ -307,13 +244,11 @@ const CreateInvoice = ({
         };
       });
 
-      // Calculate total tax amount from all items
       const totalTaxAmount = formattedItems.reduce(
         (sum, item) => sum + (item.tax_amount || 0),
         0
       );
 
-      // Calculate total discount amount from all items
       const totalDiscountAmount = formattedItems.reduce((sum, item) => {
         const itemAmount = item.quantity * item.unit_price;
         let discountAmount = 0;
@@ -325,11 +260,7 @@ const CreateInvoice = ({
         return sum + discountAmount;
       }, 0);
 
-      // Get the next invoice number
-      const nextInvoiceNumber = getNextInvoiceNumber();
-
       const payload = {
-        salesInvoiceNumber: nextInvoiceNumber,
         category: values.category,
         customer: values.customer,
         section: "sales-invoice",
@@ -352,7 +283,6 @@ const CreateInvoice = ({
       setCreateModalVisible(false);
       onCancel();
     } catch (error) {
-      // Enhanced error message
       const errorMessage =
         error?.data?.message ||
         error?.data?.error ||
@@ -366,7 +296,6 @@ const CreateInvoice = ({
 
   const handleCreateCustomer = async (values) => {
     try {
-      // Find the country ID from the selected phone code
       const selectedCountry = countries?.find(
         (c) => c.phoneCode === values.phonecode
       );
@@ -378,14 +307,13 @@ const CreateInvoice = ({
       const result = await createCustomer({
         name: values.name,
         contact: values.contact,
-        phonecode: selectedCountry.id, // Use country ID instead of phone code
+        phonecode: selectedCountry.id,
       }).unwrap();
 
       message.success("Customer created successfully");
       setIsCustomerModalOpen(false);
       customerForm.resetFields();
 
-      // Automatically select the newly created customer
       form.setFieldValue("customer", result.data.id);
     } catch (error) {
       message.error("Failed to create customer: " + error.message);
@@ -430,7 +358,7 @@ const CreateInvoice = ({
 
   const handleCategoryChange = (value) => {
     setSelectedCategory(value);
-    form.setFieldsValue({ customer: undefined }); // Clear selected customer when category changes
+    form.setFieldsValue({ customer: undefined });
   };
 
   const customerModal = (
@@ -455,7 +383,6 @@ const CreateInvoice = ({
         },
       }}
     >
-      {/* Modal Header */}
       <div
         style={{
           background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
@@ -539,8 +466,6 @@ const CreateInvoice = ({
           </div>
         </div>
       </div>
-
-      {/* Form Content */}
       <Form
         form={customerForm}
         layout="vertical"
@@ -699,7 +624,6 @@ const CreateInvoice = ({
       setSelectedCurrency(currency.currencyIcon);
       setSelectedCurrencyId(value);
 
-      // Update all prices with new currency
       const items = form.getFieldValue("items") || [];
       const updatedItems = items.map((item) => ({
         ...item,
@@ -715,7 +639,6 @@ const CreateInvoice = ({
       (product) => product.id === value
     );
     if (selectedProduct) {
-      // Get the product's currency from currencies list
       const productCurrency = currenciesData?.find(
         (c) => c.id === selectedProduct.currency
       );
@@ -726,7 +649,6 @@ const CreateInvoice = ({
         setIsCurrencyDisabled(true);
       }
 
-      // Update the items list
       const items = form.getFieldValue("items") || [];
       const newItems = [...items];
       const lastIndex = newItems.length - 1;
@@ -749,9 +671,7 @@ const CreateInvoice = ({
     }
   };
 
-  // Add a useEffect to recalculate totals when tax toggle changes
   useEffect(() => {
-    // Recalculate totals whenever tax toggle changes
     const items = form.getFieldValue("items");
     if (items && items.length > 0) {
       calculateTotals(items);
@@ -880,32 +800,6 @@ const CreateInvoice = ({
             gap: "16px",
           }}
         >
-          {/* <Form.Item
-              name="category"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Invoice Type <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select category" }]}
-              initialValue="customer"
-            >
-              <Select
-                placeholder="Select Category"
-                onChange={handleCategoryChange}
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-              >
-                <Option value="customer">Customer</Option>
-                {/* <Option value="contact">Contact</Option>
-                <Option value="company_account">Company Account</Option> */}
-          {/* </Select> */}
-          {/* </Form.Item> */}
-
           <Form.Item
             name="customer"
             label={
@@ -948,7 +842,7 @@ const CreateInvoice = ({
               dropdownRender={(menu) => (
                 <>
                   {menu}
-                  {selectedCategory === "customer" && ( // Only show Add button for customer category
+                  {selectedCategory === "customer" && (
                     <>
                       <Divider style={{ margin: "8px 0" }} />
                       <div
@@ -1078,16 +972,6 @@ const CreateInvoice = ({
               ))}
             </Select>
           </Form.Item>
-        {/* </div>
-
-        <div
-        className="create-invoice-form-grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: "16px",
-          }}
-        > */}
           <Form.Item
             name="issueDate"
             label={
@@ -1096,7 +980,6 @@ const CreateInvoice = ({
               </span>
             }
             rules={[{ required: true, message: "Please select issue date" }]}
-            // style={{ marginTop: '12px' }}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -1118,7 +1001,6 @@ const CreateInvoice = ({
               </span>
             }
             rules={[{ required: true, message: "Please select due date" }]}
-            // style={{ marginTop: '12px' }}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -1142,7 +1024,6 @@ const CreateInvoice = ({
             rules={[
               { required: true, message: "Please select payment status" },
             ]}
-            // style={{ marginTop: '12px' }}
           >
             <Select
               placeholder="Select Status"
@@ -1154,7 +1035,6 @@ const CreateInvoice = ({
             >
               <Option value="paid">Paid</Option>
               <Option value="unpaid">Unpaid</Option>
-              {/* <Option value="partially_paid">Partially Paid</Option> */}
             </Select>
           </Form.Item>
         </div>
@@ -1182,10 +1062,7 @@ const CreateInvoice = ({
               <Switch
                 checked={isTaxEnabled}
                 onChange={(checked) => {
-                  // Update the state
                   setIsTaxEnabled(checked);
-                  
-                  // We'll rely on the useEffect to recalculate totals
                 }}
                 size="small"
               />
@@ -1415,12 +1292,6 @@ const CreateInvoice = ({
                                   >
                                     <InputNumber
                                       className="item-discount-input"
-                                      // placeholder={
-                                      //   form.getFieldValue("items")?.[index]
-                                      //     ?.discount_type === "fixed"
-                                      //     ? "₹"
-                                      //     : "%"
-                                      // }
                                       formatter={(value) => {
                                         if (!value && value !== 0) return "";
                                         return value
@@ -1494,15 +1365,11 @@ const CreateInvoice = ({
                                 {isTaxEnabled && (
                                   <>
                                     {form.getFieldValue("items")?.[index]?.tax_percentage > 0 ? (
-                                      // Show remove button if tax exists
                                       <Button
                                         type="text"
                                         icon={<FiX style={{ color: "#ff4d4f" }} />}
                                         onClick={() => {
-                                          // Get current items
                                           const items = form.getFieldValue("items") || [];
-                                          
-                                          // Store original tax values in temp fields before clearing
                                           if (items[index]) {
                                             items[index] = {
                                               ...items[index],
@@ -1512,7 +1379,6 @@ const CreateInvoice = ({
                                               tax_percentage: 0,
                                               tax_amount: 0,
                                             };
-                                            
                                             form.setFieldsValue({ items });
                                             calculateTotals(items);
                                           }
@@ -1531,20 +1397,14 @@ const CreateInvoice = ({
                                         }}
                                       />
                                     ) : (
-                                      // Show add button if tax was removed
                                       <Button
                                         type="text"
                                         icon={<FiPlus style={{ color: "#52c41a" }} />}
                                         onClick={() => {
-                                          // Get current items
                                           const items = form.getFieldValue("items") || [];
-                                          
-                                          // Check if we have original tax values or need to get from product
                                           if (items[index]) {
                                             const originalTaxName = items[index]._original_tax_name;
                                             const originalTaxPercentage = items[index]._original_tax_percentage;
-                                            
-                                            // If we have stored original values, restore them
                                             if (originalTaxName || originalTaxPercentage) {
                                               items[index] = {
                                                 ...items[index],
@@ -1552,7 +1412,6 @@ const CreateInvoice = ({
                                                 tax_percentage: originalTaxPercentage || 0,
                                               };
                                             } 
-                                            // Otherwise try to get from product data
                                             else if (items[index].id) {
                                               const product = productsData?.data?.find(p => p.id === items[index].id);
                                               if (product) {
@@ -1563,7 +1422,6 @@ const CreateInvoice = ({
                                                 };
                                               }
                                             }
-                                            
                                             form.setFieldsValue({ items });
                                             calculateTotals(items);
                                           }
@@ -1638,7 +1496,6 @@ const CreateInvoice = ({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                // marginBottom: "16px",
                 padding: "12px",
                 background: "#f8fafc",
                 borderRadius: "8px",
@@ -1676,7 +1533,6 @@ const CreateInvoice = ({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                // marginBottom: "16px",
                 padding: "12px",
                 background: "#f8fafc",
                 borderRadius: "8px",
