@@ -45,6 +45,7 @@ import {
 } from '@ant-design/icons';
 import { jsPDF } from 'jspdf';
 import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/general/services/settingApi';
+import BrandConfig from '../../../../utils/brandName';
 
 const { Title, Text } = Typography;
 
@@ -221,7 +222,7 @@ const CustomFormList = ({ data = [], onEdit, onDelete, onBulkDelete }) => {
                     ctx.fillStyle = gradient;
                     ctx.font = '600 13px "Poppins"';
                     ctx.textAlign = 'left';
-                    ctx.fillText(companyName || 'Raiser CRM', 245, 630);
+                    ctx.fillText(companyName || `${BrandConfig.appCapitalName} CRM`, 245, 630);
 
                     // Convert to PDF with maximum quality
                     pdf.addImage(
@@ -784,7 +785,7 @@ const CustomFormList = ({ data = [], onEdit, onDelete, onBulkDelete }) => {
                                 alignItems: "center",
                                 gap: "4px"
                             }}>
-                                Powered by <span style={{ fontWeight: 600, background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{companyName || 'Raiser CRM'}</span>
+                                Powered by <span style={{ fontWeight: 600, background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{companyName || `${BrandConfig.appCapitalName} CRM`}</span>
                             </Text>
                         </div>
                     </div>

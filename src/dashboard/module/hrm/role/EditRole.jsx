@@ -58,6 +58,7 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
             { key: 'extra-hrm-leave-leavelist', title: 'Leave Management' },
             { key: 'extra-hrm-meeting', title: 'Meeting' },
             { key: 'extra-hrm-announcement', title: 'Announcement' },
+            { key: 'extra-hrm-calendar', title: 'Calendar' },
             { key: 'extra-hrm-document', title: 'Document' },
             { key: 'extra-hrm-trainingSetup', title: 'Training Setup' }
         ],

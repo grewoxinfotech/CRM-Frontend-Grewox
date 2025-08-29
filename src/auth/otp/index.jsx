@@ -6,6 +6,7 @@ import form_graphic from '../../assets/auth/form_grapihc.png';
 import { Link, useNavigate } from 'react-router-dom';
 import './otp.scss';
 import { useResendSignupOtpMutation, useVerifySignupMutation } from '../../dashboard/module/user-management/users/services/userApi';
+import BrandConfig from '../../utils/brandName';
 
 export default function OTPVerification() {
     const [loading, setLoading] = useState(false);
@@ -146,7 +147,7 @@ export default function OTPVerification() {
                 >
                     <div className="brand">
                         <FiBox className="logo" />
-                        <span className="brand-name">Raiser CRM</span>
+                        <span className="brand-name">{BrandConfig.appCapitalName} CRM</span>
                     </div>
                     <motion.img
                         src={form_graphic}

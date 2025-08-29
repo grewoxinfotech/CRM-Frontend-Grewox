@@ -45,6 +45,7 @@ import {
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
+import BrandConfig from "../../../utils/brandName";
 
 const Sidebar = ({
   collapsed = false,
@@ -76,10 +77,11 @@ const Sidebar = ({
 
   // Find user's role data if not client
   const userRoleData = userRole?.toLowerCase() !== 'client' ?
-    rolesData?.data?.find(role => role.id === loggedInUser?.role_id) : null;
+    rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id) : null;
 
   // Parse permissions if they exist
   const userPermissions = userRoleData?.permissions ? JSON.parse(userRoleData.permissions) : null;
+
 
   const checkPermission = (moduleKey) => {
     // Always allow settings, communication and support modules
@@ -531,7 +533,7 @@ const Sidebar = ({
           title: "Calendar",
           icon: <FiCalendar />,
           path: "/dashboard/hrm/calendar",
-          permission: "dashboards-communication"
+          permission: "extra-hrm-calendar"
         },
         {
           title: "Meeting",
@@ -757,8 +759,8 @@ const Sidebar = ({
       <aside className={`sidebar ${!isMobileView && isCollapsed ? 'collapsed' : ''} ${localMobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo">
-            {(!isMobileView && !isCollapsed) && <span className="full-text">Raiser CRM</span>}
-            {isMobileView && <span className="full-text">Raiser CRM</span>}
+            {(!isMobileView && !isCollapsed) && <span className="full-text">{BrandConfig.appCapitalName} CRM</span>}
+            {isMobileView && <span className="full-text">{BrandConfig.appCapitalName} CRM</span>}
           </div>
           {!isMobileView ? (
             <button className="collapse-btn" onClick={handleToggleCollapse}>

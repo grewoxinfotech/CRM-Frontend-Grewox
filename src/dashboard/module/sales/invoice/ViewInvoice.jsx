@@ -43,6 +43,7 @@ import "./invoice.scss";
 import { useSendInvoiceEmailMutation } from "./services/invoiceApi";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+import BrandConfig from "../../../../utils/brandName";
 // import { sendInvoiceEmail } from './services/invoiceApi';
 
 const { Text } = Typography;
@@ -71,9 +72,9 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
   const [sendInvoiceEmail] = useSendInvoiceEmailMutation();
   // State for company information
   const [companyLogo, setCompanyLogo] = useState(null);
-  const [companyName, setCompanyName] = useState("Raiser CRM");
-  const [companyEmail, setCompanyEmail] = useState("contact@raiser.com");
-  const [companyWebsite, setCompanyWebsite] = useState("www.raiser.com");
+  const [companyName, setCompanyName] = useState(`${BrandConfig.appCapitalName} CRM`);
+  const [companyEmail, setCompanyEmail] = useState(`contact@${BrandConfig.appSmallName}.com`);
+  const [companyWebsite, setCompanyWebsite] = useState(`https://${BrandConfig.appSmallName}.com`);
   const [merchantUpiId, setMerchantUpiId] = useState("");
 
   // Get company settings from general settings
@@ -1190,7 +1191,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                           color: "#1890ff",
                         }}
                       >
-                        Raiser CRM
+                        {BrandConfig.appCapitalName} CRM
                       </span>
                     </div>
                   </div>

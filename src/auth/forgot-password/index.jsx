@@ -7,6 +7,7 @@ import form_graphic from '../../assets/auth/form_grapihc.png';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSendResetEmailMutation, useVerifyOtpMutation } from './services/forgot-passwordApi';
 import './forgot-password.scss';
+import BrandConfig from '../../utils/brandName';
 
 const validationSchema = yup.object().shape({
     email: yup
@@ -215,7 +216,7 @@ export default function ForgotPassword() {
                     <div className="brand">
                         <FiBox className="logo" />
                         <span className="brand-name">
-                            Raiser CRM</span>
+                            {BrandConfig.appCapitalName} CRM</span>
                     </div>
                     <motion.img
                         src={form_graphic}

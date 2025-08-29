@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './footer.scss';
+import BrandConfig from '../../../utils/brandName';
 
 const DashboardFooter = () => {
     return (
         <footer className="dashboard-footer">
             <div className="footer-content">
                 <div className="footer-left">
-                    © 2025 Raiser Software. All rights reserved.
+                    © 2025 {BrandConfig.appCapitalName} Software. All rights reserved.
                 </div>
                 <div className="footer-right">
                     <Link to="/privacy-policy">Privacy Policy</Link>

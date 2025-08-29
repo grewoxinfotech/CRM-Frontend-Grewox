@@ -6,6 +6,7 @@ import form_graphic from '../../assets/auth/form_grapihc.png';
 import { Link, useNavigate } from 'react-router-dom';
 import { useResetPasswordMutation } from '../forgot-password/services/forgot-passwordApi';
 import './resend.scss';
+import BrandConfig from '../../utils/brandName';
 
 export default function ResetPassword() {
     const [loading, setLoading] = useState(false);
@@ -87,7 +88,8 @@ export default function ResetPassword() {
                 >
                     <div className="brand">
                         <FiLock className="logo" />
-                        <span className="brand-name">Raiser CRM</span>
+                        <span className="brand-name">{BrandConfig.appCapitalName} CRM</span>
+
                     </div>
                     <motion.img
                         src={form_graphic}

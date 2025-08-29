@@ -27,6 +27,7 @@ import TasksTable from "./DashboardComponents/TasksTable";
 import MeetingsTable from "./DashboardComponents/MeetingsTable";
 import Analytics from "./DashboardComponents/Analytics/index.jsx";
 import { useGetRevenueQuery } from "./module/sales/revenue/services/revenueApi";
+import BrandConfig from "../utils/brandName.js";
 
 const { Text } = Typography;
 
@@ -42,7 +43,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const id = user?.client_id;
-  const companyName = "Raiser Software";
+  const companyName = `${BrandConfig.appCapitalName} Software`;
   const { data: currencies } = useGetAllCurrenciesQuery();
   const { data: tasksData, isLoading: tasksLoading } = useGetAllTasksQuery(id);
   const { data: statusesData } = useGetStatusesQuery(user?.id);

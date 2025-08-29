@@ -17,8 +17,9 @@ const DashboardLayout = () => {
         skip: !loggedInUser // Skip query if user not logged in
     });
 
+
     // Find user's role data
-    const userRoleData = rolesData?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
 
     // Parse permissions if they exist
     const userPermissions = userRoleData?.permissions ? JSON.parse(userRoleData.permissions) : null;
