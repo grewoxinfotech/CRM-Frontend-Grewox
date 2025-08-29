@@ -162,7 +162,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
         country: values.country || "",
         section: "contact",
         contact_source: values.contact_source || "",
-        client_id: loggedInUser?.client_id || "",
+        // client_id: loggedInUser?.client_id || "",
       };
 
       const response = await createContact(contactData).unwrap();

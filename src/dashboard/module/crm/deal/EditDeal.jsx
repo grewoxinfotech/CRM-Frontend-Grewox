@@ -56,7 +56,6 @@ import {
   useGetLabelsQuery,
   useGetSourcesQuery,
 } from "../crmsystem/souce/services/SourceApi";
-import { useGetProductsQuery } from "../../sales/product&services/services/productApi";
 import AddCompanyModal from "../companyacoount/CreateCompanyAccount";
 import AddContactModal from "../contact/CreateContact";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
@@ -86,8 +85,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const [isAddContactVisible, setIsAddContactVisible] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [manualValue, setManualValue] = useState(0);
-  const [selectedProductPrices, setSelectedProductPrices] = useState({});
-  const selectRef = useRef(null);
+    const selectRef = useRef(null);
 
   // Get logged in user first
   const loggedInUser = useSelector(selectCurrentUser);
@@ -126,11 +124,10 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const [teamMembersOpen, setTeamMembersOpen] = useState(false);
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
   const { data: labelsData } = useGetLabelsQuery(loggedInUser?.id);
-  const { data: productsData } = useGetProductsQuery(loggedInUser?.id);
+  const products = []; // productsData?.data || []; // This line is removed
 
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
-  const products = productsData?.data || [];
   const categories = categoriesData?.data || [];
 
   const [contactMode, setContactMode] = useState("existing");
@@ -215,17 +212,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         }
       }
 
-      // Parse products if it's a string
-      let selectedProducts = [];
-      if (typeof initialValues.products === "string") {
-        try {
-          const parsedProducts = JSON.parse(initialValues.products);
-          selectedProducts = parsedProducts.products || [];
-        } catch (e) {
-          selectedProducts = [];
-        }
-      }
-
       // Parse deal_members if it's a string
       let dealMembers = [];
       if (typeof initialValues.deal_members === "string") {
@@ -255,7 +241,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         contact_id: initialValues.contact_id,
         source: initialValues.source,
         category: initialValues.category,
-        products: selectedProducts,
         closedDate: initialValues.closedDate ? dayjs(initialValues.closedDate) : null,
         status: initialValues.status || "pending",
         deal_members: dealMembers,
@@ -409,7 +394,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         contact_id: contactId || null,
         category: values.category,
         source: values.source,
-        products: { products: values.products || [] },
         deal_members: { deal_members: selectedMembers }, // Send all selected members
         is_won:
           values.status === "won"
@@ -464,46 +448,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
     e.stopPropagation();
     setDropdownOpen(false);
     setIsAddPipelineVisible(true);
-  };
-
-  // Add handler for value input change
-  const handleValueChange = (value) => {
-    const numValue = parseFloat(value) || 0;
-    setManualValue(numValue);
-
-    // Calculate total product prices
-    const productPricesTotal = Object.values(selectedProductPrices).reduce(
-      (sum, price) => sum + price,
-      0
-    );
-
-    // Set form value to manual value plus product prices
-    form.setFieldsValue({ value: numValue + productPricesTotal });
-  };
-
-  // Handle products selection change
-  const handleProductsChange = (selectedProductIds) => {
-    const newSelectedPrices = {};
-
-    // Calculate prices for selected products
-    selectedProductIds.forEach((productId) => {
-      const product = products.find((p) => p.id === productId);
-      if (product) {
-        newSelectedPrices[productId] = product.price || 0;
-      }
-    });
-
-    // Update selected product prices
-    setSelectedProductPrices(newSelectedPrices);
-
-    // Calculate total of selected product prices
-    const productPricesTotal = Object.values(newSelectedPrices).reduce(
-      (sum, price) => sum + price,
-      0
-    );
-
-    // Update form value with manual value plus product prices
-    form.setFieldsValue({ value: manualValue + productPricesTotal });
   };
 
   // Add contact mode change handler
@@ -992,7 +936,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                     style={{ width: "calc(100% - 120px)",height:"48px"  }}
                     placeholder="Enter amount"
                     type="number"
-                    onChange={(e) => handleValueChange(e.target.value)}
                   />
                 </Form.Item>
               </Input.Group>
@@ -1437,79 +1380,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
               />
             </Form.Item>
           </div>
-          <Form.Item
-            name="products"
-            label={<Text style={formItemStyle}>Products</Text>}
-            className="products-section"
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select products"
-              style={{ width: "100%" }}
-              optionFilterProp="children"
-              showSearch
-              onChange={handleProductsChange}
-              listHeight={200}
-              maxTagCount={2}
-              maxTagTextLength={15}
-              dropdownStyle={{
-                overflowY: "auto",
-                scrollbarWidth: "thin",
-                scrollBehavior: "smooth",
-              }}
-              className="custom-multiple-select"
-            >
-              {products?.map((product) => (
-                <Option key={product.id} value={product.id}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "32px",
-                        borderRadius: "4px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                          onError={(e) => (e.target.style.display = "none")}
-                        />
-                      ) : (
-                        <span
-                          style={{
-                            fontSize: "18px",
-                            color: "#1890ff",
-                            fontWeight: "500",
-                          }}
-                        >
-                          {product?.name?.charAt(0)}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <span style={{ fontWeight: "500" }}>{product.name}</span>
-                      <span style={{ fontSize: "12px", color: "#6B7280" }}>
-                        {product.selling_price}
-                      </span>
-                    </div>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
           {/* Team Members Section */}
           <div className="section-title" style={{ marginBottom: "16px" }}>
             <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>

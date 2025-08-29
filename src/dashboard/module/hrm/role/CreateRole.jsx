@@ -18,6 +18,8 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             { key: 'dashboards-project-list', title: 'Project' },
             { key: 'dashboards-lead', title: 'Leads' },
             { key: 'dashboards-deal', title: 'Deals' },
+            { key: 'dashboards-crm-contact', title: 'Contact' },
+            { key: 'dashboards-crm-company-account', title: 'Company' },
             { key: 'dashboards-proposal', title: 'Proposal' },
             { key: 'dashboards-task', title: 'Task' },
             { key: 'dashboards-TaskCalendar', title: 'Task Calendar' },
@@ -57,6 +59,7 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             { key: 'extra-hrm-leave-leavelist', title: 'Leave Management' },
             { key: 'extra-hrm-meeting', title: 'Meeting' },
             { key: 'extra-hrm-announcement', title: 'Announcement' },
+            { key: 'dashboards-communication', title: 'Calendar' },
             // { key: 'extra-hrm-jobs-joblist', title: 'Job' },
             { key: 'extra-hrm-document', title: 'Document' },
             { key: 'extra-hrm-trainingSetup', title: 'Training Setup' }

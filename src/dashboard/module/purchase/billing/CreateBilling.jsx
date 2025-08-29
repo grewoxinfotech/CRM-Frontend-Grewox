@@ -279,9 +279,6 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
         };
       });
 
-      // Get next bill number
-      const nextBillNumber = getNextBillNumber();
-
       // Get values directly from form
       const subTotal = Number(form.getFieldValue("sub_total")) || 0;
       const totalAmount = Number(form.getFieldValue("total_amount")) || 0;
@@ -303,7 +300,6 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
       // Format the data according to your API requirements
       const formattedData = {
         vendor: values.vendor_id,
-        billNumber: nextBillNumber,
         billDate: values.billDate
           ? dayjs(values.billDate).format("YYYY-MM-DD")
           : dayjs().format("YYYY-MM-DD"),
@@ -342,7 +338,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
         data: error?.data,
       });
       message.error(
-        error?.data?.message || error?.message || "Failed to create bill"
+        error?.data?.message
       );
     } finally {
       setLoading(false);
@@ -1114,7 +1110,9 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
                               <Form.Item
                                 {...field}
                                 name={[field.name, "item_name"]}
-                                style={{ marginTop: "-8px" }}
+                                style={{ marginTop: "-8px",
+                                  width:"150px"
+                                 }}
                               >
                                 <Select
                                   showSearch

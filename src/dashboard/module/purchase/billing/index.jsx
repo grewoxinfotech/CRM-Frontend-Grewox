@@ -328,10 +328,9 @@ const vendorsData = vendorsDataa?.message || [];
         setIsCreateModalVisible(false);
         billingsData.refetch();
       } else {
-        message.error(response.error?.data?.message || "Failed to create bill");
+        message.error(response.error?.data?.message);
       }
     } catch (error) {
-      message.error("Failed to create bill");
       console.error("Create billing error:", error);
     }
   };

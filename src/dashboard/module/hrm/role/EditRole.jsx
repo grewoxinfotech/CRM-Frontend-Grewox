@@ -18,6 +18,8 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
             { key: 'dashboards-project-list', title: 'Project' },
             { key: 'dashboards-lead', title: 'Leads' },
             { key: 'dashboards-deal', title: 'Deals' },
+            { key: 'dashboards-crm-contact', title: 'Contact' },
+            { key: 'dashboards-crm-company-account', title: 'Company' },
             { key: 'dashboards-proposal', title: 'Proposal' },
             { key: 'dashboards-task', title: 'Task' },
             { key: 'dashboards-TaskCalendar', title: 'Task Calendar' },
