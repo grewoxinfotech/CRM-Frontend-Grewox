@@ -10,11 +10,21 @@ export const subscribedUserApi = createApi({
             query: () => '/subscriptions/assign',
             providesTags: ['SubscribedUsers'],
         }),
+
+        getsubcriptionById: builder.query({
+            query: (id) => ({
+                url: `/subscriptions/assign/${id}`,
+                method: 'GET'
+            }),
+            providesTags: (result, error, id) => [{ type: 'Subscriptions', id }]
+        }),
     }),
+   
 });
 
 export const {
     useGetAllSubscribedUsersQuery,
+    useGetsubcriptionByIdQuery,
 } = subscribedUserApi;
 
 export default subscribedUserApi;

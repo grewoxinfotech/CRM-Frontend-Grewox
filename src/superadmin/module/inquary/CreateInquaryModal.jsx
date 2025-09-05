@@ -26,27 +26,46 @@ const { TextArea } = Input;
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues }) => {
+const CreateInquaryModal = ({ 
+    open, 
+    onCancel, 
+    onSubmit, 
+    isEditing, 
+    initialValues = {}, 
+    loggedInUser 
+}) => {
     const [form] = Form.useForm();
     const [createInquiry] = useCreateInquiryMutation();
     const [updateInquiry] = useUpdateInquiryMutation();
     const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery();
 
-    // Set form values when editing
+    // Set form values when editing or when initialValues are provided
     React.useEffect(() => {
-        if (initialValues) {
+        if (loggedInUser) {
+            // Prepare initial form values with user details
+            const defaultValues = {
+                name: loggedInUser.username || '',
+                email: loggedInUser.email || '',
+                phone: loggedInUser.phone || '',
+                phonecode: loggedInUser.phoneCode || '+91',
+                ...initialValues
+            };
+
             // Find the phone code from country ID
-            const country = countries?.find(c => c.id === initialValues.phonecode);
+            const country = countries?.find(c => c.phoneCode === defaultValues.phonecode);
             const phoneCode = country?.phoneCode || '+91';
 
             form.setFieldsValue({
-                ...initialValues,
-                phonecode: phoneCode // Set the phone code instead of ID
+                ...defaultValues,
+                phonecode: phoneCode
             });
+        } else if (initialValues) {
+            // If no logged-in user, use initialValues
+            form.setFieldsValue(initialValues);
         } else {
             form.resetFields();
         }
-    }, [initialValues, form, countries]);
+    }, [loggedInUser, initialValues, form, countries]);
 
     const handleCancel = () => {
         form.resetFields();

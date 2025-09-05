@@ -617,6 +617,12 @@ const Sidebar = ({
           permission: "dashboards-communication"
         },
         {
+          title:'Plan',
+          icon:< FiBookOpen/>,
+          path:'/dashboard/settings/plan',
+          permission:"dashboards-communication"
+        },
+        {
           title: 'Payment',
           icon: <FiDollarSign />,
           path: '/dashboard/settings/payment',

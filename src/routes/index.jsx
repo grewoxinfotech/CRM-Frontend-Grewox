@@ -75,8 +75,10 @@ import CompanyAccountDetails from "../dashboard/module/crm/companyacoount/Compan
 import ContactDetailsOverview from "../dashboard/module/crm/contact/ContactDetails.jsx";
 import FormSubmissions from "../dashboard/module/crm/generate-link/FormSubmissions.jsx";
 import GeneralSettings from "../superadmin/module/settings/general/index.jsx";
+import Plan from '../dashboard/module/settings/plan/index.jsx';
 import Payment from "../dashboard/module/settings/payment/index.jsx";
 import Storage from "../superadmin/module/storage/index.jsx";
+
 
 const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
@@ -426,6 +428,10 @@ const routes = createBrowserRouter([
       {
         path: "settings/general",
         element: <GeneralSettings />,
+      },
+      {
+        path:"settings/plan",
+        element:<Plan />
       },
       {
         path: "settings/payment",
