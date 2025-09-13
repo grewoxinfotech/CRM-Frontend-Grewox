@@ -55,6 +55,12 @@ const authSlice = createSlice({
             state.success = true;
             state.message = message;
             state.userRole = user?.roleName || null;
+
+            // Set token expiry in localStorage
+            if (user?.exp) {
+                // Convert JWT exp (in seconds) to milliseconds for localStorage
+                localStorage.setItem('tokenExpiry', user.exp);
+            }
         },
         loginFailure: (state, action) => {
             return {

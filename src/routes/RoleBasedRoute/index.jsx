@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { selectUserRole, selectIsLogin } from '../../auth/services/authSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectUserRole, selectIsLogin, logout } from '../../auth/services/authSlice';
 import { Spin, Result } from 'antd';
 
 const RoleBasedRoute = ({ children }) => {
@@ -9,9 +9,32 @@ const RoleBasedRoute = ({ children }) => {
     const isLogin = useSelector(selectIsLogin);
     const location = useLocation();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     useEffect(() => {
+        const checkTokenExpiration = () => {
+            const tokenExpiry = localStorage.getItem('tokenExpiry');
+            if (tokenExpiry) {
+                const currentTime = Date.now();
+                const expiryTime = parseInt(tokenExpiry, 10);
+                
+                // If current time is past or within 30 seconds of expiry, logout
+                if (currentTime >= expiryTime - 30000) {
+                    console.log('Token expired or about to expire. Logging out.');
+                    localStorage.removeItem('persist:root');
+                    localStorage.clear(); // Clear all localStorage
+                    dispatch(logout()); // Reset Redux state
+                    navigate('/login', { state: { from: location }, replace: true });
+                    return;
+                }
+            }
+        };
+
         const checkAndRedirect = () => {
+            // First check token expiration
+            checkTokenExpiration();
+
+            // Then proceed with existing role-based redirection logic
             if (!isLogin) {
                 localStorage.removeItem('persist:root');
                 navigate('/login', { state: { from: location }, replace: true });
@@ -33,7 +56,13 @@ const RoleBasedRoute = ({ children }) => {
         };
 
         checkAndRedirect();
-    }, [isLogin, userRole, location.pathname]);
+
+        // Optional: Set up an interval to check token expiration periodically
+        const intervalId = setInterval(checkTokenExpiration, 30000); // Check every 30 seconds
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(intervalId);
+    }, [isLogin, userRole, location.pathname, navigate, dispatch]);
 
     if (!isLogin) {
         return (
