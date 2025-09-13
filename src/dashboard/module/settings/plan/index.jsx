@@ -44,22 +44,34 @@ const Plan = () => {
         const { used, total, percentage } = subscription.storage;
         return (
             <Card 
+                className="plan-card storage-card"
                 title={
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiHardDrive style={{ marginRight: '8px', color: '#1890ff' }} />
-                        Storage
+                    <div style={{ display: 'flex', alignItems: 'center', color: '#1890ff' }}>
+                        <FiHardDrive style={{ marginRight: '8px', fontSize: '20px' }} />
+                        <span style={{ fontWeight: 600 }}>Storage Usage</span>
                     </div>
                 } 
-                style={{ marginBottom: '16px' }}
+                extra={
+                    <Tag 
+                        color={percentage > 90 ? 'error' : 'success'}
+                        style={{ fontWeight: 500 }}
+                    >
+                        {percentage > 90 ? 'Critical' : 'Healthy'}
+                    </Tag>
+                }
             >
                 <Progress 
                     percent={percentage} 
                     status={percentage > 90 ? 'exception' : 'normal'} 
-                    strokeColor="#1890ff"
+                    strokeColor={{
+                        '0%': '#108ee9',
+                        '100%': '#87d068',
+                    }}
+                    style={{ marginBottom: '12px' }}
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                    <Text>Used: {used.toFixed(2)} GB</Text>
-                    <Text>Total: {total} GB</Text>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text strong>Used: {used.toFixed(2)} GB</Text>
+                    <Text type="secondary">Total: {total} GB</Text>
                 </div>
             </Card>
         );
@@ -70,23 +82,33 @@ const Plan = () => {
         const { name, price, storage_limit } = subscription.Plan;
         return (
             <Card 
+                className="plan-card plan-details-card"
                 title={
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiDollarSign style={{ marginRight: '8px', color: '#52c41a' }} />
-                        Plan Details
+                    <div style={{ display: 'flex', alignItems: 'center', color: '#52c41a' }}>
+                        <FiDollarSign style={{ marginRight: '8px', fontSize: '20px' }} />
+                        <span style={{ fontWeight: 600 }}>Plan Details</span>
                     </div>
-                } 
-                style={{ marginBottom: '16px' }}
+                }
+                extra={
+                    <Tag color="processing" style={{ fontWeight: 500 }}>
+                        Current Plan
+                    </Tag>
+                }
             >
-                <Paragraph>
-                    <Text strong>Name: </Text>{name}
-                </Paragraph>
-                <Paragraph>
-                    <Text strong>Price: </Text>₹{price}
-                </Paragraph>
-                <Paragraph>
-                    <Text strong>Storage Limit: </Text>{storage_limit} GB
-                </Paragraph>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: '4px' }}>Plan Name</Text>
+                        <Text strong style={{ fontSize: '16px' }}>{name}</Text>
+                    </div>
+                    <div>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: '4px' }}>Price</Text>
+                        <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>₹{price}</Text>
+                    </div>
+                    <div>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: '4px' }}>Storage Limit</Text>
+                        <Text strong style={{ fontSize: '16px' }}>{storage_limit} GB</Text>
+                    </div>
+                </div>
             </Card>
         );
     };
@@ -94,26 +116,49 @@ const Plan = () => {
     const renderSubscriptionPeriod = () => {
         if (!subscription) return null;
         const { start_date, end_date, status } = subscription;
+        const daysRemaining = moment(end_date).diff(moment(), 'days');
         return (
             <Card 
+                className="plan-card subscription-period-card"
                 title={
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiCalendar style={{ marginRight: '8px', color: '#faad14' }} />
-                        Subscription Period
+                    <div style={{ display: 'flex', alignItems: 'center', color: '#faad14' }}>
+                        <FiCalendar style={{ marginRight: '8px', fontSize: '20px' }} />
+                        <span style={{ fontWeight: 600 }}>Subscription Period</span>
                     </div>
-                } 
-                style={{ marginBottom: '16px' }}
+                }
+                extra={
+                    <Tag 
+                        color={status === 'active' ? 'success' : 'error'} 
+                        style={{ fontWeight: 500 }}
+                    >
+                        {status.toUpperCase()}
+                    </Tag>
+                }
             >
-                <Paragraph>
-                    <Text strong>Start Date: </Text>{moment(start_date).format('DD MMM YYYY')}
-                </Paragraph>
-                <Paragraph>
-                    <Text strong>End Date: </Text>{moment(end_date).format('DD MMM YYYY')}
-                </Paragraph>
-                <Paragraph>
-                    <Text strong>Status: </Text>
-                    <Tag color={status === 'active' ? 'green' : 'red'}>{status}</Tag>
-                </Paragraph>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: '4px' }}>Start Date</Text>
+                        <Text strong>{moment(start_date).format('DD MMM YYYY')}</Text>
+                    </div>
+                    <div>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: '4px' }}>End Date</Text>
+                        <Text strong>{moment(end_date).format('DD MMM YYYY')}</Text>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                        <Text type="secondary" style={{ display: 'block', marginBottom: '4px' }}>Days Remaining</Text>
+                        <Progress 
+                            percent={Math.round((daysRemaining / 30) * 100)} 
+                            status={daysRemaining < 7 ? 'exception' : 'normal'}
+                            strokeColor={{
+                                '0%': '#ff4d4f',
+                                '100%': '#52c41a',
+                            }}
+                        />
+                        <Text strong style={{ color: daysRemaining < 7 ? '#ff4d4f' : '#52c41a' }}>
+                            {daysRemaining} days left
+                        </Text>
+                    </div>
+                </div>
             </Card>
         );
     };
@@ -128,34 +173,43 @@ const Plan = () => {
         } = subscription;
         return (
             <Card 
+                className="plan-card user-limits-card"
                 title={
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiUsers style={{ marginRight: '8px', color: '#722ed1' }} />
-                        User Limits
+                    <div style={{ display: 'flex', alignItems: 'center', color: '#722ed1' }}>
+                        <FiUsers style={{ marginRight: '8px', fontSize: '20px' }} />
+                        <span style={{ fontWeight: 600 }}>User Limits</span>
                     </div>
                 }
             >
-                <Row guter={[16, 16]}>
-                    <Col span={12}>
-                        <Paragraph>
-                            <Text strong>Users: </Text>{current_users_count}
-                        </Paragraph>
-                    </Col>
-                    <Col span={12}>
-                        <Paragraph>
-                            <Text strong>Clients: </Text>{current_clients_count}
-                        </Paragraph>
-                    </Col>
-                    <Col span={12}>
-                        <Paragraph>
-                            <Text strong>Vendors: </Text>{current_vendors_count}
-                        </Paragraph>
-                    </Col>
-                    <Col span={12}>
-                        <Paragraph>
-                            <Text strong>Customers: </Text>{current_customers_count}
-                        </Paragraph>
-                    </Col>
+                <Row gutter={[16, 16]}>
+                    {[
+                        { label: 'Users', value: current_users_count, icon: <FiUsers /> },
+                        { label: 'Clients', value: current_clients_count, icon: <FiUsers /> },
+                        { label: 'Vendors', value: current_vendors_count, icon: <FiUsers /> },
+                        { label: 'Customers', value: current_customers_count, icon: <FiUsers /> }
+                    ].map(({ label, value, icon }) => (
+                        <Col key={label} span={12}>
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                background: 'rgba(114, 46, 209, 0.05)', 
+                                padding: '12px', 
+                                borderRadius: '8px' 
+                            }}>
+                                {React.cloneElement(icon, { 
+                                    style: { 
+                                        marginRight: '8px', 
+                                        color: '#722ed1', 
+                                        fontSize: '20px' 
+                                    } 
+                                })}
+                                <div>
+                                    <Text type="secondary" style={{ display: 'block', fontSize: '12px' }}>{label}</Text>
+                                    <Text strong style={{ fontSize: '16px', color: '#722ed1' }}>{value}</Text>
+                                </div>
+                            </div>
+                        </Col>
+                    ))}
                 </Row>
             </Card>
         );
@@ -196,15 +250,16 @@ const Plan = () => {
                 </div>
             </div>
 
-            <Row guter={[16, 16]} style={{ gap: '16px' }}>
-                <Col xs={24} sm={24} md={12} lg={8} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {renderStorageUsage()}
-                    {renderPlanDetails()}
-                </Col>
-                <Col xs={24} sm={24} md={12} lg={8} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {renderSubscriptionPeriod()}
-                    {renderUserLimits()}
-                </Col>
+            <Row gutter={[16, 16]} style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                gap: '16px',
+                margin: 0 // Remove default margin
+            }}>
+                {renderStorageUsage()}
+                {renderPlanDetails()}
+                {renderSubscriptionPeriod()}
+                {renderUserLimits()}
             </Row>
 
             <CreateInquaryModal 
