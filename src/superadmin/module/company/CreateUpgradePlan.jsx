@@ -621,6 +621,34 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                         {buttonText}
                     </Button>
                 </div>
+
+                {isBuyPlanModal && (
+                    <div style={{
+                        marginTop: '16px',
+                        padding: '12px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '8px',
+                        border: '1px solid #e6e8eb'
+                    }}>
+                        <Text style={{
+                            fontSize: '12px',
+                            color: '#64748b',
+                            lineHeight: '1.5',
+                            display: 'block'
+                        }}>
+                            By purchasing a plan, you agree to my{' '}
+                            <a href="/terms-and-conditions" target="_blank" style={{ color: '#1890ff', textDecoration: 'none' }}>
+                                Terms & Conditions
+                            </a>,{' '}
+                            <a href="/privacy-policy" target="_blank" style={{ color: '#1890ff', textDecoration: 'none' }}>
+                                Privacy Policy
+                            </a>, and{' '}
+                            <a href="/refund-policy" target="_blank" style={{ color: '#1890ff', textDecoration: 'none' }}>
+                                Refund Policy
+                            </a>.
+                        </Text>
+                    </div>
+                )}
             </Form>
         </Modal>
     );
