@@ -13,26 +13,19 @@ import { FiPackage, FiX, FiCalendar, FiToggleRight, FiDollarSign } from 'react-i
 import { useGetAllPlansQuery } from '../plans/services/planApi';
 import { useAssignPlanMutation } from './services/companyApi';
 import moment from 'moment';
+import { useSelector } from 'react-redux';
+import { selectCurrentToken } from '../../../auth/services/authSlice';
 
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
+const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null, modalTitle = 'Create Upgrade Plan', buttonText = 'Create Upgrade Plan', initialStartDate = null, initialStatus = null, initialPaymentStatus = null }) => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
-
-    // Reset form when modal closes
-    useEffect(() => {
-        if (!open) {
-            form.resetFields();
-        }
-    }, [open, form]);
-
-    // Handle modal close
-    const handleCancel = () => {
-        form.resetFields();
-        onCancel();
-    };
+    const token = useSelector(selectCurrentToken);
+    
+    // Check if this is Buy Plan modal (all fields should be disabled)
+    const isBuyPlanModal = buttonText === 'Buy This Plan';
 
     // Fetch plans using RTK Query
     const { data: plansData, isLoading: plansLoading } = useGetAllPlansQuery({
@@ -54,61 +47,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
         }));
     }, [plansData]);
 
-    const statusOptions = [
-        { value: 'active', label: 'Active' },
-        { value: 'trial', label: 'Trial' },
-    ];
-
-    const paymentStatusOptions = [
-        { value: 'paid', label: 'Paid' },
-        { value: 'unpaid', label: 'Unpaid' },
-    ];
-
-    const handleSubmit = async (values) => {
-        try {
-            if (!companyId) {
-                message.error('Company ID is required');
-                return;
-            }
-
-            setLoading(true);
-
-            const formattedValues = {
-                client_id: companyId,
-                plan_id: values.plan,
-                start_date: values.startDate.format('YYYY-MM-DD'),
-                end_date: values.endDate.format('YYYY-MM-DD'),
-                status: values.status,
-                payment_status: values.paymentStatus
-            };
-
-            const response = await assignUpgradePlan(formattedValues).unwrap();
-
-            if (response.success) {
-                message.success('Upgrade plan assigned successfully');
-                form.resetFields();
-                handleCancel();
-            } else {
-                throw new Error(response.message || 'Failed to assign upgrade plan');
-            }
-        } catch (error) {
-            console.error('Error details:', error);
-            message.error(error?.data?.message || 'Failed to assign upgrade plan');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Validate end date should be after start date
-    const validateEndDate = (_, value) => {
-        const startDate = form.getFieldValue('startDate');
-        if (startDate && value && value.isBefore(startDate)) {
-            return Promise.reject('End date should be after start date');
-        }
-        return Promise.resolve();
-    };
-
-    // Add these functions back
+    // Calculate end date function (needed before useEffect)
     const calculateEndDate = (startDate, duration) => {
         if (!startDate || !duration) return null;
 
@@ -136,6 +75,226 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
         }
 
         return endDate;
+    };
+
+    // Reset form when modal closes
+    useEffect(() => {
+        if (!open) {
+            form.resetFields();
+        }
+    }, [open, form]);
+
+    // Set initial values when modal opens with preselected plan
+    useEffect(() => {
+        if (open && preselectedPlanId && plans.length > 0) {
+            form.setFieldsValue({
+                plan: preselectedPlanId,
+                startDate: initialStartDate || moment(),
+                status: initialStatus || 'active',
+                paymentStatus: initialPaymentStatus || 'unpaid'
+            });
+            
+            // Auto-calculate end date for preselected plan
+            const selectedPlan = plans.find(p => p.id === preselectedPlanId);
+            if (selectedPlan) {
+                const startDate = initialStartDate || moment();
+                const endDate = calculateEndDate(startDate, selectedPlan.duration);
+                form.setFieldValue('endDate', endDate);
+            }
+        }
+    }, [open, preselectedPlanId, plans, initialStartDate, initialStatus, initialPaymentStatus, form]);
+
+    // Handle modal close
+    const handleCancel = () => {
+        form.resetFields();
+        onCancel();
+    };
+
+    const statusOptions = [
+        { value: 'active', label: 'Active' },
+        { value: 'trial', label: 'Trial' },
+    ];
+
+    const paymentStatusOptions = [
+        { value: 'paid', label: 'Paid' },
+        { value: 'unpaid', label: 'Unpaid' },
+    ];
+
+    const handleSubmit = async (values) => {
+        try {
+            console.log('=== PAYMENT FLOW STARTED ===');
+            console.log('Step 1: Form values received:', values);
+            console.log('Company ID:', companyId);
+            console.log('Button Text:', buttonText);
+            
+            if (!companyId) {
+                console.error('ERROR: Company ID is missing');
+                message.error('Company ID is required');
+                return;
+            }
+
+            setLoading(true);
+
+            const formattedValues = {
+                client_id: companyId,
+                plan_id: values.plan,
+                start_date: values.startDate.format('YYYY-MM-DD'),
+                end_date: values.endDate.format('YYYY-MM-DD'),
+                status: values.status,
+                payment_status: values.paymentStatus
+            };
+            
+            console.log('Step 2: Formatted values for API:', formattedValues);
+
+            // If payment is required (unpaid status), initiate Razorpay payment
+            if (values.paymentStatus === 'unpaid' && buttonText === 'Buy This Plan') {
+                console.log('Step 3: Payment required - initiating Razorpay flow');
+                // Step 1: Create Razorpay order
+                console.log('Step 4: Calling Razorpay order API');
+                console.log('API URL:', `${import.meta.env.VITE_API_URL}/subscriptions/razorpay/order`);
+                console.log('Request body:', formattedValues);
+                
+                const orderResponse = await fetch(`${import.meta.env.VITE_API_URL}/subscriptions/razorpay/order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formattedValues)
+                });
+
+                console.log('Step 5: Order API response status:', orderResponse.status);
+                
+                if (!orderResponse.ok) {
+                    const errorData = await orderResponse.json();
+                    console.error('Order API Error:', errorData);
+                    throw new Error('Failed to create payment order');
+                }
+
+                const orderData = await orderResponse.json();
+                console.log('Step 6: Order data received:', orderData);
+                
+                const { orderId, keyId, amount, planName } = orderData.data;
+                console.log('Step 7: Extracted order details:', { orderId, keyId, amount, planName });
+
+                // Step 2: Open Razorpay checkout
+                console.log('Step 8: Creating Razorpay options');
+                const options = {
+                    key: keyId,
+                    amount: amount,
+                    currency: 'INR',
+                    name: 'CRM Grewox',
+                    description: `Payment for ${planName}`,
+                    order_id: orderId,
+                    handler: async function (response) {
+                        console.log('Step 9: Payment successful - Razorpay response:', response);
+                        try {
+                            console.log('Step 10: Starting payment verification');
+                            // Step 3: Verify payment and create subscription
+                            const verifyPayload = {
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                ...formattedValues
+                            };
+                            console.log('Step 11: Verify API payload:', verifyPayload);
+                            
+                            const verifyResponse = await fetch(`${import.meta.env.VITE_API_URL}/subscriptions/razorpay/verify`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify(verifyPayload)
+                            });
+
+                            console.log('Step 12: Verify API response status:', verifyResponse.status);
+                            
+                            if (!verifyResponse.ok) {
+                                const errorData = await verifyResponse.json();
+                                console.error('Verification API Error:', errorData);
+                                throw new Error('Payment verification failed');
+                            }
+
+                            const verifyData = await verifyResponse.json();
+                            console.log('Step 13: Verification data received:', verifyData);
+
+                            if (verifyData.success) {
+                                console.log('Step 14: Payment verified successfully!');
+                                message.success('Payment successful! Subscription activated. Please login again to see updated plan.');
+                                form.resetFields();
+                                handleCancel();
+                                console.log('Step 15: Clearing session and redirecting to login');
+                                // Clear localStorage and redirect to login to get fresh user data
+                                setTimeout(() => {
+                                    localStorage.clear();
+                                    window.location.href = '/login';
+                                }, 2000);
+                            } else{
+                                console.error('Step 14: Verification failed:', verifyData.message);
+                                throw new Error(verifyData.message || 'Payment verification failed');
+                            }
+                        } catch (error) {
+                            console.error('=== PAYMENT VERIFICATION ERROR ===');
+                            console.error('Error details:', error);
+                            message.error(error.message || 'Failed to verify payment');
+                        } finally {
+                            setLoading(false);
+                        }
+                    },
+                    prefill: {
+                        name: '',
+                        email: '',
+                        contact: ''
+                    },
+                    theme: {
+                        color: '#1890ff'
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            console.log('=== PAYMENT CANCELLED BY USER ===');
+                            setLoading(false);
+                            message.info('Payment cancelled');
+                        }
+                    }
+                };
+
+                console.log('Step 8: Opening Razorpay modal with options:', options);
+                const razorpay = new window.Razorpay(options);
+                razorpay.open();
+                console.log('Razorpay modal opened successfully');
+            } else {
+                console.log('Step 3: Direct assignment (no payment required)');
+                // Direct subscription creation without payment (for superadmin)
+                const response = await assignUpgradePlan(formattedValues).unwrap();
+                console.log('Assignment response:', response);
+
+                if (response.success) {
+                    console.log('=== ASSIGNMENT SUCCESSFUL ===');
+                    message.success('Upgrade plan assigned successfully');
+                    form.resetFields();
+                    handleCancel();
+                } else {
+                    console.error('Assignment failed:', response.message);
+                    throw new Error(response.message || 'Failed to assign upgrade plan');
+                }
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('=== ERROR IN HANDLE SUBMIT ===');
+            console.error('Error details:', error);
+            message.error(error?.data?.message || error.message || 'Failed to assign upgrade plan');
+            setLoading(false);
+        }
+    };
+
+    // Validate end date should be after start date
+    const validateEndDate = (_, value) => {
+        const startDate = form.getFieldValue('startDate');
+        if (startDate && value && value.isBefore(startDate)) {
+            return Promise.reject('End date should be after start date');
+        }
+        return Promise.resolve();
     };
 
     // Handle plan selection to auto-calculate end date
@@ -241,7 +400,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                             fontWeight: '600',
                             color: '#ffffff',
                         }}>
-                            Create Upgrade Plan
+                            {modalTitle}
                         </h2>
                         <Text style={{
                             fontSize: '14px',
@@ -274,6 +433,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                         size="large"
                         loading={plansLoading}
                         onChange={handlePlanChange}
+                        disabled={isBuyPlanModal}
                         style={{
                             width: '100%',
                             height: '48px',
@@ -323,6 +483,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                         placeholder="dd-mm-yyyy"
                         suffixIcon={<FiCalendar style={{ color: '#1890ff', fontSize: '16px' }} />}
                         onChange={handleStartDateChange}
+                        disabled={isBuyPlanModal}
                     />
                 </Form.Item>
 
@@ -375,6 +536,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                             width: '100%',
                             height: '48px',
                         }}
+                        disabled={isBuyPlanModal}
                     >
                         {statusOptions.map(option => (
                             <Option key={option.value} value={option.value}>
@@ -405,6 +567,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                             height: '48px',
                         }}
                         suffixIcon={<FiDollarSign style={{ color: '#1890ff', fontSize: '16px' }} />}
+                        disabled={isBuyPlanModal}
                     >
                         {paymentStatusOptions.map(option => (
                             <Option key={option.value} value={option.value}>
@@ -455,7 +618,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                             justifyContent: 'center',
                         }}
                     >
-                        Create Upgrade Plan
+                        {buttonText}
                     </Button>
                 </div>
             </Form>

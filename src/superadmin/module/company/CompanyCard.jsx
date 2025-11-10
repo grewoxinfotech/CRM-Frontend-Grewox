@@ -96,6 +96,8 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
             }).unwrap();
 
             if (response.success) {
+                // Set flag to indicate super-admin logged into company
+                localStorage.setItem('isSuperAdminCompanyLogin', 'true');
                 message.success('Logged in as company successfully');
                 // Force reload to update the app state with new user
                 navigate('/dashboard');

@@ -9,6 +9,16 @@ $desktop: 1024px;
 $logout-color: #ff4d4f;
 $logout-hover: #ff7875;
 
+// Loading animation
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
 .sidebar {
     width: 260px;
     height: 100vh;

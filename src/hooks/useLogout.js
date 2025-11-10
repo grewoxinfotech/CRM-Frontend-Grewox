@@ -7,9 +7,11 @@ export const useLogout = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
+        // Clear super-admin company login flag
+        localStorage.removeItem('isSuperAdminCompanyLogin');
         dispatch(logout());
         navigate('/login');
     };
 
     return handleLogout;
-}; 
+};

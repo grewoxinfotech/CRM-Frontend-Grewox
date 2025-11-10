@@ -447,16 +447,19 @@
 }
 
 .plan-page {
+    padding: 24px;
+    background: $background-color;
+    
     .plan-card {
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba($primary-color, 0.08);
         transition: all 0.3s ease;
         height: 100%;
-        margin-top: 16px; // Added top margin
+        border: 1px solid rgba($border-color, 0.1);
         
         &:hover {
             transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba($primary-color, 0.12);
+            box-shadow: 0 4px 16px rgba($primary-color, 0.15);
         }
 
         .ant-card-head {
@@ -501,6 +504,227 @@
         &.user-limits-card {
             .ant-card-head {
                 background: linear-gradient(to right, rgba(114, 46, 209, 0.05), transparent);
+            }
+        }
+    }
+
+    // Available Plans Section
+    .available-plans-section {
+        margin-top: 48px;
+        padding: 24px 0;
+
+        .ant-divider {
+            margin: 0 0 16px 0;
+            border-color: rgba($primary-color, 0.15);
+            font-size: 20px;
+
+            .ant-divider-inner-text {
+                padding: 0 20px;
+            }
+        }
+
+        .available-plan-card {
+            height: 100%;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba($primary-color, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid rgba($border-color, 0.1);
+            overflow: hidden;
+            position: relative;
+            background: white;
+
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #1890ff, #52c41a);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+
+            &:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 12px 32px rgba($primary-color, 0.2);
+                border-color: rgba($primary-color, 0.3);
+
+                &::before {
+                    opacity: 1;
+                }
+            }
+
+            .ant-card-body {
+                padding: 24px;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+
+            .plan-card-header {
+                padding-bottom: 20px;
+                border-bottom: 2px solid rgba($border-color, 0.1);
+                margin-bottom: 20px;
+
+                .plan-title-section {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 16px;
+                    flex-wrap: wrap;
+
+                    .ant-typography {
+                        color: #1e293b;
+                        font-weight: 600;
+                        letter-spacing: -0.5px;
+                    }
+
+                    .ant-tag {
+                        margin: 0;
+                        padding: 4px 12px;
+                        border-radius: 12px;
+                        font-weight: 600;
+                        font-size: 11px;
+                        border: none;
+                        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+                        color: white;
+                        box-shadow: 0 2px 8px rgba(#1890ff, 0.3);
+                    }
+                }
+
+                .price-section {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 6px;
+
+                    .price-amount {
+                        display: flex;
+                        align-items: baseline;
+                        gap: 4px;
+
+                        .currency-icon {
+                            font-weight: 600;
+                        }
+
+                        .amount {
+                            background: linear-gradient(135deg, #1890ff, #52c41a);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                            line-height: 1;
+                        }
+                    }
+
+                    .duration {
+                        font-weight: 500;
+                    }
+                }
+            }
+
+            .plan-features {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+
+                .features-group {
+                    .ant-typography {
+                        display: flex;
+                        align-items: center;
+                        color: #475569;
+                        font-size: 14px;
+                        font-weight: 600;
+                        margin-bottom: 12px;
+
+                        svg {
+                            color: #1890ff;
+                        }
+                    }
+
+                    ul {
+                        li {
+                            display: flex;
+                            align-items: center;
+                            padding: 6px 0;
+                            transition: all 0.2s ease;
+
+                            &:hover {
+                                transform: translateX(4px);
+                            }
+
+                            svg {
+                                flex-shrink: 0;
+                            }
+
+                            span {
+                                color: #64748b;
+                                font-size: 13px;
+                                line-height: 1.5;
+
+                                strong {
+                                    color: #1e293b;
+                                    font-weight: 600;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            .ant-btn-primary {
+                background: linear-gradient(135deg, $primary-color 0%, #096dd9 100%);
+                border: none;
+                font-weight: 600;
+                font-size: 14px;
+                letter-spacing: 0.3px;
+                box-shadow: 0 4px 12px rgba($primary-color, 0.25);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+                &:hover {
+                    background: linear-gradient(135deg, #096dd9 0%, $primary-color 100%);
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba($primary-color, 0.4);
+                }
+
+                &:active {
+                    transform: translateY(0);
+                }
+            }
+        }
+
+        // Responsive adjustments
+        @media (max-width: 768px) {
+            margin-top: 32px;
+            padding: 16px 0;
+
+            .ant-divider {
+                font-size: 18px;
+            }
+
+            .available-plan-card {
+                .ant-card-body {
+                    padding: 20px;
+                }
+
+                .plan-card-header {
+                    padding-bottom: 16px;
+                    margin-bottom: 16px;
+
+                    .plan-title-section {
+                        .ant-typography {
+                            font-size: 16px;
+                        }
+                    }
+
+                    .price-section {
+                        .price-amount {
+                            .amount {
+                                font-size: 22px;
+                            }
+                        }
+                    }
+                }
             }
         }
     }

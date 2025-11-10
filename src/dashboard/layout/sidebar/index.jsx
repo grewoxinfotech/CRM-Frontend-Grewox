@@ -3,6 +3,8 @@ import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSelector } from 'react-redux';
 import { selectUserRole } from '../../../auth/services/authSlice';
+import { useGetsubcriptionByIdQuery } from '../../../superadmin/module/SubscribedUser/services/SubscribedUserApi';
+import moment from 'moment';
 import {
   FiHome,
   FiSettings,
@@ -74,6 +76,32 @@ const Sidebar = ({
 
   const userRole = useSelector(selectUserRole);
 
+  // Check if super-admin logged into company account
+  const isSuperAdminCompanyLogin = localStorage.getItem('isSuperAdminCompanyLogin') === 'true';
+  
+  // Fetch subscription data to check expiry
+  const subscriptionId = loggedInUser?.client_plan_id;
+  // Don't check subscription for: super-admin OR super-admin logged into company
+  const shouldFetchSubscription = subscriptionId && userRole !== 'super-admin' && !isSuperAdminCompanyLogin;
+  
+  const { data: subscriptionData, isLoading: isSubscriptionLoading } = useGetsubcriptionByIdQuery(subscriptionId, {
+    skip: !shouldFetchSubscription // Don't fetch for super-admin or if no subscription ID
+  });
+
+  // Check if subscription is expired
+  const isSubscriptionExpired = React.useMemo(() => {
+    if (userRole === 'super-admin') return false; // Super admin never expires
+    if (isSuperAdminCompanyLogin) return false; // Super admin in company account never expires
+    if (!subscriptionData?.data?.end_date) return false;
+    
+    const endDate = moment(subscriptionData.data.end_date);
+    const currentDate = moment();
+    return endDate.isBefore(currentDate); // Returns true if expired
+  }, [subscriptionData, userRole, isSuperAdminCompanyLogin]);
+
+  // Show loading state while checking subscription
+  // Ready when: super-admin OR super-admin company login OR no subscription needed OR subscription loaded
+  const isSidebarReady = userRole === 'super-admin' || isSuperAdminCompanyLogin || !shouldFetchSubscription || !isSubscriptionLoading;
 
   // Find user's role data if not client
   const userRoleData = userRole?.toLowerCase() !== 'client' ?
@@ -108,6 +136,21 @@ const Sidebar = ({
   };
 
   const shouldShowMenuItem = (item) => {
+    // If subscription expired, only show Dashboard and Settings
+    if (isSubscriptionExpired) {
+      // Allow Dashboard
+      if (item.title === 'Dashboard') {
+        return true;
+      }
+      // Allow Settings but only Plan submenu
+      if (item.title === 'Setting') {
+        return true;
+      }
+      // Hide all other menu items
+      return false;
+    }
+
+    // Normal flow when subscription is active
     // Always show Settings, Communication and Support
     const alwaysShowItems = ['Setting', 'Communication', 'Support'];
     if (alwaysShowItems.includes(item.title)) {
@@ -652,7 +695,14 @@ const Sidebar = ({
           path: '/dashboard/settings/esignature',
           permission: "dashboards-communication"
         }
-      ]
+      ].filter(subItem => {
+        // If subscription expired, only show Plan
+        if (isSubscriptionExpired) {
+          return subItem.title === 'Plan';
+        }
+        // Otherwise show all items based on permission
+        return shouldShowMenuItem(subItem);
+      })
     },
     {
       title: "Support",
@@ -779,35 +829,53 @@ const Sidebar = ({
           )}
         </div>
         <nav className="sidebar-nav">
-          {menuItems.map((item, index) => (
-            <motion.div key={item.path || index} initial={false} onClick={handleNavigation}>
-              {!item.isDropdown
-                ? renderNavItem(item)
-                : item.title === "CRM"
-                  ? renderDropdown(item, isCrmOpen, setCrmOpen)
-                  : item.title === "Sales"
-                    ? renderDropdown(item, isSalesOpen, setSalesOpen)
-                    : item.title === "Purchase"
-                      ? renderDropdown(item, isPurchaseOpen, setPurchaseOpen)
-                      : item.title === "User Management"
-                        ? renderDropdown(
-                          item,
-                          isUserManagementOpen,
-                          setUserManagementOpen
-                        )
-                        : item.title === "Communication"
-                          ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
-                          : item.title === "HRM"
-                            ? renderDropdown(item, isHrmOpen, setHrmOpen)
-                            : item.title === "Setting"
-                              ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
-                              : item.title === "Support"
-                                ? renderDropdown(item, isSupportOpen, setSupportOpen)
-                                : item.title === "Job"
-                                  ? renderDropdown(item, isJobOpen, setJobOpen)
-                                  : renderDropdown(item, false, () => { })}
-            </motion.div>
-          ))}
+          {!isSidebarReady ? (
+            // Show loading skeleton while checking subscription
+            <div style={{ padding: '20px', opacity: 0.5 }}>
+              {[1, 2, 3, 4, 5].map((item) => (
+                <div
+                  key={item}
+                  style={{
+                    height: '40px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    marginBottom: '12px',
+                    animation: 'pulse 1.5s ease-in-out infinite'
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            menuItems.map((item, index) => (
+              <motion.div key={item.path || index} initial={false} onClick={handleNavigation}>
+                {!item.isDropdown
+                  ? renderNavItem(item)
+                  : item.title === "CRM"
+                    ? renderDropdown(item, isCrmOpen, setCrmOpen)
+                    : item.title === "Sales"
+                      ? renderDropdown(item, isSalesOpen, setSalesOpen)
+                      : item.title === "Purchase"
+                        ? renderDropdown(item, isPurchaseOpen, setPurchaseOpen)
+                        : item.title === "User Management"
+                          ? renderDropdown(
+                            item,
+                            isUserManagementOpen,
+                            setUserManagementOpen
+                          )
+                          : item.title === "Communication"
+                            ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
+                            : item.title === "HRM"
+                              ? renderDropdown(item, isHrmOpen, setHrmOpen)
+                              : item.title === "Setting"
+                                ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
+                                : item.title === "Support"
+                                  ? renderDropdown(item, isSupportOpen, setSupportOpen)
+                                  : item.title === "Job"
+                                    ? renderDropdown(item, isJobOpen, setJobOpen)
+                                    : renderDropdown(item, false, () => { })}
+              </motion.div>
+            ))
+          )}
         </nav>
 
         {isCollapsed && openDropdown && (
