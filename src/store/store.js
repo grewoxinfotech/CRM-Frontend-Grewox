@@ -71,6 +71,7 @@ import { followupCallApi } from "../dashboard/module/crm/deal/overview/followup/
 import { forgotPasswordApi } from "../auth/forgot-password/services/forgot-passwordApi";
 import dealStageReducer from "../dashboard/module/crm/deal/services/DealStageSlice";
 import { storageApi } from "../superadmin/module/storage/services/storageApi";
+import { paymentGatewayApi } from "../superadmin/module/settings/payment-gateway/services/paymentGatewayApi";
 import { RESET_STATE, RESET_API_STATE } from './actions';
 
 const persistConfig = {
@@ -173,6 +174,7 @@ const rootReducer = (state, action) => {
     [activityApi.reducerPath]: activityApi.reducer,
     [forgotPasswordApi.reducerPath]: forgotPasswordApi.reducer,
     [storageApi.reducerPath]: storageApi.reducer,
+    [paymentGatewayApi.reducerPath]: paymentGatewayApi.reducer,
   })(state, action);
 };
 
@@ -256,7 +258,8 @@ export const store = configureStore({
       .concat(settingApi.middleware)
       .concat(activityApi.middleware)
       .concat(forgotPasswordApi.middleware)
-      .concat(storageApi.middleware),
+      .concat(storageApi.middleware)
+      .concat(paymentGatewayApi.middleware),
 });
 
 export const persistor = persistStore(store);

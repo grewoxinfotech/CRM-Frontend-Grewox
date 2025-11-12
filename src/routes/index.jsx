@@ -12,6 +12,7 @@ import Profile from "../superadmin/module/profile/index.jsx";
 import SuperAdminCurrencies from "../superadmin/module/settings/currencies/index.jsx";
 import SuperAdminCountries from "../superadmin/module/settings/countries/index.jsx";
 import SuperAdminESignature from "../superadmin/module/settings/eSignature/index.jsx";
+import SuperAdminPaymentGateway from "../superadmin/module/settings/payment-gateway/index.jsx";
 import Currencies from "../dashboard/module/settings/currencies/index.jsx";
 import Countries from "../dashboard/module/settings/countries/index.jsx";
 import ESignature from "../dashboard/module/settings/eSignature/index.jsx";
@@ -520,6 +521,10 @@ const routes = createBrowserRouter([
       {
         path: "settings/esignature",
         element: <SuperAdminESignature />,
+      },
+      {
+        path: "settings/payment-gateway",
+        element: <SuperAdminPaymentGateway />,
       },
       {
         path: "inquiry",

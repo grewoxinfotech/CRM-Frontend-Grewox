@@ -129,6 +129,11 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                     title: 'ESignature',
                     icon: <FiEdit3 />,
                     path: '/superadmin/settings/esignature'
+                },
+                {
+                    title: 'Payment Gateway',
+                    icon: <FiDollarSign />,
+                    path: '/superadmin/settings/payment-gateway'
                 }
             ]
         },
