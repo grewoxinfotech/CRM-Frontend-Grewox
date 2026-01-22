@@ -87,18 +87,36 @@ const NotificationsComponent = () => {
   const notifications = notificationsData?.data || [];
   const unreadNotifications = notifications.filter((n) => {
     try {
-      // Parse the users JSON string to get assigned users
-      const usersArray = JSON.parse(n.users);
-      const assignedUsers = Array.isArray(usersArray) ? usersArray : [];
+      // Handle different formats of users field
+      let assignedUsers = [];
+      
+      // If users is already an array (already parsed by backend)
+      if (Array.isArray(n.users)) {
+        assignedUsers = n.users;
+      } 
+      // If users is a string, try to parse it
+      else if (typeof n.users === 'string') {
+        try {
+          const parsed = JSON.parse(n.users);
+          assignedUsers = Array.isArray(parsed) ? parsed : [];
+        } catch (parseError) {
+          console.error("Error parsing users data for notification:", n.id, n.users);
+          return false;
+        }
+      }
+      // If users is a number or other type, skip this notification
+      else {
+        console.warn("Invalid users field type for notification:", n.id, typeof n.users, n.users);
+        return false;
+      }
 
-      // Check if current user is in assigned users list OR if user's ID matches client_id
+      // Check if current user is in assigned users list
       const isAssignedUser = assignedUsers.includes(id);
-      // const isClientUser = n.client_id === id;
 
-      // Show notification if unread AND (user is assigned OR is client)
+      // Show notification if unread AND user is assigned
       return !n.read && isAssignedUser;
     } catch (error) {
-      console.error("Error parsing users data:", error);
+      console.error("Error filtering notification:", n.id, error);
       return false;
     }
   });
