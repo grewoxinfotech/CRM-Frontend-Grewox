@@ -18,19 +18,20 @@ const WhatsappSettings = () => {
     const [saveSettings, { isLoading: isSaving }] = useSaveWhatsappSettingsMutation();
 
     useEffect(() => {
-        const defaultToken = `raiser_crm_v1_${currentUser?.username || 'user'}_${Math.random().toString(36).substring(7)}`;
+        // Generate a unique verify token for this specific client based on username
+        const uniqueToken = `raiser_v1_${currentUser?.username || 'user'}`;
 
         if (settings) {
             form.setFieldsValue({
                 phone_number_id: settings.phone_number_id,
                 business_id: settings.business_id,
                 access_token: settings.access_token,
-                verify_token: settings.verify_token || defaultToken,
+                verify_token: settings.verify_token || uniqueToken,
                 is_active: settings.is_active
             });
         } else {
-            // Set a default "dynamic" verify token for new setups
-            form.setFieldValue('verify_token', defaultToken);
+            // For new setup, provide the username-based token automatically
+            form.setFieldValue('verify_token', uniqueToken);
         }
     }, [settings, form, currentUser]);
 
