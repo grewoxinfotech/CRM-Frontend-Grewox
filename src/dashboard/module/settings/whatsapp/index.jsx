@@ -168,28 +168,27 @@ const WhatsappSettings = () => {
                                     </div>
 
                                     <div style={{ marginBottom: '16px' }}>
-                                        <Text strong style={{ color: '#52c41a' }}>Step 2: Create Custom Form & Campaign</Text>
+                                        <Text strong style={{ color: '#52c41a' }}>Step 2: Create Custom Form</Text>
                                         <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
                                             <li>Go to <Link to="/dashboard/crm/generate-link">Custom Forms</Link>.</li>
-                                            <li>Create a new form and turn on <b>"Create WhatsApp Campaign"</b>.</li>
-                                            <li>This will auto-create a Flow and Template on Meta.</li>
+                                            <li>Create a new form with the fields you need.</li>
+                                            <li>Copy the form link to share on WhatsApp.</li>
                                         </ul>
                                     </div>
 
                                     <div style={{ marginBottom: '16px' }}>
-                                        <Text strong style={{ color: '#faad14' }}>Step 3: Wait for Meta Approval</Text>
+                                        <Text strong style={{ color: '#faad14' }}>Step 3: Share on WhatsApp</Text>
                                         <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
-                                            <li>Meta takes 1 to 24 hours to approve templates.</li>
-                                            <li>Once approved, the campaign will be ready to use.</li>
+                                            <li>Share your form link or use Meta WhatsApp Manager to create campaigns.</li>
+                                            <li>When users interact with your forms, data is captured automatically.</li>
                                         </ul>
                                     </div>
 
                                     <div style={{ marginBottom: '16px' }}>
-                                        <Text strong style={{ color: '#722ed1' }}>Step 4: Send & Collect Leads</Text>
+                                        <Text strong style={{ color: '#722ed1' }}>Step 4: Collect Leads</Text>
                                         <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
-                                            <li><b>Manual:</b> Select leads in <Link to="/dashboard/crm/lead">Lead List</Link> and click <b>"Send WhatsApp"</b>.</li>
-                                            <li><b>Auto:</b> New users messaging "Hi" will auto-receive the form.</li>
-                                            <li><b>Result:</b> Filled forms automatically create new Leads in CRM!</li>
+                                            <li><b>Auto:</b> Forms filled via WhatsApp will automatically create new Leads in CRM!</li>
+                                            <li><b>Result:</b> All your lead data is centralized in one place.</li>
                                         </ul>
                                     </div>
                                 </div>
