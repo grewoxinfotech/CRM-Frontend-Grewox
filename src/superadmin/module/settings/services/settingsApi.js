@@ -13,6 +13,7 @@ export const settingsApi = createApi({
             return headers;
         },
     }),
+    tagTypes: ['WhatsappSettings'],
     endpoints: (builder) => ({
         getAllCurrencies: builder.query({
             query: (params) => ({
@@ -36,10 +37,44 @@ export const settingsApi = createApi({
             }),
             transformResponse: (response) => response.data,
         }),
+        getWhatsappSettings: builder.query({
+            query: () => ({
+                url: '/whatsapp/settings',
+                method: 'GET',
+            }),
+            transformResponse: (response) => response.data,
+            providesTags: ['WhatsappSettings'],
+        }),
+        saveWhatsappSettings: builder.mutation({
+            query: (data) => ({
+                url: '/whatsapp/settings',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['WhatsappSettings'],
+        }),
+        getApprovedCampaigns: builder.query({
+            query: () => ({
+                url: '/whatsapp/campaigns',
+                method: 'GET',
+            }),
+            transformResponse: (response) => response.data,
+        }),
+        sendBulkCampaign: builder.mutation({
+            query: (data) => ({
+                url: '/whatsapp/bulk-send',
+                method: 'POST',
+                body: data,
+            }),
+        }),
     }),
 });
 
 export const {
     useGetAllCurrenciesQuery,
     useGetAllCountriesQuery,
+    useGetWhatsappSettingsQuery,
+    useSaveWhatsappSettingsMutation,
+    useGetApprovedCampaignsQuery,
+    useSendBulkCampaignMutation,
 } = settingsApi;

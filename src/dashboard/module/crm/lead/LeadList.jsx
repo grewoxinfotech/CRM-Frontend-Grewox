@@ -11,6 +11,7 @@ import {
   Input,
   Tooltip,
   Modal,
+  Select,
 } from "antd";
 import {
   FiEdit2,
@@ -26,6 +27,8 @@ import {
   FiBarChart2,
   FiBriefcase,
   FiUser,
+  FiMessageSquare,
+  FiSend,
 } from "react-icons/fi";
 import { useDeleteLeadMutation } from "./services/LeadApi";
 import {
@@ -33,7 +36,7 @@ import {
   useGetStatusesQuery,
 } from "../crmsystem/souce/services/SourceApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
-import { useGetAllCurrenciesQuery } from "../../../module/settings/services/settingsApi";
+import { useGetAllCurrenciesQuery, useGetApprovedCampaignsQuery, useSendBulkCampaignMutation } from "../../../module/settings/services/settingsApi";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 import { useGetContactsQuery } from "../contact/services/contactApi";
 import { useSelector } from "react-redux";
@@ -80,8 +83,45 @@ const LeadList = ({
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: companyAccountsResponse } = useGetCompanyAccountsQuery();
   const { data: contactsResponse } = useGetContactsQuery();
+  const { data: campaigns } = useGetApprovedCampaignsQuery();
+  const [sendBulkCampaign, { isLoading: isSending }] = useSendBulkCampaignMutation();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
+
+  const handleSendCampaign = async () => {
+    if (!selectedCampaignId || selectedRowKeys.length === 0) return;
+
+    try {
+      // Get phone numbers of selected leads
+      const selectedLeads = leads.data.filter(lead => selectedRowKeys.includes(lead.id));
+      const phoneNumbers = selectedLeads
+        .map(lead => {
+          const { contact } = getContactName(lead);
+          return contact?.phone;
+        })
+        .filter(Boolean);
+
+      if (phoneNumbers.length === 0) {
+        message.error("Selected leads don't have phone numbers");
+        return;
+      }
+
+      const result = await sendBulkCampaign({
+        campaignId: selectedCampaignId,
+        phoneNumbers
+      }).unwrap();
+
+      message.success(`Campaign sent! Total: ${result.sent}, Failed: ${result.failed}`);
+      setIsCampaignModalOpen(false);
+      setSelectedRowKeys([]);
+      setSelectedCampaignId(null);
+    } catch (error) {
+      console.error("Failed to send campaign:", error);
+      message.error(error?.data?.message || "Failed to send WhatsApp campaign");
+    }
+  };
 
   console.log(leads);
 
@@ -593,15 +633,78 @@ const LeadList = ({
     <div className="lead-list-container">
       {selectedRowKeys.length > 0 && (
         <div className="bulk-actions lead-bulk-actions">
-          <Button
-            className="lead-bulk-delete-btn"
-            icon={<FiTrash2 size={16} style={{ marginRight: 8 }} />}
-            onClick={handleBulkDelete}
-          >
-            Delete Selected ({selectedRowKeys.length})
-          </Button>
+          <Space>
+            <Button
+              className="lead-bulk-whatsapp-btn"
+              type="primary"
+              icon={<FiMessageSquare size={16} style={{ marginRight: 8 }} />}
+              onClick={() => setIsCampaignModalOpen(true)}
+              style={{ backgroundColor: '#25D366', borderColor: '#25D366' }}
+            >
+              Send WhatsApp ({selectedRowKeys.length})
+            </Button>
+            <Button
+              className="lead-bulk-delete-btn"
+              icon={<FiTrash2 size={16} style={{ marginRight: 8 }} />}
+              onClick={handleBulkDelete}
+            >
+              Delete Selected ({selectedRowKeys.length})
+            </Button>
+          </Space>
         </div>
       )}
+
+      {/* WhatsApp Campaign Modal */}
+      <Modal
+        title={
+          <Space>
+            <FiMessageSquare style={{ color: '#25D366' }} />
+            <span>Send WhatsApp Campaign</span>
+          </Space>
+        }
+        open={isCampaignModalOpen}
+        onCancel={() => setIsCampaignModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsCampaignModalOpen(false)}>
+            Cancel
+          </Button>,
+          <Button 
+            key="send" 
+            type="primary" 
+            icon={<FiSend />} 
+            onClick={handleSendCampaign}
+            loading={isSending}
+            disabled={!selectedCampaignId}
+            style={{ backgroundColor: '#25D366', borderColor: '#25D366' }}
+          >
+            Send to {selectedRowKeys.length} Leads
+          </Button>
+        ]}
+      >
+        <div style={{ padding: '20px 0' }}>
+          <Text type="secondary" style={{ display: 'block', marginBottom: '16px' }}>
+            Select an approved campaign template to send to the selected leads.
+          </Text>
+          <Select
+            placeholder="Select a Campaign"
+            style={{ width: '100%' }}
+            onChange={(val) => setSelectedCampaignId(val)}
+            size="large"
+          >
+            {campaigns?.map(campaign => (
+              <Select.Option key={campaign.id} value={campaign.id}>
+                {campaign.whatsapp_template_name}
+              </Select.Option>
+            ))}
+          </Select>
+          {!campaigns?.length && (
+            <div style={{ marginTop: '12px', color: '#ff4d4f' }}>
+              No approved campaigns found. Please create a campaign in Custom Form settings first.
+            </div>
+          )}
+        </div>
+      </Modal>
+
       <Table
         columns={columns}
         dataSource={leads?.data || []}

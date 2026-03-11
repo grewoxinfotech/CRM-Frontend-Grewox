@@ -1,0 +1,95 @@
+.whatsapp-settings-page {
+    padding: 24px;
+    background: #f5f7fa;
+    min-height: calc(100vh - 64px);
+
+    .page-breadcrumb {
+        margin-bottom: 16px;
+        
+        .ant-breadcrumb-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+
+            svg {
+                font-size: 16px;
+            }
+        }
+    }
+
+    .page-header {
+        margin-bottom: 24px;
+
+        .page-title {
+            h2 {
+                margin-bottom: 4px;
+                color: #1e293b;
+                font-weight: 600;
+            }
+        }
+    }
+
+    .settings-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: none;
+
+        .settings-input {
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .form-actions {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #f1f5f9;
+            text-align: right;
+
+            button {
+                border-radius: 8px;
+                height: auto;
+                padding: 10px 32px;
+                font-weight: 500;
+            }
+        }
+    }
+
+    .info-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: none;
+
+        .webhook-url-box {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+            word-break: break-all;
+
+            code {
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+                font-size: 13px;
+                color: #0f172a;
+            }
+        }
+
+        ul {
+            padding-left: 20px;
+            margin-top: 12px;
+            
+            li {
+                margin-bottom: 8px;
+                color: #64748b;
+            }
+        }
+    }
+}
+
+.whatsapp-settings-loading {
+    height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

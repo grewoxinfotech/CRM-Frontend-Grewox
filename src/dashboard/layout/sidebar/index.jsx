@@ -708,6 +708,12 @@ const Sidebar = ({
           icon: <FiEdit3 />,
           path: '/dashboard/settings/esignature',
           permission: "dashboards-communication"
+        },
+        {
+          title: 'WhatsApp',
+          icon: <FiMessageSquare />,
+          path: '/dashboard/settings/whatsapp',
+          permission: "dashboards-communication"
         }
       ].filter(subItem => {
         // If subscription expired, only show Plan

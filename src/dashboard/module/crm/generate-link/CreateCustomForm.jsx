@@ -25,6 +25,7 @@ import {
     FiLink,
     FiCheckSquare,
     FiList,
+    FiMessageSquare,
 } from "react-icons/fi";
 import "./CustomForm.scss";
 import dayjs from 'dayjs';
@@ -501,10 +502,78 @@ const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
                     )}
                 </Form.List>
 
-                <Divider style={{ margin: "24px 0" }} />
+                <Divider style={{ margin: "24px 0" }}>WhatsApp Integration</Divider>
+
+                <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#f0f7ff', 
+                    borderRadius: '12px', 
+                    border: '1px solid #bae7ff',
+                    marginBottom: '24px' 
+                }}>
+                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                        <Form.Item
+                            name="createWhatsAppCampaign"
+                            valuePropName="checked"
+                            initialValue={false}
+                            noStyle
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <Space>
+                                    <div style={{ 
+                                        width: '40px', 
+                                        height: '40px', 
+                                        borderRadius: '10px', 
+                                        backgroundColor: '#1890ff', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center',
+                                        color: 'white'
+                                    }}>
+                                        <FiMessageSquare size={20} />
+                                    </div>
+                                    <div>
+                                        <Text strong style={{ fontSize: '16px' }}>Create WhatsApp Campaign</Text>
+                                        <br />
+                                        <Text type="secondary" style={{ fontSize: '12px' }}>Automatically create a WhatsApp Flow and Template for this form</Text>
+                                    </div>
+                                </Space>
+                                <Form.Item name="createWhatsAppCampaign" valuePropName="checked" noStyle>
+                                    <Switch size="large" />
+                                </Form.Item>
+                            </div>
+                        </Form.Item>
+
+                        <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.createWhatsAppCampaign !== currentValues.createWhatsAppCampaign}>
+                            {({ getFieldValue }) => 
+                                getFieldValue('createWhatsAppCampaign') && (
+                                    <Form.Item
+                                        name="whatsapp_button_text"
+                                        label={<Text strong>WhatsApp Button Text</Text>}
+                                        initialValue="Register Now"
+                                        rules={[{ required: true, message: 'Please enter button text' }]}
+                                        style={{ marginTop: '16px', marginBottom: 0 }}
+                                    >
+                                        <Input 
+                                            placeholder="e.g. Register Now, Join Now" 
+                                            maxLength={20}
+                                            style={{ 
+                                                borderRadius: '8px',
+                                                height: '40px'
+                                            }}
+                                            suffix={<Text type="secondary" style={{ fontSize: '12px' }}>Max 20 chars</Text>}
+                                        />
+                                    </Form.Item>
+                                )
+                            }
+                        </Form.Item>
+                    </Space>
+                </div>
 
                 <div
+                    className="modal-footer"
                     style={{
+                        marginTop: "32px",
                         display: "flex",
                         justifyContent: "flex-end",
                         gap: "12px",
