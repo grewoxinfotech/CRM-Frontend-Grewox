@@ -25,6 +25,7 @@ const WhatsappSettings = () => {
             form.setFieldsValue({
                 phone_number_id: settings.phone_number_id,
                 business_id: settings.business_id,
+                facebook_page_id: settings.facebook_page_id,
                 access_token: settings.access_token,
                 verify_token: settings.verify_token || uniqueToken,
                 is_active: settings.is_active
@@ -102,6 +103,14 @@ const WhatsappSettings = () => {
                                     extra="Find this in your Meta App Dashboard under WhatsApp > Getting Started"
                                 >
                                     <Input placeholder="e.g. 102123456789012" className="settings-input" />
+                                </Form.Item>
+
+                                <Form.Item
+                                    label="Facebook Page ID (Optional)"
+                                    name="facebook_page_id"
+                                    extra="Required only if using Meta Lead Ads (Instant Forms). Find this in your Facebook Page > About > Page Transparency."
+                                >
+                                    <Input placeholder="e.g. 104567890123456" className="settings-input" />
                                 </Form.Item>
 
                                 <Form.Item
