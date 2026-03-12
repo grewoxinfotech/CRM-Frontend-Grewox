@@ -183,33 +183,17 @@ const WhatsappSettings = () => {
                                             <li><b>1. App Dashboard:</b> Go to Meta App {'>'} Webhooks. Select 'Page' from dropdown.</li>
                                             <li><b>2. Subscription:</b> Click 'Subscribe to this object' and subscribe to the <Text code>leadgen</Text> field.</li>
                                             <li><b>3. Permissions:</b> In App Settings, ensure your System User Token has <Text code>leads_retrieval</Text>, <Text code>pages_read_engagement</Text>, and <Text code>pages_show_list</Text> permissions.</li>
-                                            <li><b>4. CRM Connect:</b> Go to Meta Business Suite {'>'} All Tools {'>'} Instant Forms. Click 'CRM Setup' and ensure your App is connected to the Page.</li>
+                                            <li><b>4. CRM Connect:</b> Go to Meta Business Suite {'>'} All Tools {'>'} Instant Forms. Click 'CRM Setup' or 'Connected CRM' tab. Search for your Meta App name and click 'Connect' to link it to the Page.</li>
                                             <li><b>5. Test:</b> Use the <a href="https://developers.facebook.com/tools/lead-ads-testing" target="_blank" rel="noreferrer">Lead Ads Testing Tool</a> to send a test lead and verify it appears in CRM.</li>
                                         </ul>
                                     </div>
 
                                     <div style={{ marginBottom: '16px' }}>
-                                        <Text strong style={{ color: '#52c41a' }}>Step 3: Create Custom Form</Text>
+                                        <Text strong style={{ color: '#722ed1' }}>Step 3: Collect Leads (Automatic)</Text>
                                         <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
-                                            <li>Go to <Link to="/dashboard/crm/generate-link">Custom Forms</Link>.</li>
-                                            <li>Create a new form with the fields you need.</li>
-                                            <li>Copy the form link to share on WhatsApp.</li>
-                                        </ul>
-                                    </div>
-
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <Text strong style={{ color: '#faad14' }}>Step 4: Share on WhatsApp</Text>
-                                        <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
-                                            <li>Share your form link or use Meta WhatsApp Manager to create campaigns.</li>
-                                            <li>When users interact with your forms, data is captured automatically.</li>
-                                        </ul>
-                                    </div>
-
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <Text strong style={{ color: '#722ed1' }}>Step 5: Collect Leads (Result)</Text>
-                                        <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
-                                            <li><b>Auto:</b> Forms filled via WhatsApp or Meta Ads will automatically create new Leads in CRM!</li>
-                                            <li><b>Result:</b> All your lead data from WhatsApp and Facebook is centralized in one place.</li>
+                                            <li><b>Auto-Capture:</b> Once a user fills your Meta Lead Ad form, the data is instantly sent to our CRM.</li>
+                                            <li><b>Lead Creation:</b> A new lead will be automatically created in your CRM with all form details.</li>
+                                            <li><b>Centralized:</b> All your leads from Facebook and Instagram Ads are managed in one place.</li>
                                         </ul>
                                     </div>
                                 </div>
