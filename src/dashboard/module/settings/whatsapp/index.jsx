@@ -200,6 +200,16 @@ const WhatsappSettings = () => {
                                             <li><b>Result:</b> All your lead data is centralized in one place.</li>
                                         </ul>
                                     </div>
+
+                                    <div style={{ marginBottom: '16px' }}>
+                                        <Text strong style={{ color: '#eb2f96' }}>Step 5: Meta Page & Lead Ads (Optional)</Text>
+                                        <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
+                                            <li>Find your Facebook Page ID in Page {'>'} About {'>'} Transparency.</li>
+                                            <li>Enter the Page ID in the "Facebook Page ID" field.</li>
+                                            <li>In Meta App {'>'} Webhooks, select 'Page' and subscribe to 'leadgen'.</li>
+                                            <li>Ensure your token has 'leads_retrieval' and 'pages_read_engagement' permissions.</li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </Card>
                         </Col>
