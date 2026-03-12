@@ -173,7 +173,7 @@ const WhatsappSettings = () => {
                                             <li>Go to Meta Developers portal & select your App.</li>
                                             <li>Set Callback URL to the one shown above.</li>
                                             <li>Set Verify Token to the one generated in form.</li>
-                                            <li>Subscribe to <Text code>messages</Text> and <Text code>flows</Text> fields.</li>
+                                            <li>Subscribe to <Text code>messages</Text> field.</li>
                                         </ul>
                                     </div>
 
