@@ -22,7 +22,7 @@ import {
   FiTrash2,
   FiMapPin,
   FiTag,
-  FiGlobe,
+  FiBriefcase,
   FiUsers,
   FiChevronDown,
   FiLink,
@@ -56,6 +56,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
   const [createContact, { isLoading }] = useCreateContactMutation();
   const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Get countries data
   const { data: countries = [] } = useGetAllCountriesQuery();
@@ -270,29 +271,9 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
           onFinish={handleSubmit}
           requiredMark={false}
           className="contact-form"
+          style={{ padding: "24px" }}
         >
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="contact_owner"
-                label={
-                  <span className="form-label">
-                    <FiUsers />
-                    Contact Owner <span className="required">*</span>
-                  </span>
-                }
-                initialValue={loggedInUser?.username}
-              >
-                <Input
-                  placeholder="Enter contact owner"
-                  size="large"
-                  className="form-input"
-                  disabled
-                  value={loggedInUser?.username}
-                />
-              </Form.Item>
-            </Col>
-
             <Col span={12}>
               <Form.Item
                 name="first_name"
@@ -333,7 +314,6 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                     Last Name
                   </span>
                 }
-                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter last name"
@@ -349,13 +329,12 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                 label={
                   <span className="form-label">
                     <FiMail />
-                    Email
+                    Email (optional)
                   </span>
                 }
                 rules={[
                   { type: "email", message: "Please enter valid email" }
                 ]}
-                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter email"
@@ -364,10 +343,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                 />
               </Form.Item>
             </Col>
-          </Row>
 
-
-          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="phoneGroup"
@@ -379,9 +355,8 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                 }
                 className="combined-input-item"
                 required
-                style={{ marginTop: "22px" }}
               >
-                <Input.Group compact className="phone-input-group">
+                <div style={{ display: 'flex', gap: '8px' }}>
                   <Form.Item
                     name="phoneCode"
                     noStyle
@@ -389,22 +364,21 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                     rules={[{ required: true, message: 'Please select country code' }]}
                   >
                     <Select
-                      style={{ width: '120px' }}
-                      className="phone-code-select"
-                      dropdownMatchSelectWidth={120}
-                      suffixIcon={<FiChevronDown size={14} />}
+                      style={{ width: '120px', height: '48px' }}
+                      className="phone-code-select-common"
+                      suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
                       popupClassName="custom-select-dropdown"
                       showSearch
                       optionFilterProp="children"
                       filterOption={(input, option) =>
-                        option?.children?.props?.children[1]?.props?.children?.includes(input)
+                        option?.children?.props?.children[0]?.props?.children?.toLowerCase().includes(input.toLowerCase())
                       }
                     >
                       {countries?.map((country) => (
                         <Option key={country.id} value={country.id}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
-                            <span style={{ fontSize: '14px' }}>{country.phoneCode}</span>
+                            <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
                           </div>
                         </Option>
                       ))}
@@ -416,129 +390,114 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                     rules={[
                       { required: true, message: 'Please enter phone number' },
                       { pattern: /^\d+$/, message: 'Please enter only numbers' },
-                      { min: 10, message: 'Phone number must be at least 10 digits' },
-                      { max: 15, message: 'Phone number cannot exceed 15 digits' },
-                      {
-                        validator: (_, value) => {
-                          if (value && value.startsWith('0')) {
-                            return Promise.reject('Phone number should not start with 0');
-                          }
-                          return Promise.resolve();
-                        }
-                      }
+                      { min: 7, message: 'Phone number must be at least 7 digits' },
+                      { max: 15, message: 'Phone number cannot exceed 15 digits' }
                     ]}
-                    normalize={(value) => {
-                      if (!value) return value;
-                      // Remove any non-digit characters and leading zeros
-                      return value.replace(/\D/g, '').replace(/^0+/, '');
-                    }}
                   >
                     <Input
-                      style={{ width: 'calc(100% - 120px)' }}
-                      placeholder="Enter phone number without leading zeros"
+                      style={{ width: 'calc(100% - 120px)', height: '48px' }}
+                      placeholder="Enter phone number"
                       className="form-input"
-                      maxLength={15}
+                      type="number"
+                      onKeyDown={(e) => {
+                        if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
                     />
                   </Form.Item>
-                </Input.Group>
+                </div>
               </Form.Item>
             </Col>
 
-            <Col span={12}>
-              <Form.Item
-                name="website"
-                label={
-                  <span className="form-label">
-                    <FiLink />
-                    Website
-                  </span>
-                }
-                rules={[
-                  { type: "url", message: "Please enter a valid URL" }
-                ]}
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter website URL"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-         
-          </Row>
-
-          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="company_name"
                 label={
                   <span className="form-label">
-                    <FiGlobe />
-                    Company Name
+                    <FiBriefcase />
+                    Select Company
                   </span>
                 }
-                style={{ marginTop: "22px" }}
                 >
                   <Select
                     placeholder="Select company"
-                    size="large"
-                  className="form-input"
-                  showSearch
-                  allowClear
-                  optionFilterProp="children"
-                  filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
-                  dropdownRender={(menu) => (
-                    <>
-                      {menu}
-                      <Divider style={{ margin: '8px 0' }} />
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddCompanyClick}
-                        style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
+                    style={selectStyle}
+                    suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
+                    className="form-input"
+                    showSearch
+                    allowClear
+                    optionFilterProp="children"
+                    filterOption={(input, option) => {
+                      const companyName = option?.children?.props?.children?.[1]?.props?.children?.[0]?.props?.children || '';
+                      return companyName.toLowerCase().includes(input.toLowerCase());
+                    }}
+                    dropdownRender={(menu) => (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        {menu}
+                        <Divider style={{ margin: '8px 0' }} />
+                        <div style={{ padding: '0 8px 8px' }}>
+                          <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleAddCompanyClick}
+                            style={{
+                              width: '100%',
+                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                              border: 'none',
+                              height: '40px',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                              fontWeight: '500',
+                            }}
+                          >
+                            Add New Company
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  >
+                    {companyAccounts.map((company) => (
+                      <Option key={company.id} value={company.id}>
+                        <div style={{
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
                           gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
-                        }}
-                      >
-                        Add New Company
-                      </Button>
-                    </>
-                  )}
-
-                >
-                  {companyAccounts.map((company) => (
-                    <Option key={company.id} value={company.id} label={company.company_name}>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiGlobe style={{ marginRight: 8 }} />
-                        {company.company_name}
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
+                          padding: '4px 0'
+                        }}>
+                          <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{
+                              fontWeight: '500',
+                              color: '#111827'
+                            }}>{company.company_name}</span>
+                            {company.company_site && (
+                              <span style={{
+                                fontSize: '12px',
+                                color: '#6B7280'
+                              }}>{company.company_site}</span>
+                            )}
+                          </div>
+                        </div>
+                      </Option>
+                    ))}
+                  </Select>
               </Form.Item>
             </Col>
 
             <Col span={12}>
-            <Form.Item
+              <Form.Item
                 name="contact_source"
                 label={
-                  <span style={formItemStyle}>
-                    Source 
+                  <span className="form-label">
+                    <FiTag />
+                    Select Source 
                   </span>
                 }
-                style={{ marginTop: "22px" }}
               >
                 <Select
                   ref={sourceSelectRef}
@@ -546,7 +505,16 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                   onDropdownVisibleChange={setSourceDropdownOpen}
                   placeholder="Select source"
                   style={selectStyle}
+                  suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
+                  className="form-input"
                   popupClassName="custom-select-dropdown"
+                  showSearch
+                  allowClear
+                  optionFilterProp="children"
+                  filterOption={(input, option) => {
+                    const sourceName = option?.children?.props?.children?.[0]?.props?.children?.[1] || '';
+                    return sourceName.toLowerCase().includes(input.toLowerCase());
+                  }}
                   dropdownRender={(menu) => (
                     <div onClick={(e) => e.stopPropagation()}>
                       {menu}
@@ -649,106 +617,159 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
             </Col>
           </Row>
 
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="address"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    Address
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <TextArea
-                  placeholder="Enter address"
-                  rows={4}
-                  className="form-textarea"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+          <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+            <Button 
+              type="link" 
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              style={{ 
+                padding: 0, 
+                height: 'auto', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                color: '#1890ff',
+                fontWeight: '500',
+                fontSize: '14px'
+              }}
+            >
+              {showAdvanced ? 'Show Less Details' : 'Show More Details (Advance)'}
+              <FiChevronDown style={{ transform: showAdvanced ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
+            </Button>
+          </div>
 
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                name="city"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    City
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter city"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
+          {showAdvanced && (
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="contact_owner"
+                  label={
+                    <span className="form-label">
+                      <FiUsers />
+                      Contact Owner
+                    </span>
+                  }
+                  initialValue={loggedInUser?.username}
+                >
+                  <Input
+                    size="large"
+                    className="form-input"
+                    disabled
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col span={8}>
-              <Form.Item
-                name="state"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    State
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter state"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="website"
+                  label={
+                    <span className="form-label">
+                      <FiLink />
+                      Website
+                    </span>
+                  }
+                  rules={[
+                    { type: "url", message: "Please enter a valid URL" }
+                  ]}
+                >
+                  <Input
+                    placeholder="Enter website URL"
+                    size="large"
+                    className="form-input"
+                  />
+                </Form.Item>
+              </Col>
 
-            <Col span={8}>
-              <Form.Item
-                name="country"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    Country
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter country"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+              <Col span={24}>
+                <Form.Item
+                  name="address"
+                  label={
+                    <span className="form-label">
+                      <FiMapPin />
+                      Address
+                    </span>
+                  }
+                >
+                  <TextArea
+                    placeholder="Enter address"
+                    rows={3}
+                    className="form-textarea"
+                  />
+                </Form.Item>
+              </Col>
 
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="description"
-                label={
-                  <span className="form-label">
-                    <FiFileText />
-                    Description
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <TextArea
-                  placeholder="Enter description"
-                  rows={4}
-                  className="form-textarea"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+              <Col span={8}>
+                <Form.Item
+                  name="city"
+                  label={
+                    <span className="form-label">
+                      <FiMapPin />
+                      City
+                    </span>
+                  }
+                >
+                  <Input
+                    placeholder="Enter city"
+                    size="large"
+                    className="form-input"
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col span={8}>
+                <Form.Item
+                  name="state"
+                  label={
+                    <span className="form-label">
+                      <FiMapPin />
+                      State
+                    </span>
+                  }
+                >
+                  <Input
+                    placeholder="Enter state"
+                    size="large"
+                    className="form-input"
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col span={8}>
+                <Form.Item
+                  name="country"
+                  label={
+                    <span className="form-label">
+                      <FiMapPin />
+                      Country
+                    </span>
+                  }
+                >
+                  <Input
+                    placeholder="Enter country"
+                    size="large"
+                    className="form-input"
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col span={24}>
+                <Form.Item
+                  name="description"
+                  label={
+                    <span className="form-label">
+                      <FiFileText />
+                      Description
+                    </span>
+                  }
+                >
+                  <TextArea
+                    placeholder="Enter description"
+                    rows={4}
+                    className="form-textarea"
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          )}
 
           <Divider className="form-divider" />
 
@@ -796,9 +817,6 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
         .contact-form {
           padding: 24px;
           
-.phone-input-group .ant-select-selector .ant-select-selection-item div span:last-child {
-    color: white !important;
-}
           .form-section {
             margin-bottom: 32px;
           }
@@ -818,7 +836,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
             font-size: 14px;
 
             svg {
-              color: #6b7280;
+              color: #1890ff;
               font-size: 16px;
             }
 
@@ -864,25 +882,26 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
             }
           }
 
-          .ant-select {
-            .ant-select-selector {
-              height: 48px !important;
-              padding: 8px 16px !important;
-              border-radius: 10px !important;
-              border: 1px solid #e5e7eb !important;
-              background-color: #f9fafb !important;
+          .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+            background-color: #f9fafb !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 10px !important;
+            min-height: 48px !important;
+            padding: 0 16px !important;
+            display: flex !important;
+            align-items: center !important;
+          }
 
-              .ant-select-selection-search {
-                input {
-                  height: 46px !important;
-                }
-              }
-
-              .ant-select-selection-item {
-                line-height: 32px !important;
-                color: #1f2937 !important;
-              }
-            }
+          .ant-select-single .ant-select-selector .ant-select-selection-item,
+          .ant-select-single .ant-select-selector .ant-select-selection-placeholder,
+          .ant-select-single .ant-select-selector .ant-select-selection-search,
+          .ant-select-single .ant-select-selector .ant-select-selection-search-input {
+            line-height: 48px !important;
+            height: 48px !important;
+            transition: all 0.3s !important;
+            display: flex !important;
+            align-items: center !important;
+            padding: 0 !important;
           }
 
           .form-divider {
@@ -930,10 +949,24 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
             height: 48px !important;
           }
 
-            .ant-select-selection-placeholder {
-                line-height: 32px !important;
-                color: #fff !important;
+          .phone-code-select-common {
+            .ant-select-selector {
+              border-top-right-radius: 0 !important;
+              border-bottom-right-radius: 0 !important;
+              padding: 0 8px !important;
+              height: 48px !important;
+              display: flex !important;
+              align-items: center !important;
             }
+            
+            .ant-select-selection-item {
+              display: flex !important;
+              align-items: center !important;
+              gap: 4px !important;
+              height: 48px !important;
+              line-height: 48px !important;
+            }
+          }
 
           .phone-input-group {
             display: flex !important;

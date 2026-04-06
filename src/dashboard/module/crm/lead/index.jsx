@@ -26,6 +26,7 @@ import {
   FiList,
   FiHome,
   FiFilter,
+  FiZap,
 } from "react-icons/fi";
 import "./Lead.scss";
 import CreateLead from "./CreateLead";
@@ -51,6 +52,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import moment from "moment";
+import { Switch } from "antd";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -84,6 +86,7 @@ const Lead = () => {
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: stagesData } = useGetLeadStagesQuery();
   const [initialFormData, setInitialFormData] = useState(null);
+  const [isQuickMode, setIsQuickMode] = useState(true);
 
 
   // Handle automatic form opening
@@ -383,6 +386,39 @@ const Lead = () => {
                           <span className="button-text">Export</span>
                         </Button>
                       </Dropdown>
+                      <div className="quick-mode-toggle" style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        background: "#fff",
+                        padding: "0 12px",
+                        borderRadius: "8px",
+                        height: "40px",
+                        border: "1px solid #d9d9d9",
+                        marginRight: "4px"
+                      }}>
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "24px",
+                          height: "24px",
+                          borderRadius: "50%",
+                          background: isQuickMode ? "#fff1b8" : "#f5f5f5",
+                          transition: "all 0.3s"
+                        }}>
+                          <FiZap size={14} style={{ color: isQuickMode ? "#faad14" : "#8c8c8c" }} />
+                        </div>
+                        <span style={{ fontSize: "13px", fontWeight: "500", color: "#595959" }}>Quick Mode</span>
+                        <Switch
+                          size="small"
+                          checked={isQuickMode}
+                          onChange={setIsQuickMode}
+                          style={{
+                            backgroundColor: isQuickMode ? "#faad14" : "rgba(0, 0, 0, 0.25)"
+                          }}
+                        />
+                      </div>
                       <Button
                         type="primary"
                         icon={<FiPlus size={16} />}
@@ -441,6 +477,7 @@ const Lead = () => {
         sourcesData={sourcesData}
         statusesData={statusesData}
         categoriesData={categoriesData}
+        isQuickMode={isQuickMode}
         onCancel={() => {
           setIsModalOpen(false);
           setInitialFormData(null);

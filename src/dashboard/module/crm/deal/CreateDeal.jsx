@@ -61,6 +61,7 @@ import {
 } from "../crmsystem/souce/services/SourceApi";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
+import AddStageModal from "../crmsystem/leadstage/AddLeadStageModal";
 const { Text } = Typography;
 const { Option } = Select;
 
@@ -82,6 +83,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const [fileList, setFileList] = React.useState([]);
   const selectRef = useRef(null);
   const [isAddPipelineVisible, setIsAddPipelineVisible] = useState(false);
+  const [isAddStageVisible, setIsAddStageVisible] = useState(false);
   const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
   const [isAddContactVisible, setIsAddContactVisible] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -140,12 +142,16 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const [selectedPipeline, setSelectedPipeline] = useState(null);
 
   // Filter stages based on selected pipeline
-  const filteredStages =
-    dealStages?.filter(
-      (stage) =>
-        stage.stageType === "deal" &&
-        (!selectedPipeline || stage.pipeline === selectedPipeline)
-    ) || [];
+  const filteredStages = React.useMemo(() => {
+    if (!selectedPipeline || !dealStages) return [];
+    
+    const currentPipelineId = String(selectedPipeline?.id || selectedPipeline);
+    
+    return dealStages.filter((stage) => {
+      const stagePipelineId = String(stage.pipeline?.id || stage.pipeline);
+      return stage.stageType === "deal" && stagePipelineId === currentPipelineId;
+    });
+  }, [dealStages, selectedPipeline]);
 
   // Get default stage for selected pipeline
   const getDefaultStage = (pipelineId) => {
@@ -246,7 +252,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         pipeline: leadData.pipeline || null,
         stage: defaultStage || null,
         currency: leadData.currency || defaultCurrency,
-        company_name: leadData.company_id || null,
+        company_id: leadData.company_id || null,
       };
 
       // If contact exists, set contact-related fields
@@ -258,14 +264,31 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
           : "";
         formValues.phoneCode = existingContact.phone_code || defaultPhoneCode;
         formValues.address = existingContact.address || "";
+        
+        // If lead has no company but contact DOES, use contact's company
+        if (!formValues.company_id && existingContact.company_name) {
+          formValues.company_id = existingContact.company_name;
+        }
+        
         setSelectedContact(existingContact);
         setContactMode("existing");
       }
 
-      // If company exists, set company-related fields
-      if (existingCompany) {
-        formValues.company_name = existingCompany.id;
-        setNewCompanyName(existingCompany.company_name || "");
+      // If company exists (either from lead or contact), update company-related fields
+      const finalCompanyId = formValues.company_id;
+      const finalCompany = companyAccountsResponse?.data?.find(c => c.id === finalCompanyId);
+      
+      if (finalCompany) {
+        formValues.company_id = finalCompany.id;
+        setNewCompanyName(finalCompany.company_name || "");
+        
+        // Populate filtered contacts for this company
+        if (contactsResponse?.data) {
+          const filtered = contactsResponse.data.filter(
+            (contact) => contact.company_name === finalCompany.id
+          );
+          setFilteredContacts(filtered);
+        }
       }
 
       // Set form values
@@ -277,14 +300,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       // Set selected pipeline if lead data has pipeline
       if (leadData.pipeline) {
         setSelectedPipeline(leadData.pipeline);
-      }
-
-      // Filter contacts if company is selected
-      if (existingCompany && contactsResponse?.data) {
-        const filteredContacts = contactsResponse.data.filter(
-          (contact) => contact.company_name === existingCompany.id
-        );
-        setFilteredContacts(filteredContacts);
       }
 
       setContactMode(existingContact ? "existing" : "new");
@@ -391,10 +406,14 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         ? `+${values.phoneCode} ${values.telephone}`
         : null;
 
-      // Get the default stage for the selected pipeline
-      const defaultStage = getDefaultStage(values.pipeline);
-      if (!defaultStage) {
-        message.error("No default stage found for selected pipeline");
+      // Get the stage from values or fallback to default
+      let stageId = values.stage;
+      if (!stageId) {
+        stageId = getDefaultStage(values.pipeline);
+      }
+
+      if (!stageId) {
+        message.error("Please select a stage for the deal");
         return;
       }
 
@@ -403,14 +422,14 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         email: values.email,
         phone: formattedPhone,
         pipeline: values.pipeline,
-        stage: defaultStage, // Use the default stage
+        stage: stageId,
         value: parseFloat(values.value) || 0,
         currency: values.currency,
         closedDate: values.closedDate
           ? new Date(values.closedDate).toISOString()
           : null,
         source: values.source,
-        company_id: values.company_name || null,
+        company_id: values.company_id || null,
         contact_id: contactId || null,
         category: values.category,
         address: values.address,
@@ -467,6 +486,16 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     setNewCompanyName(leadData?.company || "");
   };
 
+  const handleAddStageClick = (e) => {
+    e.stopPropagation();
+    setIsAddStageVisible(true);
+  };
+
+  const handleStageCreationSuccess = (newStage) => {
+    setIsAddStageVisible(false);
+    form.setFieldsValue({ stage: newStage.id });
+  };
+
   const handleAddContactClick = (e) => {
     e.stopPropagation();
     setIsAddContactVisible(true);
@@ -519,10 +548,52 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     },
   };
 
+  const handleFirstNameChange = (contactId) => {
+    if (!contactId) {
+      form.setFieldsValue({
+        firstName: undefined,
+        lastName: undefined,
+        email: undefined,
+        phone: undefined,
+        address: undefined,
+        company_id: undefined,
+      });
+      setSelectedContact(null);
+      return;
+    }
+
+    // Find the selected contact from all contacts
+    const contact = contactsResponse?.data?.find((c) => c.id === contactId);
+    if (contact) {
+      // Sync company with contact
+      form.setFieldsValue({
+        firstName: contact.id, 
+        lastName: contact.last_name, 
+        email: contact.email,
+        phone: contact.phone?.replace(/^\+\+91\s/, ""),
+        address: contact.address,
+        company_id: contact.company_name || undefined,
+      });
+      setSelectedContact(contact);
+
+      // Handle contact list filtering
+      if (contact.company_name && contactsResponse?.data) {
+        // If contact has a company, filter list to show coworkers
+        const filtered = contactsResponse.data.filter(
+          (c) => c.company_name === contact.company_name
+        );
+        setFilteredContacts(filtered);
+      } else {
+        // If contact has NO company, show all contacts in the list
+        setFilteredContacts([]);
+      }
+    }
+  };
+
   const handleCompanyChange = (companyId) => {
-    // Set the company_name field with the selected company ID
+    // Set the company_id field with the selected company ID
     form.setFieldsValue({
-      company_name: companyId,
+      company_id: companyId,
       firstName: undefined,
       lastName: undefined,
       email: undefined,
@@ -538,27 +609,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       setFilteredContacts(filteredContacts);
     } else {
       setFilteredContacts([]);
-    }
-  };
-
-  const handleFirstNameChange = (contactId) => {
-    // Find the selected contact from all contacts
-    const contact = contactsResponse?.data?.find((c) => c.id === contactId);
-    if (contact) {
-      // Get current form values
-      const currentValues = form.getFieldsValue();
-
-      // Set the form values including company if it exists
-      form.setFieldsValue({
-        firstName: contact.id, // Set contact ID for form submission
-        lastName: contact.last_name, // Set actual last name for display
-        email: contact.email,
-        phone: contact.phone?.replace(/^\+\+91\s/, ""),
-        address: contact.address,
-        // Only set company_name if contact has a company, otherwise clear it
-        company_name: contact.company_name || undefined,
-      });
-      setSelectedContact(contact);
     }
   };
 
@@ -590,7 +640,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const handleCompanyCreationSuccess = (newCompany) => {
     setIsAddCompanyVisible(false);
     form.setFieldsValue({
-      company_name: newCompany.id,
+      company_id: newCompany.id,
       firstName: undefined,
       lastName: undefined,
       email: undefined,
@@ -847,9 +897,80 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 </Select>
               </Form.Item>
 
-              {/* Hidden stage field that will be set automatically */}
-              <Form.Item name="stage" hidden={true}>
-                <Input type="hidden" />
+              <Form.Item
+                name="stage"
+                label={
+                  <span style={formItemStyle}>
+                    Stage <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
+                rules={[{ required: true, message: "Stage is required" }]}
+              >
+                <Select
+                  placeholder={selectedPipeline ? "Select stage" : "Select pipeline first"}
+                  disabled={!selectedPipeline}
+                  style={selectStyle}
+                  suffixIcon={<FiChevronDown size={14} />}
+                  optionLabelProp="label"
+                  showSearch
+                  optionFilterProp="label"
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: "8px 0" }} />
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddStageClick}
+                          disabled={!selectedPipeline}
+                          style={{
+                            width: "100%",
+                            background: selectedPipeline
+                              ? "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)"
+                              : "#f5f5f5",
+                            border: "none",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            boxShadow: selectedPipeline
+                              ? "0 2px 8px rgba(24, 144, 255, 0.15)"
+                              : "none",
+                            fontWeight: "500",
+                            color: selectedPipeline ? "#ffffff" : "rgba(0, 0, 0, 0.25)",
+                          }}
+                        >
+                          Add Stage
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                >
+                  {filteredStages.map((stage) => (
+                    <Option key={stage.id} value={stage.id} label={stage.stageName}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div
+                          style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: stage.color || "#1890ff",
+                          }}
+                        />
+                        {stage.stageName}
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
 
               <Form.Item
@@ -1171,16 +1292,9 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 name="closedDate"
                 label={
                   <span style={formItemStyle}>
-                    Expected Close Date{" "}
-                    <span style={{ color: "#ff4d4f" }}>*</span>
+                    Expected Close Date (optional)
                   </span>
                 }
-                rules={[
-                  {
-                    required: true,
-                    message: "Expected close date is required",
-                  },
-                ]}
               >
                 <DatePicker
                   size="large"
@@ -1282,221 +1396,227 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               {contactMode === "existing" ? (
                 // Show existing contact/company selection fields
                 <>
-                  <Form.Item
-                    name="company_name"
-                    label={<span style={formItemStyle}>Company Name</span>}
-                  >
-                    <Select
-                      placeholder="Select company"
-                      onChange={handleCompanyChange}
-                      style={selectStyle}
-                      allowClear
-                      suffixIcon={null}
-                      dropdownRender={(menu) => (
-                        <div onClick={(e) => e.stopPropagation()}>
-                          {menu}
-                          <Divider style={{ margin: "8px 0" }} />
-                          <div
+              <Form.Item
+                name="company_id"
+                label={<span style={formItemStyle}>Select Company</span>}
+              >
+                <Select
+                  placeholder="Select company"
+                  onChange={handleCompanyChange}
+                  style={selectStyle}
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                  suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
+                  filterOption={(input, option) => {
+                    const company = companyAccountsResponse?.data?.find(c => c.id === option.value);
+                    return company?.company_name?.toLowerCase().includes(input.toLowerCase());
+                  }}
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: "8px 0" }} />
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddCompanyClick}
+                          style={{
+                            width: "100%",
+                            background:
+                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                            border: "none",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Add Company
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                >
+                  {companyAccountsResponse?.data?.map((company) => (
+                    <Option key={company.id} value={company.id}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "4px 0",
+                        }}
+                      >
+                        <FiBriefcase
+                          style={{ color: "#1890FF", fontSize: "16px" }}
+                        />
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
+                        >
+                          <span
                             style={{
-                              padding: "8px 12px",
-                              display: "flex",
-                              justifyContent: "center",
+                              fontWeight: "500",
+                              color: "#111827",
                             }}
                           >
-                            <Button
-                              type="primary"
-                              icon={<PlusOutlined />}
-                              onClick={handleAddCompanyClick}
+                            {company.company_name}
+                          </span>
+                          {company.company_site && (
+                            <span
                               style={{
-                                width: "100%",
-                                background:
-                                  "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                                border: "none",
-                                height: "40px",
-                                borderRadius: "8px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "8px",
-                                boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                                fontWeight: "500",
+                                fontSize: "12px",
+                                color: "#6B7280",
                               }}
                             >
-                              Add Company
-                            </Button>
-                          </div>
+                              {company.company_site}
+                            </span>
+                          )}
                         </div>
-                      )}
-                    >
-                      {companyAccountsResponse?.data?.map((company) => (
-                        <Option key={company.id} value={company.id}>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="firstName"
+                label={<span style={formItemStyle}>Select Contact Name</span>}
+              >
+                <Select
+                  placeholder="Select contact name"
+                  style={selectStyle}
+                  suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
+                  showSearch
+                  allowClear
+                  onChange={handleFirstNameChange}
+                  filterOption={(input, option) => {
+                    const contact = contactsResponse?.data?.find(
+                      (c) => c.id === option.value
+                    );
+                    if (!contact) return false;
+                    const fullName = `${contact.first_name || ""} ${
+                      contact.last_name || ""
+                    }`.toLowerCase();
+                    const companyName =
+                      companyAccountsResponse?.data
+                        ?.find((c) => c.id === contact.company_name)
+                        ?.company_name?.toLowerCase() || "";
+                    return (
+                      fullName.includes(input.toLowerCase()) ||
+                      companyName.includes(input.toLowerCase())
+                    );
+                  }}
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: "8px 0" }} />
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddContactClick}
+                          style={{
+                            width: "100%",
+                            background:
+                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                            border: "none",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Add Contact
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                >
+                  {(form.getFieldValue('company_id') ? filteredContacts : contactsResponse?.data)?.map((contact) => {
+                    const companyName =
+                      companyAccountsResponse?.data?.find(
+                        (c) => c.id === contact.company_name
+                      )?.company_name || "No Company";
+
+                    return (
+                      <Option key={contact.id} value={contact.id}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            padding: "4px 0",
+                          }}
+                        >
+                          <FiUser
+                            style={{ color: "#1890FF", fontSize: "16px" }}
+                          />
                           <div
                             style={{
                               display: "flex",
                               alignItems: "center",
                               gap: "8px",
-                              padding: "4px 0",
+                              flex: 1,
+                              minWidth: 0,
                             }}
                           >
-                            <FiBriefcase
-                              style={{ color: "#1890FF", fontSize: "16px" }}
-                            />
-                            <div
+                            <span
                               style={{
-                                display: "flex",
-                                flexDirection: "column",
+                                fontWeight: "500",
+                                color: "#111827",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
                               }}
-                            >
-                              <span
-                                style={{
-                                  fontWeight: "500",
-                                  color: "#111827",
-                                }}
-                              >
-                                {company.company_name}
-                              </span>
-                              {company.company_site && (
-                                <span
-                                  style={{
-                                    fontSize: "12px",
-                                    color: "#6B7280",
-                                  }}
-                                >
-                                  {company.company_site}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-
-                  <Form.Item
-                    name="firstName"
-                    label={<span style={formItemStyle}>Contact Name</span>}
-                  >
-                    <Select
-                      placeholder="Select contact name"
-                      style={selectStyle}
-                      suffixIcon={null}
-                      showSearch
-                      allowClear
-                      onChange={handleFirstNameChange}
-                      filterOption={(input, option) => {
-                        const contact = contactsResponse?.data?.find(
-                          (c) => c.id === option.value
-                        );
-                        if (!contact) return false;
-                        const fullName = `${contact.first_name || ""} ${
-                          contact.last_name || ""
-                        }`.toLowerCase();
-                        const companyName =
-                          companyAccountsResponse?.data
-                            ?.find((c) => c.id === contact.company_name)
-                            ?.company_name?.toLowerCase() || "";
-                        return (
-                          fullName.includes(input.toLowerCase()) ||
-                          companyName.includes(input.toLowerCase())
-                        );
-                      }}
-                      dropdownRender={(menu) => (
-                        <div onClick={(e) => e.stopPropagation()}>
-                          {menu}
-                          <Divider style={{ margin: "8px 0" }} />
-                          <div
-                            style={{
-                              padding: "8px 12px",
-                              display: "flex",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <Button
-                              type="primary"
-                              icon={<PlusOutlined />}
-                              onClick={handleAddContactClick}
+                            >{`${contact.first_name || ""} ${
+                              contact.last_name || ""
+                            }`}</span>
+                            <span
                               style={{
-                                width: "100%",
-                                background:
-                                  "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                                border: "none",
-                                height: "40px",
-                                borderRadius: "8px",
+                                color: "#6B7280",
+                                fontSize: "12px",
                                 display: "flex",
                                 alignItems: "center",
-                                justifyContent: "center",
-                                gap: "8px",
-                                boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                                fontWeight: "500",
+                                gap: "4px",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
                               }}
                             >
-                              Add Contact
-                            </Button>
+                              <FiBriefcase style={{ fontSize: "12px" }} />
+                              {companyName}
+                            </span>
                           </div>
                         </div>
-                      )}
-                    >
-                      {contactsResponse?.data?.map((contact) => {
-                        const companyName =
-                          companyAccountsResponse?.data?.find(
-                            (c) => c.id === contact.company_name
-                          )?.company_name || "No Company";
-
-                        return (
-                          <Option key={contact.id} value={contact.id}>
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                                padding: "4px 0",
-                              }}
-                            >
-                              <FiUser
-                                style={{ color: "#1890FF", fontSize: "16px" }}
-                              />
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "8px",
-                                  flex: 1,
-                                  minWidth: 0,
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontWeight: "500",
-                                    color: "#111827",
-                                    whiteSpace: "nowrap",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                  }}
-                                >{`${contact.first_name || ""} ${
-                                  contact.last_name || ""
-                                }`}</span>
-                                <span
-                                  style={{
-                                    color: "#6B7280",
-                                    fontSize: "12px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "4px",
-                                    whiteSpace: "nowrap",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                  }}
-                                >
-                                  <FiBriefcase style={{ fontSize: "12px" }} />
-                                  {companyName}
-                                </span>
-                              </div>
-                            </div>
-                          </Option>
-                        );
-                      })}
-                    </Select>
-                  </Form.Item>
+                      </Option>
+                    );
+                  })}
+                </Select>
+              </Form.Item>
                 </>
               ) : (
                 // Show manual entry fields

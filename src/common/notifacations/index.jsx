@@ -183,7 +183,7 @@ const NotificationsComponent = () => {
             <BiBell style={{ color: getPriorityColor(notif.priority) }} />
           ),
           placement: "topRight",
-          duration: 0,
+          duration: 4.5,
           key: notif.id,
           onClick: () => handleNotificationClick(notif),
           className: `notification-${notif.priority}`,

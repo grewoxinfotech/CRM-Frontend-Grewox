@@ -58,10 +58,11 @@ const findIndianDefaults = (countries) => {
   };
 };
 
-const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsResponse, onsubmit ,categoriesData}) => {
+const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsResponse, onSuccess ,categoriesData}) => {
   const [form] = Form.useForm();
   const [createCompanyAccount, { isLoading }] = useCreateCompanyAccountMutation();
   const [copyBillingToShipping, setCopyBillingToShipping] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Get countries data
   const { data: countries = [] } = useGetAllCountriesQuery();
@@ -148,9 +149,15 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
         phone_number: phoneNumber,
         category: values.company_category || othersCategory?.id,
       }
-      await createCompanyAccount(companyData).unwrap();
+      const response = await createCompanyAccount(companyData).unwrap();
+      
+      if (onSuccess) {
+        onSuccess(response?.data || response);
+      } else {
+        message.success('Company created successfully');
+        onCancel();
+      }
       form.resetFields();
-      onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
       message.error(error.data?.message || 'Failed to create contact');
@@ -241,7 +248,6 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
         className="company-account-form"
       >
         <div className="form-section">
-          <Text strong className="section-title">Basic Information</Text>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -254,7 +260,6 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                 }
                 rules={[{ required: true, message: "Please enter account owner" }]}
                 initialValue={loggedInUser?.username}
-                disabled
               >
                 <Input
                   placeholder="Enter account owner name"
@@ -295,10 +300,8 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                 />
               </Form.Item>
             </Col>
-          </Row>
 
-          <Row gutter={16}>
-          <Col span={12}>
+            <Col span={12}>
               <Form.Item
                 name="email"
                 label={
@@ -307,7 +310,9 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Email
                   </span>
                 }
-                style={{ marginTop: "22px" }}
+                rules={[
+                  { type: "email", message: "Please enter valid email" }
+                ]}
               >
                 <Input
                   placeholder="Enter company email"
@@ -316,6 +321,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                 />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item
                 name="website"
@@ -325,7 +331,6 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Website
                   </span>
                 }
-                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter company website"
@@ -335,7 +340,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
               </Form.Item>
             </Col>
 
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item
                 name="phoneGroup"
                 label={
@@ -345,31 +350,29 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                   </span>
                 }
                 className="combined-input-item"
-                style={{ marginTop: "22px" }}
               >
-                <Input.Group compact className="phone-input-group">
+                <div style={{ display: 'flex', gap: '8px' }}>
                   <Form.Item
                     name="phoneCode"
                     noStyle
                     initialValue={defaultPhoneCode}
                   >
                     <Select
-                      style={{ width: '120px' }}
-                      className="phone-code-select"
-                      dropdownMatchSelectWidth={120}
-                      suffixIcon={<FiChevronDown size={14} />}
+                      style={{ width: '120px', height: '48px' }}
+                      className="phone-code-select-common"
+                      suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
                       popupClassName="custom-select-dropdown"
                       showSearch
                       optionFilterProp="children"
                       filterOption={(input, option) =>
-                        option?.children?.props?.children[1]?.props?.children?.includes(input)
+                        option?.children?.props?.children[0]?.props?.children?.toLowerCase().includes(input.toLowerCase())
                       }
                     >
                       {countries?.map((country) => (
                         <Option key={country.id} value={country.id}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
-                            <span style={{ fontSize: '14px' }}>{country.phoneCode}</span>
+                            <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
                           </div>
                         </Option>
                       ))}
@@ -398,24 +401,30 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     }}
                   >
                     <Input
-                      style={{ width: 'calc(100% - 120px)' }}
-                      placeholder="Enter company number without leading zeros"
+                      style={{ width: 'calc(100% - 120px)', height: '48px' }}
+                      placeholder="Enter company number"
                       className="form-input"
-                      maxLength={15}
+                      type="number"
+                      onKeyDown={(e) => {
+                        if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
                     />
                   </Form.Item>
-                </Input.Group>
+                </div>
               </Form.Item>
             </Col>
-            <Col span={12}>
-            <Form.Item
+
+            <Col span={24}>
+              <Form.Item
                 name="company_source"
                 label={
-                  <span style={formItemStyle}>
-                    Source 
+                  <span className="form-label">
+                    <FiTag />
+                    Select Source 
                   </span>
                 }
-                style={{ marginTop: "22px" }}
               >
                 <Select
                   ref={sourceSelectRef}
@@ -424,6 +433,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                   placeholder="Select source"
                   style={selectStyle}
                   popupClassName="custom-select-dropdown"
+                  suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
                   dropdownRender={(menu) => (
                     <div onClick={(e) => e.stopPropagation()}>
                       {menu}
@@ -524,378 +534,400 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                 </Select>
               </Form.Item>
             </Col>
-
           </Row>
         </div>
 
-        <div className="form-section">
-          <Text strong className="section-title">Company Details</Text>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="company_type"
-                label={
-                  <span className="form-label">
-                    <FiBriefcase />
-                    Company Type
-                  </span>
-                }
-              >
-                <Select
-                  size="large"
-                  placeholder="Select company type"
-                  className="form-input"
-                >
-                  <Option value="private">Private</Option>
-                  <Option value="public">Public</Option>
-                  <Option value="partnership">Partnership</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-            <Form.Item
-            name="company_category"
-            label={<span style={formItemStyle}>Company Category</span>}
+        <div style={{ padding: '0 24px', marginBottom: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+          <Button 
+            type="link" 
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            style={{ 
+              padding: 0, 
+              height: 'auto', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              color: '#1890ff',
+              fontWeight: '500',
+              fontSize: '14px'
+            }}
           >
-            <Select
-              ref={categorySelectRef}
-              open={categoryDropdownOpen}
-              onDropdownVisibleChange={setCategoryDropdownOpen}
-              placeholder="Select or type to filter categories"
-              style={selectStyle}
-              popupClassName="custom-select-dropdown"
-              showSearch
-              allowClear
-              filterOption={(input, option) =>
-                option.children.props.children[0].props.children[1].toLowerCase().includes(input.toLowerCase())
-              }
-              dropdownRender={(menu) => (
-                <div onClick={(e) => e.stopPropagation()}>
-                  {menu}
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div
-                    style={{
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
+            {showAdvanced ? 'Show Less Details' : 'Show More Details (Advance)'}
+            <FiChevronDown style={{ transform: showAdvanced ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
+          </Button>
+        </div>
+
+        {showAdvanced && (
+          <>
+            <div className="form-section">
+              <Text strong className="section-title">Company Details</Text>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    name="company_type"
+                    label={
+                      <span className="form-label">
+                        <FiBriefcase />
+                        Company Type
+                      </span>
+                    }
                   >
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={handleAddCategoryClick}
-                      style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
-                      }}
+                    <Select
+                      placeholder="Select company type"
+                      style={selectStyle}
+                      suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
                     >
-                      Add Category
-                    </Button>
-                  </div>
-                </div>
-              )}
-            >
-              {categoriesData?.data?.map((category) => (
-                <Option key={category.id} value={category.id}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: category.color || '#1890ff'
-                        }}
-                      />
-                      {category.name}
-                    </div>
-                    {form.getFieldValue('company_category') !== category.id && (
-                      <Popconfirm
-                        title="Delete Category"
-                        description="Are you sure you want to delete this category?"
-                        onConfirm={(e) => {
-                          e?.stopPropagation?.();
-                          handleDeleteCategory(category.id);
-                        }}
-                        okText="Yes"
-                        cancelText="No"
-                        placement="left"
-                      >
-                        <Button
-                          type="text"
-                          icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                          size="small"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            opacity: 0.8,
-                            transition: "opacity 0.2s",
-                            "&:hover": {
-                              opacity: 1,
-                              backgroundColor: "transparent"
-                            }
-                          }}
-                        />
-                      </Popconfirm>
-                    )}
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-            </Col>
-          </Row>
+                      <Option value="private">Private</Option>
+                      <Option value="public">Public</Option>
+                      <Option value="partnership">Partnership</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="company_revenue"
-                label={
-                  <span className="form-label">
-                    <FiDollarSign />
-                    Company Revenue
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter company revenue"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </div>
+                <Col span={12}>
+                  <Form.Item
+                    name="company_category"
+                    label={<span className="form-label"><FiTag /> Company Category</span>}
+                  >
+                    <Select
+                      ref={categorySelectRef}
+                      open={categoryDropdownOpen}
+                      onDropdownVisibleChange={setCategoryDropdownOpen}
+                      placeholder="Select category"
+                      style={selectStyle}
+                      popupClassName="custom-select-dropdown"
+                      suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
+                      showSearch
+                      allowClear
+                      filterOption={(input, option) =>
+                        option.children.props.children[0].props.children[1].toLowerCase().includes(input.toLowerCase())
+                      }
+                      dropdownRender={(menu) => (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          {menu}
+                          <Divider style={{ margin: '8px 0' }} />
+                          <div
+                            style={{
+                              padding: '8px 12px',
+                              display: 'flex',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <Button
+                              type="primary"
+                              icon={<PlusOutlined />}
+                              onClick={handleAddCategoryClick}
+                              style={{
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                border: 'none',
+                                height: '40px',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              Add Category
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    >
+                      {categoriesData?.data?.map((category) => (
+                        <Option key={category.id} value={category.id}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '100%'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div
+                                style={{
+                                  width: '8px',
+                                  height: '8px',
+                                  borderRadius: '50%',
+                                  backgroundColor: category.color || '#1890ff'
+                                }}
+                              />
+                              {category.name}
+                            </div>
+                            {form.getFieldValue('company_category') !== category.id && (
+                              <Popconfirm
+                                title="Delete Category"
+                                description="Are you sure you want to delete this category?"
+                                onConfirm={(e) => {
+                                  e?.stopPropagation?.();
+                                  handleDeleteCategory(category.id);
+                                }}
+                                okText="Yes"
+                                cancelText="No"
+                                placement="left"
+                              >
+                                <Button
+                                  type="text"
+                                  icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                                  size="small"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    opacity: 0.8,
+                                    transition: "opacity 0.2s",
+                                    "&:hover": {
+                                      opacity: 1,
+                                      backgroundColor: "transparent"
+                                    }
+                                  }}
+                                />
+                              </Popconfirm>
+                            )}
+                          </div>
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-        <div className="form-section">
-          <div className="section-header">
-            <Text strong className="section-title">Billing Address</Text>
-          </div>
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="billing_address"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    Address
-                  </span>
-                }
-              >
-                <TextArea
-                  placeholder="Enter billing address"
-                  rows={3}
-                  className="form-textarea"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                name="billing_city"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    City
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter city"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="billing_state"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    State
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter state"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="billing_pincode"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    Pincode
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  type="number"
-                  placeholder="Enter pincode"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="billing_country"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    Country
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter country"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </div>
-
-        <div className="form-section">
-          <div className="section-header">
-            <Text strong className="section-title">Shipping Address</Text>
-            <div className="copy-address-switch">
-              <Text>Same as Billing Address</Text>
-              <Switch
-                checked={copyBillingToShipping}
-                onChange={handleCopyBillingToShipping}
-                size="small"
-              />
+                <Col span={12}>
+                  <Form.Item
+                    name="company_revenue"
+                    label={
+                      <span className="form-label">
+                        <FiDollarSign />
+                        Company Revenue
+                      </span>
+                    }
+                    style={{ marginTop: "22px" }}
+                  >
+                    <Input
+                      placeholder="Enter company revenue"
+                      size="large"
+                      className="form-input"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
             </div>
-          </div>
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="shipping_address"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    Address
-                  </span>
-                }
-              >
-                <TextArea
-                  placeholder="Enter shipping address"
-                  rows={3}
-                  className="form-textarea"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                name="shipping_city"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    City
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter city"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="shipping_state"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    State
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter state"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="shipping_pincode"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    Pincode
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  type="number"
-                  placeholder="Enter pincode"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="shipping_country"
-                label={
-                  <span className="form-label">
-                    <FiMapPin />
-                    Country
-                  </span>
-                }
-                style={{ marginTop: "22px" }}
-              >
-                <Input
-                  placeholder="Enter country"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </div>
+
+            <div className="form-section">
+              <div className="section-header">
+                <Text strong className="section-title">Billing Address</Text>
+              </div>
+              <Row gutter={16}>
+                <Col span={24}>
+                  <Form.Item
+                    name="billing_address"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        Address
+                      </span>
+                    }
+                  >
+                    <TextArea
+                      placeholder="Enter billing address"
+                      rows={3}
+                      className="form-textarea"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={16}>
+                <Col span={8}>
+                  <Form.Item
+                    name="billing_city"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        City
+                      </span>
+                    }
+                    style={{ marginTop: "22px" }}
+                  >
+                    <Input
+                      placeholder="Enter city"
+                      size="large"
+                      className="form-input"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    name="billing_state"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        State
+                      </span>
+                    }
+                    style={{ marginTop: "22px" }}
+                  >
+                    <Input
+                      placeholder="Enter state"
+                      size="large"
+                      className="form-input"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    name="billing_pincode"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        Pincode
+                      </span>
+                    }
+                    style={{ marginTop: "22px" }}
+                  >
+                    <Input
+                      type="number"
+                      placeholder="Enter pincode"
+                      size="large"
+                      className="form-input"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={16}>
+                <Col span={24}>
+                  <Form.Item
+                    name="billing_country"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        Country
+                      </span>
+                    }
+                    style={{ marginTop: "22px" }}
+                  >
+                    <Input
+                      placeholder="Enter country"
+                      size="large"
+                      className="form-input"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
+
+            <div className="form-section">
+              <div className="section-header">
+                <Text strong className="section-title">Shipping Address</Text>
+                <div className="copy-address-switch">
+                  <Text>Same as Billing Address</Text>
+                  <Switch
+                    checked={copyBillingToShipping}
+                    onChange={handleCopyBillingToShipping}
+                    size="small"
+                  />
+                </div>
+              </div>
+              <Row gutter={16}>
+                <Col span={24}>
+                  <Form.Item
+                    name="shipping_address"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        Address
+                      </span>
+                    }
+                  >
+                    <TextArea
+                      placeholder="Enter shipping address"
+                      rows={3}
+                      className="form-textarea"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={16}>
+                <Col span={8}>
+                  <Form.Item
+                    name="shipping_city"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        City
+                      </span>
+                    }
+                    style={{ marginTop: "22px" }}
+                  >
+                    <Input
+                      placeholder="Enter city"
+                      size="large"
+                      className="form-input"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    name="shipping_state"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        State
+                      </span>
+                    }
+                    style={{ marginTop: "22px" }}
+                  >
+                    <Input
+                      placeholder="Enter state"
+                      size="large"
+                      className="form-input"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    name="shipping_pincode"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        Pincode
+                      </span>
+                    }
+                    style={{ marginTop: "22px" }}
+                  >
+                    <Input
+                      type="number"
+                      placeholder="Enter pincode"
+                      size="large"
+                      className="form-input"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={16}>
+                <Col span={24}>
+                  <Form.Item
+                    name="shipping_country"
+                    label={
+                      <span className="form-label">
+                        <FiMapPin />
+                        Country
+                      </span>
+                    }
+                    style={{ marginTop: "22px" }}
+                  >
+                    <Input
+                      placeholder="Enter country"
+                      size="large"
+                      className="form-input"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
+          </>
+        )}
 
         <Divider className="form-divider" />
 
@@ -943,48 +975,64 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
         .company-account-form {
           padding: 24px;
 
+          .form-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #374151;
+            font-size: 14px;
+            margin-bottom: 8px;
+
+            svg {
+              color: #1890ff;
+              font-size: 16px;
+            }
+
+            .required {
+              color: #ff4d4f;
+            }
+          }
+
+          .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+            background-color: #f9fafb !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 10px !important;
+            min-height: 48px !important;
+            padding: 0 16px !important;
+            display: flex !important;
+            align-items: center !important;
+          }
+
+          .ant-select-single .ant-select-selector .ant-select-selection-item,
+          .ant-select-single .ant-select-selector .ant-select-selection-placeholder,
+          .ant-select-single .ant-select-selector .ant-select-selection-search,
+          .ant-select-single .ant-select-selector .ant-select-selection-search-input {
+            line-height: 48px !important;
+            height: 48px !important;
+            transition: all 0.3s !important;
+            display: flex !important;
+            align-items: center !important;
+            padding: 0 !important;
+          }
+
+          .phone-code-select-common {
+            .ant-select-selector {
+              border-top-right-radius: 0 !important;
+              border-bottom-right-radius: 0 !important;
+              padding: 0 8px !important;
+              height: 48px !important;
+              display: flex !important;
+              align-items: center !important;
+            }
+          }
+
           .phone-input-group {
             display: flex !important;
             
-            .phone-code-select {
-              .ant-select-selector {
-                border-top-right-radius: 0 !important;
-                border-bottom-right-radius: 0 !important;
-                padding: 8px 8px !important;
-                height: 48px !important;
-              }
-              
-              .ant-select-selection-search {
-                input {
-                  height: 100% !important;
-                }
-              }
-
-              .ant-select-selection-item {
-                padding-right: 20px !important;
-                color: #1f2937 !important;
-                display: flex !important;
-                align-items: center !important;
-                gap: 8px !important;
-              }
-
-              .ant-select-selection-placeholder {
-                color: #9CA3AF !important;
-              }
-            }
-
             .form-input {
               border-top-left-radius: 0 !important;
               border-bottom-left-radius: 0 !important;
             }
-          }
-
-          .phone-input-group .ant-select-selector .ant-select-selection-item div span:last-child {
-            color: white !important;
-          }
-
-          :where(.css-dev-only-do-not-override-240cud).ant-select-single {
-            height: 48px !important;
           }
 
           .ant-select-dropdown {

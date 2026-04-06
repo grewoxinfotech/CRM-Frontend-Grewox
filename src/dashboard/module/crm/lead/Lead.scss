@@ -220,6 +220,23 @@
                                         padding: 0 10px;
                                     }
                                 }
+
+                                .quick-mode-toggle {
+                                    @media (max-width: 992px) {
+                                        padding: 4px 8px !important;
+                                        span {
+                                            display: none;
+                                        }
+                                    }
+
+                                    @media (max-width: 767px) {
+                                        height: 38px !important;
+                                    }
+
+                                    @media (max-width: 576px) {
+                                        height: 34px !important;
+                                    }
+                                }
                             }
                         }
                     }
