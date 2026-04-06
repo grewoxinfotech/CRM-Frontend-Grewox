@@ -38,6 +38,7 @@ import {
   FiBriefcase,
   FiGlobe,
   FiEdit2,
+  FiCpu,
 } from "react-icons/fi";
 import { useGetLeadQuery, useGetLeadsQuery, useUpdateLeadMutation } from "../services/LeadApi";
 import {
@@ -65,6 +66,7 @@ import LeadNotes from "./notes";
 import LeadFiles from "./files";
 import LeadMembers from "./members";
 import LeadFollowup from "./followup/index.jsx";
+import LeadAI from "./ai";
 import "./LeadOverview.scss";
 
 const { Title, Text } = Typography;
@@ -1325,6 +1327,15 @@ const LeadOverview = () => {
       ),
       children: <LeadFollowup leadId={leadId} />,
     },
+    {
+      key: "ai",
+      label: (
+        <span>
+          <FiCpu /> AI Assistant
+        </span>
+      ),
+      children: <LeadAI leadId={leadId} leadData={localLeadData} />,
+    }
   ], [localLeadData, pipelineStages, handleStageUpdate, isUpdatingLead, setIsEditModalOpen]);
 
   const isLoading = isLoadingLead || isLoadingStages;

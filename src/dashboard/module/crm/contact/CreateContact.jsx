@@ -51,7 +51,7 @@ const findIndianDefaults = (countries) => {
   };
 };
 
-const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }) => {
+const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, companyId }) => {
   const [form] = Form.useForm();
   const [createContact, { isLoading }] = useCreateContactMutation();
   const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
@@ -150,9 +150,9 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
         contact_owner: loggedInUser?.id || "",
         first_name: values.first_name || "",
         last_name: values.last_name || "",
-        company_name: values.company_name || "",
-        email: values.email || "",
+        company_name: values.company_name || companyId || "",
         website: values.website || "",
+        email: values.email || "",
         phone_code: selectedCountry?.id || "",
         phone: phoneNumber,
         contact_source: values.contact_source || "",
@@ -162,11 +162,17 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
         state: values.state || "",
         country: values.country || "",
         section: "contact",
-        contact_source: values.contact_source || "",
-        // client_id: loggedInUser?.client_id || "",
       };
 
       const response = await createContact(contactData).unwrap();
+
+      // Check for existing contact message
+      if (response.message === "Existing contact found.") {
+        message.warning("This contact already exists.");
+        form.resetFields();
+        onCancel();
+        return;
+      }
 
       // Check if response contains error
       if (response.error) {
@@ -174,16 +180,16 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
         return; // Don't close modal or reset form
       }
 
-      message.success("Contact created successfully");
+      message.success("Contact created successfully.");
       form.resetFields();
       onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
       // Check for specific error messages
       if (error.data?.message?.includes("already exists")) {
-        message.error("Contact with this name already exists");
+        message.error("Contact with this name already exists.");
       } else {
-        message.error(error.data?.message || 'Failed to create contact');
+        message.error(error.data?.message || "Failed to create contact.");
       }
     }
   };
@@ -216,10 +222,15 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
 
   // Initialize form with default values
   React.useEffect(() => {
+    // Find 'Other' source if it exists
+    const otherSource = sources.find(s => s.name?.toLowerCase() === 'other');
+    
     form.setFieldsValue({
-      phoneCode: defaultPhoneCode
+      phoneCode: defaultPhoneCode,
+      company_name: companyId || undefined,
+      contact_source: otherSource?.id || undefined
     });
-  }, [defaultPhoneCode, form]);
+  }, [defaultPhoneCode, form, companyId, sources]);
 
   return (
     <>
@@ -346,6 +357,27 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
 
             <Col span={12}>
               <Form.Item
+                name="website"
+                label={
+                  <span className="form-label">
+                    <FiLink />
+                    Website (optional)
+                  </span>
+                }
+                rules={[
+                  { type: "url", message: "Please enter a valid URL" }
+                ]}
+              >
+                <Input
+                  placeholder="Enter website URL"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
                 name="phoneGroup"
                 label={
                   <span className="form-label">
@@ -410,84 +442,86 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
               </Form.Item>
             </Col>
 
-            <Col span={12}>
-              <Form.Item
-                name="company_name"
-                label={
-                  <span className="form-label">
-                    <FiBriefcase />
-                    Select Company
-                  </span>
-                }
-                >
-                  <Select
-                    placeholder="Select company"
-                    style={selectStyle}
-                    suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
-                    className="form-input"
-                    showSearch
-                    allowClear
-                    optionFilterProp="children"
-                    filterOption={(input, option) => {
-                      const companyName = option?.children?.props?.children?.[1]?.props?.children?.[0]?.props?.children || '';
-                      return companyName.toLowerCase().includes(input.toLowerCase());
-                    }}
-                    dropdownRender={(menu) => (
-                      <div onClick={(e) => e.stopPropagation()}>
-                        {menu}
-                        <Divider style={{ margin: '8px 0' }} />
-                        <div style={{ padding: '0 8px 8px' }}>
-                          <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAddCompanyClick}
-                            style={{
-                              width: '100%',
-                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                              border: 'none',
-                              height: '40px',
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px',
-                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                              fontWeight: '500',
-                            }}
-                          >
-                            Add New Company
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+            {!companyId && (
+              <Col span={12}>
+                <Form.Item
+                  name="company_name"
+                  label={
+                    <span className="form-label">
+                      <FiBriefcase />
+                      Select Company
+                    </span>
+                  }
                   >
-                    {companyAccounts.map((company) => (
-                      <Option key={company.id} value={company.id}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '4px 0'
-                        }}>
-                          <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{
-                              fontWeight: '500',
-                              color: '#111827'
-                            }}>{company.company_name}</span>
-                            {company.company_site && (
-                              <span style={{
-                                fontSize: '12px',
-                                color: '#6B7280'
-                              }}>{company.company_site}</span>
-                            )}
+                    <Select
+                      placeholder="Select company"
+                      style={selectStyle}
+                      suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
+                      className="form-input"
+                      showSearch
+                      allowClear
+                      optionFilterProp="children"
+                      filterOption={(input, option) => {
+                        const companyName = option?.children?.props?.children?.[1]?.props?.children?.[0]?.props?.children || '';
+                        return companyName.toLowerCase().includes(input.toLowerCase());
+                      }}
+                      dropdownRender={(menu) => (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          {menu}
+                          <Divider style={{ margin: '8px 0' }} />
+                          <div style={{ padding: '0 8px 8px' }}>
+                            <Button
+                              type="primary"
+                              icon={<PlusOutlined />}
+                              onClick={handleAddCompanyClick}
+                              style={{
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                border: 'none',
+                                height: '40px',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              Add New Company
+                            </Button>
                           </div>
                         </div>
-                      </Option>
-                    ))}
-                  </Select>
-              </Form.Item>
-            </Col>
+                      )}
+                    >
+                      {companyAccounts.map((company) => (
+                        <Option key={company.id} value={company.id}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '4px 0'
+                          }}>
+                            <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{
+                                fontWeight: '500',
+                                color: '#111827'
+                              }}>{company.company_name}</span>
+                              {company.company_site && (
+                                <span style={{
+                                  fontSize: '12px',
+                                  color: '#6B7280'
+                                }}>{company.company_site}</span>
+                              )}
+                            </div>
+                          </div>
+                        </Option>
+                      ))}
+                    </Select>
+                </Form.Item>
+              </Col>
+            )}
 
             <Col span={12}>
               <Form.Item

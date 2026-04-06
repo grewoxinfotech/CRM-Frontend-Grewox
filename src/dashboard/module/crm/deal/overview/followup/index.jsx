@@ -20,7 +20,7 @@ const { Title, Text } = Typography;
 const DealFollowup = ({ deal }) => {
     const dealId = useParams();
     const id = dealId.dealId;
-    const [activeTab, setActiveTab] = useState('task');
+    const [activeTab, setActiveTab] = useState('call');
     const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
     const [isMeetingModalVisible, setIsMeetingModalVisible] = useState(false);
     const [isCallModalVisible, setIsCallModalVisible] = useState(false);
@@ -64,16 +64,6 @@ const DealFollowup = ({ deal }) => {
 
     const items = [
         {
-            key: 'task',
-            label: 'Task',
-            icon: <FiCheckSquare />
-        },
-        {
-            key: 'meeting',
-            label: 'Meeting',
-            icon: <FiUsers />
-        },
-        {
             key: 'call',
             label: 'Call',
             icon: <FiPhoneCall />,
@@ -89,10 +79,30 @@ const DealFollowup = ({ deal }) => {
                     icon: <FiClock />
                 }
             ]
+        },
+        {
+            key: 'task',
+            label: 'Task',
+            icon: <FiCheckSquare />
+        },
+        {
+            key: 'meeting',
+            label: 'Meeting',
+            icon: <FiUsers />
         }
+        
     ];
 
     const tabItems = [
+        {
+            key: 'call',
+            label: (
+                <span>
+                    <FiPhoneCall /> Calls
+                </span>
+            ),
+            children: <FollowupCallList dealId={id} users={users} />
+        },
         {
             key: 'task',
             label: (
@@ -110,16 +120,8 @@ const DealFollowup = ({ deal }) => {
                 </span>
             ),
             children: <FollowupMeetingList dealId={id} users={users} />
-        },
-        {
-            key: 'call',
-            label: (
-                <span>
-                    <FiPhoneCall /> Calls
-                </span>
-            ),
-            children: <FollowupCallList dealId={id} users={users} />
         }
+        
     ];
 
     return (

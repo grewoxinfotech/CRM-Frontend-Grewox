@@ -209,6 +209,15 @@ const CreateLead = ({
       const shouldCreateContact = !values.contact_id && hasManualContactInfo;
 
       if (shouldCreateContact) {
+        if (!values.firstName) {
+          message.error('First Name is required to auto-create a contact');
+          return;
+        }
+        if (!values.telephone) {
+          message.error('Phone Number is required to auto-create a contact');
+          return;
+        }
+        
         try {
           // Create contact first
           const contactData = {
@@ -219,7 +228,7 @@ const CreateLead = ({
             email: values.email || "",
             phone_code: values.phoneCode || defaultPhoneCode,
             phone: values.telephone ? values.telephone.toString() : "",
-            contact_source: "lead",
+            contact_source: values.source || "website",
             description: `Lead created from lead form by ${loggedInUser?.name} on ${new Date().toLocaleDateString()}`,
             address: values.address || "",
             client_id: loggedInUser.client_id
@@ -607,10 +616,10 @@ const CreateLead = ({
                   { type: 'number', min: 0, message: 'Value must be greater than or equal to 0' }
                 ]}
               >
-                <Input
-                  style={inputStyle}
+                <InputNumber
+                  style={{ ...inputStyle, width: '100%' }}
                   placeholder="Enter amount"
-                  type="number"
+                  min={0}
                   onKeyDown={(e) => {
                     if (['e', 'E', '+', '-'].includes(e.key)) {
                       e.preventDefault();
@@ -757,7 +766,11 @@ const CreateLead = ({
                     </div>
                   )}
                 >
-                  {contactsResponse?.data?.map((contact) => {
+                  {contactsResponse?.data?.filter(contact => {
+                    const selectedCompanyId = form.getFieldValue('company_id');
+                    if (!selectedCompanyId) return true; // Show all if no company selected
+                    return contact.company_name === selectedCompanyId; // Only show contacts for selected company
+                  }).map((contact) => {
                     const companyName = companyAccountsResponse?.data?.find(
                       (c) => c.id === contact.company_name
                     )?.company_name || "No Company";
@@ -960,66 +973,6 @@ const CreateLead = ({
                     </Option>
                   ))}
                 </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="leadValueGroup"
-                label={<span style={formItemStyle}>Lead Value</span>}
-                className="combined-input-item"
-              >
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <Form.Item
-                    name="currency"
-                    noStyle
-                    initialValue={defaultCurrency}
-                    rules={[{ required: true, message: 'Please select currency' }]}
-                  >
-                    <Select
-                      style={{ 
-                        width: '120px', 
-                        height: '48px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                      className="currency-select-common"
-                      suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
-                      popupClassName="custom-select-dropdown"
-                      showSearch
-                      optionFilterProp="value"
-                      filterOption={(input, option) =>
-                        (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
-                      }
-                    >
-                      {currencies?.map((currency) => (
-                        <Option key={currency.id} value={currency.id}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
-                            <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
-                          </div>
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    name="leadValue"
-                    noStyle
-                    initialValue={0}
-                    rules={[
-                      { type: 'number', min: 0, message: 'Value must be greater than or equal to 0' }
-                    ]}
-                  >
-                    <Input
-                      style={inputStyle}
-                      placeholder="Enter amount"
-                      type="number"
-                      onKeyDown={(e) => {
-                        if (['e', 'E', '+', '-'].includes(e.key)) {
-                          e.preventDefault();
-                        }
-                      }}
-                    />
-                  </Form.Item>
-                </div>
               </Form.Item>
 
               <Form.Item
@@ -1384,7 +1337,11 @@ const CreateLead = ({
                     </div>
                   )}
                 >
-                  {contactsResponse?.data?.map((contact) => {
+                  {contactsResponse?.data?.filter(contact => {
+                    const selectedCompanyId = form.getFieldValue('company_id');
+                    if (!selectedCompanyId) return true; // Show all if no company selected
+                    return contact.company_name === selectedCompanyId; // Only show contacts for selected company
+                  }).map((contact) => {
                     const companyName = companyAccountsResponse?.data?.find(
                       (c) => c.id === contact.company_name
                     )?.company_name || "No Company";
@@ -1692,6 +1649,24 @@ const CreateLead = ({
 
             .ant-select-item-empty {
               color: #9CA3AF !important;
+            }
+          }
+
+          .ant-input-number {
+            display: flex !important;
+            align-items: center !important;
+            padding: 0 !important;
+
+            .ant-input-number-input-wrap {
+              height: 100%;
+              display: flex;
+              align-items: center;
+            }
+
+            .ant-input-number-input {
+              height: 48px !important;
+              padding: 0 16px !important;
+              line-height: 48px !important;
             }
           }
 

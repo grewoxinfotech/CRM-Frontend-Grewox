@@ -270,12 +270,26 @@ const FormSubmissions = () => {
         const firstSubmission = parseSubmissionData(submissionsData.data[0]);
         const allFields = Object.keys(firstSubmission.submission_data || {});
 
+        // Prioritize specific fields like Name, Mobile, etc.
+        const priorityFields = ['name', 'mobile', 'phone', 'you come?', 'youcome?'];
+        const sortedFields = [...allFields].sort((a, b) => {
+            const aLower = a.toLowerCase();
+            const bLower = b.toLowerCase();
+            const aIndex = priorityFields.findIndex(p => aLower.includes(p));
+            const bIndex = priorityFields.findIndex(p => bLower.includes(p));
+            
+            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            return 0;
+        });
+
         // Status column
         const statusColumn = {
             title: 'Status',
             key: 'status',
             width: 120,
-            fixed: 'left',
+            fixed: 'right',
             render: (_, record) => {
                 const isConverted = leads?.data?.some(lead => lead.inquiry_id === record.id);
                 return (
@@ -304,8 +318,8 @@ const FormSubmissions = () => {
             }
         };
 
-        // First 5 fields
-        const visibleFields = allFields.slice(0, 5);
+        // First 5 fields from sorted list
+        const visibleFields = sortedFields.slice(0, 5);
         const dataColumns = visibleFields.map((field) => ({
             title: formatFieldName(field),
             dataIndex: ['submission_data', field],
@@ -318,8 +332,8 @@ const FormSubmissions = () => {
             }
         }));
 
-        // Remaining fields
-        const remainingFields = allFields.slice(5);
+        // Remaining fields from sorted list
+        const remainingFields = sortedFields.slice(5);
         const remainingColumns = remainingFields.map((field) => ({
             title: formatFieldName(field),
             dataIndex: ['submission_data', field],
@@ -346,7 +360,7 @@ const FormSubmissions = () => {
             ),
             key: 'actions',
             width: 100,
-            fixed: 'left',
+            fixed: 'right',
             render: (_, record) => (
                 <div className="action-cell">
                     <Dropdown
@@ -365,10 +379,10 @@ const FormSubmissions = () => {
         };
 
         return [
-            actionColumn,
-            statusColumn,
             ...dataColumns,
-            ...remainingColumns
+            ...remainingColumns,
+            statusColumn,
+            actionColumn
         ];
     }, [submissionsData?.data, leads?.data]);
 

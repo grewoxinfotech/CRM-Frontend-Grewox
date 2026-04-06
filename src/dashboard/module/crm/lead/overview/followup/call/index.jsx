@@ -17,6 +17,10 @@ import {
   FiTrash2,
   FiMoreVertical,
   FiPhone,
+  FiClock,
+  FiAlertCircle,
+  FiFileText,
+  FiTag,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./followupCall.scss";
@@ -180,9 +184,15 @@ const FollowupCallList = ({ leadId, users, rtiId }) => {
       },
     },
     {
-      title: "Reminder",
+      title: (
+        <Space>
+          <FiClock size={14} />
+          <span>Reminder</span>
+        </Space>
+      ),
       dataIndex: "call_reminder",
       key: "call_reminder",
+      width: 160,
       render: (reminder) => {
         const reminderMap = {
           "5_min": "5 minutes before",
@@ -195,16 +205,28 @@ const FollowupCallList = ({ leadId, users, rtiId }) => {
       },
     },
     {
-      title: "Notes",
+      title: (
+        <Space>
+          <FiFileText size={14} />
+          <span>Notes</span>
+        </Space>
+      ),
       dataIndex: "call_notes",
       key: "call_notes",
+      width: 200,
       render: (notes) => notes || "-",
       ellipsis: true,
     },
     {
-      title: "Priority",
+      title: (
+        <Space>
+          <FiAlertCircle size={14} />
+          <span>Priority</span>
+        </Space>
+      ),
       dataIndex: "priority",
       key: "priority",
+      width: 120,
       render: (priority) => {
         const priorityMap = {
           highest: "High",
@@ -216,9 +238,15 @@ const FollowupCallList = ({ leadId, users, rtiId }) => {
       },
     },
     {
-      title: "Call Type",
+      title: (
+        <Space>
+          <FiTag size={14} />
+          <span>Call Type</span>
+        </Space>
+      ),
       dataIndex: "call_type",
       key: "call_type",
+      width: 140,
       render: (callType) => {
         if (!callType) return "-";
         return callType;

@@ -50,6 +50,19 @@ export const leadApi = createApi({
       }),
       providesTags: (result, error, id) => [{ type: "Lead", id }],
     }),
+    getLeadAiSuggestions: builder.query({
+      query: (id) => ({
+        url: `/leads/ai-suggestions/${id}`,
+        method: "GET",
+      }),
+    }),
+    chatWithLeadAi: builder.mutation({
+      query: ({ id, message, history }) => ({
+        url: `/leads/ai-chat/${id}`,
+        method: "POST",
+        body: { message, history },
+      }),
+    }),
     createLead: builder.mutation({
       query: (data) => ({
         url: "/leads",
@@ -140,6 +153,8 @@ export const leadApi = createApi({
 export const {
   useGetLeadsQuery,
   useGetLeadQuery,
+  useGetLeadAiSuggestionsQuery,
+  useChatWithLeadAiMutation,
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useDeleteLeadMutation,

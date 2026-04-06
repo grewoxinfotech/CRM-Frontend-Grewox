@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Tabs,
   Typography,
@@ -73,7 +73,9 @@ const NotificationsComponent = () => {
   const [clearAll] = useClearAllNotificationsMutation();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [processedNotifications] = useState(new Set());
+  const processedNotifications = useRef(new Set());
+  const isFirstLoad = useRef(true);
+
   // Poll for new notifications every 5 seconds only if not super admin
   useEffect(() => {
     if (!isSuperAdmin) {
@@ -144,9 +146,21 @@ const NotificationsComponent = () => {
   };
 
   useEffect(() => {
-    // Show all unread notifications
+    // Wait for the first load to finish fetching
+    if (isLoading) return;
+
+    // On first load, mark existing notifications as "processed" without showing popups
+    if (isFirstLoad.current) {
+      unreadNotifications.forEach((notif) => {
+        processedNotifications.current.add(notif.id);
+      });
+      isFirstLoad.current = false;
+      return;
+    }
+
+    // Show only NEW unread notifications
     unreadNotifications.forEach((notif) => {
-      if (!processedNotifications.has(notif.id)) {
+      if (!processedNotifications.current.has(notif.id)) {
         const isReminder = notif.notification_type === "reminder";
         notification.info({
           message: (
@@ -189,13 +203,10 @@ const NotificationsComponent = () => {
           className: `notification-${notif.priority}`,
         });
 
-        // Helper function to get color based on priority
-
-        processedNotifications.add(notif.id);
-      
+        processedNotifications.current.add(notif.id);
       }
     });
-  }, [notifications, unreadNotifications]);
+  }, [unreadNotifications, isLoading]);
 
   const handleNotificationClick = (notification) => {
     // Handle redirection based on section and IDs

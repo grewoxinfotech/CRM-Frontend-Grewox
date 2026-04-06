@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Table, Tag, Space, Button, Avatar, Tooltip, Dropdown, Modal, message } from 'antd';
-import { FiCheckSquare, FiCalendar, FiEdit2, FiTrash2, FiMoreVertical, FiAlertCircle } from 'react-icons/fi';
+import { FiCheckSquare, FiCalendar, FiEdit2, FiTrash2, FiMoreVertical, FiAlertCircle, FiTag } from 'react-icons/fi';
 import { useGetFollowupTaskByIdQuery, useDeleteFollowupTaskMutation } from './services/followupTaskApi';
 import dayjs from 'dayjs';
 import './followuptask.scss';
@@ -90,9 +90,15 @@ const FollowupTaskList = ({ leadId, users }) => {
             )
         },
         {
-            title: 'Priority',
+            title: (
+                <Space>
+                    <FiAlertCircle size={14} />
+                    <span>Priority</span>
+                </Space>
+            ),
             dataIndex: 'priority',
             key: 'priority',
+            width: 150,
             render: (priority) => {
                 const priorityColors = {
                     highest: { color: '#ff4d4f', bg: '#fff1f0' },
@@ -116,9 +122,15 @@ const FollowupTaskList = ({ leadId, users }) => {
             }
         },
         {
-            title: 'Status',
+            title: (
+                <Space>
+                    <FiTag size={14} />
+                    <span>Status</span>
+                </Space>
+            ),
             dataIndex: 'status',
             key: 'status',
+            width: 150,
             render: (status) => {
                 const statusColors = {
                     not_started: { color: '#8c8c8c', bg: '#f5f5f5' },

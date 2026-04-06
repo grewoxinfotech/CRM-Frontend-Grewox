@@ -797,9 +797,9 @@ const CreateLog = ({
             <Select
               placeholder="Select purpose"
               size="large"
-              listHeight={100}
-              virtual={true}
-              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+              listHeight={300}
+              virtual={false}
+              style={{ width: "100%", borderRadius: "10px", height: "80px" }}
             >
               <Option value="none">-None-</Option>
               <Option value="prospecting">Prospecting</Option>

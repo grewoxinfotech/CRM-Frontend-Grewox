@@ -20,7 +20,7 @@ const { Title, Text } = Typography;
 const LeadFollowup = ({ leadId }) => {
     const leadIdParam = useParams();
     const id = leadId || leadIdParam.leadId;
-    const [activeTab, setActiveTab] = useState('task');
+    const [activeTab, setActiveTab] = useState('call');
     const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
     const [isMeetingModalVisible, setIsMeetingModalVisible] = useState(false);
     const [isCallModalVisible, setIsCallModalVisible] = useState(false);
@@ -64,16 +64,6 @@ const LeadFollowup = ({ leadId }) => {
 
     const items = [
         {
-            key: 'task',
-            label: 'Task',
-            icon: <FiCheckSquare />
-        },
-        {
-            key: 'meeting',
-            label: 'Meeting',
-            icon: <FiUsers />
-        },
-        {
             key: 'call',
             label: 'Call',
             icon: <FiPhoneCall />,
@@ -89,10 +79,30 @@ const LeadFollowup = ({ leadId }) => {
                     icon: <FiClock />
                 }
             ]
+        },
+        {
+            key: 'task',
+            label: 'Task',
+            icon: <FiCheckSquare />
+        },
+        {
+            key: 'meeting',
+            label: 'Meeting',
+            icon: <FiUsers />
         }
+        
     ];
 
     const tabItems = [
+         {
+            key: 'call',
+            label: (
+                <span>
+                    <FiPhoneCall /> Calls
+                </span>
+            ),
+            children: <FollowupCallList leadId={id} users={users} />
+        },
         {
             key: 'task',
             label: (
@@ -110,16 +120,8 @@ const LeadFollowup = ({ leadId }) => {
                 </span>
             ),
             children: <FollowupMeetingList leadId={id} users={users} />
-        },
-        {
-            key: 'call',
-            label: (
-                <span>
-                    <FiPhoneCall /> Calls
-                </span>
-            ),
-            children: <FollowupCallList leadId={id} users={users} />
         }
+       
     ];
 
     return (
