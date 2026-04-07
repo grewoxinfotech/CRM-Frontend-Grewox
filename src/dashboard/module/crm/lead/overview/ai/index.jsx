@@ -11,6 +11,10 @@ const LeadAI = ({ leadId, leadData }) => {
   const [chatHistory, setChatHistory] = useState([
     { role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you close this lead today?' }
   ]);
+  const [isThinking, setIsThinking] = useState(false);
+  const [isPlanning, setIsPlanning] = useState(false);
+  const [currentThought, setCurrentThought] = useState("");
+  const [currentPlan, setCurrentPlan] = useState("");
   const chatEndRef = useRef(null);
   const [chatWithAi, { isLoading: isChatLoading }] = useChatWithLeadAiMutation();
 
@@ -20,7 +24,7 @@ const LeadAI = ({ leadId, leadData }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [chatHistory]);
+  }, [chatHistory, isThinking, isPlanning]);
 
   const { 
     data: suggestionsResponse, 
@@ -30,13 +34,14 @@ const LeadAI = ({ leadId, leadData }) => {
     error 
   } = useGetLeadAiSuggestionsQuery(leadId);
 
-  const aiData = suggestionsResponse?.message || {};
+  const aiData = suggestionsResponse?.data || {};
   const suggestions = aiData.suggestions || [];
   const leadScore = aiData.score || 0;
   const leadSummary = aiData.summary || "";
 
   // Helper: Sanitize HTML to prevent XSS
   const sanitizeHTML = (html) => {
+    if (typeof html !== 'string') return '';
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const scripts = doc.querySelectorAll('script');
     scripts.forEach(s => s.remove());
@@ -44,45 +49,46 @@ const LeadAI = ({ leadId, leadData }) => {
   };
 
   // Helper: Convert plain text to structured HTML if needed
-  const formatTextToHTML = (text) => {
-    if (typeof text !== 'string') return '';
-    if (text.includes('<div')) return text; // Already HTML
+  const formatTextToHTML = (content) => {
+    if (!content) return '';
+    
+    // If it's a structured AI response object, render it
+    if (typeof content === 'object') {
+      const { strategy, actions, script } = content;
+      const actionsList = (actions || [])
+        .map(a => `<li>${a.replace(/^-/, "").trim()}</li>`)
+        .join("");
 
-    const strategy = text.match(/STRATEGY:\s*([\s\S]*?)ACTIONS:/)?.[1] || "";
-    const actions = text.match(/ACTIONS:\s*([\s\S]*?)SCRIPT:/)?.[1] || "";
-    const script = text.match(/SCRIPT:\s*([\s\S]*)/)?.[1] || "";
-
-    const actionsList = actions
-      .split("\n")
-      .filter(a => a.trim())
-      .map(a => `<li>${a.replace(/^-/, "").trim()}</li>`)
-      .join("");
-
-    return `
-      <div class="ai-bot-response-card">
-        <div style="margin-bottom:12px;">
-          <div style="font-weight:600; color: #1e293b; margin-bottom: 4px;">💡 Strategy</div>
-          <div style="color: #475569;">${strategy.trim()}</div>
-        </div>
-        <div style="margin-bottom:12px;">
-          <div style="font-weight:600; color: #1e293b; margin-bottom: 4px;">✅ Actions</div>
-          <ul style="margin: 0; padding-left: 20px; color: #475569;">${actionsList}</ul>
-        </div>
-        <div>
-          <div style="font-weight:600; color: #1e293b; margin-bottom: 4px;">💬 Script</div>
-          <div style="background:#eef2ff; padding:12px; border-radius:8px; border: 1px solid #c7d2fe; color: #3730a3; font-style: italic;">
-            ${script.replace(/"/g, "").trim()}
+      return `
+        <div class="ai-bot-response-card">
+          <div style="margin-bottom:12px;">
+            <div style="font-weight:600; color: #1e293b; margin-bottom: 4px;">💡 Strategy</div>
+            <div style="color: #475569;">${strategy || ''}</div>
           </div>
-          <button 
-            class="ai-copy-btn"
-            data-text="${script.replace(/"/g, "").trim()}"
-            style="margin-top:8px; padding:6px 12px; cursor:pointer; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 4px;"
-          >
-            📋 Copy
-          </button>
+          <div style="margin-bottom:12px;">
+            <div style="font-weight:600; color: #1e293b; margin-bottom: 4px;">✅ Actions</div>
+            <ul style="margin: 0; padding-left: 20px; color: #475569;">${actionsList}</ul>
+          </div>
+          <div>
+            <div style="font-weight:600; color: #1e293b; margin-bottom: 4px;">💬 Script</div>
+            <div style="background:#eef2ff; padding:12px; border-radius:8px; border: 1px solid #c7d2fe; color: #3730a3; font-style: italic;">
+              ${(script || '').replace(/"/g, "").trim()}
+            </div>
+            <button 
+              class="ai-copy-btn"
+              data-text="${(script || '').replace(/"/g, "").trim()}"
+              style="margin-top:8px; padding:6px 12px; cursor:pointer; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 4px;"
+            >
+              📋 Copy
+            </button>
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    }
+
+    if (content.includes('<div')) return content; // Already HTML
+
+    return `<div style="color: #475569;">${content}</div>`;
   };
 
   const handleSendMessage = async () => {
@@ -91,21 +97,47 @@ const LeadAI = ({ leadId, leadData }) => {
     const userMessage = { role: 'user', content: chatMessage };
     setChatHistory(prev => [...prev, userMessage]);
     setChatMessage("");
+    setIsThinking(true);
+    setCurrentThought("Analyzing lead context...");
 
     try {
+      // Send only last 5 messages to the backend to save tokens
+      const recentHistory = chatHistory.slice(-5).map(h => ({
+        role: h.role,
+        content: typeof h.content === 'object' ? h.content.strategy : h.content
+      }));
+
       const response = await chatWithAi({ 
         id: leadId, 
         message: chatMessage,
-        history: chatHistory 
+        history: recentHistory
       }).unwrap();
 
-      if (response?.success) {
-        setChatHistory(prev => [...prev, { role: 'assistant', content: response.message }]);
+      if (response?.success && response.data) {
+        const aiResponse = response.data;
+        
+        // Phase 1: Thinking
+        setCurrentThought(aiResponse.thinking || "Analyzing data...");
+        await new Promise(r => setTimeout(r, 1200));
+        
+        // Phase 2: Planning
+        setIsThinking(false);
+        setIsPlanning(true);
+        setCurrentPlan(aiResponse.planning || "Formulating strategy...");
+        await new Promise(r => setTimeout(r, 1200));
+        
+        // Final: Add to history
+        setIsPlanning(false);
+        setChatHistory(prev => [...prev, { role: 'assistant', content: aiResponse }]);
       } else {
+        setIsThinking(false);
+        setIsPlanning(false);
         message.error("Failed to get AI response");
       }
     } catch (err) {
       console.error("Chat Error:", err);
+      setIsThinking(false);
+      setIsPlanning(false);
       message.error("Error communicating with AI");
     }
   };
@@ -223,27 +255,31 @@ const LeadAI = ({ leadId, leadData }) => {
                         </div>
                         
                         <div>
-                          <Text strong>{item.strategy?.split(' ')[0]} Strategy</Text>
-                          <Paragraph style={{ margin: "4px 0 0 0" }}>{item.strategy}</Paragraph>
+                          <Text strong>💡 Strategy</Text>
+                          <Paragraph style={{ margin: "4px 0 0 0" }}>
+                            {item.strategy?.replace(/^💡\s*/, "")}
+                          </Paragraph>
                         </div>
 
                         <div>
-                          <Text strong>{item.actions?.[0]?.split(' ')[0]} Actions</Text>
+                          <Text strong>✅ Actions</Text>
                           <ul style={{ paddingLeft: "20px", margin: "4px 0 0 0" }}>
                             {item.actions?.map((action, i) => (
-                              <li key={i}>{action}</li>
+                              <li key={i}>{action?.replace(/^✅\s*/, "")}</li>
                             ))}
                           </ul>
                         </div>
 
                         <div style={{ background: "#f0f5ff", padding: "12px", borderRadius: "8px", border: "1px solid #d6e4ff" }}>
-                          <Text strong>{item.script?.split(' ')[0]} Suggested Script</Text>
-                          <Paragraph style={{ margin: "4px 0 8px 0", fontStyle: "italic" }}>{item.script}</Paragraph>
+                          <Text strong>💬 Suggested Script</Text>
+                          <Paragraph style={{ margin: "4px 0 8px 0", fontStyle: "italic" }}>
+                            {item.script?.replace(/^💬\s*/, "")}
+                          </Paragraph>
                           <Button 
                             size="small" 
                             icon={<FiMessageSquare />} 
                             onClick={() => {
-                              navigator.clipboard.writeText(item.script?.replace('💬 ', ''));
+                              navigator.clipboard.writeText(item.script?.replace(/^💬\s*/, ""));
                               message.success("Script copied!");
                             }}
                           >
@@ -334,16 +370,67 @@ const LeadAI = ({ leadId, leadData }) => {
                 </div>
               </div>
             ))}
-            {isChatLoading && (
-              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+            
+            {isThinking && (
+              <div style={{ display: "flex", gap: "8px", marginBottom: "16px", alignItems: "flex-start" }}>
                 <Avatar icon={<FiCpu />} style={{ backgroundColor: '#87d068' }} />
-                <div style={{ padding: "10px 14px", borderRadius: "12px", background: "#f1f5f9" }}>
-                  <Skeleton.Input active size="small" style={{ width: 100 }} />
+                <div style={{ padding: "10px 14px", borderRadius: "12px", background: "#f1f5f9", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                  <Space direction="vertical" size={4}>
+                    <Text type="secondary" italic style={{ fontSize: "12px" }}>
+                      Thinking...
+                    </Text>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Text style={{ fontSize: "14px" }}>{currentThought}</Text>
+                      <div className="typing-dots">
+                        <span>.</span><span>.</span><span>.</span>
+                      </div>
+                    </div>
+                  </Space>
                 </div>
               </div>
             )}
+
+            {isPlanning && (
+              <div style={{ display: "flex", gap: "8px", marginBottom: "16px", alignItems: "flex-start" }}>
+                <Avatar icon={<FiCpu />} style={{ backgroundColor: '#87d068' }} />
+                <div style={{ padding: "10px 14px", borderRadius: "12px", background: "#f0fdf4", border: "1px solid #dcfce7", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                  <Space direction="vertical" size={4}>
+                    <Text type="secondary" italic style={{ fontSize: "12px", color: "#166534" }}>
+                      Planning...
+                    </Text>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Text style={{ fontSize: "14px", color: "#166534" }}>{currentPlan}</Text>
+                      <div className="typing-dots green">
+                        <span>.</span><span>.</span><span>.</span>
+                      </div>
+                    </div>
+                  </Space>
+                </div>
+              </div>
+            )}
+
             <div ref={chatEndRef} />
           </div>
+
+          <style>{`
+            @keyframes blink {
+              0% { opacity: .2; }
+              20% { opacity: 1; }
+              100% { opacity: .2; }
+            }
+            .typing-dots span {
+              animation-name: blink;
+              animation-duration: 1.4s;
+              animation-iteration-count: infinite;
+              animation-fill-mode: both;
+              font-weight: bold;
+              font-size: 18px;
+              line-height: 0;
+            }
+            .typing-dots span:nth-child(2) { animation-delay: .2s; }
+            .typing-dots span:nth-child(3) { animation-delay: .4s; }
+            .typing-dots.green span { color: #166534; }
+          `}</style>
 
           <div style={{ padding: "16px", borderTop: "1px solid #e2e8f0" }}>
             <div style={{ display: "flex", gap: "8px" }}>
