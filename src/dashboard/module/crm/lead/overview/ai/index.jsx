@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Card, Typography, List, Tag, Space, Button, Empty, Skeleton, message, Progress, Divider, Input, Avatar } from "antd";
 import { FiCpu, FiTrendingUp, FiPhoneCall, FiMessageSquare, FiCheckCircle, FiRefreshCw, FiZap, FiSend, FiUser } from "react-icons/fi";
-import { useGetLeadAiSuggestionsQuery, useChatWithLeadAiMutation } from "../../services/LeadApi";
+import { useGetLeadAiSuggestionsQuery, useChatWithLeadAiMutation, useGetLeadAiChatHistoryQuery } from "../../services/LeadApi";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -33,6 +33,39 @@ const LeadAI = ({ leadId, leadData }) => {
     refetch, 
     error 
   } = useGetLeadAiSuggestionsQuery(leadId);
+
+  const { 
+    data: historyResponse, 
+    isLoading: isHistoryLoading 
+  } = useGetLeadAiChatHistoryQuery(leadId);
+
+  useEffect(() => {
+    if (historyResponse?.success && historyResponse.data && historyResponse.data.length > 0) {
+      const formattedHistory = historyResponse.data.map(chat => {
+        let content = chat.message;
+        
+        // Handle potential JSON string in ai_response_data
+        let aiResponseData = chat.ai_response_data;
+        if (typeof aiResponseData === 'string') {
+          try {
+            aiResponseData = JSON.parse(aiResponseData);
+          } catch (e) {
+            console.error("Error parsing ai_response_data:", e);
+          }
+        }
+
+        return {
+          role: chat.role,
+          content: chat.role === 'assistant' && aiResponseData ? aiResponseData : chat.message
+        };
+      });
+      
+      setChatHistory([
+        { role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you close this lead today?' },
+        ...formattedHistory
+      ]);
+    }
+  }, [historyResponse]);
 
   const aiData = suggestionsResponse?.data || {};
   const suggestions = aiData.suggestions || [];

@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from "../../../../../../src/store/baseQuery";
 export const leadApi = createApi({
   reducerPath: "leadApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Lead", "Followup"],
+  tagTypes: ["Lead", "Followup", "AiChat"],
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     getLeads: builder.query({
@@ -56,12 +56,20 @@ export const leadApi = createApi({
         method: "GET",
       }),
     }),
+    getLeadAiChatHistory: builder.query({
+      query: (id) => ({
+        url: `/leads/ai-chat-history/${id}`,
+        method: "GET",
+      }),
+      providesTags: (result, error, id) => [{ type: "AiChat", id }],
+    }),
     chatWithLeadAi: builder.mutation({
       query: ({ id, message, history }) => ({
         url: `/leads/ai-chat/${id}`,
         method: "POST",
         body: { message, history },
       }),
+      invalidatesTags: (result, error, { id }) => [{ type: "AiChat", id }],
     }),
     createLead: builder.mutation({
       query: (data) => ({
@@ -154,6 +162,7 @@ export const {
   useGetLeadsQuery,
   useGetLeadQuery,
   useGetLeadAiSuggestionsQuery,
+  useGetLeadAiChatHistoryQuery,
   useChatWithLeadAiMutation,
   useCreateLeadMutation,
   useUpdateLeadMutation,
