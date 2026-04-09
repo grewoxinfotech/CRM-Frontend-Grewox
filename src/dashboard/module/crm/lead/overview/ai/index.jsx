@@ -13,8 +13,10 @@ const LeadAI = ({ leadId, leadData }) => {
   ]);
   const [isThinking, setIsThinking] = useState(false);
   const [isPlanning, setIsPlanning] = useState(false);
+  const [lastFailedMessage, setLastFailedMessage] = useState(null);
   const [currentThought, setCurrentThought] = useState("");
   const [currentPlan, setCurrentPlan] = useState("");
+  const isSendingRef = useRef(false);
   const chatEndRef = useRef(null);
   const [chatWithAi, { isLoading: isChatLoading }] = useChatWithLeadAiMutation();
 
@@ -36,7 +38,8 @@ const LeadAI = ({ leadId, leadData }) => {
 
   const { 
     data: historyResponse, 
-    isLoading: isHistoryLoading 
+    isLoading: isHistoryLoading,
+    refetch: refetchHistory
   } = useGetLeadAiChatHistoryQuery(leadId);
 
   useEffect(() => {
@@ -60,10 +63,37 @@ const LeadAI = ({ leadId, leadData }) => {
         };
       });
       
-      setChatHistory([
+      const mergedHistory = [
         { role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you close this lead today?' },
         ...formattedHistory
-      ]);
+      ];
+
+      // Deduplicate repeated role+content messages (observed in some refresh/refetch flows)
+      const deduped = [];
+      const seen = new Set();
+      for (const msg of mergedHistory) {
+        const normalizedContent = typeof msg.content === "object"
+          ? JSON.stringify(msg.content)
+          : String(msg.content || "");
+        const key = `${msg.role}::${normalizedContent}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          deduped.push(msg);
+        }
+      }
+
+      // Collapse accidental consecutive assistant duplicates; keep latest one
+      const collapsed = [];
+      for (const msg of deduped) {
+        const prev = collapsed[collapsed.length - 1];
+        if (prev && prev.role === "assistant" && msg.role === "assistant") {
+          collapsed[collapsed.length - 1] = msg;
+        } else {
+          collapsed.push(msg);
+        }
+      }
+
+      setChatHistory(collapsed);
     }
   }, [historyResponse]);
 
@@ -71,65 +101,72 @@ const LeadAI = ({ leadId, leadData }) => {
   const suggestions = aiData.suggestions || [];
   const leadScore = aiData.score || 0;
   const leadSummary = aiData.summary || "";
+  const suggestionsErrorMessage =
+    error?.data?.message ||
+    error?.data?.error ||
+    error?.error ||
+    (typeof error?.data === "string" ? error.data : "");
 
-  // Helper: Sanitize HTML to prevent XSS
-  const sanitizeHTML = (html) => {
-    if (typeof html !== 'string') return '';
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const scripts = doc.querySelectorAll('script');
-    scripts.forEach(s => s.remove());
-    return doc.body.innerHTML;
-  };
-
-  // Helper: Convert plain text to structured HTML if needed
-  const formatTextToHTML = (content) => {
-    if (!content) return '';
+  // Helper: Convert plain text to structured React component if needed
+  const renderAiContent = (content) => {
+    if (!content) return null;
     
     // If it's a structured AI response object, render it
     if (typeof content === 'object') {
       const { strategy, actions, script } = content;
-      const actionsList = (actions || [])
-        .map(a => `<li>${a.replace(/^-/, "").trim()}</li>`)
-        .join("");
+      const actionsList = (actions || []).map(a => a.replace(/^-/, "").trim());
 
-      return `
-        <div class="ai-bot-response-card">
-          <div style="margin-bottom:12px;">
-            <div style="font-weight:600; color: #1e293b; margin-bottom: 4px;">💡 Strategy</div>
-            <div style="color: #475569;">${strategy || ''}</div>
+      return (
+        <div className="ai-bot-response-card">
+          <div style={{ marginBottom: "12px" }}>
+            <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "4px" }}>💡 Strategy</div>
+            <div style={{ color: "#475569" }}>{strategy || ''}</div>
           </div>
-          <div style="margin-bottom:12px;">
-            <div style="font-weight:600; color: #1e293b; margin-bottom: 4px;">✅ Actions</div>
-            <ul style="margin: 0; padding-left: 20px; color: #475569;">${actionsList}</ul>
+          <div style={{ marginBottom: "12px" }}>
+            <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "4px" }}>✅ Actions</div>
+            <ul style={{ margin: 0, paddingLeft: "20px", color: "#475569" }}>
+              {actionsList.map((action, i) => (
+                <li key={i}>{action}</li>
+              ))}
+            </ul>
           </div>
           <div>
-            <div style="font-weight:600; color: #1e293b; margin-bottom: 4px;">💬 Script</div>
-            <div style="background:#eef2ff; padding:12px; border-radius:8px; border: 1px solid #c7d2fe; color: #3730a3; font-style: italic;">
-              ${(script || '').replace(/"/g, "").trim()}
+            <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "4px" }}>💬 Script</div>
+            <div style={{ background: "#eef2ff", padding: "12px", borderRadius: "8px", border: "1px solid #c7d2fe", color: "#3730a3", fontStyle: "italic" }}>
+              {(script || '').replace(/"/g, "").trim()}
             </div>
-            <button 
-              class="ai-copy-btn"
-              data-text="${(script || '').replace(/"/g, "").trim()}"
-              style="margin-top:8px; padding:6px 12px; cursor:pointer; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 4px;"
+            <Button 
+              size="small" 
+              icon={<FiMessageSquare />} 
+              style={{ marginTop: "8px" }}
+              onClick={() => {
+                navigator.clipboard.writeText((script || '').replace(/"/g, "").trim());
+                message.success("Script copied!");
+              }}
             >
-              📋 Copy
-            </button>
+              Copy Script
+            </Button>
           </div>
         </div>
-      `;
+      );
     }
 
-    if (content.includes('<div')) return content; // Already HTML
-
-    return `<div style="color: #475569;">${content}</div>`;
+    return <div style={{ color: "#475569" }}>{content}</div>;
   };
 
-  const handleSendMessage = async () => {
-    if (!chatMessage.trim()) return;
+  const handleSendMessage = async (msg = chatMessage) => {
+    if (!msg.trim()) return;
+    if (isSendingRef.current) return;
+    isSendingRef.current = true;
 
-    const userMessage = { role: 'user', content: chatMessage };
-    setChatHistory(prev => [...prev, userMessage]);
+    // Only add to history if it's a new message, not a retry
+    const isRetry = msg === lastFailedMessage;
+    if (!isRetry) {
+      setChatHistory(prev => [...prev, { role: 'user', content: msg }]);
+    }
+    
     setChatMessage("");
+    setLastFailedMessage(null);
     setIsThinking(true);
     setCurrentThought("Analyzing lead context...");
 
@@ -142,7 +179,7 @@ const LeadAI = ({ leadId, leadData }) => {
 
       const response = await chatWithAi({ 
         id: leadId, 
-        message: chatMessage,
+        message: msg,
         history: recentHistory
       }).unwrap();
 
@@ -159,36 +196,25 @@ const LeadAI = ({ leadId, leadData }) => {
         setCurrentPlan(aiResponse.planning || "Formulating strategy...");
         await new Promise(r => setTimeout(r, 1200));
         
-        // Final: Add to history
+        // Final: refresh canonical history from server (single source of truth)
         setIsPlanning(false);
-        setChatHistory(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+        await refetchHistory();
       } else {
         setIsThinking(false);
         setIsPlanning(false);
+        setLastFailedMessage(msg);
         message.error("Failed to get AI response");
       }
     } catch (err) {
       console.error("Chat Error:", err);
       setIsThinking(false);
       setIsPlanning(false);
+      setLastFailedMessage(msg);
       message.error("Error communicating with AI");
+    } finally {
+      isSendingRef.current = false;
     }
-  };
-
-  const handleCopyClick = (e) => {
-    const btn = e.target.closest('.ai-copy-btn');
-    if (btn) {
-      const text = btn.getAttribute('data-text');
-      if (text) {
-        navigator.clipboard.writeText(text);
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '✅ Copied!';
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-        }, 2000);
-      }
-    }
-  };
+  }; 
 
   const handleGenerate = async () => {
     try {
@@ -239,7 +265,30 @@ const LeadAI = ({ leadId, leadData }) => {
         {isLoading ? (
           <Skeleton active paragraph={{ rows: 8 }} />
         ) : error ? (
-          <Empty description="Please check your GEMINI_API_KEY in .env file" />
+          <Empty 
+            description={
+              <span>
+                <Text type="danger">
+                  {suggestionsErrorMessage || "Unable to load AI suggestions right now."}
+                </Text>
+                <br />
+                <Text type="secondary">
+                  {suggestionsErrorMessage
+                    ? "Please try again. If the issue persists, check backend logs."
+                    : "Please check your network connection and API server."}
+                </Text>
+              </span>
+            }
+          >
+            <Button 
+              type="primary" 
+              icon={<FiRefreshCw />} 
+              onClick={handleGenerate} 
+              loading={isFetching}
+            >
+              Retry Suggestions
+            </Button>
+          </Empty>
         ) : (
           <>
             <div style={{ display: "flex", gap: "24px", marginBottom: "24px", alignItems: "center" }}>
@@ -349,7 +398,6 @@ const LeadAI = ({ leadId, leadData }) => {
           
           <div 
             style={{ height: "300px", overflowY: "auto", padding: "16px", background: "#ffffff" }}
-            onClick={handleCopyClick}
           >
             {chatHistory.map((msg, index) => (
               <div 
@@ -395,10 +443,9 @@ const LeadAI = ({ leadId, leadData }) => {
                         boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                         width: "100%"
                       }}
-                      dangerouslySetInnerHTML={{ 
-                        __html: sanitizeHTML(formatTextToHTML(msg.content)) 
-                      }}
-                    />
+                    >
+                      {renderAiContent(msg.content)}
+                    </div>
                   )}
                 </div>
               </div>
@@ -466,6 +513,18 @@ const LeadAI = ({ leadId, leadData }) => {
           `}</style>
 
           <div style={{ padding: "16px", borderTop: "1px solid #e2e8f0" }}>
+            {lastFailedMessage && (
+              <div style={{ marginBottom: "8px", display: "flex", justifyContent: "center" }}>
+                <Button 
+                  size="small" 
+                  danger 
+                  icon={<FiRefreshCw />} 
+                  onClick={() => handleSendMessage(lastFailedMessage)}
+                >
+                  Retry last message
+                </Button>
+              </div>
+            )}
             <div style={{ display: "flex", gap: "8px" }}>
               <TextArea 
                 placeholder="Ask me how to close this lead..." 
@@ -478,13 +537,13 @@ const LeadAI = ({ leadId, leadData }) => {
                     handleSendMessage();
                   }
                 }}
-                disabled={isChatLoading}
+                disabled={isChatLoading || isThinking || isPlanning}
               />
               <Button 
                 type="primary" 
                 icon={<FiSend />} 
-                onClick={handleSendMessage}
-                loading={isChatLoading}
+                onClick={() => handleSendMessage()}
+                loading={isChatLoading || isThinking || isPlanning}
                 disabled={!chatMessage.trim()}
               />
             </div>
