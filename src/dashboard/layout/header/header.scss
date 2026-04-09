@@ -7,8 +7,8 @@ $desktop: 1024px;
 
 .dashboard-header {
     height: 70px;
-    background: white;
-    border-bottom: 1px solid rgba($border-color, 0.1);
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid #dbe3ef;
     padding: 0 24px;
     display: flex;
     align-items: center;
@@ -19,7 +19,8 @@ $desktop: 1024px;
     left: 260px;
     z-index: 998;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(8px);
 
     @media (max-width: $desktop) {
         left: 0;
@@ -68,7 +69,7 @@ $desktop: 1024px;
             margin: 0;
             font-size: 20px;
             font-weight: 600;
-            color: $primary-color;
+            color: #0f172a;
             letter-spacing: 0.2px;
 
             @media (max-width: $desktop) {

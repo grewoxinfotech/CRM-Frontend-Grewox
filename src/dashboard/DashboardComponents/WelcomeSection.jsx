@@ -1,9 +1,9 @@
 import React from "react";
-import { Card, Avatar, Button, Typography, Badge, Tag, Row, Col } from "antd";
-import { FiBarChart2, FiClock, FiBriefcase, FiUser } from "react-icons/fi";
+import { Card, Avatar, Button, Typography, Tag, Row, Col, Space } from "antd";
+import { FiBarChart2, FiCalendar, FiBriefcase, FiUser } from "react-icons/fi";
 import { motion } from "framer-motion";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) => {
     const getGreeting = () => {
@@ -36,243 +36,84 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
     };
 
     const roleDisplay = getRoleOrCompanyDisplay();
+    const displayName = user?.firstName || user?.username || "User";
+    const displayCompany = companyName || "Your Company";
+    const displayEmail = user?.email || "no-email";
 
-    return (
-        <motion.div
-            initial={{ scale: 0.97, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="welcome-section-wrapper"
-        >
-            <Card
-                className="welcome-card"
-                bodyStyle={{ padding: '24px' }}
-                style={{
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)',
-                    border: 'none',
-                    borderRadius: '16px',
-                    margin: '0 0 24px 0',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.06)',
-                    overflow: 'hidden',
-                    position: 'relative'
-                }}
-            >
-                {/* Background Pattern */}
-                <div className="welcome-pattern" style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    width: '40%',
-                    height: '100%',
-                    background: 'linear-gradient(45deg, transparent 0%, rgba(24, 144, 255, 0.03) 100%)',
-                    clipPath: 'polygon(100% 0, 100% 100%, 0 100%, 100% 0)',
-                    zIndex: 0
-                }} />
+  return (
+    <motion.div
+      initial={{ y: 10, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="welcome-section-wrapper"
+    >
+      <Card className="welcome-card white-label-welcome" bodyStyle={{ padding: 24 }}>
+        <Row gutter={[20, 20]} align="middle">
+          <Col xs={24} md={15}>
+            <Space direction="vertical" size={10} style={{ width: "100%" }}>
+              <Space align="center" size={8}>
+                <FiCalendar style={{ color: "#64748b" }} />
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  {new Date().toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </Text>
+              </Space>
+              <Title level={2} style={{ margin: 0, color: "#0f172a", fontSize: "clamp(24px,4vw,32px)" }}>
+                {getGreeting()}, {displayName}
+              </Title>
+              <Text style={{ color: "#475569", fontSize: 15 }}>
+                Welcome to your white-label dashboard. Track pipeline health and take action from one place.
+              </Text>
+              <Tag color="blue" style={{ width: "fit-content", margin: 0 }}>
+                {displayCompany}
+              </Tag>
+            </Space>
+          </Col>
 
-                <Row gutter={[24, 24]} align="middle" style={{ position: 'relative', zIndex: 1 }}>
-                    <Col xs={24} sm={24} md={16} lg={16} xl={16}>
-                        <motion.div
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ duration: 0.4, delay: 0.2 }}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                marginBottom: '16px'
-                            }}
-                        >
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                            >
-                                <FiClock style={{ color: '#1890ff', fontSize: '18px' }} />
-                            </motion.div>
-                            <Text style={{
-                                fontSize: '15px',
-                                color: '#666',
-                                fontWeight: '500'
-                            }}>
-                                {new Date().toLocaleDateString('en-US', {
-                                    weekday: 'long',
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                })}
-                            </Text>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ duration: 0.4, delay: 0.3 }}
-                            style={{ marginBottom: '16px' }}
-                        >
-                            <Text style={{
-                                fontSize: 'clamp(24px, 5vw, 36px)',
-                                fontWeight: '700',
-                                background: 'linear-gradient(90deg, #1890ff, #69c0ff)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                display: 'block',
-                                letterSpacing: '-0.5px',
-                                lineHeight: 1.2
-                            }}>
-                                {getGreeting()}, {user?.firstName || user?.username}!
-                            </Text>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ duration: 0.4, delay: 0.4 }}
-                        >
-                            <Text style={{
-                                fontSize: '16px',
-                                color: '#666',
-                                display: 'block',
-                                lineHeight: 1.5
-                            }}>
-                                Welcome back to your enterprise dashboard. Stay productive and manage your business efficiently.
-                            </Text>
-                        </motion.div>
-                    </Col>
-
-                    <Col xs={24} sm={24} md={8} lg={8} xl={8} className="welcome-section-right">
-                        <motion.div
-                            initial={{ x: 20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ duration: 0.4, delay: 0.5 }}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'flex-end',
-                                gap: '20px'
-                            }}
-                        >
-                            <motion.div
-                                whileHover={{ scale: 1.02 }}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '16px',
-                                    background: '#fff',
-                                    padding: '16px 24px',
-                                    borderRadius: '16px',
-                                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-                                    border: '1px solid rgba(24, 144, 255, 0.1)',
-                                    width: '100%',
-                                    maxWidth: '360px'
-                                }}
-                            >
-                                <Badge dot color="#52c41a" offset={[-9, 10]}>
-                                    <Avatar
-                                        size={56}
-                                        src={user?.profilePic}
-                                        style={{
-                                            background: "linear-gradient(135deg, #1890ff 0%, #69c0ff 100%)",
-                                            border: "3px solid #fff",
-                                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)"
-                                        }}
-                                    >
-                                        {!user?.profilePic && (user?.firstName?.[0] || 'U')}
-                                    </Avatar>
-                                </Badge>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <motion.div
-                                        initial={{ scale: 0.9, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        transition={{ duration: 0.3, delay: 0.6 }}
-                                        style={{ marginBottom: '8px' }}
-                                    >
-                                        <Tag
-                                            icon={roleDisplay.icon}
-                                            color={roleDisplay.color}
-                                            style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '6px',
-                                                padding: '4px 12px',
-                                                borderRadius: '8px',
-                                                fontSize: '14px',
-                                                lineHeight: '20px',
-                                                margin: 0,
-                                                maxWidth: '100%',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                                fontWeight: '500'
-                                            }}
-                                        >
-                                            {roleDisplay.text}
-                                        </Tag>
-                                    </motion.div>
-                                    <motion.div
-                                        initial={{ y: 5, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        transition={{ duration: 0.3, delay: 0.7 }}
-                                    >
-                                        <Text style={{
-                                            fontSize: '14px',
-                                            color: '#666',
-                                            display: 'block',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
-                                        }}>
-                                            {user?.email}
-                                        </Text>
-                                    </motion.div>
-                                </div>
-                            </motion.div>
-
-                            <motion.div
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ duration: 0.4, delay: 0.8 }}
-                                style={{
-                                    width: '100%',
-                                    maxWidth: '360px',
-                                    display: 'flex',
-                                    justifyContent: { xs: 'flex-start', sm: 'flex-start', md: 'flex-end' }
-                                }}
-                            >
-                                <motion.div
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    style={{ width: '100%' }}
-                                >
-                                    <Button
-                                        type="primary"
-                                        icon={<FiBarChart2 style={{ fontSize: '18px' }} />}
-                                        onClick={() => setShowAnalytics(!showAnalytics)}
-                                        style={{
-                                            background: showAnalytics
-                                                ? 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)'
-                                                : 'linear-gradient(135deg, #1890ff 0%, #69c0ff 100%)',
-                                            border: 'none',
-                                            height: '48px',
-                                            borderRadius: '12px',
-                                            boxShadow: '0 4px 16px rgba(24, 144, 255, 0.15)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            width: '100%',
-                                            justifyContent: 'center',
-                                            fontSize: '16px',
-                                            fontWeight: '500'
-                                        }}
-                                    >
-                                        {showAnalytics ? 'View Dashboard' : 'Analytics'}
-                                    </Button>
-                                </motion.div>
-                            </motion.div>
-                        </motion.div>
-                    </Col>
-                </Row>
-            </Card>
-        </motion.div>
-    );
+          <Col xs={24} md={9}>
+            <div className="white-label-profile-box">
+              <div className="white-label-profile-header">
+                <Space align="center" size={10} className="white-label-user-meta">
+                  <Avatar size={46} src={user?.profilePic} style={{ background: "#1d4ed8" }}>
+                    {!user?.profilePic && (user?.firstName?.[0] || "U")}
+                  </Avatar>
+                  <div className="white-label-user-text" style={{ minWidth: 0 }}>
+                    <Text strong style={{ color: "#0f172a", display: "block" }}>
+                      {displayName}
+                    </Text>
+                    <Text
+                      type="secondary"
+                      className="white-label-user-email"
+                      style={{ fontSize: 12, display: "block" }}
+                    >
+                      {displayEmail}
+                    </Text>
+                  </div>
+                </Space>
+                <div className="white-label-role-chip">
+                  <span className="white-label-role-icon">{roleDisplay.icon}</span>
+                  <span className="white-label-role-text">{roleDisplay.text}</span>
+                </div>
+              </div>
+              <Button
+                type="primary"
+                icon={<FiBarChart2 />}
+                onClick={() => setShowAnalytics(!showAnalytics)}
+                className="white-label-cta-btn"
+                block
+              >
+                {showAnalytics ? "View Dashboard" : "View Analytics"}
+              </Button>
+            </div>
+          </Col>
+        </Row>
+      </Card>
+    </motion.div>
+  );
 };
 
 export default WelcomeSection; 

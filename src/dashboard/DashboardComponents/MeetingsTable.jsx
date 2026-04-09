@@ -15,10 +15,10 @@ const responsiveStyles = {
         }
     },
     headerContainer: {
-        background: 'linear-gradient(135deg, #ffffff 0%, #e6f7ff 100%)',
-        borderBottom: '1px solid #e6f4ff',
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
         padding: '16px',
-        borderRadius: '8px 8px 0 0',
+        borderRadius: '12px 12px 0 0',
         '@media (max-width: 768px)': {
             padding: '12px',
         }
@@ -60,7 +60,7 @@ const responsiveStyles = {
         }
     },
     iconContainer: {
-        background: '#1890ff',
+        background: '#1d4ed8',
         width: '28px',
         height: '28px',
         borderRadius: '6px',
@@ -71,10 +71,7 @@ const responsiveStyles = {
     },
     titleText: {
         fontSize: '18px',
-        color: '#1f2937',
-        background: 'linear-gradient(90deg, #1890ff, #69c0ff)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
+        color: '#0f172a',
         fontWeight: '600',
         letterSpacing: '-0.02em',
         '@media (max-width: 576px)': {
@@ -83,9 +80,9 @@ const responsiveStyles = {
     },
     totalTag: {
         marginLeft: '8px',
-        background: '#e6f7ff',
-        border: 'none',
-        color: '#1890ff',
+        background: '#f1f5f9',
+        border: '1px solid #e2e8f0',
+        color: '#334155',
         fontWeight: '600',
         fontSize: '13px',
         '@media (max-width: 576px)': {
@@ -128,6 +125,8 @@ const MeetingsTable = ({
             title: "Meeting Title",
             dataIndex: "title",
             key: "title",
+            width: 220,
+            ellipsis: true,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -171,6 +170,8 @@ const MeetingsTable = ({
             title: "Time",
             dataIndex: "startTime",
             key: "time",
+            width: 170,
+            align: 'center',
             render: (startTime, record) => (
                 <div style={{ whiteSpace: 'nowrap' }}>
                     <Text strong style={{ display: 'block' }}>
@@ -187,6 +188,8 @@ const MeetingsTable = ({
             title: "Participants",
             dataIndex: "employee",
             key: "employee",
+            width: 190,
+            align: 'center',
             render: (employees) => {
                 let employeeArray = [];
                 
@@ -220,6 +223,8 @@ const MeetingsTable = ({
             title: "Status",
             dataIndex: "status",
             key: "status",
+            width: 120,
+            align: 'center',
             render: (status) => {
                 const statusConfig = {
                     scheduled: {
@@ -253,6 +258,10 @@ const MeetingsTable = ({
             },
         },
     ];
+    const meetingsColumnMap = Object.fromEntries(columns.map((col) => [col.key, col]));
+    const orderedColumns = ["title", "status", "time", "employee"]
+        .map((key) => meetingsColumnMap[key])
+        .filter(Boolean);
 
     return (
         <Card
@@ -278,11 +287,12 @@ const MeetingsTable = ({
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
                             size="small"
+                            className="white-label-date-filter"
                         >
-                            <Radio.Button value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
-                            <Radio.Button value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
-                            <Radio.Button value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
-                            <Radio.Button value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
+                            <Radio.Button value="all">All Time</Radio.Button>
+                            <Radio.Button value="today">Today</Radio.Button>
+                            <Radio.Button value="month">This Month</Radio.Button>
+                            <Radio.Button value="year">This Year</Radio.Button>
                         </Radio.Group>
                     </div>
                 </div>
@@ -291,10 +301,12 @@ const MeetingsTable = ({
             <div style={responsiveStyles.tableWrapper}>
                 <Table
                     dataSource={filterMeetingsByDate(meetings)}
-                    columns={columns}
+                    columns={orderedColumns}
+                    size="middle"
+                    tableLayout="fixed"
                     rowKey="id"
                     pagination={{
-                        pageSize: 5,
+                        pageSize: 8,
                         total: filterMeetingsByDate(meetings)?.length,
                         showTotal: (total) => `Total ${total} meetings`,
                         showSizeChanger: false,
@@ -312,12 +324,12 @@ const MeetingsTable = ({
                         overflowY: 'hidden',
                         width: '100%'
                     }}
-                    className="colorful-table fixed-height-table"
+                    className="white-label-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => navigate(`/dashboard/hrm/meeting/${record.id}`),
                         style: { cursor: 'pointer' }
                     })}
-                    scroll={{ x: '1000px', y: 'hidden' }}
+                    scroll={{ x: '980px', y: 'hidden' }}
                     // loading={loading}
                     locale={{
                         emptyText: (

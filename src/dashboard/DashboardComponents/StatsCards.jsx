@@ -12,9 +12,11 @@ const fadeInUp = {
     transition: { duration: 0.5 }
 };
 
-const getStarColor = (color) => {
-    // Create a slightly lighter version of the main color for stars
-    return color + '40'; // 40 is for 25% opacity in hex
+const iconBgMap = {
+    Customers: "#e0e7ff",
+    Leads: "#fce7f3",
+    Deals: "#dbeafe",
+    "TOTAL REVENUE": "#dcfce7",
 };
 
 const StatsCards = ({ stats }) => {
@@ -27,43 +29,21 @@ const StatsCards = ({ stats }) => {
                             <Card
                                 className="stats-card"
                                 style={{
-                                    background: stat.gradient,
-                                    border: 'none',
-                                    borderRadius: '12px',
-                                    height: '140px',
+                                    background: "#ffffff",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: '14px',
+                                    height: '154px',
                                     position: 'relative',
                                     overflow: 'hidden'
                                 }}
                                 bodyStyle={{
-                                    padding: '20px',
+                                    padding: '18px',
                                     height: '100%',
                                     position: 'relative',
                                     zIndex: 1
                                 }}
                                 hoverable
                             >
-                                {/* Decorative Stars */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '10px',
-                                    right: '10px',
-                                    width: '20px',
-                                    height: '20px',
-                                    background: getStarColor(stat.color),
-                                    opacity: 0.4,
-                                    transform: 'rotate(45deg)'
-                                }} />
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '40px',
-                                    right: '40px',
-                                    width: '40px',
-                                    height: '40px',
-                                    background: getStarColor(stat.color),
-                                    opacity: 0.2,
-                                    transform: 'rotate(45deg)'
-                                }} />
-
                                 <div style={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -73,35 +53,32 @@ const StatsCards = ({ stats }) => {
                                     <div style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '12px',
-                                        marginBottom: '16px'
+                                        gap: '12px'
                                     }}>
                                         <div style={{
-                                            background: stat.iconGradient,
-                                            width: '40px',
-                                            height: '40px',
+                                            background: iconBgMap[stat.title] || "#eff6ff",
+                                            width: '42px',
+                                            height: '42px',
                                             borderRadius: '8px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                            border: "1px solid #dbeafe"
                                         }}>
-                                            <span style={{ color: '#fff', fontSize: '20px' }}>
+                                            <span style={{ color: '#1d4ed8', fontSize: '20px' }}>
                                                 {stat.icon}
                                             </span>
                                         </div>
                                         <div>
                                             <Text style={{
-                                                fontSize: '16px',
-                                                color: '#1f2937',
+                                                fontSize: '15px',
+                                                color: '#0f172a',
                                                 fontWeight: '500',
                                                 display: 'block'
                                             }}>
                                                 {stat.title}
                                             </Text>
-                                            <Text type="secondary" style={{
-                                                fontSize: '12px'
-                                            }}>
+                                            <Text type="secondary" style={{ fontSize: '12px' }}>
                                                 {stat.tag}
                                             </Text>
                                         </div>
@@ -109,9 +86,9 @@ const StatsCards = ({ stats }) => {
 
                                     <div>
                                         <div style={{
-                                            fontSize: '28px',
+                                            fontSize: '30px',
                                             fontWeight: '700',
-                                            color: stat.color,
+                                            color: '#0f172a',
                                             marginBottom: '4px',
                                             lineHeight: '1',
                                             letterSpacing: '-0.02em'
@@ -126,10 +103,7 @@ const StatsCards = ({ stats }) => {
                                                 prefix={stat.format === 'currency' ? stat.currencySymbol : ''}
                                             />
                                         </div>
-                                        <Text type="secondary" style={{
-                                            fontSize: '13px',
-                                            display: 'block'
-                                        }}>
+                                        <Text type="secondary" style={{ fontSize: '13px', display: 'block' }}>
                                             {stat.description}
                                         </Text>
                                     </div>

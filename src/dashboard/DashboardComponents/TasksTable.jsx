@@ -15,10 +15,10 @@ const responsiveStyles = {
         }
     },
     headerContainer: {
-        background: 'linear-gradient(135deg, #ffffff 0%, #f0f2ff 100%)',
-        borderBottom: '1px solid #f9f0ff',
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
         padding: '16px',
-        borderRadius: '8px 8px 0 0',
+        borderRadius: '12px 12px 0 0',
         '@media (max-width: 768px)': {
             padding: '12px',
         }
@@ -60,7 +60,7 @@ const responsiveStyles = {
         }
     },
     iconContainer: {
-        background: '#722ed1',
+        background: '#1d4ed8',
         width: '28px',
         height: '28px',
         borderRadius: '6px',
@@ -71,10 +71,7 @@ const responsiveStyles = {
     },
     titleText: {
         fontSize: '18px',
-        color: '#1f2937',
-        background: 'linear-gradient(90deg, #722ed1, #b37feb)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
+        color: '#0f172a',
         fontWeight: '600',
         letterSpacing: '-0.02em',
         '@media (max-width: 576px)': {
@@ -83,9 +80,9 @@ const responsiveStyles = {
     },
     totalTag: {
         marginLeft: '8px',
-        background: '#f9f0ff',
-        border: 'none',
-        color: '#722ed1',
+        background: '#f1f5f9',
+        border: '1px solid #e2e8f0',
+        color: '#334155',
         fontWeight: '600',
         fontSize: '13px',
         '@media (max-width: 576px)': {
@@ -372,6 +369,8 @@ const TasksTable = ({
             title: "Task Name",
             dataIndex: "taskName",
             key: "taskName",
+            width: 220,
+            ellipsis: true,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -409,6 +408,8 @@ const TasksTable = ({
             title: "Due Date",
             dataIndex: "dueDate",
             key: "dueDate",
+            width: 150,
+            align: 'center',
             render: (date) => (
                 <Tooltip title={dayjs(date).format('MMMM DD, YYYY, HH:mm')}>
                     <Text style={{ whiteSpace: 'nowrap' }}>{dayjs(date).format('MMM DD, YYYY')}</Text>
@@ -419,6 +420,8 @@ const TasksTable = ({
             title: "Status",
             dataIndex: "status",
             key: "status",
+            width: 130,
+            align: 'center',
             filters: [
                 { text: 'Completed', value: 'Completed' },
                 { text: 'In Progress', value: 'In Progress' },
@@ -438,6 +441,8 @@ const TasksTable = ({
             title: "Priority",
             dataIndex: "priority",
             key: "priority",
+            width: 120,
+            align: 'center',
             filters: [
                 { text: 'High', value: 'High' },
                 { text: 'Medium', value: 'Medium' },
@@ -454,6 +459,10 @@ const TasksTable = ({
             ),
         }
     ];
+    const tasksColumnMap = Object.fromEntries(columns.map((col) => [col.key, col]));
+    const orderedColumns = ["taskName", "status", "priority", "dueDate"]
+        .map((key) => tasksColumnMap[key])
+        .filter(Boolean);
 
     return (
         <Card
@@ -479,11 +488,12 @@ const TasksTable = ({
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
                             size="small"
+                            className="white-label-date-filter"
                         >
-                            <Radio.Button value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
-                            <Radio.Button value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
-                            <Radio.Button value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
-                            <Radio.Button value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
+                            <Radio.Button value="all">All Time</Radio.Button>
+                            <Radio.Button value="today">Today</Radio.Button>
+                            <Radio.Button value="month">This Month</Radio.Button>
+                            <Radio.Button value="year">This Year</Radio.Button>
                         </Radio.Group>
                     </div>
                 </div>
@@ -492,10 +502,12 @@ const TasksTable = ({
             <div style={responsiveStyles.tableWrapper}>
                 <Table
                     dataSource={filterTasksByDate(tasks)}
-                    columns={columns}
+                    columns={orderedColumns}
+                    size="middle"
+                    tableLayout="fixed"
                     rowKey="id"
                     pagination={{
-                        pageSize: 5,
+                        pageSize: 8,
                         total: filterTasksByDate(tasks)?.length,
                         showTotal: (total) => `Total ${total} tasks`,
                         showSizeChanger: false,
@@ -513,12 +525,12 @@ const TasksTable = ({
                         overflowY: 'hidden',
                         width: '100%'
                     }}
-                    className="colorful-table fixed-height-table"
+                    className="white-label-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => handleRowClick(record),
                         style: { cursor: 'pointer' }
                     })}
-                    scroll={{ x: '1000px', y: 'hidden' }}
+                    scroll={{ x: '980px', y: 'hidden' }}
                     // loading={loading}
                     locale={{
                         emptyText: (

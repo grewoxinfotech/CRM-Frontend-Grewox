@@ -14,10 +14,10 @@ const responsiveStyles = {
         }
     },
     headerContainer: {
-        background: 'linear-gradient(135deg, #ffffff 0%, #f0f2ff 100%)',
-        borderBottom: '1px solid #e6f4ff',
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
         padding: '16px',
-        borderRadius: '8px 8px 0 0',
+        borderRadius: '12px 12px 0 0',
         '@media (max-width: 768px)': {
             padding: '12px',
         }
@@ -59,7 +59,7 @@ const responsiveStyles = {
         }
     },
     iconContainer: {
-        background: '#1890ff',
+        background: '#1d4ed8',
         width: '28px',
         height: '28px',
         borderRadius: '6px',
@@ -70,10 +70,7 @@ const responsiveStyles = {
     },
     titleText: {
         fontSize: '18px',
-        color: '#1f2937',
-        background: 'linear-gradient(90deg, #1890ff, #69c0ff)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
+        color: '#0f172a',
         fontWeight: '600',
         letterSpacing: '-0.02em',
         '@media (max-width: 576px)': {
@@ -82,9 +79,9 @@ const responsiveStyles = {
     },
     totalTag: {
         marginLeft: '8px',
-        background: '#e6f4ff',
-        border: 'none',
-        color: '#1890ff',
+        background: '#f1f5f9',
+        border: '1px solid #e2e8f0',
+        color: '#334155',
         fontWeight: '600',
         fontSize: '13px',
         '@media (max-width: 576px)': {
@@ -129,6 +126,8 @@ const LeadsTable = ({
             title: "Lead Title",
             dataIndex: "leadTitle",
             key: "leadTitle",
+            width: 220,
+            ellipsis: true,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -185,7 +184,7 @@ const LeadsTable = ({
                         color: '#faad14',
                         bg: 'rgba(250, 173, 20, 0.1)',
                         icon: <FiTarget style={{ marginRight: '4px' }} />,
-                        text: 'Med'
+                        text: 'Medium'
                     },
                     low: {
                         color: '#ff4d4f',
@@ -204,9 +203,9 @@ const LeadsTable = ({
                     <Tag style={{
                         color: interestStyle.color,
                         backgroundColor: interestStyle.bg,
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '2px 8px',
+                        border: `1px solid ${interestStyle.color}40`,
+                        borderRadius: '999px',
+                        padding: '2px 10px',
                         fontSize: '12px',
                         fontWeight: '500',
                         whiteSpace: 'nowrap'
@@ -216,17 +215,22 @@ const LeadsTable = ({
                     </Tag>
                 );
             },
+            width: 140,
+            align: 'center'
         },
         {
             title: "Value",
             dataIndex: "leadValue",
             key: "leadValue",
+            width: 130,
+            align: 'right',
             sorter: (a, b) => (a.leadValue || 0) - (b.leadValue || 0),
             render: (value, record) => {
                 const currency = currencies?.find(c => c.id === record.currency);
+                const numericValue = Number(value) || 0;
                 return (
-                    <Text strong style={{ fontSize: '13px', color: '#52c41a', whiteSpace: 'nowrap' }}>
-                        {currency?.currencyIcon || ''} {(value || 0).toLocaleString()}
+                    <Text strong style={{ fontSize: '13px', color: numericValue > 0 ? '#16a34a' : '#64748b', whiteSpace: 'nowrap' }}>
+                        {currency?.currencyIcon || '₹'} {numericValue.toLocaleString()}
                     </Text>
                 );
             },
@@ -260,8 +264,14 @@ const LeadsTable = ({
                     </Tag>
                 );
             },
+            width: 120,
+            align: 'center'
         }
     ];
+    const leadsColumnMap = Object.fromEntries(columns.map((col) => [col.key, col]));
+    const orderedColumns = ["leadTitle", "status", "interest_level", "leadValue"]
+        .map((key) => leadsColumnMap[key])
+        .filter(Boolean);
 
     return (
         <Card
@@ -287,11 +297,12 @@ const LeadsTable = ({
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
                             size="small"
+                            className="white-label-date-filter"
                         >
-                            <Radio.Button value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
-                            <Radio.Button value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
-                            <Radio.Button value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
-                            <Radio.Button value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
+                            <Radio.Button value="all">All Time</Radio.Button>
+                            <Radio.Button value="today">Today</Radio.Button>
+                            <Radio.Button value="month">This Month</Radio.Button>
+                            <Radio.Button value="year">This Year</Radio.Button>
                         </Radio.Group>
                     </div>
                 </div>
@@ -300,11 +311,13 @@ const LeadsTable = ({
             <div style={responsiveStyles.tableWrapper}>
                 <Table
                     dataSource={filterLeadsByDate(leads)}
-                    columns={columns}
+                    columns={orderedColumns}
+                    size="middle"
+                    tableLayout="fixed"
                     // loading={loading}
                     rowKey="id"
                     pagination={{
-                        pageSize: 5,
+                        pageSize: 8,
                         total: filterLeadsByDate(leads)?.length,
                         showTotal: (total) => `Total ${total} leads`,
                         showSizeChanger: false,
@@ -322,12 +335,12 @@ const LeadsTable = ({
                         overflowY: 'hidden',
                         width: '100%'
                     }}
-                    className="colorful-table fixed-height-table"
+                    className="white-label-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => navigate(`/dashboard/crm/leads/${record.id}`),
                         style: { cursor: 'pointer' }
                     })}
-                    scroll={{ x: '1000px', y: 'hidden' }}
+                    scroll={{ x: '980px', y: 'hidden' }}
                     locale={{
                         emptyText: (
                             <div style={{

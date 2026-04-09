@@ -8,7 +8,7 @@ $desktop: 1024px;
 .dashboard-layout {
     display: flex;
     min-height: 100vh;
-    background-color: $background-color;
+    background-color: #eef2f7;
     position: relative;
 
     @media (max-width: $desktop) {
@@ -21,8 +21,8 @@ $desktop: 1024px;
         display: flex;
         flex-direction: column;
         min-height: 100vh;
-        width: calc(100% - 260px);
-        margin-left: 260px;
+        width: calc(100% - 236px);
+        margin-left: 236px;
         transition: all 0.3s ease;
 
         @media (max-width: $desktop) {
@@ -33,11 +33,11 @@ $desktop: 1024px;
 
         .page-content {
             flex: 1;
-            padding: 24px;
-            padding-top: calc(24px + 70px);
+            padding: 16px;
+            padding-top: calc(16px + 70px);
             padding-bottom: 80px;
             min-height: calc(100vh - 70px - 60px);
-            background-color: #f8fafc;
+            background-color: #eef2f7;
 
             @media (max-width: $desktop) {
                 padding: 16px;
@@ -86,8 +86,8 @@ $desktop: 1024px;
     position: fixed;
     top: 0;
     right: 0;
-    left: 260px;
-    width: calc(100% - 260px);
+    left: 236px;
+    width: calc(100% - 236px);
     height: 70px;
     z-index: 998;
     transition: all 0.3s ease;
@@ -106,8 +106,8 @@ $desktop: 1024px;
     position: fixed;
     bottom: 0;
     right: 0;
-    left: 260px;
-    width: calc(100% - 260px);
+    left: 236px;
+    width: calc(100% - 236px);
     height: 60px;
     z-index: 997;
     transition: all 0.3s ease;

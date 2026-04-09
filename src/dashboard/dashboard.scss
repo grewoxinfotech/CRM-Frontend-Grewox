@@ -1,6 +1,6 @@
 .dashboard-container {
     padding: 24px;
-    background-color: #f8fafc;
+    background-color: #f3f6fb;
     min-height: 100vh;
 
     @media (max-width: 576px) {
@@ -761,6 +761,34 @@
     }
 
     .leads-table-card {
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05) !important;
+
+        .white-label-table {
+            .ant-table {
+                border-radius: 0 0 12px 12px;
+                overflow: hidden;
+                background: #ffffff;
+
+                .ant-table-thead>tr>th {
+                    background: #f8fafc !important;
+                    color: #334155;
+                    font-weight: 600;
+                    border-bottom: 1px solid #e2e8f0;
+                    padding: 12px 14px;
+                }
+
+                .ant-table-tbody>tr>td {
+                    padding: 11px 14px;
+                    border-bottom: 1px solid #eef2f7;
+                }
+
+                .ant-table-tbody>tr:hover>td {
+                    background: #f8fbff !important;
+                }
+            }
+        }
 
         .colorful-table {
             .ant-table {
@@ -863,12 +891,192 @@
     }
 }
 
+.white-label-welcome {
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06) !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+}
+
+.white-label-profile-box {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.white-label-profile-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.white-label-user-meta {
+    min-width: 0;
+    flex: 1;
+}
+
+.white-label-user-text {
+    min-width: 0;
+}
+
+.white-label-user-email {
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.white-label-role-chip {
+    flex-shrink: 0;
+    min-width: 0;
+    max-width: 132px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    padding: 4px 10px;
+    border-radius: 10px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 12px;
+    font-weight: 600;
+
+}
+
+.white-label-role-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.white-label-role-text {
+    display: inline-block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.white-label-cta-btn {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    font-weight: 600;
+}
+
+.white-label-cta-btn:hover {
+    background: #1e40af !important;
+    border-color: #1e40af !important;
+}
+
+@media (max-width: 992px) {
+    .white-label-profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .white-label-user-meta {
+        width: 100%;
+    }
+
+    .white-label-user-email {
+        max-width: 100%;
+    }
+
+    .white-label-role-chip {
+        max-width: 100%;
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 576px) {
+    .white-label-profile-box {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .white-label-profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .white-label-user-meta {
+        width: 100%;
+    }
+
+    .white-label-user-email {
+        max-width: 100%;
+    }
+
+    .white-label-role-chip {
+        margin-left: 0 !important;
+        max-width: 100%;
+        align-self: flex-start;
+    }
+
+    .white-label-cta-btn {
+        height: 40px;
+    }
+}
+
+.white-label-date-filter {
+    display: inline-flex;
+    gap: 6px;
+    padding: 4px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+
+    .ant-radio-button-wrapper {
+        border: none !important;
+        background: transparent !important;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 600;
+        height: 30px;
+        line-height: 30px;
+        padding: 0 10px;
+        border-radius: 8px !important;
+        transition: all 0.2s ease;
+    }
+
+    .ant-radio-button-wrapper:not(:first-child)::before {
+        display: none !important;
+    }
+
+    .ant-radio-button-wrapper-checked {
+        background: #1d4ed8 !important;
+        color: #ffffff !important;
+        box-shadow: 0 3px 10px rgba(29, 78, 216, 0.25);
+    }
+}
+
 .welcome-section-right {
     display: flex;
     flex-direction: column;
 }
 
 @media (max-width: 768px) {
+    .white-label-welcome {
+        border-radius: 12px !important;
+    }
+
+    .white-label-welcome .ant-card-body {
+        padding: 16px !important;
+    }
+
     .welcome-section-right {
         align-items: center;
     }
@@ -879,5 +1087,60 @@
     
     .welcome-section-right > div > div {
         justify-content: center !important;
+    }
+
+    .white-label-date-filter {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .white-label-date-filter .ant-radio-button-wrapper {
+        width: 100%;
+        text-align: center;
+        padding: 0 6px;
+        font-size: 11px;
+    }
+
+    .leads-table-card .white-label-table .ant-table-thead > tr > th {
+        font-size: 12px;
+        padding: 10px 10px;
+    }
+
+    .leads-table-card .white-label-table .ant-table-tbody > tr > td {
+        font-size: 12px;
+        padding: 9px 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .white-label-welcome .ant-card-body {
+        padding: 12px !important;
+    }
+
+    .white-label-profile-box {
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .white-label-role-chip {
+        max-width: 100%;
+    }
+
+    .white-label-date-filter {
+        grid-template-columns: 1fr;
+    }
+
+    .white-label-date-filter .ant-radio-button-wrapper {
+        height: 32px;
+        line-height: 32px;
+        font-size: 12px;
+    }
+
+    .leads-table-card .white-label-table .ant-table-thead > tr > th,
+    .leads-table-card .white-label-table .ant-table-tbody > tr > td {
+        padding: 8px 8px;
+        font-size: 11px;
     }
 }

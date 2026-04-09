@@ -14,10 +14,10 @@ const responsiveStyles = {
         }
     },
     headerContainer: {
-        background: 'linear-gradient(135deg, #ffffff 0%, #f0f2ff 100%)',
-        borderBottom: '1px solid #e6ffec',
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
         padding: '16px',
-        borderRadius: '8px 8px 0 0',
+        borderRadius: '12px 12px 0 0',
         '@media (max-width: 768px)': {
             padding: '12px',
         }
@@ -59,7 +59,7 @@ const responsiveStyles = {
         }
     },
     iconContainer: {
-        background: '#52c41a',
+        background: '#1d4ed8',
         width: '28px',
         height: '28px',
         borderRadius: '6px',
@@ -70,10 +70,7 @@ const responsiveStyles = {
     },
     titleText: {
         fontSize: '18px',
-        color: '#1f2937',
-        background: 'linear-gradient(90deg, #52c41a, #95de64)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
+        color: '#0f172a',
         fontWeight: '600',
         letterSpacing: '-0.02em',
         '@media (max-width: 576px)': {
@@ -82,9 +79,9 @@ const responsiveStyles = {
     },
     totalTag: {
         marginLeft: '8px',
-        background: '#f6ffed',
-        border: 'none',
-        color: '#52c41a',
+        background: '#f1f5f9',
+        border: '1px solid #e2e8f0',
+        color: '#334155',
         fontWeight: '600',
         fontSize: '13px',
         '@media (max-width: 576px)': {
@@ -129,6 +126,8 @@ const DealsTable = ({
             title: "Deal Title",
             dataIndex: "dealTitle",
             key: "dealTitle",
+            width: 220,
+            ellipsis: true,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -168,6 +167,8 @@ const DealsTable = ({
             title: "Stage",
             dataIndex: "stage",
             key: "stage",
+            width: 150,
+            align: 'center',
             filters: stagesData?.filter(stage => stage.stageType === "deal").map(stage => ({
                 text: stage.stageName,
                 value: stage.id
@@ -195,12 +196,15 @@ const DealsTable = ({
             title: "Value",
             dataIndex: "value",
             key: "value",
+            width: 130,
+            align: 'right',
             sorter: (a, b) => (a.value || 0) - (b.value || 0),
             render: (value, record) => {
                 const currency = currencies?.find(c => c.id === record.currency);
+                const numericValue = Number(value) || 0;
                 return (
-                    <Text strong style={{ fontSize: '13px', color: '#52c41a', whiteSpace: 'nowrap' }}>
-                        {currency?.currencyIcon || ''} {(value || 0).toLocaleString()}
+                    <Text strong style={{ fontSize: '13px', color: numericValue > 0 ? '#16a34a' : '#64748b', whiteSpace: 'nowrap' }}>
+                        {currency?.currencyIcon || '₹'} {numericValue.toLocaleString()}
                     </Text>
                 );
             },
@@ -209,6 +213,8 @@ const DealsTable = ({
             title: "Status",
             dataIndex: "status",
             key: "status",
+            width: 120,
+            align: 'center',
             filters: [
                 { text: 'Won', value: 'won' },
                 { text: 'Pending', value: 'pending' },
@@ -240,6 +246,10 @@ const DealsTable = ({
             },
         }
     ];
+    const dealsColumnMap = Object.fromEntries(columns.map((col) => [col.key, col]));
+    const orderedColumns = ["dealTitle", "status", "stage", "value"]
+        .map((key) => dealsColumnMap[key])
+        .filter(Boolean);
 
     return (
         <Card
@@ -265,11 +275,12 @@ const DealsTable = ({
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
                             size="small"
+                            className="white-label-date-filter"
                         >
-                            <Radio.Button value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
-                            <Radio.Button value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
-                            <Radio.Button value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
-                            <Radio.Button value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
+                            <Radio.Button value="all">All Time</Radio.Button>
+                            <Radio.Button value="today">Today</Radio.Button>
+                            <Radio.Button value="month">This Month</Radio.Button>
+                            <Radio.Button value="year">This Year</Radio.Button>
                         </Radio.Group>
                     </div>
                 </div>
@@ -278,11 +289,13 @@ const DealsTable = ({
             <div style={responsiveStyles.tableWrapper}>
                 <Table
                     dataSource={filterDealsByDate(deals)}
-                    columns={columns}
+                    columns={orderedColumns}
+                    size="middle"
+                    tableLayout="fixed"
                     // loading={loading}
                     rowKey="id"
                     pagination={{
-                        pageSize: 5,
+                        pageSize: 8,
                         total: filterDealsByDate(deals)?.length,
                         showTotal: (total) => `Total ${total} deals`,
                         showSizeChanger: false,
@@ -300,12 +313,12 @@ const DealsTable = ({
                         overflowY: 'hidden',
                         width: '100%'
                     }}
-                    className="colorful-table fixed-height-table"
+                    className="white-label-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => navigate(`/dashboard/crm/deal/${record.id}`),
                         style: { cursor: 'pointer' }
                     })}
-                    scroll={{ x: '1000px', y: 'hidden' }}
+                    scroll={{ x: '980px', y: 'hidden' }}
                     locale={{
                         emptyText: (
                             <div style={{
