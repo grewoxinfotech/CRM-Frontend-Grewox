@@ -4,6 +4,8 @@ export {
     useGetAllCountriesQuery,
     useGetWhatsappSettingsQuery,
     useSaveWhatsappSettingsMutation,
+    useGetWhatsappMessagesQuery,
+    useGetWhatsappConversationsQuery,
     useGetApprovedCampaignsQuery,
     useSendBulkCampaignMutation
 } from '../../../../superadmin/module/settings/services/settingsApi';

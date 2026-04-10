@@ -79,6 +79,8 @@ import GeneralSettings from "../superadmin/module/settings/general/index.jsx";
 import Plan from '../dashboard/module/settings/plan/index.jsx';
 import Payment from "../dashboard/module/settings/payment/index.jsx";
 import WhatsappSettings from "../dashboard/module/settings/whatsapp/index.jsx";
+import WhatsAppMessages from "../dashboard/module/whatsapp/WhatsAppMessages.jsx";
+import WhatsAppInbox from "../dashboard/module/whatsapp/WhatsAppInbox.jsx";
 import Storage from "../superadmin/module/storage/index.jsx";
 
 
@@ -454,6 +456,14 @@ const routes = createBrowserRouter([
       {
         path: "settings/whatsapp",
         element: <WhatsappSettings />,
+      },
+      {
+        path: "whatsapp/messages",
+        element: <WhatsAppMessages />,
+      },
+      {
+        path: "whatsapp/inbox",
+        element: <WhatsAppInbox />,
       },
       {
         path: "settings/tax",

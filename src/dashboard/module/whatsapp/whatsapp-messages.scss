@@ -1,0 +1,44 @@
+.whatsapp-messages-page {
+  .wa-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .wa-filters-card {
+    margin-bottom: 16px;
+
+    .wa-filters {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+
+  .wa-table-card {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  }
+
+  .wa-loading {
+    display: flex;
+    justify-content: center;
+    padding: 48px;
+  }
+
+  .wa-msg-preview {
+    max-width: 420px;
+    display: inline-block;
+  }
+}
+
+@media (max-width: 576px) {
+  .whatsapp-messages-page .wa-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

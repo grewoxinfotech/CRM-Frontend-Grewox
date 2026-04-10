@@ -44,6 +44,8 @@ import {
   FiTruck,
   FiSliders,
   FiMenu,
+  FiList,
+  FiPhone,
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
@@ -66,6 +68,7 @@ const Sidebar = ({
   const [isHrmOpen, setHrmOpen] = useState(false);
   const [isSupportOpen, setSupportOpen] = useState(false);
   const [isJobOpen, setJobOpen] = useState(false);
+  const [isWhatsappOpen, setWhatsappOpen] = useState(false);
   const [isSalesOpen, setSalesOpen] = useState(false);
   const [isPurchaseOpen, setPurchaseOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -290,6 +293,9 @@ const Sidebar = ({
         break;
       case "Job":
         setJobOpen(!isJobOpen);
+        break;
+      case "WhatsApp":
+        setWhatsappOpen(!isWhatsappOpen);
         break;
     }
 
@@ -527,6 +533,32 @@ const Sidebar = ({
       ].filter(item => shouldShowMenuItem(item)),
     },
     {
+      title: "WhatsApp",
+      icon: <FiPhone />,
+      isDropdown: true,
+      permission: "dashboards-communication",
+      subItems: [
+        {
+          title: "Inbox",
+          icon: <FiMessageSquare />,
+          path: "/dashboard/whatsapp/inbox",
+          permission: "dashboards-communication",
+        },
+        {
+          title: "Business setup",
+          icon: <FiSettings />,
+          path: "/dashboard/settings/whatsapp",
+          permission: "dashboards-communication",
+        },
+        {
+          title: "Message log",
+          icon: <FiList />,
+          path: "/dashboard/whatsapp/messages",
+          permission: "dashboards-communication",
+        },
+      ].filter((item) => shouldShowMenuItem(item)),
+    },
+    {
       title: "HRM",
       icon: <FiUsers />,
       isDropdown: true,
@@ -709,12 +741,6 @@ const Sidebar = ({
           path: '/dashboard/settings/esignature',
           permission: "dashboards-communication"
         },
-        {
-          title: 'WhatsApp',
-          icon: <FiMessageSquare />,
-          path: '/dashboard/settings/whatsapp',
-          permission: "dashboards-communication"
-        }
       ].filter(subItem => {
         // If subscription expired, only show Plan
         if (isSubscriptionExpired) {
@@ -884,15 +910,17 @@ const Sidebar = ({
                           )
                           : item.title === "Communication"
                             ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
-                            : item.title === "HRM"
-                              ? renderDropdown(item, isHrmOpen, setHrmOpen)
-                              : item.title === "Setting"
-                                ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
-                                : item.title === "Support"
-                                  ? renderDropdown(item, isSupportOpen, setSupportOpen)
-                                  : item.title === "Job"
-                                    ? renderDropdown(item, isJobOpen, setJobOpen)
-                                    : renderDropdown(item, false, () => { })}
+                            : item.title === "WhatsApp"
+                              ? renderDropdown(item, isWhatsappOpen, setWhatsappOpen)
+                              : item.title === "HRM"
+                                ? renderDropdown(item, isHrmOpen, setHrmOpen)
+                                : item.title === "Setting"
+                                  ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
+                                  : item.title === "Support"
+                                    ? renderDropdown(item, isSupportOpen, setSupportOpen)
+                                    : item.title === "Job"
+                                      ? renderDropdown(item, isJobOpen, setJobOpen)
+                                      : renderDropdown(item, false, () => { })}
               </motion.div>
             ))
           )}

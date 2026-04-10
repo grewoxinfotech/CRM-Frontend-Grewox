@@ -1,0 +1,130 @@
+.wa-inbox {
+  .wa-inbox-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .wa-inbox-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .wa-left,
+  .wa-right {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  }
+
+  .wa-center {
+    padding: 48px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .wa-conv {
+    cursor: pointer;
+    padding: 10px 10px;
+    border-radius: 10px;
+  }
+
+  .wa-conv.active {
+    background: #eff6ff;
+  }
+
+  .wa-conv-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .wa-conv-preview {
+    display: inline-block;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wa-thread-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .wa-thread {
+    height: calc(100vh - 320px);
+    min-height: 360px;
+    overflow: auto;
+    padding: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+  }
+
+  .wa-bubble {
+    max-width: 78%;
+    margin: 8px 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+  }
+
+  .wa-bubble.in {
+    margin-right: auto;
+    border-top-left-radius: 6px;
+  }
+
+  .wa-bubble.out {
+    margin-left: auto;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    border-top-right-radius: 6px;
+  }
+
+  .wa-bubble-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .wa-bubble-body {
+    white-space: pre-wrap;
+    color: #0f172a;
+  }
+
+  .wa-compose {
+    display: grid;
+    grid-template-columns: 1fr 110px;
+    gap: 10px;
+    margin-top: 12px;
+    align-items: start;
+  }
+}
+
+@media (max-width: 992px) {
+  .wa-inbox .wa-inbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wa-inbox .wa-thread {
+    height: 520px;
+  }
+
+  .wa-inbox .wa-conv-preview {
+    max-width: 100%;
+  }
+}
+

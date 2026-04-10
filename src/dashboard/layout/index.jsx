@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './header';
 import Sidebar from './sidebar';
@@ -6,9 +6,15 @@ import Footer from './footer';
 import './layout.scss';
 import { useGetRolesQuery } from '../module/hrm/role/services/roleApi';
 import { selectCurrentUser } from '../../auth/services/authSlice';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { io } from 'socket.io-client';
+import { BASE_URL } from '../../config/config';
+import { leadApi } from '../module/crm/lead/services/LeadApi';
+import { settingsApi } from '../../superadmin/module/settings/services/settingsApi';
 
 const DashboardLayout = () => {
+    const dispatch = useDispatch();
+    const inboxSocketRef = useRef(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1024);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -87,6 +93,27 @@ const DashboardLayout = () => {
             refetch();
         }
     }, [loggedInUser, refetch]);
+
+    // WhatsApp webhook → DB: refresh leads / inbox when tenant receives a message
+    useEffect(() => {
+        if (!loggedInUser?.id) return;
+
+        const baseUrl = BASE_URL.replace(/\/?api\/v1\/?$/, '');
+        inboxSocketRef.current = io(baseUrl, {
+            withCredentials: true,
+            path: '/socket.io',
+        });
+        inboxSocketRef.current.emit('user_connected', loggedInUser.id);
+        inboxSocketRef.current.on('whatsapp_inbox_update', () => {
+            dispatch(leadApi.util.invalidateTags(['Lead']));
+            dispatch(settingsApi.util.invalidateTags(['WhatsappInbox']));
+        });
+
+        return () => {
+            inboxSocketRef.current?.disconnect();
+            inboxSocketRef.current = null;
+        };
+    }, [loggedInUser?.id, dispatch]);
 
     return (
         <div className={`dashboard-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>

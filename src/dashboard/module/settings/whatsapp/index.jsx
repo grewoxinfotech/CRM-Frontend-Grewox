@@ -3,6 +3,7 @@ import { Card, Form, Input, Switch, Button, message, Row, Col, Typography, Bread
 import { SaveOutlined } from '@ant-design/icons';
 import { FiHome } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import { UnorderedListOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useGetWhatsappSettingsQuery, useSaveWhatsappSettingsMutation } from '../services/settingsApi';
@@ -28,7 +29,8 @@ const WhatsappSettings = () => {
                 facebook_page_id: settings.facebook_page_id,
                 access_token: settings.access_token,
                 verify_token: settings.verify_token || uniqueToken,
-                is_active: settings.is_active
+                is_active: settings.is_active,
+                ai_auto_reply: settings.ai_auto_reply !== false,
             });
         } else {
             // For new setup, provide the username-based token automatically
@@ -69,11 +71,16 @@ const WhatsappSettings = () => {
                 </Breadcrumb>
             </div>
 
-            <div className="page-header">
+            <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                 <div className="page-title">
                     <Title level={2}>WhatsApp Settings</Title>
                     <Text type="secondary">Configure your WhatsApp Business API credentials</Text>
                 </div>
+                <Link to="/dashboard/whatsapp/messages">
+                    <Button icon={<UnorderedListOutlined />} size="large">
+                        Open message log
+                    </Button>
+                </Link>
             </div>
 
             <div className="page-contents">
@@ -82,7 +89,7 @@ const WhatsappSettings = () => {
                     layout="vertical"
                     onFinish={handleSave}
                     className="settings-form"
-                    initialValues={{ is_active: true }}
+                    initialValues={{ is_active: true, ai_auto_reply: true }}
                 >
                     <Row gutter={[24, 24]}>
                         <Col xs={24} lg={16}>
@@ -142,6 +149,15 @@ const WhatsappSettings = () => {
                                     valuePropName="checked"
                                 >
                                     <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+                                </Form.Item>
+
+                                <Form.Item
+                                    label="AI auto-reply (Gemini)"
+                                    name="ai_auto_reply"
+                                    valuePropName="checked"
+                                    extra="When on, incoming WhatsApp messages get a short AI reply (needs GEMINI_API_KEY on the server). When off, the static thank-you template is used."
+                                >
+                                    <Switch checkedChildren="On" unCheckedChildren="Off" />
                                 </Form.Item>
 
                                 <div className="form-actions">
