@@ -98,6 +98,7 @@ const CreateLead = ({
   const [selectedContact, setSelectedContact] = useState(null);
   const [newCompanyName, setNewCompanyName] = useState("");
   const [createContact] = useCreateContactMutation();
+  const selectedCompanyId = Form.useWatch('company_id', form);
 
   // Get stages data
   const { data: stagesData } = useGetLeadStagesQuery();
@@ -121,6 +122,7 @@ const CreateLead = ({
   const {
     data: contactsResponse,
     isLoading: isContactsLoading,
+    refetch: refetchContacts,
   } = useGetContactsQuery();
 
   useEffect(() => {
@@ -421,15 +423,22 @@ const CreateLead = ({
     setIsAddContactVisible(true);
   };
 
-  const handleCompanyCreationSuccess = (newCompany) => {
+  const handleCompanyCreationSuccess = async (newCompany) => {
     setIsAddCompanyVisible(false);
+    
+    if (newCompany.contact_id) {
+      await refetchContacts();
+    }
+    
     form.setFieldsValue({
       company_id: newCompany.id,
+      contact_id: newCompany.contact_id || undefined,
       firstName: undefined,
       lastName: undefined,
-      email: undefined,
-      telephone: undefined,
-      address: undefined,
+      email: newCompany.email || undefined,
+      phoneCode: newCompany.phone_code || form.getFieldValue('phoneCode'),
+      telephone: newCompany.phone_number || undefined,
+      address: newCompany.billing_address || undefined,
     });
     message.success("Company added successfully");
     setNewCompanyName("");
@@ -767,7 +776,6 @@ const CreateLead = ({
                   )}
                 >
                   {contactsResponse?.data?.filter(contact => {
-                    const selectedCompanyId = form.getFieldValue('company_id');
                     if (!selectedCompanyId) return true; // Show all if no company selected
                     return contact.company_name === selectedCompanyId; // Only show contacts for selected company
                   }).map((contact) => {

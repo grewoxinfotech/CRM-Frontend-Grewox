@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from "../../../../../store/baseQuery";
 export const companyAccountApi = createApi({
   reducerPath: "companyAccountApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["CompanyAccounts"],
+  tagTypes: ["CompanyAccounts", "Contacts"],
   endpoints: (builder) => ({
     getCompanyAccounts: builder.query({
       query: (params) => {
@@ -34,7 +34,7 @@ export const companyAccountApi = createApi({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["CompanyAccounts"],
+      invalidatesTags: ["CompanyAccounts", "Contacts"],
     }),
     updateCompanyAccount: builder.mutation({
       query: ({ id, data }) => ({

@@ -64,7 +64,8 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const [selectedPipeline, setSelectedPipeline] = useState(null);
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
-  const { data: contactsData } = useGetContactsQuery();
+  const { data: contactsData, refetch: refetchContacts } = useGetContactsQuery();
+  const selectedCompanyId = Form.useWatch('company_id', form);
   const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
   const [isAddContactVisible, setIsAddContactVisible] = useState(false);
   const [isAddStageVisible, setIsAddStageVisible] = useState(false);
@@ -134,10 +135,10 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
 
   const filteredStages = React.useMemo(() => {
     if (!selectedPipeline || !stages.length) return [];
-    
+
     // Normalize selectedPipeline to string
     const currentPipelineId = String(selectedPipeline?.id || selectedPipeline);
-    
+
     return stages.filter(stage => {
       // Normalize stage.pipeline to string
       const stagePipelineId = String(stage.pipeline?.id || stage.pipeline);
@@ -258,7 +259,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const handleSubmit = async (values) => {
     try {
       let contactId = values.contact_id;
-      
+
       // Get the selected country's phone code
       const selectedCountry = countries.find(c => c.id === values.phoneCode);
 
@@ -299,7 +300,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           message.error('Phone Number is required to auto-create a contact');
           return;
         }
-        
+
         try {
           // Create contact first
           const contactData = {
@@ -471,9 +472,21 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   };
 
   // Handler for successful company creation
-  const handleCompanyCreationSuccess = (newCompany) => {
+  const handleCompanyCreationSuccess = async (newCompany) => {
     setIsAddCompanyVisible(false);
-    form.setFieldValue('company_id', newCompany.id);
+
+    if (newCompany.contact_id) {
+      await refetchContacts();
+    }
+
+    form.setFieldsValue({
+      company_id: newCompany.id,
+      contact_id: newCompany.contact_id || undefined,
+      email: newCompany.email || undefined,
+      phoneCode: newCompany.phone_code || form.getFieldValue('phoneCode'),
+      telephone: newCompany.phone_number || undefined,
+      address: newCompany.billing_address || undefined,
+    });
   };
 
   // Handler for successful contact creation
@@ -793,15 +806,15 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
               { min: 3, message: "Lead title must be at least 3 characters" },
               {
                 validator: (_, value) => {
-                    if (!value) return Promise.resolve();
-                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                        return Promise.reject(
-                            new Error('Lead title must contain both uppercase or lowercase English letters')
-                        );
-                    }
-                    return Promise.resolve();
+                  if (!value) return Promise.resolve();
+                  if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                    return Promise.reject(
+                      new Error('Lead title must contain both uppercase or lowercase English letters')
+                    );
+                  }
+                  return Promise.resolve();
                 }
-            }
+              }
             ]}
           >
             <Input
@@ -1029,8 +1042,8 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                 rules={[{ required: true, message: 'Please select currency' }]}
               >
                 <Select
-                  style={{ 
-                    width: '120px', 
+                  style={{
+                    width: '120px',
                     height: '48px',
                     display: 'flex',
                     alignItems: 'center'
@@ -1890,8 +1903,8 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             <div style={{ display: 'flex', gap: '8px' }}>
               <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
                 <Select
-                  style={{ 
-                    width: '120px', 
+                  style={{
+                    width: '120px',
                     height: '48px',
                     display: 'flex',
                     alignItems: 'center'
