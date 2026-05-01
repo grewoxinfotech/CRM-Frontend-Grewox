@@ -521,7 +521,7 @@ const NotificationsComponent = () => {
       open={dropdownOpen}
       onOpenChange={(visible) => setDropdownOpen(visible)}
     >
-      <Badge count={totalUnread} className="notification-badge">
+      <Badge count={totalUnread} className="notification-badge" offset={[2, 2]}>
         <Button type="text" className="notification-button" loading={isLoading}>
           <BiBell className="notification-bell-icon" />
         </Button>

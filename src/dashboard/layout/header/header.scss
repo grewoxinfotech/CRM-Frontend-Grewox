@@ -6,10 +6,10 @@ $tablet: 768px;
 $desktop: 1024px;
 
 .dashboard-header {
-    height: 70px;
+    height: 50px;
     background: rgba(255, 255, 255, 0.92);
     border-bottom: 1px solid #dbe3ef;
-    padding: 0 24px;
+    padding: 0 32px 0 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -24,8 +24,8 @@ $desktop: 1024px;
 
     @media (max-width: $desktop) {
         left: 0;
-        padding: 0 16px;
-        height: 60px;
+        padding: 0 12px;
+        height: 50px;
     }
 
     .header-left {
@@ -86,7 +86,7 @@ $desktop: 1024px;
     .header-right {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 20px;
 
         @media (max-width: $mobile) {
             gap: 12px;
@@ -94,22 +94,29 @@ $desktop: 1024px;
 
         .search-container {
             position: relative;
-            margin-right: 8px;
+            margin: 0;
 
             @media (max-width: $desktop) {
                 position: static;
             }
 
             .search-input {
-                width: 240px;
+                width: 180px;
                 transition: all 0.3s ease;
+                border-radius: 8px !important;
 
                 @media (max-width: $desktop) {
-                    width: 200px;
+                    width: 150px;
                 }
 
-                @media (max-width: $mobile) {
-                    width: 160px;
+                @media (max-width: $tablet) {
+                    position: absolute;
+                    right: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 200px;
+                    z-index: 10;
+                    background: white;
                 }
             }
 
@@ -179,15 +186,15 @@ $desktop: 1024px;
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 20px;
 
             @media (max-width: $desktop) {
                 gap: 0.75rem;
             }
 
             .action-btn {
-                width: 40px;
-                height: 40px;
+                width: 32px;
+                height: 32px;
                 border: none;
                 background: transparent;
                 border-radius: 8px;
@@ -222,6 +229,13 @@ $desktop: 1024px;
                 }
             }
 
+            .header-divider {
+                width: 1px;
+                height: 20px;
+                background: #000000;
+                margin: 0 4px;
+            }
+
             .user-avatar {
                 cursor: pointer;
                 display: flex;
@@ -234,14 +248,14 @@ $desktop: 1024px;
                     font-weight: 500;
                     border: 2px solid transparent;
                     transition: all 0.2s ease;
-                    width: 40px;
-                    height: 40px;
-                    line-height: 36px;
+                    width: 32px;
+                    height: 32px;
+                    line-height: 32px;
                     font-size: 1rem;
 
                     @media (max-width: $desktop) {
-                        width: 36px;
-                        height: 36px;
+                        width: 32px;
+                        height: 32px;
                         line-height: 32px;
                         font-size: 0.9rem;
                     }

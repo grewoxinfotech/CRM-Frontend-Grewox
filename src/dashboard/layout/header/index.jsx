@@ -221,7 +221,7 @@ const Header = () => {
                     )}
                 </div>
 
-                <Space className="header-actions" size={16}>
+                <div className="header-actions">
                     <Tooltip title="Search" mouseEnterDelay={0.5}>
                         <button
                             className={`action-btn ${showSearch ? 'active' : ''}`}
@@ -240,7 +240,7 @@ const Header = () => {
                     </Tooltip>
 
                     <Notifications />
-
+                    <div className="header-divider" />
                     <Dropdown
                         menu={{
                             items: [
@@ -266,12 +266,12 @@ const Header = () => {
                         trigger={['click']}
                     >
                         <div className="user-avatar">
-                            <Avatar size={40}>
+                            <Avatar size={32}>
                                 {getInitials(user?.username)}
                             </Avatar>
                         </div>
                     </Dropdown>
-                </Space>
+                </div>
             </div>
         </header>
     );

@@ -172,9 +172,56 @@ const DealList = ({
 
   const columns = [
     {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 110,
+      render: (date) => {
+        const dealDate = moment(date);
+        const today = moment().startOf('day');
+        const yesterday = moment().subtract(1, 'days').startOf('day');
+        const thisWeek = moment().subtract(7, 'days').startOf('day');
+
+        let colors = {
+          bg: "#fff1f0",
+          text: "#cf1322",
+          border: "#ffa39e"
+        };
+
+        if (dealDate.isSame(today, 'day')) {
+          colors = { bg: "#f6ffed", text: "#389e0d", border: "#b7eb8f" };
+        } else if (dealDate.isSame(yesterday, 'day')) {
+          colors = { bg: "#e6f7ff", text: "#096dd9", border: "#91d5ff" };
+        } else if (dealDate.isAfter(thisWeek)) {
+          colors = { bg: "#fff7e6", text: "#d46b08", border: "#ffd591" };
+        }
+
+        return (
+          <Tag
+            style={{
+              borderRadius: "6px",
+              padding: "2px 10px",
+              fontSize: "12px",
+              fontWeight: "600",
+              backgroundColor: colors.bg,
+              color: colors.text,
+              border: `1px solid ${colors.border}`,
+              margin: 0,
+              textTransform: 'uppercase'
+            }}
+          >
+            {dealDate.isSame(today, 'day') ? "Today" : 
+             dealDate.isSame(yesterday, 'day') ? "Yesterday" : 
+             dealDate.format("DD MMM YYYY")}
+          </Tag>
+        );
+      }
+    },
+    {
       title: "Deal Name",
       dataIndex: "dealTitle",
       key: "dealTitle",
+      width: 250,
       filterDropdown: ({
         setSelectedKeys,
         selectedKeys,
@@ -213,7 +260,6 @@ const DealList = ({
       onFilter: (value, record) =>
         record.dealTitle.toLowerCase().includes(value.toLowerCase()),
       render: (text, record) => {
-        // Find company and contact details
         const company = companyAccountsResponse?.data?.find(
           (c) => c.id === record.company_id
         );
@@ -223,19 +269,6 @@ const DealList = ({
 
         return (
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <Avatar
-              style={{
-                backgroundColor:
-                  record.status?.toLowerCase() === "won"
-                    ? "#52c41a"
-                    : "#1890ff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {text?.[0]?.toUpperCase() || "D"}
-            </Avatar>
             <div style={{ flex: 1 }}>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
@@ -267,7 +300,8 @@ const DealList = ({
                       backgroundColor: "#e6f7ff",
                       color: "#1890ff",
                       border: "none",
-                      fontSize: "12px",
+                      fontSize: "11px",
+                      fontWeight: "500"
                     }}
                   >
                     {company.company_name}
@@ -285,7 +319,8 @@ const DealList = ({
                       backgroundColor: "#f3f4f6",
                       color: "#4b5563",
                       border: "none",
-                      fontSize: "12px",
+                      fontSize: "11px",
+                      fontWeight: "500"
                     }}
                   >
                     {`${contact.first_name} ${contact.last_name || ""}`}
@@ -296,13 +331,12 @@ const DealList = ({
           </div>
         );
       },
-      // width: "30%",
     },
     {
       title: "Source",
       dataIndex: "source",
       key: "source",
-      width: "150px",
+      width: 150,
       filters: sources.map((source) => ({
         text: source.name,
         value: source.id,
@@ -310,9 +344,6 @@ const DealList = ({
       onFilter: (value, record) => record.source === value,
       render: (sourceId) => {
         const source = sources.find((s) => s.id === sourceId) || {};
-        const className = `source-${source.name
-          ?.toLowerCase()
-          .replace(/\s+/g, "")}`;
         return (
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <FiLink
@@ -338,7 +369,7 @@ const DealList = ({
       title: "Stage",
       dataIndex: "stage",
       key: "stage",
-      width: "200px",
+      width: 180,
       filters: dealStages.map((stage) => ({
         text: stage.stageName,
         value: stage.id,
@@ -350,11 +381,12 @@ const DealList = ({
           <Tag
             style={{
               textTransform: "capitalize",
-              padding: "4px 12px",
+              padding: "2px 10px",
               borderRadius: "4px",
-              fontSize: "13px",
-              fontWeight: "500",
+              fontSize: "12px",
+              fontWeight: "600",
               color: "white",
+              border: 'none',
               background: stage?.color || "#1890ff",
             }}
           >
@@ -367,55 +399,18 @@ const DealList = ({
       title: "Expected Date",
       dataIndex: "closedDate",
       key: "closedDate",
-      width: "200px",
-      render: (date) => dayjs(date).format("DD-MM-YYYY"),
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <DatePicker
-            value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
-            onChange={(date) => {
-              const dateStr = date ? date.format("YYYY-MM-DD") : null;
-              setSelectedKeys(dateStr ? [dateStr] : []);
-            }}
-            style={{ marginBottom: 8, display: "block" }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
-        </div>
-      ),
-      onFilter: (value, record) => {
-        if (!value || !record.closedDate) return false;
-        return dayjs(record.closedDate).format("YYYY-MM-DD") === value;
-      },
-      filterIcon: (filtered) => (
-        <FiCalendar style={{ color: filtered ? "#1890ff" : undefined }} />
+      width: 150,
+      render: (date) => (
+        <Text style={{ fontSize: "13px" }}>
+          {date ? dayjs(date).format("DD MMM YYYY") : "N/A"}
+        </Text>
       ),
     },
     {
       title: "Value",
       dataIndex: "value",
       key: "value",
-      width: "150px",
+      width: 140,
       sorter: (a, b) => (a.value || 0) - (b.value || 0),
       render: (value, record) => (
         <Text strong style={{ fontSize: "14px", color: "#52c41a" }}>
@@ -427,6 +422,7 @@ const DealList = ({
       title: "Status",
       dataIndex: "status",
       key: "status",
+      width: 120,
       filters: [
         { text: "Won", value: true },
         { text: "Lost", value: false },
@@ -439,9 +435,10 @@ const DealList = ({
           <Tag
             style={{
               margin: 0,
-              padding: "4px 11px",
-              fontSize: "13px",
-              borderRadius: "12px",
+              padding: "2px 10px",
+              fontSize: "12px",
+              fontWeight: "600",
+              borderRadius: "4px",
               background: statusConfig.bg,
               color: statusConfig.color,
               border: "none",
@@ -463,12 +460,11 @@ const DealList = ({
             menu={getDropdownItems(record)}
             trigger={["click"]}
             placement="bottomRight"
-            arrow
           >
             <Button
               type="text"
               icon={<FiMoreVertical style={{ fontSize: "16px" }} />}
-              className="action-btn"
+              className="action-dropdown-button"
               onClick={(e) => e.stopPropagation()}
             />
           </Dropdown>
@@ -482,6 +478,7 @@ const DealList = ({
     Modal.confirm({
       title: 'Delete Selected Deals',
       content: `Are you sure you want to delete ${selectedRowKeys.length} selected deals?`,
+      centered: true,
       okText: 'Yes',
       okType: 'danger',
       cancelText: 'No',
@@ -497,19 +494,22 @@ const DealList = ({
     });
   };
 
-  const BulkActions = () => (
-    <div className="bulk-actions">
-      {selectedRowKeys.length > 0 && (
-        <Button
-          className="delete-button"
-          icon={<FiTrash2 size={16} style={{ marginRight: 8 }} />}
-          onClick={handleBulkDelete}
-        >
-          Delete Selected ({selectedRowKeys.length})
-        </Button>
-      )}
-    </div>
-  );
+  const BulkActions = () => {
+    if (selectedRowKeys.length === 0) return null;
+    return (
+      <div className="bulk-actions deal-bulk-actions">
+        <Space>
+          <Button
+            className="lead-bulk-delete-btn"
+            icon={<FiTrash2 size={16} style={{ marginRight: 8 }} />}
+            onClick={handleBulkDelete}
+          >
+            Delete Selected ({selectedRowKeys.length})
+          </Button>
+        </Space>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -519,8 +519,10 @@ const DealList = ({
           columns={columns}
           dataSource={deals}
           rowKey="id"
+          size="small"
           pagination={paginationConfig}
-          scroll={{ x: "max-content", y: '' }}
+          scroll={{ x: 'max-content', y: 'calc(100vh - 220px)' }}
+          className="compact-table"
           loading={loading}
           onChange={onTableChange}
           onRow={(record) => ({

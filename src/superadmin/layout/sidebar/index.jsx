@@ -287,12 +287,14 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
             </div>
 
                 <div className="sidebar-nav">
-                    {menuItems.map((item) => (
+                    {menuItems.map((item, index) => (
                         item.isDropdown ? (
-                            renderSettingsDropdown(item)
+                            <React.Fragment key={item.title || index}>
+                                {renderSettingsDropdown(item)}
+                            </React.Fragment>
                         ) : (
                             <NavLink
-                                key={item.path}
+                                key={item.path || index}
                                 to={item.path}
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                                 onClick={handleNavigation}

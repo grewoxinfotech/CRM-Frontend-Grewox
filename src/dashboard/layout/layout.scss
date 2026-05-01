@@ -34,9 +34,9 @@ $desktop: 1024px;
         .page-content {
             flex: 1;
             padding: 16px;
-            padding-top: calc(16px + 70px);
-            padding-bottom: 80px;
-            min-height: calc(100vh - 70px - 60px);
+            padding-top: calc(16px + 50px);
+            padding-bottom: 60px;
+            min-height: calc(100vh - 50px - 40px);
             background-color: #eef2f7;
 
             @media (max-width: $desktop) {
@@ -88,7 +88,7 @@ $desktop: 1024px;
     right: 0;
     left: 236px;
     width: calc(100% - 236px);
-    height: 70px;
+    height: 50px;
     z-index: 998;
     transition: all 0.3s ease;
     background: white;
@@ -97,7 +97,7 @@ $desktop: 1024px;
     @media (max-width: $desktop) {
         left: 0;
         width: 100%;
-        height: 60px;
+        height: 50px;
     }
 }
 
@@ -108,7 +108,7 @@ $desktop: 1024px;
     right: 0;
     left: 236px;
     width: calc(100% - 236px);
-    height: 60px;
+    height: 40px;
     z-index: 997;
     transition: all 0.3s ease;
     background: white;
@@ -116,7 +116,7 @@ $desktop: 1024px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 0 32px 0 24px;
 
     @media (max-width: $desktop) {
         left: 0;
@@ -164,7 +164,7 @@ body {
         left: 0;
         width: 100%;
         z-index: 999;
-        height: 60px;
+        height: 50px;
     }
 }
 

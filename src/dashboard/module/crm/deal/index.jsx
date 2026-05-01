@@ -13,6 +13,8 @@ import {
   Row,
   Col,
   Popover,
+  Switch,
+  Select,
 } from "antd";
 import {
   FiPlus,
@@ -22,6 +24,7 @@ import {
   FiGrid,
   FiList,
   FiHome,
+  FiZap,
 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import "./Deal.scss";
@@ -29,9 +32,18 @@ import CreateDeal from "./CreateDeal";
 import DealCard from "./DealCard";
 import DealList from "./DealList";
 import EditDeal from "./EditDeal";
+import PageHeader from "../../../../components/PageHeader";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useDeleteDealMutation, useGetDealsQuery } from "./services/DealApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import {
+  useGetAllCurrenciesQuery,
+} from "../../settings/services/settingsApi";
+import {
+  useGetSourcesQuery,
+} from "../crmsystem/souce/services/SourceApi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -51,9 +63,13 @@ const Deal = () => {
     current: 1,
     pageSize: 10,
   });
+  const [isQuickMode, setIsQuickMode] = useState(true);
+  const loggedInUser = useSelector(selectCurrentUser);
   const navigate = useNavigate();
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: dealStages = [] } = useGetLeadStagesQuery();
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const [deleteDeal] = useDeleteDealMutation();
   const { data: deals, isLoading } = useGetDealsQuery({
     page: pagination.current,
@@ -86,6 +102,7 @@ const Deal = () => {
     Modal.confirm({
       title: "Delete Deal",
       content: "Are you sure you want to delete this deal?",
+      centered: true,
       okText: "Yes",
       okType: "danger",
       cancelText: "No",
@@ -210,31 +227,6 @@ const Deal = () => {
     doc.save(`${filename}.pdf`);
   };
 
-  const exportMenu = (
-    <Menu>
-      <Menu.Item
-        key="csv"
-        icon={<FiDownload />}
-        onClick={() => handleExport("csv")}
-      >
-        Export as CSV
-      </Menu.Item>
-      <Menu.Item
-        key="excel"
-        icon={<FiDownload />}
-        onClick={() => handleExport("excel")}
-      >
-        Export as Excel
-      </Menu.Item>
-      <Menu.Item
-        key="pdf"
-        icon={<FiDownload />}
-        onClick={() => handleExport("pdf")}
-      >
-        Export as PDF
-      </Menu.Item>
-    </Menu>
-  );
 
   const searchContent = (
     <div className="search-popup">
@@ -252,90 +244,59 @@ const Deal = () => {
 
   return (
     <div className="deal-page">
-      <div className="page-breadcrumb">
-        <Breadcrumb>
-          <Breadcrumb.Item>
-            <Link to="/dashboard">
-              <FiHome style={{ marginRight: "4px" }} />
-              Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>Deal</Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
-
-      <div className="page-header">
-        <div className="header-content">
-          <div className="page-title">
-            <div className="title-row">
-              <div className="page-title-content">
-                <Title level={2}>Deals</Title>
-                <Text type="secondary">Manage all deals in the system</Text>
-              </div>
-              <div className="header-actions">
-                <div className="desktop-actions">
-                  <div className="action-buttons">
-                    <Button.Group className="view-toggle">
-                      <Button
-                        type={viewMode === "table" ? "primary" : "default"}
-                        icon={<FiList size={16} />}
-                        onClick={() => setViewMode("table")}
-                      />
-                      <Button
-                        type={viewMode === "card" ? "primary" : "default"}
-                        icon={<FiGrid size={16} />}
-                        onClick={() => setViewMode("card")}
-                      />
-                    </Button.Group>
-                  </div>
-
-                  <div style={{display:"flex",alignItems:"center",gap:"12px", width: "100%"}}>
-                    <div className="search-container" style={{flex: 1}}>
-                      <Input
-                        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                        placeholder="Search deals..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        className="search-input"
-                      />
-                    </div>
-                    <div className="action-buttons-group">
-                      <Popover
-                        content={searchContent}
-                        trigger="click"
-                        open={isSearchVisible}
-                        onOpenChange={setIsSearchVisible}
-                        placement="bottomRight"
-                        className="mobile-search-popover"
-                      >
-                        <Button
-                          className="search-icon-button"
-                          icon={<FiSearch size={16} />}
-                        />
-                      </Popover>
-                      <Dropdown overlay={exportMenu} trigger={["click"]}>
-                        <Button className="export-button">
-                          <FiDownload size={16} />
-                          <span className="button-text">Export</span>
-                        </Button>
-                      </Dropdown>
-                      <Button
-                        type="primary"
-                        icon={<FiPlus size={16} />}
-                        onClick={handleCreate}
-                        className="add-button"
-                      >
-                        <span className="button-text">Add Deal</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="All Deals"
+        count={deals?.pagination?.total || 0}
+        subtitle={<span style={{ fontSize: '14px' }}>Manage all deals in the system</span>}
+        breadcrumbItems={[
+          {
+            title: (
+              <Link to="/dashboard">
+                <FiHome style={{ marginRight: "4px" }} />
+                Home
+              </Link>
+            ),
+          },
+          {
+            title: `All Deals (${deals?.pagination?.total || 0})`,
+          },
+        ]}
+        searchText={searchText}
+        onSearch={handleSearch}
+        searchPlaceholder="Search deals..."
+        viewMode={viewMode}
+        onViewChange={setViewMode}
+        onAdd={handleCreate}
+        addText="Add Deal"
+        isQuickMode={isQuickMode}
+        onQuickModeToggle={setIsQuickMode}
+        showQuickMode={true}
+        mobileSearchContent={searchContent}
+        isSearchVisible={isSearchVisible}
+        onSearchVisibleChange={setIsSearchVisible}
+        exportMenu={{
+          items: [
+            {
+              key: 'csv',
+              label: 'Export as CSV',
+              icon: <FiDownload />,
+              onClick: () => handleExport('csv'),
+            },
+            {
+              key: 'excel',
+              label: 'Export as Excel',
+              icon: <FiDownload />,
+              onClick: () => handleExport('excel'),
+            },
+            {
+              key: 'pdf',
+              label: 'Export as PDF',
+              icon: <FiDownload />,
+              onClick: () => handleExport('pdf'),
+            },
+          ]
+        }}
+      />
 
       <Card className="deal-content">
         {viewMode === "table" ? (

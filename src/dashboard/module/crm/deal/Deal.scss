@@ -178,6 +178,7 @@
 }
 
 @keyframes tabIconBounce {
+
   0%,
   100% {
     transform: translateY(0);
@@ -201,19 +202,18 @@
 }
 
 .deal-page {
-  padding: 24px;
-  background: $background-color;
+  padding: 0px 20px 20px;
 
   @media (max-width: 768px) {
-    padding: 16px;
+    padding: 0px 16px;
   }
 
   @media (max-width: 480px) {
-    padding: 12px;
+    padding: 0px 12px;
   }
 
   .page-breadcrumb {
-    margin-bottom: 16px;
+    margin-bottom: 8px;
 
     @media (max-width: 768px) {
       margin-bottom: 12px;
@@ -256,427 +256,418 @@
   }
 
   .page-header {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-    margin-bottom: 24px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    margin-bottom: 8px;
+    overflow: hidden;
 
     .header-content {
-      padding: 16px 24px;
+      padding: 6px 16px;
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 24px;
+      flex-direction: column;
+      gap: 12px;
 
-      @media (max-width: 992px) {
-        padding: 12px 16px;
-        gap: 12px;
-      }
-
-      @media (max-width: 767px) {
-        align-items: center;
-        text-align: center;
-        gap: 16px;
-      }
-
-      @media (max-width: 576px) {
-        padding: 10px 12px;
+      @media (max-width: 768px) {
+        padding: 6px 12px;
         gap: 12px;
       }
 
       .page-title {
-        flex: 1;
-        
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
         .title-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 4px;
-
-          @media (max-width: 1200px) {
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 12px;
-            width: 100%;
-          }
+          flex-wrap: wrap;
+          gap: 16px;
 
           h2 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1a1a1a;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
             margin: 0;
-
-            @media (max-width: 768px) {
-              font-size: 20px;
-            }
-
-            @media (max-width: 480px) {
-              font-size: 18px;
-            }
+            letter-spacing: -0.02em;
           }
 
-          .header-actions {
-            display: flex;
+          @media (max-width: 768px) {
+            font-size: 20px;
+          }
+
+          @media (max-width: 480px) {
+            font-size: 18px;
+          }
+        }
+
+        .header-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+
+          @media (max-width: 1200px) {
+            width: 100%;
             justify-content: space-between;
+          }
+
+          .desktop-actions {
+            display: flex;
             align-items: center;
             gap: 12px;
+            flex-wrap: nowrap;
 
             @media (max-width: 1200px) {
               width: 100%;
               justify-content: space-between;
             }
 
-            .desktop-actions {
+            .search-container {
+              position: relative;
               display: flex;
               align-items: center;
-              gap: 12px;
-              flex-wrap: nowrap;
+              width: 100%;
 
-              @media (max-width: 1200px) {
-                width: 100%;
-                justify-content: space-between;
+              .search-input {
+                width: 240px;
+                border-radius: 8px !important;
+
+                @media (max-width: 1200px) {
+                  width: 100%;
+                }
+
+                @media (max-width: 992px) {
+                  width: 100%;
+                }
+
+                @media (max-width: 767px) {
+                  display: none;
+                }
+              }
+            }
+
+            .action-buttons-group {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+
+              .search-icon-button {
+                display: none;
+                padding: 0 12px;
+                width: 30px;
+                height: 30px;
+                align-items: center;
+                justify-content: center;
+
+                @media (max-width: 767px) {
+                  display: flex;
+                }
+
+                @media (max-width: 576px) {
+                  width: 34px;
+                  height: 34px;
+                  padding: 0 10px;
+                }
               }
 
-              .search-container {
-                position: relative;
+              .export-button,
+              .add-button {
+                height: 30px;
                 display: flex;
                 align-items: center;
-                width: 100%;
+                justify-content: center;
 
-                .search-input {
-                  width: 240px;
+                @media (max-width: 767px) {
+                  padding: 0 12px;
+                  width: 30px;
+                  height: 30px;
 
-                  @media (max-width: 1200px) {
-                    width: 100%;
-                  }
-
-                  @media (max-width: 992px) {
-                    width: 100%;
-                  }
-
-                  @media (max-width: 767px) {
+                  .button-text {
                     display: none;
                   }
                 }
-              }
 
-              .action-buttons-group {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-
-                .search-icon-button {
-                  display: none;
-                  padding: 0 12px;
-                  width: 38px;
-                  height: 38px;
-                  align-items: center;
-                  justify-content: center;
-
-                  @media (max-width: 767px) {
-                    display: flex;
-                  }
-
-                  @media (max-width: 576px) {
-                    width: 34px;
-                    height: 34px;
-                    padding: 0 10px;
-                  }
-                }
-
-                .export-button,
-                .add-button {
-                  height: 38px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-
-                  @media (max-width: 767px) {
-                    padding: 0 12px;
-                    width: 38px;
-                    height: 38px;
-
-                    .button-text {
-                      display: none;
-                    }
-                  }
-
-                  @media (max-width: 576px) {
-                    width: 34px;
-                    height: 34px;
-                    padding: 0 10px;
-                  }
+                @media (max-width: 576px) {
+                  width: 34px;
+                  height: 34px;
+                  padding: 0 10px;
                 }
               }
             }
           }
         }
       }
+    }
 
-      .ant-typography-secondary {
-        font-size: 14px;
-        color: #666;
+    .ant-typography-secondary {
+      font-size: 14px;
+      color: #666;
 
-        @media (max-width: 767px) {
-          text-align: center;
-        }
+      @media (max-width: 767px) {
+        text-align: center;
+      }
 
-        @media (max-width: 768px) {
-          font-size: 13px;
-        }
+      @media (max-width: 768px) {
+        font-size: 13px;
+      }
 
-        @media (max-width: 480px) {
-          font-size: 12px;
-        }
+      @media (max-width: 480px) {
+        font-size: 12px;
       }
     }
   }
+}
 
-  .deal-content {
-    // @include hover-shadow;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba($primary-color, 0.08);
-    height: 100%;
+.deal-content {
+  // @include hover-shadow;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+
+  .ant-card-body {
+    padding: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 24px;
-    
-    .ant-card-body {
-      padding: 0;
-      overflow-x: auto;
-      overflow-y: hidden;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
 
-      @media (max-width: 768px) {
-        border-radius: 8px;
-      }
+    @media (max-width: 768px) {
+      border-radius: 8px;
     }
+  }
 
-    .ant-table-wrapper {
+  .ant-table-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .ant-table {
+      background: transparent;
       flex: 1;
       display: flex;
       flex-direction: column;
-      
-      .ant-table {
-        background: transparent;
+
+      .ant-table-container {
         flex: 1;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
+      }
 
-        .ant-table-container {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
+      .ant-table-body {
+        flex: 1;
+        overflow-y: auto !important;
+      }
 
-        .ant-table-body {
-          flex: 1;
-          overflow-y: hidden !important;
+      .ant-table-thead>tr>th {
+        background: #fafafa;
+        font-weight: 600;
+        color: $text-color-dark;
+        padding: 10px 12px;
+        border-bottom: 1px solid $border-color;
+
+        &::before {
+          display: none;
         }
+      }
+
+      .ant-table-tbody>tr>td {
+        padding: 8px 12px;
+        vertical-align: middle;
+
+        &:last-child {
+          padding-right: 24px;
+        }
+      }
+
+      .ant-table-row {
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #fafafa;
+        }
+      }
+
+      @media (max-width: 768px) {
+        font-size: 14px;
 
         .ant-table-thead>tr>th {
-          background: #fafafa;
-          font-weight: 600;
-          color: $text-color-dark;
-          padding: 16px;
-          border-bottom: 1px solid $border-color;
-
-          &::before {
-            display: none;
-          }
-        }
-        .ant-table-tbody>tr>td {    
-          padding: 16px;
-          vertical-align: middle;
-
-          &:last-child {
-            padding-right: 24px;
-          }
-        }
-
-        .ant-table-row {
-          transition: all 0.3s ease;
-
-          &:hover {
-            background: #fafafa;
-          }
-        }
-
-        @media (max-width: 768px) {
+          padding: 8px 12px;
           font-size: 14px;
-
-          .ant-table-thead > tr > th {
-            padding: 8px 12px;
-            font-size: 14px;
-            white-space: nowrap;
-          }
-
-          .ant-table-tbody > tr > td {
-            padding: 8px 12px;
-            font-size: 14px;
-          }
-
-          .ant-tag {
-            font-size: 12px;
-            padding: 2px 6px;
-          }
-
-          .ant-typography {
-            font-size: 14px;
-          }
-
-          .ant-btn {
-            font-size: 14px;
-            padding: 4px 8px;
-            height: 28px;
-          }
-
-          .ant-avatar {
-            width: 24px;
-            height: 24px;
-            font-size: 12px;
-          }
+          white-space: nowrap;
         }
 
-        @media (max-width: 480px) {
+        .ant-table-tbody>tr>td {
+          padding: 8px 12px;
+          font-size: 14px;
+        }
+
+        .ant-tag {
+          font-size: 12px;
+          padding: 2px 6px;
+        }
+
+        .ant-typography {
+          font-size: 14px;
+        }
+
+        .ant-btn {
+          font-size: 14px;
+          padding: 4px 8px;
+          height: 28px;
+        }
+
+        .ant-avatar {
+          width: 24px;
+          height: 24px;
+          font-size: 12px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        font-size: 13px;
+
+        .ant-table-thead>tr>th {
+          padding: 6px 8px;
           font-size: 13px;
+        }
 
-          .ant-table-thead > tr > th {
-            padding: 6px 8px;
-            font-size: 13px;
-          }
+        .ant-table-tbody>tr>td {
+          padding: 6px 8px;
+          font-size: 13px;
+        }
 
-          .ant-table-tbody > tr > td {
-            padding: 6px 8px;
-            font-size: 13px;
-          }
+        .ant-tag {
+          font-size: 11px;
+          padding: 1px 4px;
+        }
 
-          .ant-tag {
-            font-size: 11px;
-            padding: 1px 4px;
-          }
+        .ant-typography {
+          font-size: 13px;
+        }
 
-          .ant-typography {
-            font-size: 13px;
-          }
+        .ant-btn {
+          font-size: 13px;
+          padding: 3px 6px;
+          height: 24px;
+        }
 
-          .ant-btn {
-            font-size: 13px;
-            padding: 3px 6px;
-            height: 24px;
-          }
+        .ant-avatar {
+          width: 20px;
+          height: 20px;
+          font-size: 11px;
+        }
+      }
+    }
 
-          .ant-avatar {
-            width: 20px;
-            height: 20px;
-            font-size: 11px;
+    .ant-table-pagination.ant-pagination {
+      display: flex !important;
+      visibility: visible !important;
+      padding: 0 10px !important; 
+      width: 100% !important;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      @media (max-width: 768px) {
+        margin: 12px 16px;
+        justify-content: center;
+
+        .ant-pagination-total-text {
+          display: none;
+        }
+
+        .ant-pagination-item,
+        .ant-pagination-prev,
+        .ant-pagination-next {
+          min-width: 32px;
+          height: 32px;
+          line-height: 30px;
+
+          a {
+            padding: 0;
+            font-size: 14px;
           }
         }
       }
 
-      .ant-table-pagination.ant-pagination {
-        margin: 16px 24px;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
+      @media (max-width: 480px) {
+        margin: 10px;
+        gap: 4px;
 
-        @media (max-width: 768px) {
-          margin: 12px 16px;
-          justify-content: center;
-          
-          .ant-pagination-total-text {
-            display: none;
-          }
-
-          .ant-pagination-item,
-          .ant-pagination-prev,
-          .ant-pagination-next {
-            min-width: 32px;
-            height: 32px;
-            line-height: 30px;
-            
-            a {
-              padding: 0;
-              font-size: 14px;
-            }
-          }
-        }
-
-        @media (max-width: 480px) {
-          margin: 10px;
-          gap: 4px;
-          
-          .ant-pagination-item,
-          .ant-pagination-prev,
-          .ant-pagination-next {
-            min-width: 28px;
-            height: 28px;
-            line-height: 26px;
-            margin: 0;
-            
-            a {
-              font-size: 13px;
-            }
-          }
-
-          .ant-pagination-item-ellipsis {
-            line-height: 26px;
-          }
-
-          .ant-select-selector {
-            height: 28px !important;
-            
-            .ant-select-selection-item {
-              line-height: 26px !important;
-              font-size: 13px;
-            }
-          }
-        }
-
-        // Style for active page
-        .ant-pagination-item-active {
-          background: #1677ff;
-          border-color: #1677ff;
-          
-          a {
-            color: white;
-          }
-
-          &:hover {
-            background: #4096ff;
-            border-color: #4096ff;
-            
-            a {
-              color: white;
-            }
-          }
-        }
-
-        // Hover effects for pagination items
         .ant-pagination-item,
         .ant-pagination-prev,
         .ant-pagination-next {
-          transition: all 0.3s ease;
-          
-          &:hover {
-            border-color: #1677ff;
-            
-            a {
-              color: #1677ff;
-            }
+          min-width: 28px;
+          height: 28px;
+          line-height: 26px;
+          margin: 0;
+
+          a {
+            font-size: 13px;
+          }
+        }
+
+        .ant-pagination-item-ellipsis {
+          line-height: 26px;
+        }
+
+        .ant-select-selector {
+          height: 28px !important;
+
+          .ant-select-selection-item {
+            line-height: 26px !important;
+            font-size: 13px;
+          }
+        }
+      }
+
+      // Style for active page
+      .ant-pagination-item-active {
+        background: #1677ff;
+        border-color: #1677ff;
+
+        a {
+          color: white;
+        }
+
+        &:hover {
+          background: #4096ff;
+          border-color: #4096ff;
+
+          a {
+            color: white;
+          }
+        }
+      }
+
+      // Hover effects for pagination items
+      .ant-pagination-item,
+      .ant-pagination-prev,
+      .ant-pagination-next {
+        transition: all 0.3s ease;
+
+        &:hover {
+          border-color: #1677ff;
+
+          a {
+            color: #1677ff;
           }
         }
       }
     }
   }
 }
+
 
 // Search Popover Styles
 .search-popover {
@@ -699,7 +690,8 @@
         border: 1px solid #e6e6e6;
         transition: all 0.3s ease;
 
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
           border-color: #1677ff;
           box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
         }
@@ -710,7 +702,7 @@
 
         input {
           font-size: 14px;
-          
+
           &::placeholder {
             color: #999;
           }
@@ -727,7 +719,7 @@
       .search-input {
         .ant-input-affix-wrapper {
           height: 34px;
-          
+
           input {
             font-size: 13px;
           }
@@ -744,7 +736,7 @@
       .search-input {
         .ant-input-affix-wrapper {
           height: 32px;
-          
+
           input {
             font-size: 12px;
           }
@@ -767,9 +759,9 @@
   padding: 12px;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 
-              0 6px 16px 0 rgba(0, 0, 0, 0.08), 
-              0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
 
   .filter-menu-item {
     padding: 0;
@@ -884,7 +876,7 @@
   justify-content: center;
   border-radius: 4px;
   transition: all 0.3s ease;
-  
+
   &:hover {
     background-color: rgba(0, 0, 0, 0.04);
   }
@@ -947,10 +939,12 @@
     .ant-table-pagination {
       display: flex !important;
       visibility: visible !important;
+
       .ant-pagination-options {
         display: flex !important;
         align-items: center;
         margin-bottom: 10px;
+
         .ant-select-selection-item {
           width: auto !important;
           min-width: 40px;
@@ -983,20 +977,25 @@
 
 .deal-list-container {
   margin-right: 10px;
+
   .ant-table-pagination {
     display: flex !important;
     visibility: visible !important;
+
     .ant-pagination-options {
       display: flex !important;
       align-items: center;
       margin-bottom: 10px;
+
       .ant-select {
         display: flex;
         align-items: center;
+
         .ant-select-selector {
           display: flex;
           align-items: center;
           justify-content: center;
+
           .ant-select-selection-item {
             width: auto !important;
             min-width: 40px;
@@ -1021,8 +1020,9 @@
 @media (max-width: 1200px) {
   .deal-list-container {
     .ant-table {
-      .ant-table-thead > tr > th,
-      .ant-table-tbody > tr > td {
+
+      .ant-table-thead>tr>th,
+      .ant-table-tbody>tr>td {
         padding: 12px 8px;
         font-size: 14px;
       }
@@ -1033,12 +1033,13 @@
 @media (max-width: 992px) {
   .deal-list-container {
     .ant-table {
-      .ant-table-thead > tr > th,
-      .ant-table-tbody > tr > td {
+
+      .ant-table-thead>tr>th,
+      .ant-table-tbody>tr>td {
         padding: 10px 6px;
         font-size: 13px;
       }
-      
+
       .ant-tag {
         font-size: 12px;
         padding: 2px 6px;
@@ -1050,34 +1051,35 @@
 @media (max-width: 768px) {
   .deal-list-container {
     margin-right: 0;
-    
+
     .ant-table {
-      .ant-table-thead > tr > th,
-      .ant-table-tbody > tr > td {
+
+      .ant-table-thead>tr>th,
+      .ant-table-tbody>tr>td {
         padding: 8px 4px;
         font-size: 12px;
         white-space: nowrap;
       }
-      
+
       .ant-tag {
         font-size: 11px;
         padding: 1px 4px;
       }
-      
+
       .ant-avatar {
         width: 24px;
         height: 24px;
         font-size: 12px;
       }
     }
-    
+
     .ant-table-pagination {
       justify-content: center;
-      
+
       .ant-pagination-options {
         .ant-select {
           min-width: 70px;
-          
+
           .ant-select-selector {
             .ant-select-selection-item {
               font-size: 12px;
@@ -1092,29 +1094,30 @@
 @media (max-width: 480px) {
   .deal-list-container {
     .ant-table {
-      .ant-table-thead > tr > th,
-      .ant-table-tbody > tr > td {
+
+      .ant-table-thead>tr>th,
+      .ant-table-tbody>tr>td {
         padding: 6px 3px;
         font-size: 11px;
       }
-      
+
       .ant-tag {
         font-size: 10px;
         padding: 1px 3px;
       }
-      
+
       .ant-avatar {
         width: 20px;
         height: 20px;
         font-size: 10px;
       }
     }
-    
+
     .ant-table-pagination {
       .ant-pagination-options {
         .ant-select {
           min-width: 60px;
-          
+
           .ant-select-selector {
             .ant-select-selection-item {
               font-size: 11px;
@@ -1128,11 +1131,11 @@
 
 // Common hover effect mixin
 @mixin hover-shadow {
-    transition: all 0.3s ease;
+  transition: all 0.3s ease;
 
-    &:hover {
-        transform: translateY(-2px);
-    }
+  &:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .bulk-actions {
@@ -1142,29 +1145,56 @@
 }
 
 .delete-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 16px;
-  font-weight: 500;
-  font-size: 16px;
-  border-radius: 6px;
-  margin-left: 20px;
-  margin-top: 15px;
-  background: #DC2626;
-  border-color: #DC2626;
-  color: white;
-  transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    font-weight: 500;
+    font-size: 16px;
+    margin-left: 20px;
+    margin-top: 0;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    background: #ff4d4f !important;
+    border-color: #ff4d4f !important;
+    color: white !important;
 
-  &:hover, &:focus {
-    background: #ff7875 !important;
-    color: #fff !important;
+    &:hover, &:focus {
+        background: #d9363e !important;
+        border-color: #d9363e !important;
+        color: #fff !important;
+    }
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
 }
 
-  svg {
-    width: 16px;
-    height: 16px;
-    // margin-right: 8px;
-  }
+.action-dropdown-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    svg {
+        font-size: 18px;
+        color: #8c8c8c;
+    }
+}
+.deal-bulk-actions {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0;
 }

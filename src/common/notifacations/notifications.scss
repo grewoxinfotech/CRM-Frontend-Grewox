@@ -347,14 +347,41 @@
 }
 
 .notification-button {
-    padding: 4px;
-    font-size: 20px;
-    color: #666;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #64748b !important; // slate-500 for better visibility
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    
+    .notification-bell-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.05) !important;
+        color: #1e293b !important;
+    }
 }
 
 .notification-badge {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+
     .ant-badge-count {
         background: #ff4d4f;
+        box-shadow: 0 0 0 2px #fff;
+        min-width: 16px;
+        height: 16px;
+        line-height: 16px;
+        padding: 0 4px;
+        font-size: 10px;
     }
 }
 

@@ -16,6 +16,8 @@ import {
   message,
   Form,
   Popover,
+  Pagination,
+  DatePicker,
 } from "antd";
 import {
   FiPlus,
@@ -34,6 +36,7 @@ import LeadCard from "./LeadCard";
 import LeadList from "./LeadList";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import EditLead from "./EditLead";
+import PageHeader from "../../../../components/PageHeader";
 import { useDeleteLeadMutation, useGetLeadsQuery } from "./services/LeadApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
@@ -73,10 +76,13 @@ const Lead = () => {
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteLead, { isLoading: isDeleteLoading }] = useDeleteLeadMutation();
+  const [dateRange, setDateRange] = useState(null);
   const { data: leads, isLoading } = useGetLeadsQuery({
     page: pagination.current,
-    pageSize: pagination.pageSize,
-    search: searchText,
+    pageSize: viewMode === "card" ? 100 : pagination.pageSize,
+    search: searchText || undefined,
+    ...(dateRange?.[0] && { startDate: dateRange[0].format('YYYY-MM-DD') }),
+    ...(dateRange?.[1] && { endDate: dateRange[1].format('YYYY-MM-DD') }),
   });
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
@@ -87,6 +93,7 @@ const Lead = () => {
   const { data: stagesData } = useGetLeadStagesQuery();
   const [initialFormData, setInitialFormData] = useState(null);
   const [isQuickMode, setIsQuickMode] = useState(true);
+  const [loading, setLoading] = useState(false);
 
 
   // Handle automatic form opening
@@ -271,31 +278,6 @@ const Lead = () => {
     doc.save(`${filename}.pdf`);
   };
 
-  const exportMenu = (
-    <Menu>
-      <Menu.Item
-        key="csv"
-        icon={<FiDownload />}
-        onClick={() => handleExport("csv")}
-      >
-        Export as CSV
-      </Menu.Item>
-      <Menu.Item
-        key="excel"
-        icon={<FiDownload />}
-        onClick={() => handleExport("excel")}
-      >
-        Export as Excel
-      </Menu.Item>
-      <Menu.Item
-        key="pdf"
-        icon={<FiDownload />}
-        onClick={() => handleExport("pdf")}
-      >
-        Export as PDF
-      </Menu.Item>
-    </Menu>
-  );
 
   // Add debug log for initialFormData changes
   useEffect(() => {
@@ -318,124 +300,73 @@ const Lead = () => {
 
   return (
     <div className="lead-page">
-      <div className="page-breadcrumb">
-        <Breadcrumb>
-          <Breadcrumb.Item>
-            <Link to="/dashboard">
-              <FiHome style={{ marginRight: "4px" }} />
-              Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>Lead</Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
-
-      <div className="page-header">
-        <div className="header-content">
-          <div className="page-title">
-            <div className="title-row">
-              <div className="page-title-content">
-                <Title level={2}>Leads</Title>
-                <Text type="secondary">Manage all leads in the system</Text>
-              </div>
-              <div className="header-actions">
-                <div className="desktop-actions">
-                  <div className="action-buttons">
-                    <Button.Group className="view-toggle">
-                      <Button
-                        type={viewMode === "table" ? "primary" : "default"}
-                        icon={<FiList size={16} />}
-                        onClick={() => setViewMode("table")}
-                      />
-                      <Button
-                        type={viewMode === "card" ? "primary" : "default"}
-                        icon={<FiGrid size={16} />}
-                        onClick={() => setViewMode("card")}
-                      />
-                    </Button.Group>
-                  </div>
-
-                  <div style={{display:"flex",alignItems:"center",gap:"12px", width: "100%"}}>
-                    <div className="search-container" style={{flex: 1}}>
-                      <Input
-                        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                        placeholder="Search leads..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        className="search-input"
-                      />
-                    </div>
-                    <div className="action-buttons-group">
-                      <Popover
-                        content={searchContent}
-                        trigger="click"
-                        open={isSearchVisible}
-                        onOpenChange={setIsSearchVisible}
-                        placement="bottomRight"
-                        className="mobile-search-popover"
-                      >
-                        <Button 
-                          className="search-icon-button"
-                          icon={<FiSearch size={16} />}
-                        />
-                      </Popover>
-                      <Dropdown overlay={exportMenu} trigger={["click"]}>
-                        <Button className="export-button">
-                          <FiDownload size={16} />
-                          <span className="button-text">Export</span>
-                        </Button>
-                      </Dropdown>
-                      <div className="quick-mode-toggle" style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        background: "#fff",
-                        padding: "0 12px",
-                        borderRadius: "8px",
-                        height: "40px",
-                        border: "1px solid #d9d9d9",
-                        marginRight: "4px"
-                      }}>
-                        <div style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          width: "24px",
-                          height: "24px",
-                          borderRadius: "50%",
-                          background: isQuickMode ? "#fff1b8" : "#f5f5f5",
-                          transition: "all 0.3s"
-                        }}>
-                          <FiZap size={14} style={{ color: isQuickMode ? "#faad14" : "#8c8c8c" }} />
-                        </div>
-                        <span style={{ fontSize: "13px", fontWeight: "500", color: "#595959" }}>Quick Mode</span>
-                        <Switch
-                          size="small"
-                          checked={isQuickMode}
-                          onChange={setIsQuickMode}
-                          style={{
-                            backgroundColor: isQuickMode ? "#faad14" : "rgba(0, 0, 0, 0.25)"
-                          }}
-                        />
-                      </div>
-                      <Button
-                        type="primary"
-                        icon={<FiPlus size={16} />}
-                        onClick={handleCreate}
-                        className="add-button"
-                      >
-                        <span className="button-text">Add Lead</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="All Leads"
+        count={leads?.pagination?.total || 0}
+        subtitle={<span style={{ fontSize: '14px' }}>Manage all leads in the system</span>}
+        breadcrumbItems={[
+          {
+            title: (
+              <Link to="/dashboard">
+                <FiHome style={{ marginRight: "4px" }} />
+                Home
+              </Link>
+            ),
+          },
+          {
+            title: `All Leads (${leads?.pagination?.total || 0})`,
+          },
+        ]}
+        searchText={searchText}
+        onSearch={handleSearch}
+        searchPlaceholder="Search leads..."
+        viewMode={viewMode}
+        onViewChange={setViewMode}
+        onAdd={handleCreate}
+        addText="Add Lead"
+        isQuickMode={isQuickMode}
+        onQuickModeToggle={setIsQuickMode}
+        showQuickMode={true}
+        mobileSearchContent={searchContent}
+        isSearchVisible={isSearchVisible}
+        onSearchVisibleChange={setIsSearchVisible}
+        exportMenu={{
+          items: [
+            {
+              key: 'csv',
+              label: 'Export as CSV',
+              icon: <FiDownload />,
+              onClick: () => handleExport('csv'),
+            },
+            {
+              key: 'excel',
+              label: 'Export as Excel',
+              icon: <FiDownload />,
+              onClick: () => handleExport('excel'),
+            },
+            {
+              key: 'pdf',
+              label: 'Export as PDF',
+              icon: <FiDownload />,
+              onClick: () => handleExport('pdf'),
+            },
+          ]
+        }}
+        extraActions={
+          <DatePicker.RangePicker 
+            value={dateRange}
+            onChange={(dates) => {
+              setDateRange(dates);
+              setPagination(prev => ({ ...prev, current: 1 }));
+            }}
+            style={{ 
+              borderRadius: '8px',
+              height: '30px',
+              width: '260px'
+            }}
+          />
+        }
+      />
 
       <Card className="lead-content">
         {viewMode === "table" ? (
@@ -450,22 +381,39 @@ const Lead = () => {
             onTableChange={handleTableChange}
           />
         ) : (
-          <LeadCard
-            leads={leads}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            categoriesData={categoriesData}
-            sourcesData={sourcesData}
-            statusesData={statusesData}
-            currencies={currencies}
-            countries={countries}
-            pipelines={pipelines}
-            onView={handleView}
-            onLeadClick={handleLeadClick}
-            loading={isLoading}
-            pagination={pagination}
-            onTableChange={handleTableChange}
-          />
+          <>
+            <LeadCard
+              leads={leads}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              categoriesData={categoriesData}
+              sourcesData={sourcesData}
+              statusesData={statusesData}
+              currencies={currencies}
+              countries={countries}
+              pipelines={pipelines}
+              onView={handleView}
+              onLeadClick={handleLeadClick}
+              loading={isLoading}
+              pagination={pagination}
+              onTableChange={handleTableChange}
+            />
+            {leads?.pagination?.total > 0 && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                padding: '6px 0',
+              }}>
+                <Pagination
+                  current={pagination.current}
+                  pageSize={viewMode === "card" ? 100 : pagination.pageSize}
+                  total={leads?.pagination?.total || 0}
+                  onChange={(page, pageSize) => handleTableChange({ current: page, pageSize })}
+                  showSizeChanger={false}
+                />
+              </div>
+            )}
+          </>
         )}
       </Card>
 

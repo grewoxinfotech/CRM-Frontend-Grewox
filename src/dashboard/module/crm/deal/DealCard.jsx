@@ -12,7 +12,11 @@ import {
   FiTarget,
   FiLock,
   FiMove,
-  FiPlus
+  FiPlus,
+  FiUser,
+  FiBriefcase,
+  FiPhone,
+  FiMail
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation, useUpdateDealStageMutation } from "./services/DealApi";
@@ -214,40 +218,54 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
           )}
         </div>
 
-        {/* Title, Company, Value Section */}
+        {/* Deal Title */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Tooltip title={deal?.dealTitle} placement="topLeft">
-              <Text strong className="deal-title" style={{
-                fontSize: '14px', lineHeight: '1.4', display: 'block', overflow: 'hidden',
-                textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#1f2937'
-              }}>
-                {deal?.dealTitle || 'Untitled Deal'}
-              </Text>
-            </Tooltip>
-            {deal.company_name && (
-              <Tooltip title={`Company: ${deal.company_name}`}>
-                <Text className="company-name" style={{
-                  fontSize: '12px', color: '#64748b', display: 'block', overflow: 'hidden',
-                  textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px'
-                }}>
-                  {deal.company_name}
-                </Text>
-              </Tooltip>
-            )}
-            {/* Contact Name (Add if you have firstName/lastName on the deal object) */}
-            <Text className="contact-name" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '2px' }}>
-              {`${deal.firstName || ''} ${deal.lastName || ''}`.trim() || 'No Contact'}
+          <Tooltip title={deal?.dealTitle}>
+            <Text strong style={{
+              fontSize: '13px',
+              display: 'block',
+              lineHeight: '1.2',
+              color: '#1f2937',
+              marginBottom: '2px',
+              flex: 1
+            }}>
+              {deal?.dealTitle || 'Untitled Deal'}
             </Text>
-          </div>
-          {/* Value Tag */}
+          </Tooltip>
+          {/* Value Tag Moved here for density */}
           <div style={{
             display: 'flex', alignItems: 'center', background: '#f0fdf4', padding: '2px 8px',
-            borderRadius: '4px', border: '1px solid #dcfce7', height: '20px'
+            borderRadius: '4px', border: '1px solid #dcfce7', height: '20px', flexShrink: 0
           }}>
-            <span style={{ fontSize: '12px', fontWeight: '600', color: '#16a34a', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '11px', fontWeight: '700', color: '#16a34a', whiteSpace: 'nowrap' }}>
               {formatDealValue(deal.value, deal.currency)}
             </span>
+          </div>
+        </div>
+
+        {/* High Density Info Section */}
+        <div style={{
+          background: '#fcfcfc',
+          padding: '8px 10px',
+          borderRadius: '6px',
+          border: '1px solid #f0f0f0',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px'
+        }}>
+          {deal.company_name && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FiBriefcase size={11} style={{ color: '#8c8c8c' }} />
+              <Text strong style={{ fontSize: '11px', color: '#434343', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {deal.company_name}
+              </Text>
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FiUser size={11} style={{ color: '#8c8c8c' }} />
+            <Text style={{ fontSize: '11px', color: '#595959', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {`${deal.firstName || ''} ${deal.lastName || ''}`.trim() || 'No Contact'}
+            </Text>
           </div>
         </div>
 
@@ -376,12 +394,16 @@ const DroppableStage = ({ stage, children, deals, onEdit, onDelete, onView, onDe
         height: 'calc(100vh - 240px)',
         overflowY: 'auto',
         overflowX: 'hidden',
-        backgroundColor: isOver ? 'rgba(240, 247, 255, 0.8)' : 'transparent',
+        backgroundColor: isOver ? 'rgba(59, 130, 246, 0.05)' : '#f8fafc',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)',
         borderRadius: '0 0 8px 8px',
         width: '350px',
         position: 'relative',
         transition: 'background-color 0.2s ease',
-        willChange: 'background-color'
+        willChange: 'background-color',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
       }}
     >
       <SortableContext items={deals.map(deal => deal.id)} strategy={verticalListSortingStrategy}>
@@ -473,15 +495,15 @@ const SortableColumn = ({ stage, dealsInStage, children, index }) => {
           {...attributes}
           {...listeners}
           style={{
-            padding: '16px 12px',
-            borderBottom: '1px solid #f0f0f0',
+            padding: '12px 14px',
+            borderBottom: '1px solid #e2e8f0',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             cursor: isDragging ? 'grabbing' : 'grab',
             borderTopLeftRadius: '8px',
             borderTopRightRadius: '8px',
-            background: '#ffffff',
+            background: '#f8fafc',
             userSelect: 'none',
             pointerEvents: 'auto'
           }}
@@ -843,7 +865,7 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
           <div className="kanban-board" style={{
             display: 'flex',
             gap: '16px',
-            padding: '12px',
+            padding: '12px 24px 24px 12px',
             width: 'max-content',
             minWidth: '100%',
             height: 'fit-content',
@@ -877,8 +899,7 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
               }
 
               .kanban-column-content {
-                max-height: calc(100vh - 320px) !important;
-                min-height: 200px;
+                height: calc(100vh - 240px) !important;
                 overflow-y: auto !important;
                 scrollbar-width: thin;
                 scrollbar-color: #d1d5db transparent;
@@ -903,7 +924,7 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
 
               .kanban-column {
                 height: fit-content;
-                min-height: calc(100vh - 320px);
+                min-height: calc(100vh - 240px);
               }
 
               .ant-empty {
@@ -916,7 +937,7 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
                 margin-bottom: 0 !important;
               }
               .kanban-column-content {
-                background: #ffffff;
+                background: #f8fafc !important;
                 border-radius: 0 0 8px 8px;
               }
               .kanban-column-content:empty {

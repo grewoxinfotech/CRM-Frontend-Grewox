@@ -1,5 +1,17 @@
 @import './theme/theme.scss';
 
+// Global Border Radius
+.ant-input, 
+.ant-input-affix-wrapper, 
+.ant-btn, 
+.ant-select-selector, 
+.ant-picker, 
+.ant-input-number,
+.ant-card {
+    border-radius: 8px !important;
+}
+
+
 
 
 .ant-modal-content {

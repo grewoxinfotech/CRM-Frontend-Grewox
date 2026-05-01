@@ -1,0 +1,202 @@
+@import "../../styles/theme/theme.scss";
+
+.custom-page-header-container {
+    .page-breadcrumb {
+        margin-bottom: 8px;
+
+        @media (max-width: 768px) {
+            margin-bottom: 12px;
+        }
+
+        .ant-breadcrumb {
+            @media (max-width: 768px) {
+                font-size: 13px;
+            }
+
+            @media (max-width: 480px) {
+                font-size: 12px;
+            }
+
+            .ant-breadcrumb-link {
+                color: $text-color-light;
+                transition: all 0.3s ease;
+
+                a {
+                    color: $text-color-light;
+                    display: flex;
+                    align-items: center;
+
+                    &:hover {
+                        color: $primary-color;
+                    }
+                }
+            }
+
+            .ant-breadcrumb-separator {
+                color: $text-color-light;
+                opacity: 0.5;
+            }
+        }
+    }
+
+    .page-header {
+        background: #ffffff;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        margin-bottom: 16px;
+        overflow: hidden;
+
+        .header-content {
+            padding: 6px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            @media (max-width: 768px) {
+                padding: 6px 12px;
+                gap: 12px;
+            }
+
+            .page-title {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+
+                .title-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                    gap: 16px;
+
+                    h2 {
+                        font-size: 18px;
+                        font-weight: 700;
+                        color: #1e293b;
+                        margin: 0;
+                        letter-spacing: -0.02em;
+                    }
+
+                    .header-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        flex-wrap: wrap;
+
+                        .desktop-actions {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            width: 100%;
+
+                            @media (max-width: 1200px) {
+                                flex-wrap: wrap;
+                                gap: 12px;
+                                justify-content: center;
+                            }
+
+                            @media (max-width: 768px) {
+                                flex-direction: column;
+                                align-items: stretch;
+                            }
+
+                            .action-buttons {
+                                flex-shrink: 0;
+                                @media (max-width: 768px) {
+                                    display: flex;
+                                    justify-content: center;
+                                }
+                            }
+
+                            .search-container {
+                                flex: 1;
+                                min-width: 200px;
+                                
+                                @media (max-width: 768px) {
+                                    width: 100%;
+                                    min-width: 0;
+                                }
+
+                                .search-input {
+                                    width: 240px;
+                                    border-radius: 8px !important;
+
+                                    @media (max-width: 1200px) {
+                                        width: 100%;
+                                    }
+
+                                    @media (max-width: 992px) {
+                                        width: 100%;
+                                    }
+
+                                    @media (max-width: 767px) {
+                                        display: none;
+                                    }
+                                }
+                            }
+
+                            .action-buttons-group {
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+
+                                .search-icon-button {
+                                    display: none;
+                                    padding: 0 12px;
+                                    width: 30px;
+                                    height: 30px;
+                                    align-items: center;
+                                    justify-content: center;
+
+                                    @media (max-width: 767px) {
+                                        display: flex;
+                                    }
+
+                                    @media (max-width: 576px) {
+                                        width: 34px;
+                                        height: 34px;
+                                        padding: 0 10px;
+                                    }
+                                }
+
+                                .export-button,
+                                .add-button {
+                                    height: 30px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+
+                                    @media (max-width: 767px) {
+                                        padding: 0 12px !important;
+                                        width: 30px;
+                                        height: 30px;
+
+                                        .button-text {
+                                            display: none;
+                                        }
+                                    }
+
+                                    @media (max-width: 576px) {
+                                        width: 34px;
+                                        height: 34px;
+                                        padding: 0 10px;
+                                    }
+                                }
+
+                                .quick-mode-toggle {
+                                    @media (max-width: 992px) {
+                                        padding: 4px 8px !important;
+                                        span {
+                                            display: none;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
