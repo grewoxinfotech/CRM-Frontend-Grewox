@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
     Card,
     Typography,
-    Breadcrumb,
     Divider,
     Row,
     Col,
     Badge,
     Button,
     message,
-    Spin
 } from 'antd';
 import {
     FiUser,
@@ -29,10 +27,10 @@ import { useUpdateUserMutation } from '../user-management/users/services/userApi
 import './profile.scss';
 import EditProfileModal from './EditProfileModal';
 import EditCompanyWrapper from './EditCompanyWrapper';
+import PageHeader from '../../../components/PageHeader';
 
 const { Title, Text } = Typography;
 
-// Helper functions
 const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -41,165 +39,23 @@ const getInitials = (name) => {
 const formatRole = (role) => {
     if (!role || typeof role !== 'string') return 'User';
     if (role === 'client') return 'Company';
-    return role.split('-').map(word =>
-        word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    return role.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 };
 
 const getUserFullName = (user) => {
-    if (user?.firstName && user?.lastName) {
-        return `${user.firstName} ${user.lastName}`;
-    }
+    if (user?.firstName && user?.lastName) return `${user.firstName} ${user.lastName}`;
     return user?.username || 'User';
-};
-
-const ProfileHeader = ({ user, userRole, onEditClick }) => {
-    return (
-        <div className="profile-header">
-            <div className="profile-header-content">
-                <div className="profile-avatar-container">
-                    <Badge dot status="success" className="status-badge">
-                        <div className="profile-avatar">
-                            {user?.profilePic ? (
-                                <img
-                                    src={user.profilePic}
-                                    alt={getUserFullName(user)}
-                                />
-                            ) : (
-                                <div className="avatar-initials">
-                                    {getInitials(getUserFullName(user))}
-                                </div>
-                            )}
-                        </div>
-                    </Badge>
-                </div>
-                <div className="profile-title">
-                    <Title level={3}>{getUserFullName(user)}</Title>
-                    <Text className="username">@{user?.username || 'user'}</Text>
-                    <div className="role-badge">
-                        <FiShield />
-                        {formatRole(userRole)}
-                    </div>
-                </div>
-            </div>
-            <div className="profile-actions">
-                <Button type="primary" icon={<FiSettings />} onClick={onEditClick}>
-                    Edit Profile
-                </Button>
-            </div>
-        </div>
-    );
-};
-
-const PersonalInfo = ({ user }) => {
-    const infoItems = [
-        { icon: FiUser, label: 'First Name', value: user?.firstName || 'Not provided' },
-        { icon: FiUser, label: 'Last Name', value: user?.lastName || 'Not provided' },
-        { icon: FiMail, label: 'Email', value: user?.email },
-        { icon: FiPhone, label: 'Phone', value: user?.phone || 'Not provided' },
-    ];
-
-    return (
-        <div className="profile-info-section">
-            <Title level={4}>Personal Information</Title>
-            <Row gutter={[24, 24]}>
-                {infoItems.map((item, index) => (
-                    <Col xs={24} sm={12} key={index}>
-                        <div className="info-item">
-                            <div className="info-label">
-                                <item.icon className="info-icon" />
-                                <Text type="secondary">{item.label}</Text>
-                            </div>
-                            <Text strong>{item.value}</Text>
-                        </div>
-                    </Col>
-                ))}
-            </Row>
-        </div>
-    );
-};
-
-const AdditionalInfo = ({ user, userRole }) => {
-    const infoItems = [
-        {
-            icon: FiMapPin,
-            label: 'Address',
-            value: user?.address || 'Not provided'
-        },
-        {
-            icon: FiHome,
-            label: 'City',
-            value: user?.city || 'Not provided'
-        },
-        {
-            icon: FiMap,
-            label: 'State',
-            value: user?.state || 'Not provided'
-        },
-        {
-            icon: FiGlobe,
-            label: 'Country',
-            value: user?.country || 'Not provided'
-        },
-        {
-            icon: FiMapPin,
-            label: 'Zip Code',
-            value: user?.zipCode || 'Not provided'
-        },
-        {
-            icon: FiShield,
-            label: 'Role',
-            value: formatRole(userRole)
-        },
-    ];
-
-    return (
-        <div className="profile-info-section">
-            <Title level={4}>Additional Information</Title>
-            <Row gutter={[24, 24]}>
-                {infoItems.map((item, index) => (
-                    <Col xs={24} sm={12} key={index}>
-                        <div className="info-item">
-                            <div className="info-label">
-                                <item.icon className="info-icon" />
-                                <Text type="secondary">{item.label}</Text>
-                            </div>
-                            <Text strong>{item.value}</Text>
-                        </div>
-                    </Col>
-                ))}
-            </Row>
-        </div>
-    );
 };
 
 const Profile = () => {
     const user = useSelector(selectCurrentUser);
     const userRole = useSelector(selectUserRole);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-
-    // Only need updateUser mutation since EditCompany handles its own updates
     const [updateUser, { isLoading: isUpdatingUser }] = useUpdateUserMutation();
 
-    const handleEditProfile = () => {
-        setIsEditModalVisible(true);
-    };
-
-    const handleCancelEdit = () => {
-        setIsEditModalVisible(false);
-    };
-
     const handleSubmitEdit = async (formData) => {
-        if (!user?.id) {
-            message.error('User ID not found');
-            return;
-        }
-
         try {
-            await updateUser({
-                id: user.id,
-                data: formData
-            }).unwrap();
+            await updateUser({ id: user.id, data: formData }).unwrap();
             message.success('Profile updated successfully');
             setIsEditModalVisible(false);
         } catch (error) {
@@ -208,50 +64,128 @@ const Profile = () => {
     };
 
     return (
-        <div className="profile-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Profile</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
+        <div className="profile-page standard-page-container">
+            <PageHeader
+                title="My Profile"
+                subtitle="View and manage your account information"
+                breadcrumbItems={[
+                    { title: <Link to="/dashboard"><FiHome style={{ marginRight: '4px' }} /> Home</Link> },
+                    { title: "Profile" },
+                ]}
+                extraActions={[
+                    <Button key="edit" type="primary" icon={<FiSettings />} onClick={() => setIsEditModalVisible(true)}>
+                        Edit Profile
+                    </Button>
+                ]}
+            />
 
-            <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>My Profile</Title>
-                    <Text type="secondary">View and manage your account information</Text>
+            <Card className="standard-content-card profile-details-card">
+                <div className="profile-header-standard">
+                    <div className="profile-avatar-wrapper">
+                        <Badge dot status="success" offset={[-5, 35]}>
+                            <div className="profile-avatar-circle">
+                                {user?.profilePic ? (
+                                    <img src={user.profilePic} alt={getUserFullName(user)} />
+                                ) : (
+                                    <div className="avatar-initials-large">{getInitials(getUserFullName(user))}</div>
+                                )}
+                            </div>
+                        </Badge>
+                    </div>
+                    <div className="profile-main-info">
+                        <Title level={3} style={{ margin: 0 }}>{getUserFullName(user)}</Title>
+                        <Text type="secondary">@{user?.username || 'user'}</Text>
+                        <div className="role-tag-premium">
+                            <FiShield size={12} />
+                            {formatRole(userRole)}
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <Card className="profile-details-card">
-                <ProfileHeader
-                    user={user}
-                    userRole={userRole}
-                    onEditClick={handleEditProfile}
-                />
-                <Divider />
-                <PersonalInfo user={user} />
-                <Divider />
-                <AdditionalInfo user={user} userRole={userRole} />
+                <Divider style={{ margin: '24px 0' }} />
+
+                <div className="profile-info-grid">
+                    <div className="info-group">
+                        <Title level={5} className="group-title">Personal Information</Title>
+                        <Row gutter={[24, 16]}>
+                            <Col xs={24} sm={12}>
+                                <div className="info-detail-item">
+                                    <Text type="secondary" className="detail-label"><FiUser /> First Name</Text>
+                                    <Text strong className="detail-value">{user?.firstName || 'Not provided'}</Text>
+                                </div>
+                            </Col>
+                            <Col xs={24} sm={12}>
+                                <div className="info-detail-item">
+                                    <Text type="secondary" className="detail-label"><FiUser /> Last Name</Text>
+                                    <Text strong className="detail-value">{user?.lastName || 'Not provided'}</Text>
+                                </div>
+                            </Col>
+                            <Col xs={24} sm={12}>
+                                <div className="info-detail-item">
+                                    <Text type="secondary" className="detail-label"><FiMail /> Email</Text>
+                                    <Text strong className="detail-value">{user?.email}</Text>
+                                </div>
+                            </Col>
+                            <Col xs={24} sm={12}>
+                                <div className="info-detail-item">
+                                    <Text type="secondary" className="detail-label"><FiPhone /> Phone</Text>
+                                    <Text strong className="detail-value">{user?.phone || 'Not provided'}</Text>
+                                </div>
+                            </Col>
+                        </Row>
+                    </div>
+
+                    <Divider style={{ margin: '24px 0' }} />
+
+                    <div className="info-group">
+                        <Title level={5} className="group-title">Additional Information</Title>
+                        <Row gutter={[24, 16]}>
+                            <Col xs={24} sm={12} md={8}>
+                                <div className="info-detail-item">
+                                    <Text type="secondary" className="detail-label"><FiMapPin /> Address</Text>
+                                    <Text strong className="detail-value">{user?.address || 'Not provided'}</Text>
+                                </div>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <div className="info-detail-item">
+                                    <Text type="secondary" className="detail-label"><FiHome /> City</Text>
+                                    <Text strong className="detail-value">{user?.city || 'Not provided'}</Text>
+                                </div>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <div className="info-detail-item">
+                                    <Text type="secondary" className="detail-label"><FiMap /> State</Text>
+                                    <Text strong className="detail-value">{user?.state || 'Not provided'}</Text>
+                                </div>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <div className="info-detail-item">
+                                    <Text type="secondary" className="detail-label"><FiGlobe /> Country</Text>
+                                    <Text strong className="detail-value">{user?.country || 'Not provided'}</Text>
+                                </div>
+                            </Col>
+                            <Col xs={24} sm={12} md={8}>
+                                <div className="info-detail-item">
+                                    <Text type="secondary" className="detail-label"><FiMapPin /> Zip Code</Text>
+                                    <Text strong className="detail-value">{user?.zipCode || 'Not provided'}</Text>
+                                </div>
+                            </Col>
+                        </Row>
+                    </div>
+                </div>
             </Card>
 
-            {/* Conditionally render different edit modals based on user role */}
             {userRole === 'client' ? (
                 <EditCompanyWrapper
                     visible={isEditModalVisible}
-                    onCancel={handleCancelEdit}
+                    onCancel={() => setIsEditModalVisible(false)}
                     initialValues={user}
                     loading={false}
                 />
             ) : (
                 <EditProfileModal
                     visible={isEditModalVisible}
-                    onCancel={handleCancelEdit}
+                    onCancel={() => setIsEditModalVisible(false)}
                     onSubmit={handleSubmitEdit}
                     initialValues={user}
                     loading={isUpdatingUser}

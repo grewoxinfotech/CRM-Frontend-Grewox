@@ -1,356 +1,149 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
-    Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table, Popover
+    Card, Typography, Modal, message,
 } from 'antd';
 import {
-    FiPlus, FiSearch,
-    FiChevronDown, FiDownload,
-    FiHome, FiFilter
+    FiPlus, FiSearch, FiDownload, FiHome
 } from 'react-icons/fi';
+import PageHeader from "../../../../components/PageHeader";
 import './Ticket.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Link } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import CreateTicket from './CreateTicket';
 import TicketList from './TicketList';
 import { useGetAllTicketsQuery, useDeleteTicketMutation } from './services/ticketApi';
 
-const { Title, Text } = Typography;
-
-const Tickets = () => {
-    const dispatch = useDispatch();
+const Tickets = ({ isSupport = false }) => {
     const filterState = useSelector(state => state.ticket) || {};
-    
-    // Add default values for all potentially undefined properties
     const { 
         filters = {}, 
-        pagination = { 
-            current: 1, 
-            pageSize: 10,
-            total: 0 
-        }, 
-        sorting = { 
-            field: undefined, 
-            order: undefined 
-        } 
+        pagination = { current: 1, pageSize: 10 }, 
+        sorting = {} 
     } = filterState;
     
-    // Use optional chaining and provide default values
     const { data: tickets, isLoading } = useGetAllTicketsQuery({
         ...filters,
         page: pagination?.current || 1,
         limit: pagination?.pageSize || 10,
         sortField: sorting?.field,
         sortOrder: sorting?.order,
+        is_sadmin_support: isSupport
     });
 
     const [deleteTicket] = useDeleteTicketMutation();
-
     const [isFormVisible, setIsFormVisible] = useState(false);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const searchInputRef = useRef(null);
-
     const [isSearchVisible, setIsSearchVisible] = useState(false);
-    const [isFilterVisible, setIsFilterVisible] = useState(false);
-
-    const filteredTickets = React.useMemo(() => {
-        if (!tickets?.data) return [];
-        
-        return tickets.data.filter(ticket => {
-            if (!searchText) return true;
-            
-            const searchTerm = searchText.toLowerCase();
-            return (
-                ticket.subject?.toLowerCase().includes(searchTerm) ||
-                ticket.description?.toLowerCase().includes(searchTerm) ||
-                ticket.priority?.toLowerCase().includes(searchTerm) ||
-                ticket.status?.toLowerCase().includes(searchTerm) ||
-                ticket.type?.toLowerCase().includes(searchTerm) ||
-                ticket.requester?.toLowerCase().includes(searchTerm) ||
-                ticket.agent?.toLowerCase().includes(searchTerm) ||
-                ticket.project?.toLowerCase().includes(searchTerm)
-            );
-        });
-    }, [tickets, searchText]);
-
-    const handleAddTicket = () => {
-        setSelectedTicket(null);
-        setIsEditing(false);
-        setIsFormVisible(true);
-    };
-
-    const handleEditTicket = (ticket) => {
-        setSelectedTicket(ticket);
-        setIsEditing(true);
-        setIsFormVisible(true);
-    };
-
-    const handleViewTicket = (ticket) => {
-        setSelectedTicket(ticket);
-    };
-
-    const handleDelete = (record) => {
-        Modal.confirm({
-            title: 'Delete Confirmation',
-            content: 'Are you sure you want to delete this ticket?',
-            okType: 'danger',
-            okText: 'Yes',
-            cancelText: 'No',
-            bodyStyle: { padding: '20px' },
-            onOk: async () => {
-                try {
-                    await deleteTicket(record.id).unwrap();
-                    message.success('Ticket deleted successfully');
-                } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete ticket');
-                }
-            },
-        });
-    };
-
-    const handleFormClose = () => {
-        setIsFormVisible(false);
-        setSelectedTicket(null);
-        setIsEditing(false);
-    };
 
     const handleSearch = (value) => {
         setSearchText(value);
     };
 
-    const exportMenu = (
-        <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
-            </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-                onClick={() => handleExport('excel')}
-            >
-                Export as Excel
-            </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-                onClick={() => handleExport('pdf')}
-            >
-                Export as PDF
-            </Menu.Item>
-        </Menu>
-    );
-
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = filteredTickets.map(ticket => ({
-                'Ticket ID': ticket.id,
+            const data = (tickets?.data || []).map(ticket => ({
                 'Subject': ticket.ticketSubject,
                 'Priority': ticket.priority,
                 'Status': ticket.status,
                 'Requester': ticket.requester,
-                'Agent': ticket.agent,
-                'Created Date': moment(ticket.created_at).format('YYYY-MM-DD'),
+                'Date': moment(ticket.created_at).format('YYYY-MM-DD'),
             }));
 
             switch (type) {
-                case 'csv':
-                    exportToCSV(data, 'tickets_export');
-                    break;
-                case 'excel':
-                    exportToExcel(data, 'tickets_export');
-                    break;
-                case 'pdf':
-                    exportToPDF(data, 'tickets_export');
-                    break;
-                default:
-                    break;
+                case 'csv': exportToCSV(data, 'tickets'); break;
+                case 'excel': exportToExcel(data, 'tickets'); break;
+                case 'pdf': exportToPDF(data, 'tickets'); break;
             }
-            message.success(`Successfully exported as ${type.toUpperCase()}`);
+            message.success(`Exported as ${type.toUpperCase()}`);
         } catch (error) {
-            message.error(`Failed to export: ${error.message}`);
+            message.error("Export failed");
         } finally {
             setLoading(false);
         }
     };
 
     const exportToCSV = (data, filename) => {
-        const csvContent = [
-            Object.keys(data[0]).join(','),
-            ...data.map(item => Object.values(item).map(value =>
-                `"${value?.toString().replace(/"/g, '""')}"`
-            ).join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `${filename}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+        const csv = [Object.keys(data[0]).join(","), ...data.map(i => Object.values(i).join(","))].join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${filename}.csv`;
+        link.click();
     };
 
     const exportToExcel = (data, filename) => {
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Tickets');
+        XLSX.utils.book_append_sheet(wb, ws, "Tickets");
         XLSX.writeFile(wb, `${filename}.xlsx`);
     };
 
     const exportToPDF = (data, filename) => {
-        const doc = new jsPDF('l', 'pt', 'a4');
-        doc.autoTable({
-            head: [Object.keys(data[0])],
-            body: data.map(item => Object.values(item)),
-            margin: { top: 20 },
-            styles: { fontSize: 8 }
-        });
+        const doc = new jsPDF("l", "pt", "a4");
+        doc.autoTable({ head: [Object.keys(data[0])], body: data.map(i => Object.values(i)) });
         doc.save(`${filename}.pdf`);
     };
 
-    const searchContent = (
-        <div className="search-popup">
-            <Input
-                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                placeholder="Search tickets..."
-                allowClear
-                onChange={(e) => handleSearch(e.target.value)}
-                value={searchText}
-                className="search-input"
-                autoFocus
-            />
-        </div>
-    );
-
-    const filterMenu = (
-        <Menu className="filter-menu">
-            <Menu.Item key="export" className="filter-menu-item">
-                <div className="filter-section">
-                    <Dropdown overlay={exportMenu} trigger={['click']}>
-                        <Button className="export-button">
-                            <FiDownload size={16} />
-                            Export
-                        </Button>
-                    </Dropdown>
-                </div>
-            </Menu.Item>
-        </Menu>
-    );
-
     return (
-        <div className="tickets-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard/support">Support</Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Tickets</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
+        <div className="ticket-page standard-page-container">
+            <PageHeader
+                title={isSupport ? "Help Support" : "Support Tickets"}
+                count={tickets?.pagination?.total || 0}
+                subtitle={isSupport ? "Manage support requests" : "Manage internal support tickets"}
+                breadcrumbItems={[
+                    { title: <Link to="/dashboard"><FiHome style={{ marginRight: "4px" }} /> Home</Link> },
+                    { title: isSupport ? "Help Support" : "Tickets" },
+                ]}
+                searchText={searchText}
+                onSearch={handleSearch}
+                onAdd={() => { setSelectedTicket(null); setIsEditing(false); setIsFormVisible(true); }}
+                addText="Create Ticket"
+                isSearchVisible={isSearchVisible}
+                onSearchVisibleChange={setIsSearchVisible}
+                exportMenu={{
+                    items: [
+                        { key: 'csv', label: 'Export CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
+                        { key: 'excel', label: 'Export Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
+                        { key: 'pdf', label: 'Export PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') },
+                    ]
+                }}
+            />
 
-            <div className="page-header">
-                <div className="header-content">
-                    <div className="page-title">
-                        <div className="title-row">
-                            <Title level={2}>Tickets</Title>
-                            <div className="mobile-actions">
-                                <Button
-                                    type="primary"
-                                    icon={<FiPlus size={18} />}
-                                    onClick={handleAddTicket}
-                                    className="mobile-add-button"
-                                />
-                                <Popover
-                                    content={searchContent}
-                                    trigger="click"
-                                    visible={isSearchVisible}
-                                    onVisibleChange={setIsSearchVisible}
-                                    placement="bottomRight"
-                                    overlayClassName="search-popover"
-                                >
-                                    <Button
-                                        icon={<FiSearch size={18} />}
-                                        className="mobile-search-button"
-                                    />
-                                </Popover>
-                                <Dropdown overlay={exportMenu} trigger={["click"]}>
-                                    <Button className="export-button">
-                                        <FiDownload size={18} />
-                                    </Button>
-                                </Dropdown>
-                            </div>
-                        </div>
-                        <Text type="secondary">Manage all tickets in the organization</Text>
-                    </div>
-
-                    <div className="header-actions">
-                        <div className="desktop-actions">
-                            <Input
-                                prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                                placeholder="Search tickets..."
-                                allowClear
-                                onChange={(e) => handleSearch(e.target.value)}
-                                value={searchText}
-                                ref={searchInputRef}
-                                className="search-input"
-                            />
-                            <Dropdown overlay={exportMenu} trigger={['click']}>
-                                <Button className="export-button">
-                                    <FiDownload size={16} />
-                                    <span>Export</span>
-                                    <FiChevronDown size={14} />
-                                </Button>
-                            </Dropdown>
-                            <Button
-                                type="primary"
-                                icon={<FiPlus size={16} />}
-                                onClick={handleAddTicket}
-                                className="add-button"
-                            >
-                                Create Ticket
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <Card className="tickets-table-card">
+            <Card className="standard-content-card">
                 <TicketList
-                    tickets={filteredTickets}
+                    tickets={tickets}
+                    onEdit={(t) => { setSelectedTicket(t); setIsEditing(true); setIsFormVisible(true); }}
+                    onDelete={(t) => {
+                        Modal.confirm({
+                            title: 'Delete Ticket',
+                            content: 'Are you sure?',
+                            onOk: async () => {
+                                await deleteTicket(t.id).unwrap();
+                                message.success('Deleted');
+                            }
+                        });
+                    }}
+                    onView={setSelectedTicket}
                     loading={isLoading}
-                    onEdit={handleEditTicket}
-                    onDelete={handleDelete}
-                    onView={handleViewTicket}
+                    isSupport={isSupport}
+                    searchText={searchText}
                 />
             </Card>
 
-            <CreateTicket 
+            <CreateTicket
                 open={isFormVisible}
-                onCancel={handleFormClose}
-                isEditing={isEditing}
+                onCancel={() => setIsFormVisible(false)}
                 initialValues={selectedTicket}
+                isEditing={isEditing}
+                isSupport={isSupport}
             />
         </div>
     );

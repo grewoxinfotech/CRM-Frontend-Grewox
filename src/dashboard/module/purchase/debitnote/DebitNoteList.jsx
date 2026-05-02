@@ -1,33 +1,10 @@
-import React, { useState, useEffect } from "react";
-import {
-  Table,
-  Button,
-  Dropdown,
-  Typography,
-  Spin,
-  Alert,
-  Menu,
-  Input,
-  Space,
-  DatePicker,
-  Tag,
-  Modal,
-} from "antd";
-import {
-  FiMoreVertical,
-  FiEdit2,
-  FiTrash2,
-  FiEye,
-  FiFileText,
-  FiCalendar,
-  FiDollarSign,
-} from "react-icons/fi";
-import { useGetDebitNotesQuery } from "./services/debitnoteApi";
+import React, { useState } from "react";
+import { Table, Button, Dropdown, Typography, Tag } from "antd";
+import { FiMoreVertical, FiTrash2, FiFileText, FiCalendar } from "react-icons/fi";
 import { useSelector } from "react-redux";
 import { useGetBillingsQuery } from "../billing/services/billingApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import dayjs from "dayjs";
-import "./debitnote.scss";
 
 const { Text } = Typography;
 
@@ -37,10 +14,7 @@ const getCompanyId = (state) => {
 };
 
 const DebitNoteList = ({
-  onEdit,
   onDelete,
-  onView,
-  searchText,
   loading,
   debitNotes = [],
   pagination,
@@ -57,15 +31,6 @@ const DebitNoteList = ({
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-
   const billings = billingss?.message;
   
   const getBillNumber = (billId) => {
@@ -78,70 +43,29 @@ const DebitNoteList = ({
     return currency?.currencyIcon || "₹";
   };
 
-  const handleBulkDelete = () => {
-    const idsToDelete = selectedRowKeys.map(key => {
-      const debitNote = debitNotes?.find(note => note._id === key || note.id === key);
-      return debitNote?.id || debitNote?._id;
-    }).filter(id => id); // Remove any undefined/null values
-
-    if (idsToDelete.length > 0) {
-      onDelete(idsToDelete);
-      setSelectedRowKeys([]);
-    }
-  };
-
-  const getActionItems = (record) => [
-    // {
-    //   key: 'view',
-    //   icon: <FiEye style={{ fontSize: '16px' }} />,
-    //   label: 'View',
-    //   onClick: () => onView(record)
-    // },
-    // {
-    //   key: 'edit',
-    //   icon: <FiEdit2 style={{ fontSize: '16px' }} />,
-    //   label: 'Edit',
-    //   onClick: () => onEdit(record)
-    // },
-    {
-      key: 'delete',
-      icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
-      label: 'Delete',
-      danger: true,
-      onClick: () => onDelete(record)
-    }
-  ];
-
   const columns = [
     {
-      title: "Bill Number",
+      title: "Bill Details",
       dataIndex: "bill",
       key: "bill",
-      render: (billId) => (
-        <div className="item-wrapper">
-          <div className="item-content">
-            <div className="icon-wrapper bill-icon">
-              <FiFileText className="item-icon" size={16} />
-            </div>
-            <div className="info-wrapper">
-              <div className="name">{getBillNumber(billId)}</div>
-              <div className="meta">Bill ID</div>
-            </div>
+      width: 250,
+      render: (billId, record) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ 
+            width: '32px', 
+            height: '32px', 
+            borderRadius: '6px', 
+            background: '#fee2e2', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            color: '#dc2626'
+          }}>
+            <FiFileText size={16} />
           </div>
-        </div>
-      ),
-    },
-    {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-      render: (date) => (
-        <div className="item-wrapper">
-          <div className="item-content">
-            <div className="icon-wrapper date-icon">
-              <FiCalendar className="item-icon" size={16} />
-            </div>
-            <Text>{dayjs(date).format("DD MMM, YYYY")}</Text>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <Text strong style={{ color: '#1e293b' }}>{getBillNumber(billId)}</Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}>{dayjs(record.date).format('DD MMM YYYY')}</Text>
           </div>
         </div>
       ),
@@ -150,109 +74,62 @@ const DebitNoteList = ({
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
+      width: 150,
       render: (amount, record) => (
-        <div className="item-wrapper">
-          <div className="item-content">
-            <div className="icon-wrapper amount-icon">
-              <Text className="item-icon">{getCurrencySymbol(record.currency)}</Text>
-            </div>
-            <Text>{Number(amount).toLocaleString()}</Text>
-          </div>
-        </div>
+        <Text strong style={{ color: '#dc2626' }}>
+            {getCurrencySymbol(record.currency)} {parseFloat(amount || 0).toLocaleString()}
+        </Text>
       ),
     },
     {
       title: "Description",
       dataIndex: "description",
       key: "description",
-      render: (description) => (
-        <div className="item-wrapper">
-          <div className="item-content">
-            <div className="info-wrapper">
-              <div className="name">{description || "N/A"}</div>
-            </div>
-          </div>
-        </div>
-      ),
+      ellipsis: true,
+      width: 300,
+      render: (text) => <Text type="secondary" style={{ fontSize: '13px' }}>{text || 'N/A'}</Text>
     },
     {
       title: "Actions",
       key: "actions",
-      width: 80,
       fixed: 'right',
+      width: 80,
       render: (_, record) => (
         <Dropdown
-          overlay={
-            <Menu>
-              {getActionItems(record).map(item => (
-                <Menu.Item key={item.key} icon={item.icon} onClick={item.onClick} danger={item.danger}>
-                  {item.label}
-                </Menu.Item>
-              ))}
-            </Menu>
-          }
+          menu={{
+            items: [
+              { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
+            ]
+          }}
           trigger={['click']}
+          placement="bottomRight"
         >
-          <Button
-            type="text"
-            icon={<FiMoreVertical size={16} />}
-            className="action-button"
-          />
+          <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
         </Dropdown>
       ),
     },
   ];
 
-  // Remove local filtering since it's now handled by the server
-  const filteredDebitNotes = debitNotes;
-
-  // Update pagination configuration
-  const paginationConfig = {
-    ...pagination,
-    showSizeChanger: true,
-    showQuickJumper: true,
-    showTotal: (total) => `Total ${total} debit notes`,
-    pageSizeOptions: ["10", "20", "50", "100"]
-  };
-
-  // Row selection config
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (newSelectedRowKeys) => {
-      setSelectedRowKeys(newSelectedRowKeys);
-    }
-  };
-
   return (
     <div className="debitnote-list-container">
-      {selectedRowKeys.length > 0 && (
-        <div className="bulk-actions">
-          <Button
-            type="primary"
-            danger
-            icon={<FiTrash2 />}
-            onClick={handleBulkDelete}
-          >
-            Delete Selected ({selectedRowKeys.length})
-          </Button>
-        </div>
-      )}
       <Table
-        className="custom-table"
-        columns={columns}
-        dataSource={filteredDebitNotes}
-        rowSelection={rowSelection}
-        rowKey={record => record.id || record._id}
-        loading={loading}
-        // scroll={{ x: 1200 }}
-        scroll={{ x: 'max-content', y: '100%' }}
-
-        pagination={paginationConfig}
-        onChange={onChange}
-        locale={{
-          emptyText: 'No debit notes found',
+        rowSelection={{
+          selectedRowKeys,
+          onChange: setSelectedRowKeys,
         }}
-        
+        columns={columns}
+        dataSource={debitNotes}
+        rowKey={record => record.id || record._id}
+        size="small"
+        loading={loading}
+        className="compact-table"
+        pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} debit notes`,
+        }}
+        onChange={onChange}
+        scroll={{ x: 'max-content' }}
       />
     </div>
   );

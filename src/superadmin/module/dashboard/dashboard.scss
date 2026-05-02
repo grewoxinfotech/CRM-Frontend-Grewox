@@ -161,66 +161,6 @@ $shimmer-gradient: linear-gradient(90deg,
         }
     }
 
-    .page-header {
-        margin-bottom: 24px;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        gap: 24px;
-        background: white;
-        padding: 24px 32px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
-
-        @media (max-width: $tablet) {
-            padding: 20px 24px;
-            flex-direction: column;
-            gap: 16px;
-            text-align: center;
-        }
-
-        @media (max-width: $mobile) {
-            padding: 16px 20px;
-            margin-bottom: 16px;
-        }
-
-        .page-title {
-            text-align: left;
-            margin-bottom: 0;
-            flex-shrink: 0;
-
-            @media (max-width: $tablet) {
-                text-align: center;
-            }
-
-            h2 {
-                color: $text-color-dark;
-                margin-bottom: 4px;
-                font-size: 28px;
-                font-weight: 600;
-                line-height: 1.2;
-
-                @media (max-width: $tablet) {
-                    font-size: 24px;
-                }
-
-                @media (max-width: $mobile) {
-                    font-size: 20px;
-                }
-            }
-
-            .ant-typography-secondary {
-                color: $text-color-light;
-                font-size: 15px;
-                display: block;
-
-                @media (max-width: $mobile) {
-                    font-size: 13px;
-                }
-            }
-        }
-    }
 
     // Row Gutter Adjustments
     .ant-row {

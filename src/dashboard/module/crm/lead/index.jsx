@@ -353,13 +353,13 @@ const Lead = () => {
           ]
         }}
         extraActions={
-          <DatePicker.RangePicker 
+          <DatePicker.RangePicker
             value={dateRange}
             onChange={(dates) => {
               setDateRange(dates);
               setPagination(prev => ({ ...prev, current: 1 }));
             }}
-            style={{ 
+            style={{
               borderRadius: '8px',
               height: '30px',
               width: '260px'
@@ -399,9 +399,9 @@ const Lead = () => {
               onTableChange={handleTableChange}
             />
             {leads?.pagination?.total > 0 && (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
                 padding: '6px 0',
               }}>
                 <Pagination

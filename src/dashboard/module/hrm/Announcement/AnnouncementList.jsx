@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import { Table, Button, Space, Tag, Dropdown, Menu, Modal, message } from 'antd';
+import React from 'react';
+import { Table, Button, Dropdown, Typography, Modal, message } from 'antd';
 import {
     FiEdit2,
     FiTrash2,
     FiMoreVertical,
     FiBell,
-    FiCalendar,
-    FiUser
 } from 'react-icons/fi';
 import moment from 'moment';
-import './announcement.scss';
+
+const { Text } = Typography;
 
 const AnnouncementList = ({
     loading,
@@ -17,57 +16,12 @@ const AnnouncementList = ({
     pagination = {},
     onEdit,
     onDelete,
-    onPageChange,
-    onPageSizeChange
 }) => {
-    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-
-    // Row selection config
-    const rowSelection = {
-        selectedRowKeys,
-        onChange: (newSelectedRowKeys) => {
-            setSelectedRowKeys(newSelectedRowKeys);
-        }
-    };
-
-    const handleTableChange = (pagination) => {
-        onPageChange?.(pagination.current);
-        onPageSizeChange?.(pagination.pageSize);
-    };
-
-    // Bulk actions component
-    const BulkActions = () => (
-        <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
-            {selectedRowKeys.length > 0 && (
-                <Button
-                    type="primary"
-                    danger
-                    icon={<FiTrash2 size={16} />}
-                    onClick={() => handleBulkDelete(selectedRowKeys)}
-                >
-                    Delete Selected ({selectedRowKeys.length})
-                </Button>
-            )}
-        </div>
-    );
-
-    const handleBulkDelete = (ids) => {
+    const handleDelete = (id) => {
         Modal.confirm({
-            title: 'Delete Selected Announcements',
-            content: `Are you sure you want to delete ${ids.length} selected announcements?`,
-            okText: 'Yes',
-            okType: 'danger',
-            cancelText: 'No',
-            onOk: () => {
-                Promise.all(ids.map(id => onDelete(id)))
-                    .then(() => {
-                        message.success(`${ids.length} announcements deleted successfully`);
-                        setSelectedRowKeys([]);
-                    })
-                    .catch((error) => {
-                        message.error('Failed to delete announcements');
-                    });
-            },
+            title: 'Delete Announcement',
+            content: 'Are you sure?',
+            onOk: () => onDelete(id),
         });
     };
 
@@ -77,17 +31,13 @@ const AnnouncementList = ({
             dataIndex: "title",
             key: "title",
             render: (text, record) => (
-                <div className="item-wrapper">
-                    <div className="item-content">
-                        <div className="icon-wrapper" style={{ color: "#7C3AED", background: "rgba(124, 58, 237, 0.1)" }}>
-                            <FiBell className="item-icon" />
-                        </div>
-                        <div className="info-wrapper">
-                            <div className="name" style={{ color: "#262626", fontWeight: 600 }}>{text}</div>
-                            {record.description && (
-                                <div className="meta">{record.description.length > 50 ? `${record.description.substring(0, 50)}...` : record.description}</div>
-                            )}
-                        </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
+                        <FiBell size={14} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <Text strong style={{ color: '#1e293b' }}>{text}</Text>
+                        <Text type="secondary" style={{ fontSize: '11px' }}>{record.description?.substring(0, 50)}...</Text>
                     </div>
                 </div>
             ),
@@ -96,55 +46,13 @@ const AnnouncementList = ({
             title: "Created By",
             dataIndex: "created_by",
             key: "created_by",
-            render: (text) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '6px',
-                        background: 'rgba(37, 99, 235, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#2563EB'
-                    }}>
-                        <FiUser size={16} />
-                    </div>
-                    <Tag color="blue">{text}</Tag>
-                </div>
-            ),
+            render: (text) => <Text type="secondary" style={{ fontSize: '12px' }}>{text || '-'}</Text>
         },
         {
             title: "Created Date",
             dataIndex: "createdAt",
             key: "createdAt",
-            render: (date) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '6px',
-                        background: 'rgba(37, 99, 235, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#2563EB'
-                    }}>
-                        <FiCalendar size={16} />
-                    </div>
-                    <div>
-                        <div style={{
-                            color: '#262626',
-                            fontSize: '14px',
-                            fontWeight: 500
-                        }}>{moment(date).format('MMM DD, YYYY')}</div>
-                        <div style={{
-                            color: '#666',
-                            fontSize: '12px'
-                        }}>{moment(date).format('hh:mm A')}</div>
-                    </div>
-                </div>
-            ),
+            render: (date) => <Text type="secondary" style={{ fontSize: '12px' }}>{moment(date).format('DD MMM YYYY')}</Text>
         },
         {
             title: "Actions",
@@ -153,23 +61,16 @@ const AnnouncementList = ({
             fixed: 'right',
             render: (_, record) => (
                 <Dropdown
-                    overlay={
-                        <Menu>
-                            <Menu.Item key="edit" onClick={() => onEdit(record)}>
-                                <FiEdit2 /> Edit
-                            </Menu.Item>
-                            <Menu.Item key="delete" danger onClick={() => onDelete(record.id)}>
-                                <FiTrash2 /> Delete
-                            </Menu.Item>
-                        </Menu>
-                    }
+                    menu={{
+                        items: [
+                            { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
+                            { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) }
+                        ]
+                    }}
                     trigger={["click"]}
+                    placement="bottomRight"
                 >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical />}
-                        className="action-button"
-                    />
+                    <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
                 </Dropdown>
             ),
         },
@@ -177,37 +78,21 @@ const AnnouncementList = ({
 
     return (
         <div className="announcement-list-container">
-            <BulkActions />
             <Table
-                rowSelection={rowSelection}
                 columns={columns}
                 dataSource={announcements}
                 loading={loading}
                 rowKey="id"
-                onChange={handleTableChange}
+                size="small"
+                className="compact-table"
                 pagination={{
                     ...pagination,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} items`,
-                    pageSizeOptions: ['10', '20', '50', '100'],
-                    position: ['bottomRight'],
-                    onChange: (page, pageSize) => {
-                        onPageChange(page);
-                        if (pageSize !== pagination.pageSize) {
-                            onPageSizeChange(pageSize);
-                        }
-                    }
+                    showTotal: (total) => `Total ${total} items`
                 }}
-                // className="custom-table"
-                scroll={{ x: 'max-content', y: '100%' }}
-                style={{
-                    background: '#ffffff',
-                    borderRadius: '12px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)'
-                }}
+                scroll={{ x: 'max-content' }}
             />
         </div>
     );
 };
 
-export default AnnouncementList; 
+export default AnnouncementList;

@@ -46,38 +46,6 @@
         }
     }
 
-    .page-header {
-        @include hover-shadow;
-        margin-bottom: 24px;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        gap: 24px;
-        background: white;
-        padding: 24px 32px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
-
-        .page-title {
-            text-align: left;
-            margin-bottom: 0;
-
-            h2 {
-                color: $text-color-dark;
-                margin-bottom: 4px;
-                font-size: 28px;
-                font-weight: 600;
-                line-height: 1.2;
-            }
-
-            .ant-typography-secondary {
-                color: $text-color-light;
-                font-size: 15px;
-                display: block;
-            }
-        }
-    }
 
     .profile-details-card {
         @include hover-shadow;
@@ -501,20 +469,6 @@
     .profile-page {
         padding: 16px;
 
-        .page-header {
-            flex-direction: column;
-            padding: 24px;
-            gap: 20px;
-
-            .page-title {
-                text-align: center;
-                width: 100%;
-
-                h2 {
-                    margin-bottom: 4px;
-                }
-            }
-        }
 
         .profile-details-card {
             .profile-header {

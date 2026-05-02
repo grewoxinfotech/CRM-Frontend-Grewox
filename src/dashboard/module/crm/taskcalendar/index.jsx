@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Typography, Breadcrumb, Card, message, Button, Empty, Popconfirm, Tag, Badge, Tooltip, Modal } from 'antd';
-import { FiHome, FiCalendar, FiPlus, FiTrash2, FiTag, FiClock, FiMapPin, FiPhone, FiChevronUp, FiChevronDown } from 'react-icons/fi';
+import { Calendar, Typography, Card, message, Button, Empty, Tooltip, Modal, Space } from 'antd';
+import { FiHome, FiCalendar, FiPlus, FiTrash2, FiTag, FiClock, FiPhone, FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import './taskcalender.scss';
 import CreateTaskCalendar from './CreateTaskCalender';
 import { useGetAllTaskCalendarEventsQuery, useDeleteTaskCalendarEventMutation } from './services/taskCalender';
+import PageHeader from '../../../../components/PageHeader';
+
+dayjs.extend(isSameOrAfter);
 
 const { Title, Text } = Typography;
-
-const defaultColor = '#1890ff';
 
 const getTypeColor = (type) => {
     switch ((type || '').toLowerCase()) {
@@ -34,54 +36,33 @@ const TaskCalendarPage = () => {
     const [showAllTasks, setShowAllTasks] = useState(false);
     const [moreEvents, setMoreEvents] = useState({ visible: false, events: [], date: null });
 
-    const { data: calendarTasks, isLoading, isError } = useGetAllTaskCalendarEventsQuery();
-    const [deleteTaskCalendarEvent, { isLoading: isDeleting }] = useDeleteTaskCalendarEventMutation();
+    const { data: calendarTasks, isLoading } = useGetAllTaskCalendarEventsQuery();
+    const [deleteTaskCalendarEvent] = useDeleteTaskCalendarEventMutation();
 
     useEffect(() => {
         if (calendarTasks) {
             const tasksArray = Array.isArray(calendarTasks)
                 ? calendarTasks
                 : calendarTasks?.data || [];
-
             setTasks(tasksArray);
         }
     }, [calendarTasks]);
 
     useEffect(() => {
-        updateUpcomingTasks();
-    }, [tasks]);
-
-    const updateUpcomingTasks = () => {
         if (!Array.isArray(tasks)) {
             setUpcomingTasks([]);
             return;
         }
-
         const today = dayjs();
         const upcoming = tasks
             .filter(task => dayjs(task.taskDate).isSameOrAfter(today, 'day'))
             .sort((a, b) => dayjs(a.taskDate).diff(dayjs(b.taskDate)));
         setUpcomingTasks(upcoming);
-    };
+    }, [tasks]);
 
     const handleDateSelect = (date) => {
         setSelectedDate(date);
         setIsModalVisible(true);
-    };
-
-    const handleCreateTask = (values) => {
-        const newTask = {
-            taskName: values.title,
-            taskDate: values.startDate,
-            taskTime: values.start_time,
-            taskDescription: values.description,
-            client_id: values.client_id,
-            created_by: values.created_by
-        };
-
-        setTasks(prevTasks => [...prevTasks, newTask]);
-        message.success('Task created successfully');
-        setIsModalVisible(false);
     };
 
     const handleDeleteTask = async (taskId) => {
@@ -89,44 +70,11 @@ const TaskCalendarPage = () => {
             await deleteTaskCalendarEvent(taskId).unwrap();
             message.success('Task deleted successfully');
         } catch (error) {
-            console.error('Failed to delete task:', error);
             message.error('Failed to delete task');
         }
     };
 
-    const getPriorityColor = (priority) => {
-        switch (priority) {
-            case 'high': return '#ff4d4f';
-            case 'medium': return '#faad14';
-            case 'low': return '#52c41a';
-            case 'normal': return '#1890ff';
-            default: return '#1890ff';
-        }
-    };
-
-    const getPriorityText = (priority) => {
-        switch (priority) {
-            case 'high': return 'High Priority';
-            case 'medium': return 'Medium Priority';
-            case 'low': return 'Low Priority';
-            case 'normal': return 'Normal';
-            default: return 'Normal';
-        }
-    };
-
-    const getTaskTypeIcon = (type) => {
-        switch (type) {
-            case 'task': return <FiCalendar style={{ fontSize: '16px' }} />;
-            case 'call': return <FiPhone style={{ fontSize: '16px' }} />;
-            case 'meeting': return <FiClock style={{ fontSize: '16px' }} />;
-            case 'reminder': return <FiTag style={{ fontSize: '16px' }} />;
-            default: return <FiCalendar style={{ fontSize: '16px' }} />;
-        }
-    };
-
     const dateCellRender = (date) => {
-        if (!Array.isArray(tasks)) return null;
-
         const dayTasks = tasks.filter(
             task => dayjs(task.taskDate).format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
         );
@@ -146,7 +94,6 @@ const TaskCalendarPage = () => {
                 >
                     <div
                         className="calendar-event"
-                        style={{ cursor: 'pointer' }}
                         onClick={e => {
                             e.stopPropagation();
                             setMoreEvents({ visible: true, events: dayTasks, date: date.format('DD-MM-YYYY') });
@@ -163,7 +110,6 @@ const TaskCalendarPage = () => {
                             e.stopPropagation();
                             setMoreEvents({ visible: true, events: dayTasks, date: date.format('DD-MM-YYYY') });
                         }}
-                        style={{ color: '#1890ff', cursor: 'pointer', fontSize: 12, marginTop: 2 }}
                     >
                         +{dayTasks.length - 1} more
                     </div>
@@ -174,100 +120,55 @@ const TaskCalendarPage = () => {
 
     const displayedTasks = showAllTasks ? upcomingTasks : upcomingTasks.slice(0, 2);
 
-    if (isLoading) {
-        return (
-            <div className="task-calendar-page">
-                <div className="page-breadcrumb">
-                    <Breadcrumb>
-                        <Breadcrumb.Item>
-                            <Link to="/dashboard">
-                                <FiHome style={{ marginRight: '4px' }} />
-                                Home
-                            </Link>
-                        </Breadcrumb.Item>
-                        <Breadcrumb.Item>
-                            <Link to="/dashboard/crm">CRM</Link>
-                        </Breadcrumb.Item>
-                        <Breadcrumb.Item>Task Calendar</Breadcrumb.Item>
-                    </Breadcrumb>
-                </div>
-                <div className="page-header">
-                    <div className="page-title">
-                        <Title level={2}>Task Calendar</Title>
-                        <Text type="secondary">Loading task calendar data...</Text>
-                    </div>
-                </div>
-                <Card style={{ textAlign: 'center', padding: '50px' }}>
-                    Loading task calendar...
-                </Card>
-            </div>
-        );
-    }
-
     return (
-        <div className="task-calendar-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    {/* <Breadcrumb.Item>
-                        <Link to="/dashboard/crm">CRM</Link>
-                    </Breadcrumb.Item> */}
-                    <Breadcrumb.Item>Task Calendar</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Task Calendar</Title>
-                    <Text type="secondary">Manage your tasks and events</Text>
-                </div>
-            </div>
+        <div className="task-calendar-page standard-page-container">
+            <PageHeader
+                title="Task Calendar"
+                subtitle="Manage your tasks and events"
+                breadcrumbItems={[
+                    { title: <Link to="/dashboard"><FiHome style={{ marginRight: '4px' }} /> Home</Link> },
+                    { title: "CRM" },
+                    { title: "Task Calendar" },
+                ]}
+                onAdd={() => setIsModalVisible(true)}
+                addText="Create Task"
+            />
 
             <div className="task-calendar-content">
-                <Card className="upcoming-tasks" loading={isLoading}>
+                <Card className="upcoming-tasks standard-content-card" loading={isLoading}>
                     <div className="section-header">
-                        <Title level={4}>
-                            <FiCalendar style={{ marginRight: '8px' }} />
+                        <Title level={4} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FiCalendar style={{ color: '#4f46e5' }} />
                             Upcoming Tasks
                         </Title>
                     </div>
                     <div className="task-cards">
                         {!upcomingTasks.length ? (
-                            <Empty
-                                description="No tasks scheduled"
-                                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            />
+                            <Empty description="No tasks scheduled" image={Empty.PRESENTED_IMAGE_SIMPLE} />
                         ) : (
                             <>
                                 {displayedTasks.map(task => (
                                     <div key={task.id} className="task-card">
                                         <div className="card-content">
                                             <div className="task-info">
-                                                <div className="task-name">
-                                                    {task.taskName}
-                                                </div>
+                                                <div className="task-name">{task.taskName}</div>
                                                 <div className="task-datetime">
                                                     <div className="date">
-                                                        <FiCalendar style={{ marginRight: '4px', color: '#1890ff' }} />
+                                                        <FiCalendar size={12} />
                                                         {dayjs(task.taskDate).format('MMM DD, YYYY')}
                                                     </div>
                                                     <div className="time">
-                                                        <FiClock style={{ marginRight: '4px', color: '#1890ff' }} />
+                                                        <FiClock size={12} />
                                                         {task.taskTime}
                                                     </div>
                                                 </div>
                                             </div>
                                             <Button
-                                                className="delete-button"
                                                 type="text"
                                                 danger
-                                                icon={<FiTrash2 size={16} />}
+                                                icon={<FiTrash2 size={14} />}
                                                 onClick={() => handleDeleteTask(task.id)}
+                                                className="delete-button"
                                             />
                                         </div>
                                     </div>
@@ -278,6 +179,7 @@ const TaskCalendarPage = () => {
                                         className="show-more-button"
                                         onClick={() => setShowAllTasks(!showAllTasks)}
                                         icon={showAllTasks ? <FiChevronUp /> : <FiChevronDown />}
+                                        style={{ width: '100%', marginTop: '8px' }}
                                     >
                                         {showAllTasks ? 'Show Less' : `Show ${upcomingTasks.length - 2} More`}
                                     </Button>
@@ -287,9 +189,9 @@ const TaskCalendarPage = () => {
                     </div>
                 </Card>
 
-                <Card className="calendar-card" loading={isLoading}>
+                <Card className="calendar-card standard-content-card" loading={isLoading} bodyStyle={{ padding: '16px' }}>
                     <Calendar
-                        className="calendar"
+                        className="calendar compact-calendar"
                         dateCellRender={dateCellRender}
                         onSelect={handleDateSelect}
                     />
@@ -299,54 +201,55 @@ const TaskCalendarPage = () => {
             <CreateTaskCalendar
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
-                onSubmit={handleCreateTask}
+                onSubmit={() => { setIsModalVisible(false); message.success('Task scheduled'); }}
                 selectedDate={selectedDate}
             />
 
             <Modal
                 open={moreEvents.visible}
-                title={<span style={{ color: '#fff' }}>{`Events for ${moreEvents.date}`}</span>}
+                title={<span style={{ color: '#1e293b', fontWeight: 600 }}>{`Events for ${moreEvents.date}`}</span>}
                 footer={null}
                 onCancel={() => setMoreEvents({ visible: false, events: [], date: null })}
+                centered
+                width={400}
             >
-                {moreEvents.events.map((task, idx) => (
-                    <div
-                        key={idx}
-                        style={{
-                            marginBottom: 12,
-                            padding: 12,
-                            borderRadius: 10,
-                            background: '#f5faff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 12,
-                            minHeight: 48
-                        }}
-                    >
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: 15 }}>{task.taskName}</div>
-                            {task.taskType && (
-                                <span
-                                    style={{
-                                        display: 'inline-block',
-                                        background: getTypeColor(task.taskType).bg,
-                                        color: getTypeColor(task.taskType).color,
-                                        borderRadius: 8,
-                                        fontSize: 12,
-                                        fontWeight: 500,
-                                        padding: '2px 10px',
-                                        marginTop: 4
-                                    }}
-                                >
-                                    {task.taskType}
-                                </span>
-                            )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {moreEvents.events.map((task, idx) => (
+                        <div
+                            key={idx}
+                            style={{
+                                padding: '12px',
+                                borderRadius: '8px',
+                                background: '#f8fafc',
+                                border: '1px solid #f1f5f9',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px'
+                            }}
+                        >
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>{task.taskName}</div>
+                                {task.taskType && (
+                                    <Tag
+                                        style={{
+                                            background: getTypeColor(task.taskType).bg,
+                                            color: getTypeColor(task.taskType).color,
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            fontSize: '11px',
+                                            margin: '4px 0 0 0'
+                                        }}
+                                    >
+                                        {task.taskType.toUpperCase()}
+                                    </Tag>
+                                )}
+                            </div>
+                            <div style={{ color: '#4f46e5', fontWeight: 700, fontSize: '14px' }}>
+                                {task.taskTime?.slice(0, 5)}
+                            </div>
                         </div>
-                        <div style={{ color: '#1890ff', fontWeight: 700, fontSize: 15, minWidth: 48, textAlign: 'right' }}>
-                            {task.taskTime?.slice(0, 5)}
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </Modal>
         </div>
     );

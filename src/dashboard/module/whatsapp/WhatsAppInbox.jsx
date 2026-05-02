@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Input, List, Typography, Tag, Button, Empty, Spin, Divider } from 'antd';
-import { ReloadOutlined, SendOutlined, SearchOutlined } from '@ant-design/icons';
+import { FiHome } from 'react-icons/fi';
+import { SearchOutlined, SendOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useGetWhatsappConversationsQuery, useGetWhatsappMessagesQuery } from '../settings/services/settingsApi';
+import { Link } from 'react-router-dom';
+import PageHeader from '../../../components/PageHeader';
 
 import './whatsapp-inbox.scss';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const sourceColor = (s) => {
   if (s === 'ai') return 'purple';
@@ -44,32 +47,39 @@ export default function WhatsAppInbox() {
   } = useGetWhatsappMessagesQuery(msgArgs, { skip: !msgArgs });
 
   const messages = msgData?.data || [];
-
-  // For now: UI only (send API UI can be wired once you confirm which lead/contact mapping to use)
   const canSend = Boolean(selected) && draft.trim().length > 0;
 
   return (
-    <div className="wa-inbox">
-      <div className="wa-inbox-header">
-        <div>
-          <Title level={3} style={{ margin: 0 }}>
-            WhatsApp Inbox
-          </Title>
-          <Text type="secondary">Numbers list (left) and messages (right).</Text>
-        </div>
-        <Button icon={<ReloadOutlined />} loading={convFetching || msgFetching} onClick={() => { refetchConvs(); refetchMsgs(); }}>
-          Refresh
-        </Button>
-      </div>
+    <div className="wa-inbox standard-page-container">
+      <PageHeader
+        title="WhatsApp Inbox"
+        subtitle="Numbers list (left) and messages (right)."
+        breadcrumbItems={[
+            { title: <Link to="/dashboard"><FiHome style={{ marginRight: '4px' }} /> Home</Link> },
+            { title: "Communication" },
+            { title: "WhatsApp Inbox" },
+        ]}
+        extraActions={[
+            <Button 
+                key="refresh" 
+                icon={<ReloadOutlined />} 
+                loading={convFetching || msgFetching} 
+                onClick={() => { refetchConvs(); refetchMsgs(); }}
+            >
+                Refresh
+            </Button>
+        ]}
+      />
 
       <div className="wa-inbox-grid">
-        <Card className="wa-left">
+        <Card className="wa-left standard-content-card" bodyStyle={{ padding: '16px' }}>
           <Input
             allowClear
             prefix={<SearchOutlined />}
             placeholder="Search number…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            className="search-input"
           />
           <Divider style={{ margin: '12px 0' }} />
 
@@ -93,12 +103,12 @@ export default function WhatsAppInbox() {
                     <List.Item.Meta
                       title={
                         <div className="wa-conv-title">
-                          <Text strong>{item.wa_from}</Text>
-                          {item.lastSource ? <Tag color={sourceColor(item.lastSource)}>{item.lastSource}</Tag> : null}
+                          <Text strong style={{ fontSize: '13px' }}>{item.wa_from}</Text>
+                          {item.lastSource ? <Tag color={sourceColor(item.lastSource)} style={{ fontSize: '10px' }}>{item.lastSource}</Tag> : null}
                         </div>
                       }
                       description={
-                        <Text type="secondary" className="wa-conv-preview">
+                        <Text type="secondary" className="wa-conv-preview" style={{ fontSize: '12px' }}>
                           {item.lastPreview || '—'}
                         </Text>
                       }
@@ -110,23 +120,23 @@ export default function WhatsAppInbox() {
           )}
         </Card>
 
-        <Card className="wa-right">
+        <Card className="wa-right standard-content-card" bodyStyle={{ padding: 0 }}>
           {!selected ? (
-            <Empty description="Select a number to view messages" />
+            <div style={{ padding: '40px' }}><Empty description="Select a number to view messages" /></div>
           ) : msgLoading ? (
-            <div className="wa-center">
+            <div className="wa-center" style={{ padding: '40px' }}>
               <Spin />
             </div>
           ) : (
             <>
-              <div className="wa-thread-header">
+              <div className="wa-thread-header" style={{ padding: '12px 16px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
                 <Text strong>Chat with: {selected}</Text>
-                <Button size="small" onClick={() => refetchMsgs()} loading={msgFetching}>
+                <Button size="small" type="text" onClick={() => refetchMsgs()} loading={msgFetching} icon={<ReloadOutlined />}>
                   Reload
                 </Button>
               </div>
 
-              <div className="wa-thread">
+              <div className="wa-thread" style={{ height: 'calc(100vh - 350px)', overflowY: 'auto', padding: '16px' }}>
                 {messages.length === 0 ? (
                   <Empty description="No messages found" />
                 ) : (
@@ -134,36 +144,39 @@ export default function WhatsAppInbox() {
                     <div
                       key={m.id}
                       className={`wa-bubble ${m.direction === 'outbound' ? 'out' : 'in'}`}
+                      style={{ marginBottom: '16px' }}
                     >
-                      <div className="wa-bubble-meta">
-                        <Tag color={m.direction === 'outbound' ? 'geekblue' : 'green'}>
+                      <div className="wa-bubble-meta" style={{ marginBottom: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <Tag color={m.direction === 'outbound' ? 'geekblue' : 'green'} style={{ fontSize: '10px', borderRadius: '4px' }}>
                           {m.direction === 'outbound' ? 'You' : 'Customer'}
                         </Tag>
-                        {m.message_source ? <Tag color={sourceColor(m.message_source)}>{m.message_source}</Tag> : null}
-                        <Text type="secondary" style={{ fontSize: 12 }}>
+                        {m.message_source ? <Tag color={sourceColor(m.message_source)} style={{ fontSize: '10px', borderRadius: '4px' }}>{m.message_source}</Tag> : null}
+                        <Text type="secondary" style={{ fontSize: '11px' }}>
                           {m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}
                         </Text>
                       </div>
-                      <div className="wa-bubble-body">{m.body || '—'}</div>
+                      <div className="wa-bubble-body" style={{ padding: '10px 14px', borderRadius: '8px', background: m.direction === 'outbound' ? '#eff6ff' : '#f1f5f9', fontSize: '13px', maxWidth: '80%' }}>
+                        {m.body || '—'}
+                      </div>
                     </div>
                   ))
                 )}
               </div>
 
-              <div className="wa-compose">
+              <div className="wa-compose" style={{ padding: '16px', borderTop: '1px solid #f1f5f9' }}>
                 <Input.TextArea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   rows={2}
                   placeholder="Type a message…"
+                  style={{ borderRadius: '8px' }}
                 />
-                <Button type="primary" icon={<SendOutlined />} disabled={!canSend}>
-                  Send
-                </Button>
+                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button type="primary" icon={<SendOutlined />} disabled={!canSend} style={{ borderRadius: '6px' }}>
+                    Send
+                    </Button>
+                </div>
               </div>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Send button UI ready. Tell me: message send should map to which lead/contact (latest lead for this phone? manual pick?).
-              </Text>
             </>
           )}
         </Card>
@@ -171,4 +184,3 @@ export default function WhatsAppInbox() {
     </div>
   );
 }
-

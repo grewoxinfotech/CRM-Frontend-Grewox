@@ -1,98 +1,11 @@
 import React from 'react';
-import { Card, Table, Typography, Tag, Avatar, Radio, Input, Button, Space } from 'antd';
+import { Card, Table, Typography, Tag, Avatar, Radio } from 'antd';
 import { FiFileText } from 'react-icons/fi';
 
 const { Text } = Typography;
 
-// Add responsive styles object
-const responsiveStyles = {
-    tableWrapper: {
-        overflowX: 'auto',
-        overflowY: 'hidden',
-        '@media (max-width: 768px)': {
-            margin: '0 -16px',
-        }
-    },
-    headerContainer: {
-        background: '#ffffff',
-        borderBottom: '1px solid #e2e8f0',
-        padding: '16px',
-        borderRadius: '12px 12px 0 0',
-        '@media (max-width: 768px)': {
-            padding: '12px',
-        }
-    },
-    headerContent: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '12px',
-        flexWrap: 'wrap',
-        gap: '12px',
-        '@media (max-width: 576px)': {
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-        }
-    },
-    titleSection: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        flexWrap: 'wrap',
-        '@media (max-width: 576px)': {
-            width: '100%',
-        }
-    },
-    filterSection: {
-        '@media (max-width: 576px)': {
-            width: '100%',
-            '.ant-radio-group': {
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px',
-            },
-            '.ant-radio-button-wrapper': {
-                flex: '1',
-                textAlign: 'center',
-                minWidth: 'calc(50% - 4px)',
-            }
-        }
-    },
-    iconContainer: {
-        background: '#1d4ed8',
-        width: '28px',
-        height: '28px',
-        borderRadius: '6px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0
-    },
-    titleText: {
-        fontSize: '18px',
-        color: '#0f172a',
-        fontWeight: '600',
-        letterSpacing: '-0.02em',
-        '@media (max-width: 576px)': {
-            fontSize: '16px',
-        }
-    },
-    totalTag: {
-        marginLeft: '8px',
-        background: '#f1f5f9',
-        border: '1px solid #e2e8f0',
-        color: '#334155',
-        fontWeight: '600',
-        fontSize: '13px',
-        '@media (max-width: 576px)': {
-            fontSize: '12px',
-        }
-    }
-};
-
 const DealsTable = ({
     deals,
-    // loading,
     currencies,
     stagesData,
     dateFilter,
@@ -109,14 +22,10 @@ const DealsTable = ({
         return deals.filter(deal => {
             const dealDate = new Date(deal.createdAt);
             switch (dateFilter) {
-                case 'today':
-                    return dealDate >= today;
-                case 'month':
-                    return dealDate >= firstDayOfMonth;
-                case 'year':
-                    return dealDate >= firstDayOfYear;
-                default:
-                    return true;
+                case 'today': return dealDate >= today;
+                case 'month': return dealDate >= firstDayOfMonth;
+                case 'year': return dealDate >= firstDayOfYear;
+                default: return true;
             }
         });
     };
@@ -126,215 +35,80 @@ const DealsTable = ({
             title: "Deal Title",
             dataIndex: "dealTitle",
             key: "dealTitle",
-            width: 220,
-            ellipsis: true,
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search deals..."
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: '100%', marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button type="primary" onClick={() => confirm()} size="small">Search</Button>
-                        <Button onClick={clearFilters} size="small">Reset</Button>
-                    </Space>
-                </div>
-            ),
-            onFilter: (value, record) =>
-                record.dealTitle?.toLowerCase().includes(value.toLowerCase()),
             render: (text, record) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
-                    <Avatar style={{
-                        backgroundColor: record.is_won ? '#52c41a' : '#1890ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                    }}>
-                        {text && text[0] ? text[0].toUpperCase() : 'D'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Avatar size="small" style={{ backgroundColor: record.is_won ? '#10b981' : '#3b82f6', fontSize: '10px' }}>
+                        {text ? text[0].toUpperCase() : 'D'}
                     </Avatar>
-                    <Text strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {text || 'Untitled Deal'}
-                    </Text>
+                    <Text strong style={{ fontSize: '13px' }}>{text || 'Untitled'}</Text>
                 </div>
             ),
-         
         },
         {
             title: "Stage",
             dataIndex: "stage",
             key: "stage",
-            width: 150,
-            align: 'center',
-            filters: stagesData?.filter(stage => stage.stageType === "deal").map(stage => ({
-                text: stage.stageName,
-                value: stage.id
-            })) || [],
-            onFilter: (value, record) => record.stage === value,
             render: (stageId) => {
-                const stage = stagesData?.filter(stage => stage.stageType === "deal").find(s => s.id === stageId);
-                return (
-                    <Tag style={{
-                        textTransform: 'capitalize',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        color: 'white',
-                        background: stage?.color || '#1890ff',
-                        whiteSpace: 'nowrap'
-                    }}>
-                        {stage?.stageName || 'Unknown Stage'}
-                    </Tag>
-                );
+                const stage = stagesData?.filter(s => s.stageType === "deal").find(s => s.id === stageId);
+                return <Tag style={{ borderRadius: '4px', fontSize: '11px', color: 'white', border: 'none', background: stage?.color || '#3b82f6' }}>{stage?.stageName || '-'}</Tag>;
             },
+            align: 'center'
         },
         {
             title: "Value",
             dataIndex: "value",
             key: "value",
-            width: 130,
             align: 'right',
-            sorter: (a, b) => (a.value || 0) - (b.value || 0),
             render: (value, record) => {
                 const currency = currencies?.find(c => c.id === record.currency);
-                const numericValue = Number(value) || 0;
-                return (
-                    <Text strong style={{ fontSize: '13px', color: numericValue > 0 ? '#16a34a' : '#64748b', whiteSpace: 'nowrap' }}>
-                        {currency?.currencyIcon || '₹'} {numericValue.toLocaleString()}
-                    </Text>
-                );
-            },
+                return <Text strong style={{ fontSize: '13px', color: '#0f172a' }}>{currency?.currencyIcon || '₹'}{Number(value || 0).toLocaleString()}</Text>;
+            }
         },
         {
             title: "Status",
             dataIndex: "status",
             key: "status",
-            width: 120,
-            align: 'center',
-            filters: [
-                { text: 'Won', value: 'won' },
-                { text: 'Pending', value: 'pending' },
-                { text: 'Lost', value: 'lost' }
-            ],
-            onFilter: (value, record) => {
-                if (value === 'won') return record.is_won === true;
-                if (value === 'lost') return record.is_won === false;
-                return record.is_won === null;
+            render: (_, record) => {
+                const statusName = record.is_won === true ? 'Won' : record.is_won === false ? 'Lost' : 'Pending';
+                const colors = { Won: 'success', Lost: 'error', Pending: 'warning' };
+                return <Tag color={colors[statusName]} style={{ borderRadius: '4px', fontSize: '11px', border: 'none' }}>{statusName}</Tag>;
             },
-            render: (status, record) => {
-                const statusName = record.is_won === true ? 'Won' :
-                    record.is_won === false ? 'Lost' : 'Pending';
-                const statusColor = {
-                    'Won': 'success',
-                    'Lost': 'error',
-                    'Pending': 'warning'
-                }[statusName];
-
-                return (
-                    <Tag color={statusColor} style={{
-                        textTransform: 'capitalize',
-                        fontSize: '12px',
-                        whiteSpace: 'nowrap'
-                    }}>
-                        {statusName}
-                    </Tag>
-                );
-            },
+            align: 'center'
         }
     ];
-    const dealsColumnMap = Object.fromEntries(columns.map((col) => [col.key, col]));
-    const orderedColumns = ["dealTitle", "status", "stage", "value"]
-        .map((key) => dealsColumnMap[key])
-        .filter(Boolean);
 
     return (
         <Card
-            className="leads-table-card"
+            className="standard-content-card"
             bodyStyle={{ padding: 0 }}
-            style={{ height: '100%' }}
-        >
-            <div style={responsiveStyles.headerContainer}>
-                <div style={responsiveStyles.headerContent}>
-                    <div style={responsiveStyles.titleSection}>
-                        <div style={responsiveStyles.iconContainer}>
-                            <FiFileText style={{ color: 'white', fontSize: '16px' }} />
-                        </div>
-                        <Text strong style={responsiveStyles.titleText}>
-                            Deal Data
-                        </Text>
-                        <Tag style={responsiveStyles.totalTag}>
-                            {deals?.length || 0} Total
-                        </Tag>
-                    </div>
-                    <div style={responsiveStyles.filterSection}>
-                        <Radio.Group
-                            value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value)}
-                            size="small"
-                            className="white-label-date-filter"
-                        >
-                            <Radio.Button value="all">All Time</Radio.Button>
-                            <Radio.Button value="today">Today</Radio.Button>
-                            <Radio.Button value="month">This Month</Radio.Button>
-                            <Radio.Button value="year">This Year</Radio.Button>
-                        </Radio.Group>
-                    </div>
+            title={
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ background: '#3b82f6', p: '6px', borderRadius: '6px', display: 'flex' }}><FiFileText style={{ color: 'white' }} /></div>
+                    <Text strong style={{ fontSize: '15px' }}>Deal Data</Text>
+                    <Tag style={{ borderRadius: '10px', background: '#f1f5f9', border: 'none' }}>{deals?.length || 0}</Tag>
                 </div>
-            </div>
-
-            <div style={responsiveStyles.tableWrapper}>
-                <Table
-                    dataSource={filterDealsByDate(deals)}
-                    columns={orderedColumns}
-                    size="middle"
-                    tableLayout="fixed"
-                    // loading={loading}
-                    rowKey="id"
-                    pagination={{
-                        pageSize: 8,
-                        total: filterDealsByDate(deals)?.length,
-                        showTotal: (total) => `Total ${total} deals`,
-                        showSizeChanger: false,
-                        hideOnSinglePage: true,
-                        style: {
-                            marginTop: '12px',
-                            padding: '8px 16px',
-                            background: '#f8fafc',
-                            borderRadius: '0 0 8px 8px'
-                        }
-                    }}
-                    style={{
-                        borderRadius: '8px',
-                        overflowX: 'auto',
-                        overflowY: 'hidden',
-                        width: '100%'
-                    }}
-                    className="white-label-table fixed-height-table"
-                    onRow={(record) => ({
-                        onClick: () => navigate(`/dashboard/crm/deal/${record.id}`),
-                        style: { cursor: 'pointer' }
-                    })}
-                    scroll={{ x: '980px', y: 'hidden' }}
-                    locale={{
-                        emptyText: (
-                            <div style={{
-                                padding: '24px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '8px'
-                            }}>
-                                {/* <FiFileText style={{ fontSize: '24px', color: '#8c8c8c' }} /> */}
-                                <Text type="secondary">No deals found</Text>
-                            </div>
-                        )
-                    }}
-                />
-            </div>
+            }
+            extra={
+                <Radio.Group value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} size="small">
+                    <Radio.Button value="all">All</Radio.Button>
+                    <Radio.Button value="today">Today</Radio.Button>
+                    <Radio.Button value="month">Month</Radio.Button>
+                </Radio.Group>
+            }
+        >
+            <Table
+                dataSource={filterDealsByDate(deals)}
+                columns={columns}
+                size="small"
+                rowKey="id"
+                className="compact-table"
+                pagination={{ pageSize: 6, hideOnSinglePage: true }}
+                onRow={(record) => ({
+                    onClick: () => navigate(`/dashboard/crm/deal/${record.id}`),
+                    style: { cursor: 'pointer' }
+                })}
+                scroll={{ x: 'max-content' }}
+            />
         </Card>
     );
 };

@@ -1,10 +1,48 @@
 .crm-system-setup {
-  display: flex;
-  height: 100%;
-  background-color: #f8f9fa;
+  background-color: transparent;
 
-  @media screen and (max-width: 768px) {
-    flex-direction: column;
+  .crm-system-modern-layout {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    min-height: calc(100vh - 200px);
+
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+      min-height: auto;
+    }
+
+    .crm-setup-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      height: 100%;
+
+      @media screen and (max-width: 768px) {
+        width: 100% !important;
+        height: auto;
+      }
+      
+      .sidebar-menu-list {
+        @media screen and (max-width: 768px) {
+          display: flex;
+          overflow-x: auto;
+          white-space: nowrap;
+          padding-bottom: 8px;
+          
+          .modern-sidebar-item {
+            margin-bottom: 0 !important;
+            margin-right: 8px;
+            flex-shrink: 0;
+          }
+        }
+      }
+    }
+    
+    .content-display-area {
+      flex-grow: 1;
+      min-width: 0;
+      height: 100%;
+    }
   }
 
   .crm-sidebar {

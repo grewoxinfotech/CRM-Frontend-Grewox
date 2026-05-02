@@ -9,7 +9,7 @@ const { TextArea } = Input;
 const LeadAI = ({ leadId, leadData }) => {
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([
-    { role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you close this lead today?' }
+    { role: 'assistant', content: 'Hello! I am your Grewox CRM AI assistant. How can I help you close this lead today?' }
   ]);
   const [isThinking, setIsThinking] = useState(false);
   const [isPlanning, setIsPlanning] = useState(false);
@@ -70,7 +70,7 @@ const LeadAI = ({ leadId, leadData }) => {
       });
       
       const mergedHistory = [
-        { role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you close this lead today?' },
+        { role: 'assistant', content: 'Hello! I am your Grewox CRM AI assistant. How can I help you close this lead today?' },
         ...formattedHistory
       ];
 

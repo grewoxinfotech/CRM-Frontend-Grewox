@@ -37,24 +37,6 @@
         }
     }
 
-    .page-header {
-        margin-bottom: 24px;
-        background: white;
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-        .page-title {
-            h2 {
-                margin-bottom: 4px;
-                color: #1f2937;
-            }
-
-            .ant-typography-secondary {
-                color: #6b7280;
-            }
-        }
-    }
 
     .interviews-content {
         display: grid;
@@ -359,10 +341,6 @@
     .interviews-page {
         padding: 16px;
 
-        .page-header {
-            padding: 16px;
-            margin-bottom: 16px;
-        }
 
         .interviews-content {
             gap: 16px;
@@ -419,12 +397,7 @@
                 }
             }
         }
-        .page-header {
-            padding: 6px !important;
-            .page-title h2 {
-                font-size: 16px !important;
-            }
-        }
+
     }
 }
 

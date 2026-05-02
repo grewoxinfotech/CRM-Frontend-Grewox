@@ -37,38 +37,6 @@
     }
   }
 
-  .page-header {
-    margin-bottom: 24px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 24px;
-    background: white;
-    padding: 24px 32px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.08);
-
-    .page-title {
-      text-align: left;
-      margin-bottom: 0;
-      flex-shrink: 0;
-
-      h2 {
-        color: #1e293b;
-        margin-bottom: 4px;
-        font-size: 28px;
-        font-weight: 600;
-        line-height: 1.2;
-      }
-
-      .ant-typography-secondary {
-        color: #64748b;
-        font-size: 15px;
-        display: block;
-      }
-    }
-  }
 
   .page-contents {
     .gateway-card {
@@ -204,10 +172,6 @@
   @media (max-width: 991px) {
     padding: 16px;
 
-    .page-header {
-      margin: 0 0 16px;
-      padding: 20px;
-    }
 
     .page-contents {
       .ant-row {

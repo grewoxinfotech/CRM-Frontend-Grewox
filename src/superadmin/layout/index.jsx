@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './header';
-import Sidebar from './sidebar';
 import Footer from './footer';
+import Sidebar from '../../components/Sidebar/Sidebar';
+import { getSuperAdminMenuItems } from '../../config/sidebarItems';
 import './layout.scss';
+
+import FloatingAIBtn from '../../components/AISupport/FloatingAIBtn';
 
 const SuperAdminLayout = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -20,9 +23,14 @@ const SuperAdminLayout = () => {
         }
     }, []);
 
+    const menuItems = getSuperAdminMenuItems();
+
     return (
         <div className={`superadmin-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
             <Sidebar
+                menuItems={menuItems}
+                brandName="Super Admin"
+                profilePath="/superadmin/profile"
                 collapsed={sidebarCollapsed}
                 onCollapsedChange={handleSidebarToggle}
             />
@@ -33,6 +41,7 @@ const SuperAdminLayout = () => {
                 </div>
                 <Footer />
             </div>
+            <FloatingAIBtn />
         </div>
     );
 };

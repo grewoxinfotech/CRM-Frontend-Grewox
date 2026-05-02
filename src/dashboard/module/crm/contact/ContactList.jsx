@@ -1,241 +1,85 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Table,
   Button,
-  Tag,
   Dropdown,
-  Input,
-  Space,
-  Tooltip,
   Typography,
   Modal,
   message,
   Avatar,
+  Tag,
 } from "antd";
 import {
   FiEdit2,
   FiTrash2,
   FiEye,
   FiMoreVertical,
-  FiBriefcase,
   FiMail,
   FiPhone,
   FiUser,
-  FiCalendar,
-  FiMapPin,
-  FiCheck,
-  FiX,
-  FiAlertCircle,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import EditContact from "./EditContact";
-import CreateContact from "./CreateContact";
-import { useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
-import { useDeleteContactMutation } from './services/contactApi';
-import "./contact.scss";
 
 const { Text } = Typography;
 
 const ContactList = ({
   onEdit,
-  onView,
   searchText = "",
   contactsResponse,
   isLoading,
   companyAccountsResponse,
-  isCompanyAccountsLoading,
-  loggedInUser,
   onDelete,
   pagination
 }) => {
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [selectedContact, setSelectedContact] = useState(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const navigate = useNavigate();
-  const [deleteContact] = useDeleteContactMutation();
 
-
-
-  // Fetch countries data
-  const { data: countriesData } = useGetAllCountriesQuery();
-
-  // Safely handle contacts data
-  const contacts = React.useMemo(() => {
-    if (!contactsResponse?.data) return [];
-    return contactsResponse?.data;
-  }, [contactsResponse]);
-
-  // Safely handle company accounts data
-  const companyAccounts = React.useMemo(() => {
-    if (!companyAccountsResponse?.data) return [];
-    return companyAccountsResponse.data;
+  const companyMap = React.useMemo(() => {
+    const list = companyAccountsResponse?.data || [];
+    return list.reduce((acc, c) => { acc[c.id] = c.company_name; return acc; }, {});
   }, [companyAccountsResponse]);
 
-  // Create a map of company IDs to company names
-  const companyMap = React.useMemo(() => {
-    return companyAccounts.reduce((acc, company) => {
-      acc[company.id] = company.company_name;
-      return acc;
-    }, {});
-  }, [companyAccounts]);
-
-  // Enhance contacts with company names
   const enhancedContacts = React.useMemo(() => {
-    return contacts.map(contact => ({
-      ...contact,
-      company_display_name: companyMap[contact.company_name] || contact.company_name || 'N/A'
+    const list = contactsResponse?.data || [];
+    return list.map(c => ({
+      ...c,
+      company_display_name: companyMap[c.company_name] || c.company_name || 'N/A'
     }));
-  }, [contacts, companyMap]);
+  }, [contactsResponse, companyMap]);
 
-  // Clear selections when contacts data changes
-  useEffect(() => {
-    setSelectedRowKeys([]);
-  }, [contacts]);
-
-  const handleChange = (newPagination, filters, sorter) => {
-    if (pagination?.onChange) {
-      pagination.onChange(newPagination, filters, sorter);
-    }
-  };
-
-  const handleDelete = (recordOrIds) => {
-    if (onDelete) {
-      onDelete(recordOrIds);
-      setSelectedRowKeys([]);
-    }
-  };
-
-  // Row selection config
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (newSelectedRowKeys) => {
-      setSelectedRowKeys(newSelectedRowKeys);
-    }
-  };
-
-  const handleRowClick = (event, record) => {
-    // Don't navigate if clicking on the actions button or its dropdown
-    if (event.target.closest('.action-button') || event.target.closest('.ant-dropdown')) {
-      return;
-    }
-    navigate(`/dashboard/crm/contact/${record.id}`);
-  };
-  const handleView = (record) => {
-  
-    navigate(`/dashboard/crm/contact/${record.id}`);
-  };
-
-  const filteredContacts = React.useMemo(() => {
-    if (!enhancedContacts || !Array.isArray(enhancedContacts)) {
-      return [];
-    }
-    return enhancedContacts.filter((contact) => {
-      const searchLower = searchText.toLowerCase();
-      const firstName = contact?.first_name?.toLowerCase() || "";
-      const lastName = contact?.last_name?.toLowerCase() || "";
-      const email = contact?.email?.toLowerCase() || "";
-      const phone = contact?.phone?.toLowerCase() || "";
-      const company = contact?.company_display_name?.toLowerCase() || "";
-      const status = contact?.status?.toLowerCase() || "";
-
-      return (
-        !searchText ||
-        firstName.includes(searchLower) ||
-        lastName.includes(searchLower) ||
-        email.includes(searchLower) ||
-        phone.includes(searchLower) ||
-        company.includes(searchLower) ||
-        status.includes(searchLower)
-      );
+  const handleDelete = (id) => {
+    Modal.confirm({
+      title: 'Delete Contact',
+      content: 'Are you sure?',
+      okText: 'Delete',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          if (onDelete) await onDelete(id);
+        } catch (error) {
+          message.error('Delete failed');
+        }
+      },
     });
-  }, [enhancedContacts, searchText]);
-
-  const handleEdit = (record) => {
-    setSelectedContact(record);
-    setEditModalVisible(true);
   };
-
-  const handleEditModalClose = () => {
-    setEditModalVisible(false);
-    setSelectedContact(null);
-  };
-
-  const handleCreateModalClose = () => {
-    setCreateModalVisible(false);
-  };
-
-  // const getDropdownItems = (record) => ({
-  //   items: [
-  //     {
-  //       key: "view",
-  //       label: (
-  //         <Button
-  //           type="text"
-  //           onClick={(e) => {
-  //             e.stopPropagation();
-  //             handleRowClick(e, record);
-  //           }}
-  //         >
-  //           View Details
-  //         </Button>
-  //       ),
-  //     },
-  //     {
-  //       key: "edit",
-  //       label: (
-  //         <Button
-  //           type="text"
-  //           onClick={(e) => {
-  //             e.stopPropagation();
-  //             handleEdit(record);
-  //           }}
-  //         >
-  //           Edit Contact
-  //         </Button>
-  //       ),
-  //     },
-  //     {
-  //       key: "delete",
-  //       label: (
-  //         <Button
-  //           type="text"
-  //           onClick={(e) => {
-  //             e.stopPropagation();
-  //             handleDelete(record.id);
-  //           }}
-  //         >
-  //           Delete Contact
-  //         </Button>
-  //       ),
-  //     },
-  //   ],
-  // });
 
   const columns = [
     {
       title: "Contact",
       key: "contact",
+      width: 250,
       render: (_, record) => (
-        <div className="item-wrapper">
-          <div className="item-content">
-            <div className="icon-wrapper" style={{ color: "#2563EB", background: "rgba(37, 99, 235, 0.1)" }}>
-              {record.profile_pic ? (
-                <Avatar src={record.profile_pic} />
-              ) : (
-                <FiUser className="item-icon" />
-              )}
-            </div>
-            <div className="info-wrapper">
-              <div className="name" >
-                {record.first_name} {record.last_name}
-              </div>
-              <div className="meta" style={{ display: 'flex', alignItems: 'center' }}>
-                <FiMail size={12} style={{  marginRight: '5px' }} />
-                {record.email }
-              </div>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Avatar 
+            size={32} 
+            src={record.profile_pic} 
+            icon={!record.profile_pic && <FiUser />} 
+            style={{ backgroundColor: '#1890ff' }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <Text strong style={{ color: '#1e293b' }}>{record.first_name} {record.last_name}</Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}><FiMail size={10} /> {record.email || 'N/A'}</Text>
           </div>
         </div>
       ),
@@ -243,198 +87,68 @@ const ContactList = ({
     {
       title: "Company",
       key: "company",
+      width: 200,
       render: (_, record) => (
-        <div className="item-wrapper">
-          <div className="item-content">
-            <div className="icon-wrapper" style={{ color: "#2563EB", background: "rgba(37, 99, 235, 0.1)" }}>
-              <FiBriefcase className="item-icon" />
-            </div>
-            <div className="info-wrapper">
-              <div className="name">{record.company_display_name}</div>
-              <div className="meta">
-                <FiPhone size={12}   />
-                {record.phone}
-              </div>
-            </div>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <Text strong style={{ fontSize: '13px' }}>{record.company_display_name}</Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}><FiPhone size={10} /> {record.phone || 'N/A'}</Text>
         </div>
-      ),
+      )
     },
     {
       title: "Location",
       key: "location",
+      width: 150,
       render: (_, record) => (
-        <div className="item-wrapper">
-          <div className="item-content">
-            <div className="icon-wrapper" style={{ color: "#059669", background: "rgba(5, 150, 105, 0.1)" }}>
-              <FiMapPin className="item-icon" />
-            </div>
-            <div className="info-wrapper">
-              <div className="name">{record.city}</div>
-              <div className="meta">{record.country}</div>
-            </div>
-          </div>
-        </div>
-      ),
+        <Tag color="blue" style={{ borderRadius: '4px', border: 'none' }}>{record.city || 'N/A'}, {record.country || 'N/A'}</Tag>
+      )
     },
     {
       title: "Created",
-      key: "created_at",
-      render: (_, record) => (
-        <div className="item-wrapper">
-          <div className="item-content">
-            <div className="icon-wrapper" style={{ color: "#2563EB", background: "rgba(37, 99, 235, 0.1)" }}>
-              <FiCalendar className="item-icon" />
-            </div>
-            <div className="info-wrapper">
-              <div className="name">{dayjs(record.created_at).format('MMM DD, YYYY')}</div>
-            </div>
-          </div>
-        </div>
-      ),
+      dataIndex: "created_at",
+      key: "date",
+      width: 150,
+      render: (date) => dayjs(date).format('DD MMM YYYY')
     },
     {
       title: "Actions",
       key: "actions",
-      width: 80,
       fixed: 'right',
-      // render: (_, record) => (
-      //   <Dropdown
-      //     menu={getDropdownItems(record)}
-      //     trigger={['click']}
-      //     placement="bottomRight"
-      //   >
-      //     <Button
-      //       type="text"
-      //       icon={<FiMoreVertical />}
-      //       className="action-button"
-      //       onClick={(e) => e.stopPropagation()}
-      //     />
-      //   </Dropdown>
-      // ),
-      render: (_, record) => {
-        const items = [
-          {
-            key: 'view',
-            icon: <FiEye style={{ fontSize: '16px' }} />,
-            label: 'View',
-            onClick: () => {
-           
-              handleView(record);
-            }
-          },
-          {
-            key: 'edit',
-            icon: <FiEdit2 style={{ fontSize: '16px' }} />,
-            label: 'Edit',
-            onClick: () => {
-              handleEdit(record);
-            }
-          },
-          {
-            key: 'delete',
-            icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
-            label: 'Delete',
-            danger: true,
-            onClick: () => {
-              handleDelete(record.id);
-            }
-          }
-        ];
-
-        return (
-          <Dropdown
-            menu={{ items }}
-            trigger={['click']}
-            placement="bottomRight"
-            overlayClassName="action-dropdown"
-          >
-            <Button
-              type="text"
-              icon={<FiMoreVertical size={16} />}
-              className="action-button"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            />
-          </Dropdown>
-        );
-      }
+      width: 80,
+      render: (_, record) => (
+        <Dropdown
+          menu={{
+            items: [
+              { key: 'view', icon: <FiEye />, label: 'View', onClick: () => navigate(`/dashboard/crm/contact/${record.id}`) },
+              { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
+              { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) }
+            ]
+          }}
+          trigger={['click']}
+          placement="bottomRight"
+        >
+          <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+        </Dropdown>
+      )
     },
   ];
 
-  // Bulk actions component
-  const BulkActions = () => (
-    <div className="bulk-actions">
-      {selectedRowKeys.length > 0 && (
-        <Button
-          type="primary"
-          danger
-          icon={<FiTrash2 size={16} />}
-          onClick={() => handleDelete(selectedRowKeys)}
-          className="delete-button"
-        >
-          Delete Selected ({selectedRowKeys.length})
-        </Button>
-      )}
-    </div>
-  );
-
   return (
     <div className="contact-list-container">
-      {/* Bulk Actions */}
-      <BulkActions />
-
-      {/* Contact Table */}
       <Table
         rowSelection={{
-          type: 'checkbox',
-          ...rowSelection,
           selectedRowKeys,
-          onChange: (newSelectedRowKeys) => {
-            setSelectedRowKeys(newSelectedRowKeys);
-          },
+          onChange: setSelectedRowKeys,
         }}
-        onRow={(record) => ({
-          onClick: (e) => handleRowClick(e, record),
-          style: { cursor: 'pointer' }
-        })}
         columns={columns}
         dataSource={enhancedContacts}
-        loading={isLoading || isCompanyAccountsLoading}
+        loading={isLoading}
         rowKey="id"
-        className="modern-table"
-        onChange={handleChange}
+        size="small"
+        className="compact-table"
         pagination={pagination}
-        scroll={{ x: "max-content", y: "100%" }}
+        scroll={{ x: 'max-content' }}
       />
-
-      {/* Edit Modal */}
-      {editModalVisible && (
-        <EditContact
-          open={editModalVisible}
-          onCancel={handleEditModalClose}
-          contactData={selectedContact}
-          isLoading={isLoading}
-          loggedInUser={loggedInUser}
-          contactsResponse={contactsResponse}
-          companyAccountsResponse={companyAccountsResponse}
-          isCompanyAccountsLoading={isCompanyAccountsLoading}
-        />
-      )}
-
-      {/* Create Modal */}
-      {createModalVisible && (
-        <CreateContact
-          open={createModalVisible}
-          onCancel={handleCreateModalClose}
-          isLoading={isLoading}
-          loggedInUser={loggedInUser}
-          contactsResponse={contactsResponse}
-          companyAccountsResponse={companyAccountsResponse}
-          isCompanyAccountsLoading={isCompanyAccountsLoading}
-        />
-      )}
     </div>
   );
 };

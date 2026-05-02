@@ -13,6 +13,7 @@ import {
     Spin
 } from 'antd';
 import { FiUser, FiMail, FiPhone, FiX, FiUpload } from 'react-icons/fi';
+import { useSelector } from 'react-redux';
 import { useCreateTicketMutation, useUpdateTicketMutation } from './services/ticketApi';
 import { useGetEmployeesQuery } from '../../hrm/Employee/services/employeeApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
@@ -35,7 +36,7 @@ const statusOptions = [
     { value: 'closed', label: 'Closed' }
 ];
 
-const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
+const CreateTicket = ({ open, onCancel, isEditing, initialValues, isSupport = false }) => {
     const [form] = Form.useForm();
     const [createTicket, { isLoading: isCreating }] = useCreateTicketMutation();
     const [updateTicket, { isLoading: isUpdating }] = useUpdateTicketMutation();
@@ -62,6 +63,11 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
         });
     }, [employeesData, rolesData]);
     
+    const user = useSelector(state => state.auth.user);
+    const userRole = useSelector(state => state.auth.userRole);
+    // In the dashboard module, we always simplify the form for companies
+    const isSimplified = true;
+    
     useEffect(() => {
         if (open) {
             form.resetFields();
@@ -78,9 +84,14 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
                     description: initialValues.description
                 };
                 form.setFieldsValue(formattedValues);
+            } else if (isSupport && user) {
+                form.setFieldsValue({
+                    requestor: user.id,
+                    priority: 'medium'
+                });
             }
         }
-    }, [open, form, initialValues]);
+    }, [open, form, initialValues, isSupport, user]);
 
     const handleSubmit = async (values) => {
         try {
@@ -96,7 +107,8 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
                 ...otherValues,
                 ticketSubject: values.subject,
                 status: values.status || 'open',
-                requestor: values.requestor
+                requestor: isSimplified ? (user?.id || values.requestor) : values.requestor,
+                is_sadmin_support: isSupport
             };
 
             console.log('Submitting ticket with payload:', payload);
@@ -242,7 +254,7 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
                     padding: '24px',
                 }}
             >
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isSimplified ? '1fr' : '1fr 1fr', gap: '16px' }}>
                     <Form.Item
                         name="subject"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Subject <span style={{ color: "#ff4d4f" }}>*</span></span>}
@@ -262,175 +274,161 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
                         />
                     </Form.Item>
 
-                    <Form.Item
-                        name="requestor"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Requestor <span style={{ color: "#ff4d4f" }}>*</span></span>}
-                        rules={[{ required: true, message: 'Please select an employee as requestor' }]}
-                    >
-                        <Select
-                            showSearch
-                            placeholder="Select employee"
-                            optionFilterProp="label"
-                            size="large"
-                            listHeight={100}
-                            dropdownStyle={{
-                                height: '100px',
-                                overflowY: 'auto',
-                                scrollbarWidth: 'thin',
-                                scrollBehavior: 'smooth'
-                            }}
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                            }}
-                            filterOption={(input, option) => {
-                                const label = option?.label?.toString() || '';
-                                return label.toLowerCase().includes(input.toLowerCase());
-                            }}
-                            options={employees.map(employee => {
-                                const roleStyles = {
-                                    'employee': {
-                                        color: '#D46B08',
-                                        bg: '#FFF7E6',
-                                        border: '#FFD591'
-                                    },
-                                    'default': {
-                                        color: '#531CAD',
-                                        bg: '#F9F0FF',
-                                        border: '#D3ADF7'
-                                    }
-                                };
+                    {!isSimplified && (
+                        <Form.Item
+                            name="requestor"
+                            label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Requestor <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                            rules={[{ required: true, message: 'Please select an employee as requestor' }]}
+                        >
+                            <Select
+                                showSearch
+                                placeholder="Select employee"
+                                optionFilterProp="label"
+                                size="large"
+                                listHeight={100}
+                                dropdownStyle={{
+                                    height: '100px',
+                                    overflowY: 'auto',
+                                    scrollbarWidth: 'thin',
+                                    scrollBehavior: 'smooth'
+                                }}
+                                style={{
+                                    width: '100%',
+                                    borderRadius: '10px',
+                                }}
+                                filterOption={(input, option) => {
+                                    const label = option?.label?.toString() || '';
+                                    return label.toLowerCase().includes(input.toLowerCase());
+                                }}
+                                options={employees.map(employee => {
+                                    const roleStyles = {
+                                        'employee': {
+                                            color: '#D46B08',
+                                            bg: '#FFF7E6',
+                                            border: '#FFD591'
+                                        },
+                                        'default': {
+                                            color: '#531CAD',
+                                            bg: '#F9F0FF',
+                                            border: '#D3ADF7'
+                                        }
+                                    };
 
-                                const roleStyle = roleStyles[employee.role?.role_name?.toLowerCase()] || roleStyles.default;
+                                    const roleStyle = roleStyles[employee.role?.role_name?.toLowerCase()] || roleStyles.default;
 
-                                return {
-                                    label: (
-                                        <div style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '12px',
-                                            padding: '4px 0'
-                                        }}>
+                                    return {
+                                        label: (
                                             <div style={{
-                                                width: '40px',
-                                                height: '40px',
-                                                borderRadius: '50%',
-                                                background: '#e6f4ff',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: '#1890ff',
-                                                fontSize: '16px',
-                                                fontWeight: '500',
-                                                textTransform: 'uppercase'
+                                                gap: '12px',
+                                                padding: '4px 0'
                                             }}>
-                                                {employee.profilePic ? (
-                                                    <img
-                                                        src={employee.profilePic}
-                                                        alt={employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`}
+                                                <div style={{
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    borderRadius: '50%',
+                                                    background: '#e6f4ff',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: '#1890ff',
+                                                    fontSize: '16px',
+                                                    fontWeight: '500',
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    {employee.profilePic ? (
+                                                        <img
+                                                            src={employee.profilePic}
+                                                            alt={employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                borderRadius: '50%',
+                                                                objectFit: 'cover'
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <FiUser style={{ fontSize: '20px' }} />
+                                                    )}
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    flex: 1
+                                                }}>
+                                                    <span style={{
+                                                        fontWeight: 500,
+                                                        color: 'rgba(0, 0, 0, 0.85)',
+                                                        fontSize: '14px'
+                                                    }}>
+                                                        {employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`}
+                                                    </span>
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px'
+                                                }}>
+                                                    <div
+                                                        className="role-indicator"
                                                         style={{
-                                                            width: '100%',
-                                                            height: '100%',
+                                                            width: '8px',
+                                                            height: '8px',
                                                             borderRadius: '50%',
-                                                            objectFit: 'cover'
+                                                            background: roleStyle.color,
+                                                            boxShadow: `0 0 8px ${roleStyle.color}`,
+                                                            animation: 'pulse 2s infinite'
                                                         }}
                                                     />
-                                                ) : (
-                                                    <FiUser style={{ fontSize: '20px' }} />
-                                                )}
+                                                    <span style={{
+                                                        padding: '0px 8px',
+                                                        borderRadius: '4px',
+                                                        fontSize: '12px',
+                                                        background: roleStyle.bg,
+                                                        color: roleStyle.color,
+                                                        border: `1px solid ${roleStyle.border}`,
+                                                        fontWeight: 500,
+                                                        textTransform: 'capitalize'
+                                                    }}>
+                                                        {employee.role?.role_name || 'User'}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                flex: 1
-                                            }}>
-                                                <span style={{
-                                                    fontWeight: 500,
-                                                    color: 'rgba(0, 0, 0, 0.85)',
-                                                    fontSize: '14px'
-                                                }}>
-                                                    {employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`}
-                                                </span>
-                                            </div>
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px'
-                                            }}>
-                                                <div
-                                                    className="role-indicator"
-                                                    style={{
-                                                        width: '8px',
-                                                        height: '8px',
-                                                        borderRadius: '50%',
-                                                        background: roleStyle.color,
-                                                        boxShadow: `0 0 8px ${roleStyle.color}`,
-                                                        animation: 'pulse 2s infinite'
-                                                    }}
-                                                />
-                                                <span style={{
-                                                    padding: '0px 8px',
-                                                    borderRadius: '4px',
-                                                    fontSize: '12px',
-                                                    background: roleStyle.bg,
-                                                    color: roleStyle.color,
-                                                    border: `1px solid ${roleStyle.border}`,
-                                                    fontWeight: 500,
-                                                    textTransform: 'capitalize'
-                                                }}>
-                                                    {employee.role?.role_name || 'User'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ),
-                                    value: employee.id
-                                };
-                            })}
-                        />
-                    </Form.Item>
+                                        ),
+                                        value: employee.id
+                                    };
+                                })}
+                            />
+                        </Form.Item>
+                    )}
 
-                    <Form.Item
-                        name="priority"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Priority</span>}
-                        rules={[{ required: true, message: 'Please select priority' }]}
-                        initialValue="medium"
-                    >
-                        <Select
-                            placeholder="Select priority"
-                            size="large"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                height: '48px'
-                            }}
+                    {!isSimplified && (
+                        <Form.Item
+                            name="priority"
+                            label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Priority</span>}
+                            rules={[{ required: true, message: 'Please select priority' }]}
+                            initialValue="medium"
                         >
-                            {priorityOptions.map(option => (
-                                <Option key={option.value} value={option.value}>
-                                    {option.label}
-                                </Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
+                            <Select
+                                placeholder="Select priority"
+                                size="large"
+                                style={{
+                                    width: '100%',
+                                    borderRadius: '10px',
+                                    height: '48px'
+                                }}
+                            >
+                                {priorityOptions.map(option => (
+                                    <Option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    )}
 
-                    <Form.Item
-                        name="agent"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Agent</span>}
-                    >
-                        <Input
-                            placeholder="Enter agent"
-                            size="large"
-                            style={{
-                                borderRadius: '10px',
-                                padding: '8px 16px',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                                transition: 'all 0.3s ease',
-                            }}
-                        />
-                    </Form.Item>
-
-                    {isEditing && (
+                    {!isSimplified && isEditing && (
                         <Form.Item
                             name="status"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Status</span>}

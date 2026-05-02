@@ -37,28 +37,6 @@
         }
     }
 
-    .page-header {
-        margin-bottom: 24px;
-        background: white;
-        padding: 24px 32px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
-
-        .page-title {
-            h2 {
-                color: $text-color-dark;
-                margin-bottom: 4px;
-                font-size: 28px;
-                font-weight: 600;
-                line-height: 1.2;
-            }
-
-            .ant-typography-secondary {
-                color: $text-color-light;
-                font-size: 15px;
-            }
-        }
-    }
 
     .calendar-content {
         display: grid;
@@ -428,12 +406,6 @@
     .calendar-page {
         padding: 8px;
 
-        .page-header {
-            padding: 12px;
-            .page-title h2 {
-                font-size: 20px;
-            }
-        }
 
         .calendar-content {
             gap: 8px;
@@ -532,12 +504,7 @@
                 font-size: 12px !important;
                     }
         }
-        .page-header {
-            padding: 6px;
-            .page-title h2 {
-                font-size: 16px;
-            }
-        }
+
         .upcoming-events {
             .event-cards {
                 padding: 2px !important;

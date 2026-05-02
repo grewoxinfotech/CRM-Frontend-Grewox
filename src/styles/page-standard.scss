@@ -1,0 +1,143 @@
+@import './theme/theme.scss';
+
+// Global Page Standards (Based on Leads/Deals)
+.standard-page-container {
+    padding: 0 20px;
+
+    @media (max-width: 768px) {
+        padding: 16px;
+    }
+
+    @media (max-width: 480px) {
+        padding: 12px;
+    }
+}
+
+// Breadcrumb Standards
+.standard-breadcrumb {
+    margin-bottom: 4px;
+    padding: 0;
+
+    .ant-breadcrumb {
+        font-size: 14px;
+        
+        @media (max-width: 768px) {
+            font-size: 13px;
+        }
+
+        .ant-breadcrumb-link {
+            color: $text-color-light;
+            
+            a {
+                color: $text-color-light;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+
+                &:hover {
+                    color: $primary-color;
+                }
+            }
+
+            &:last-child {
+                color: $text-color-dark;
+                font-weight: 500;
+            }
+        }
+
+        .ant-breadcrumb-separator {
+            margin: 0 8px;
+            color: $text-color-light;
+        }
+    }
+}
+
+// Header Standards
+.custom-page-header-container {
+
+}
+
+// Compact Table Standards
+.standard-content-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 12px 16px;
+    
+    .ant-card-body {
+        padding: 0;
+    }
+}
+
+.compact-table {
+    background: transparent;
+
+    .ant-table-thead > tr > th {
+        background: #fafafa;
+        font-weight: 600;
+        color: #1e293b;
+        padding: 10px 12px !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        font-size: 13px;
+
+        &::before {
+            display: none;
+        }
+    }
+
+    .ant-table-tbody > tr > td {
+        padding: 8px 12px !important;
+        font-size: 13px;
+        vertical-align: middle;
+
+        &:last-child {
+            padding-right: 24px !important;
+        }
+    }
+
+    .ant-table-row {
+        transition: all 0.3s ease;
+        &:hover {
+            background: #f8fafc !important;
+        }
+    }
+
+    // Pagination styling
+    .ant-table-pagination.ant-pagination {
+        margin: 16px 0 !important;
+        
+        .ant-pagination-item-active {
+            background: $primary-color;
+            border-color: $primary-color;
+            a { color: white; }
+        }
+    }
+}
+
+// Status & Priority Tag Standards
+.status-tag {
+    border-radius: 4px;
+    border: none;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+// Action Button Standards
+.action-dropdown-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+    color: #64748b;
+
+    &:hover {
+        background: #f1f5f9;
+        color: $primary-color;
+    }
+}

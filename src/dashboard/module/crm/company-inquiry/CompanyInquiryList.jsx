@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Table, Button, Tooltip, Empty, Typography, Dropdown, Input, Space } from 'antd';
-import { FiEdit2, FiEye, FiTrash2, FiMoreVertical } from 'react-icons/fi';
+import { Table, Button, Typography, Dropdown, Tag } from 'antd';
+import { FiEdit2, FiEye, FiTrash2, FiMoreVertical, FiUser, FiBriefcase, FiPhone } from 'react-icons/fi';
 
 const { Text } = Typography;
 
@@ -12,114 +12,43 @@ const CompanyInquiryList = ({
     onDelete,
     searchText
 }) => {
-
-    const getDropdownItems = (record) => {
-       
-        return {
-            items: [
-                {
-                    key: 'view',
-                    icon: <FiEye />,
-                    label: 'View Details',
-                    onClick: () => onView?.(record),
-                },
-                {
-                    key: 'edit',
-                    icon: <FiEdit2 />,
-                    label: 'Edit',
-                    onClick: () => onEdit?.(record),
-                },
-                {
-                    key: 'delete',
-                    icon: <FiTrash2 />,
-                    label: 'Delete',
-                    onClick: () => {
-                       
-                        onDelete?.(record);
-                    },
-                    danger: true,
-                },
-            ],
-        };
-    };
-   
     const columns = [
         {
-            title: "Full Name",
-            dataIndex: "fullname",
-            key: "fullname",
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search full name"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])} 
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>   
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+            title: "Inquirer Details",
+            key: "inquirer",
+            width: 250,
+            render: (_, record) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '6px', 
+                        background: '#e0e7ff', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        color: '#4338ca'
+                    }}>
+                        <FiUser size={16} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <Text strong style={{ color: '#1e293b' }}>{record.fullname || 'N/A'}</Text>
+                        <Text type="secondary" style={{ fontSize: '12px' }}><FiPhone size={10} /> {record.phone || 'N/A'}</Text>
+                    </div>
                 </div>
-              ),
-              onFilter: (value, record) =>
-                record.fullname.toLowerCase().includes(value.toLowerCase()),
-            render: (text, record) => (
-                <Text strong style={{ cursor: 'pointer' }} onClick={() => onView?.(record)}>
-                    {text || '-'}
-                </Text>
             ),
         },
         {
-            title: "Business Category",
+            title: "Category",
             dataIndex: "business_category",
-            key: "business_category",
+            key: "category",
             width: 180,
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search business category"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+            render: (text) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FiBriefcase size={12} style={{ color: '#64748b' }} />
+                    <Text style={{ fontSize: '13px' }}>{text || 'N/A'}</Text>
                 </div>
-              ),
-              onFilter: (value, record) =>
-                record.business_category.toLowerCase().includes(value.toLowerCase()),
-            render: (text) => text || '-',
-        },
-        {
-            title: "Phone",
-            dataIndex: "phone",
-            key: "phone",
-            width: 150,
-            sorter: (a, b) => (a?.phone || '').localeCompare(b?.phone || ''),
-            render: (text) => text || '-',
+            )
         },
         {
             title: "Description",
@@ -127,58 +56,47 @@ const CompanyInquiryList = ({
             key: "description",
             ellipsis: true,
             width: 300,
-            sorter: (a, b) => (a?.description || '').localeCompare(b?.description || ''),
-            render: (text) => text || '-',
+            render: (text) => <Text type="secondary" style={{ fontSize: '13px' }}>{text || '-'}</Text>
         },
         {
             title: "Created By",
             dataIndex: "created_by",
-            key: "created_by",
+            key: "owner",
             width: 150,
-            sorter: (a, b) => (a?.created_by || '').localeCompare(b?.created_by || ''),
-            render: (text) => text || '-',
+            render: (text) => <Tag color="purple" style={{ borderRadius: '4px', border: 'none' }}>{text || 'N/A'}</Tag>
         },
         {
-            title: 'Action',
+            title: 'Actions',
             key: 'actions',
             width: 80,
             fixed: 'right',
-            align: 'center',
             render: (_, record) => (
                 <Dropdown
-                    menu={getDropdownItems(record)}
+                    menu={{
+                        items: [
+                            { key: 'view', icon: <FiEye />, label: 'View', onClick: () => onView?.(record) },
+                            { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit?.(record) },
+                            { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete?.(record) }
+                        ]
+                    }}
                     trigger={['click']}
                     placement="bottomRight"
-                    overlayClassName="company-inquiry-actions-dropdown"
                 >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical />}
-                        className="action-dropdown-button"
-                        onClick={(e) => e.preventDefault()}
-                    />
+                    <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
                 </Dropdown>
             ),
         },
     ];
 
-    const safeData = Array.isArray(data) ? data : [];
-
     const filteredData = useMemo(() => {
-        if (!searchText) return safeData;
-
-        return safeData.filter((item) => {
-            if (!item) return false;
-
-            const searchLower = searchText.toLowerCase();
-            return (
-                (item.fullname || '').toLowerCase().includes(searchLower) ||
-                (item.business_category || '').toLowerCase().includes(searchLower) ||
-                (item.phone || '').toLowerCase().includes(searchLower) ||
-                (item.description || '').toLowerCase().includes(searchLower)
-            );
-        });
-    }, [safeData, searchText]);
+        if (!searchText) return data;
+        const searchLower = searchText.toLowerCase();
+        return data.filter(item => 
+            (item.fullname || '').toLowerCase().includes(searchLower) ||
+            (item.business_category || '').toLowerCase().includes(searchLower) ||
+            (item.phone || '').toLowerCase().includes(searchLower)
+        );
+    }, [data, searchText]);
 
     return (
         <div className="company-inquiry-list">
@@ -187,17 +105,14 @@ const CompanyInquiryList = ({
                 dataSource={filteredData}
                 loading={loading}
                 rowKey={(record) => record?._id || record?.id || Math.random().toString()}
-                scroll={{ x: 1200 }}
+                size="small"
+                className="compact-table"
                 pagination={{
                     pageSize: 10,
                     showSizeChanger: true,
-                    showTotal: (total, range) =>
-                        `${range[0]}-${range[1]} of ${total} items`,
+                    showTotal: (total) => `Total ${total} items`
                 }}
-                locale={{
-                    emptyText: <Empty description="No inquiries found" />
-                }}
-                className="company-inquiry-table"
+                scroll={{ x: 'max-content' }}
             />
         </div>
     );

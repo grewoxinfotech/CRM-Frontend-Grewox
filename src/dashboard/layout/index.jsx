@@ -1,16 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './header';
-import Sidebar from './sidebar';
 import Footer from './footer';
+import Sidebar from '../../components/Sidebar/Sidebar';
+import { getDashboardMenuItems } from '../../config/sidebarItems';
 import './layout.scss';
 import { useGetRolesQuery } from '../module/hrm/role/services/roleApi';
-import { selectCurrentUser } from '../../auth/services/authSlice';
+import { selectCurrentUser, selectUserRole } from '../../auth/services/authSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { io } from 'socket.io-client';
 import { BASE_URL } from '../../config/config';
 import { leadApi } from '../module/crm/lead/services/LeadApi';
 import { settingsApi } from '../../superadmin/module/settings/services/settingsApi';
+import { useGetsubcriptionByIdQuery } from '../../superadmin/module/SubscribedUser/services/SubscribedUserApi';
+import BrandConfig from '../../utils/brandName';
+import moment from 'moment';
+
+import FloatingAIBtn from '../../components/AISupport/FloatingAIBtn';
 
 const DashboardLayout = () => {
     const dispatch = useDispatch();
@@ -115,16 +121,51 @@ const DashboardLayout = () => {
         };
     }, [loggedInUser?.id, dispatch]);
 
+    const userRole = useSelector(selectUserRole);
+    const isSuperAdminCompanyLogin = localStorage.getItem('isSuperAdminCompanyLogin') === 'true';
+    const subscriptionId = loggedInUser?.client_plan_id;
+    const shouldFetchSubscription = subscriptionId && userRole !== 'super-admin' && !isSuperAdminCompanyLogin;
+    
+    const { data: subscriptionData, isLoading: isSubscriptionLoading } = useGetsubcriptionByIdQuery(subscriptionId, {
+      skip: !shouldFetchSubscription
+    });
+  
+    const isSubscriptionExpired = React.useMemo(() => {
+      if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return false;
+      if (!subscriptionData?.data?.end_date) return false;
+      return moment(subscriptionData.data.end_date).isBefore(moment());
+    }, [subscriptionData, userRole, isSuperAdminCompanyLogin]);
+
+    const checkPermission = (moduleKey) => {
+        if (['settings', 'communication', 'support'].includes(moduleKey?.toLowerCase())) return true;
+        if (userRole?.toLowerCase() === 'client') return true;
+        if (!userPermissions) return false;
+        const modulePermissions = userPermissions[moduleKey];
+        return modulePermissions && modulePermissions.length > 0 && modulePermissions[0].permissions.includes('view');
+    };
+
+    const shouldShowMenuItem = (item) => {
+        if (isSubscriptionExpired) return ['Dashboard', 'Setting'].includes(item.title);
+        if (['Setting', 'Communication', 'Support'].includes(item.title)) return true;
+        if (userRole?.toLowerCase() === 'client') return true;
+        if (!item.permission) return true;
+        if (item.subItems?.length > 0) return item.subItems.some(sub => !sub.permission || checkPermission(sub.permission));
+        return checkPermission(item.permission);
+    };
+
+    const menuItems = React.useMemo(() => {
+        return getDashboardMenuItems(checkPermission, isSubscriptionExpired).filter(shouldShowMenuItem);
+    }, [userPermissions, userRole, isSubscriptionExpired]);
+
     return (
         <div className={`dashboard-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
             <Sidebar
+                menuItems={menuItems}
+                brandName={`${BrandConfig.appCapitalName} CRM`}
+                profilePath="/dashboard/profile"
                 collapsed={sidebarCollapsed}
                 onCollapsedChange={handleSidebarToggle}
-                userPermissions={userPermissions}
-                rolesData={rolesData}
-                loggedInUser={loggedInUser}
-                isMobileMenuOpen={isMobileMenuOpen}
-                onMobileMenuClose={handleMobileMenuToggle}
+                isSidebarReady={!shouldFetchSubscription || !isSubscriptionLoading}
             />
             <div className="main-content">
                 <Header onMobileMenuToggle={handleMobileMenuToggle} />
@@ -136,6 +177,7 @@ const DashboardLayout = () => {
             {isMobileMenuOpen && (
                 <div className="sidebar-overlay" onClick={handleMobileMenuToggle} />
             )}
+            <FloatingAIBtn />
         </div>
     );
 };

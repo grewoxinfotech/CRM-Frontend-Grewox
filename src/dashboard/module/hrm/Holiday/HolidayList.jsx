@@ -1,193 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Space, Button, Tooltip, Tag, message, Modal, Select, Dropdown, Input } from 'antd';
+import React from 'react';
+import { Table, Button, Tag, Dropdown, Typography, Modal, message } from 'antd';
 import {
     FiEdit2,
     FiTrash2,
     FiMoreVertical,
     FiCalendar,
-    FiClock,
-    FiStar
 } from 'react-icons/fi';
 import { useGetAllHolidaysQuery, useDeleteHolidayMutation } from './services/holidayApi';
 import dayjs from 'dayjs';
-import './holiday.scss';
 
-const { Option } = Select;
+const { Text } = Typography;
 
-const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
-    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-    const [isMobile, setIsMobile] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
-
-    // RTK Query hooks
-    const { data: response = {}, isLoading } = useGetAllHolidaysQuery({
-        page: currentPage,
-        pageSize,
+const HolidayList = ({ onEdit, searchText = '', loading: parentLoading }) => {
+    const { data: response = {}, isLoading: localLoading } = useGetAllHolidaysQuery({
         search: searchText,
-        ...filters
     });
     const [deleteHoliday] = useDeleteHolidayMutation();
 
-    // Define leave types
-    const leaveTypes = [
-        { text: 'Paid', value: 'paid' },
-        { text: 'Unpaid', value: 'unpaid' }
-    ];
+    const holidays = response.data || [];
+    const loading = parentLoading || localLoading;
 
-    // Destructure data and pagination from response
-    const { data: holidays = [], pagination = {} } = response;
-
-
-    const handleDelete = (recordOrIds) => {
-        const isMultiple = Array.isArray(recordOrIds);
-        const title = isMultiple ? 'Delete Selected Holidays' : 'Delete Holiday';
-        const content = isMultiple
-            ? `Are you sure you want to delete ${recordOrIds.length} selected holidays?`
-            : 'Are you sure you want to delete this holiday?';
-
+    const handleDelete = (id) => {
         Modal.confirm({
-            title,
-            content,
-            okText: 'Yes',
-            okType: 'danger',
-            bodyStyle: { padding: '20px' },
-            cancelText: 'No',
+            title: 'Delete Holiday',
+            content: 'Are you sure?',
             onOk: async () => {
                 try {
-                    if (isMultiple) {
-                        // Handle bulk delete
-                        await Promise.all(recordOrIds.map(id => deleteHoliday(id).unwrap()));
-                        message.success(`${recordOrIds.length} holidays deleted successfully`);
-                        setSelectedRowKeys([]); // Clear selection after delete
-                    } else {
-                        // Handle single delete
-                        await deleteHoliday(recordOrIds).unwrap();
-                        message.success('Holiday deleted successfully');
-                    }
+                    await deleteHoliday(id).unwrap();
+                    message.success('Deleted successfully');
                 } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete holiday(s)');
+                    message.error('Failed to delete');
                 }
             },
         });
     };
-
-    // Row selection config
-    const rowSelection = {
-        selectedRowKeys,
-        onChange: (newSelectedRowKeys) => {
-            setSelectedRowKeys(newSelectedRowKeys);
-        }
-    };
-
-    // Bulk actions component
-    const BulkActions = () => (
-        <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
-            {selectedRowKeys.length > 0 && (
-                <Button
-                    type="primary"
-                    danger
-                    icon={<FiTrash2 />}
-                    onClick={() => handleDelete(selectedRowKeys)}
-                >
-                    Delete Selected ({selectedRowKeys.length})
-                </Button>
-            )}
-        </div>
-    );
 
     const columns = [
         {
             title: 'Holiday Name',
             dataIndex: 'holiday_name',
             key: 'holiday_name',
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search holiday name"
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: 188, marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button
-                            type="primary"
-                            onClick={() => confirm()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                            Reset
-                        </Button>
-                    </Space>
-                </div>
-            ),
-            onFilter: (value, record) =>
-                (record.holiday_name?.toLowerCase() || '').includes(value.toLowerCase()),
             render: (text) => (
-                <div className="item-wrapper">
-                    <div className="item-content">
-                        <div
-                            className="icon-wrapper"
-                            style={{
-                                color: "#7C3AED",
-                                background: "rgba(124, 58, 237, 0.1)"
-                            }}
-                        >
-                            <FiCalendar className="item-icon" />
-                        </div>
-                        <div className="info-wrapper">
-                            <div
-                                className="name"
-                                style={{
-                                    color: "#7C3AED",
-                                    fontWeight: 600,
-                                    fontSize: "14px"
-                                }}
-                            >
-                                {text || 'N/A'}
-                            </div>
-                        </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+                        <FiCalendar size={14} />
                     </div>
+                    <Text strong style={{ color: '#1e293b' }}>{text}</Text>
                 </div>
             ),
         },
         {
-            title: 'Leave Type',
+            title: 'Type',
             dataIndex: 'leave_type',
             key: 'leave_type',
-            filters: leaveTypes,
-            onFilter: (value, record) => record.leave_type === value,
-            render: (type) => (
-                <div className="item-wrapper">
-                    <div className="item-content">
-                        <div
-                            className="icon-wrapper"
-                            style={{
-                                color: type === 'paid' ? "#059669" : "#2563EB",
-                                background: type === 'paid' ? "rgba(5, 150, 105, 0.1)" : "rgba(37, 99, 235, 0.1)"
-                            }}
-                        >
-                            <FiStar className="item-icon" />
-                        </div>
-                        <div className="info-wrapper">
-                            <div
-                                className="name"
-                                style={{
-                                    color: type === 'paid' ? "#059669" : "#2563EB",
-                                    fontWeight: 500,
-                                    fontSize: "14px"
-                                }}
-                            >
-                                {type ? type.charAt(0).toUpperCase() + type.slice(1) : 'N/A'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ),
+            render: (type) => <Tag style={{ borderRadius: '4px', border: 'none' }}>{type ? type.toUpperCase() : 'N/A'}</Tag>
         },
         {
             title: 'Duration',
@@ -197,125 +63,51 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
                 const end = dayjs(record.end_date);
                 const days = end.diff(start, 'day') + 1;
                 return (
-                    <div className="item-wrapper">
-                        <div className="item-content">
-                            <div
-                                className="icon-wrapper"
-                                style={{
-                                    color: "#D97706",
-                                    background: "rgba(217, 119, 6, 0.1)"
-                                }}
-                            >
-                                <FiClock className="item-icon" />
-                            </div>
-                            <div className="info-wrapper">
-                                <div
-                                    className="name"
-                                    style={{
-                                        color: "#D97706",
-                                        fontWeight: 500,
-                                        fontSize: "14px"
-                                    }}
-                                >
-                                    {days} day{days > 1 ? 's' : ''}
-                                </div>
-                                <div className="meta">
-                                    {dayjs(record.start_date).format('DD MMM')} - {dayjs(record.end_date).format('DD MMM YYYY')}
-                                </div>
-                            </div>
-                        </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <Text strong style={{ fontSize: '13px' }}>{days} Day{days > 1 ? 's' : ''}</Text>
+                        <Text type="secondary" style={{ fontSize: '11px' }}>{start.format('DD MMM')} - {end.format('DD MMM YYYY')}</Text>
                     </div>
                 );
-            },
-            sorter: (a, b) => {
-                const daysA = dayjs(a.end_date).diff(dayjs(a.start_date), 'day') + 1;
-                const daysB = dayjs(b.end_date).diff(dayjs(b.start_date), 'day') + 1;
-                return daysA - daysB;
-            },
+            }
         },
         {
             title: 'Actions',
             key: 'actions',
-            width: '80px',
+            width: 80,
             fixed: 'right',
             render: (_, record) => (
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Dropdown
-                        menu={{
-                            items: [
-                                {
-                                    key: 'edit',
-                                    icon: <FiEdit2 style={{ fontSize: '14px', color: '#1890ff' }} />,
-                                    label: 'Edit Holiday',
-                                    onClick: () => onEdit(record),
-                                },
-                                {
-                                    key: 'delete',
-                                    icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,
-                                    label: 'Delete Holiday',
-                                    danger: true,
-                                    onClick: () => handleDelete(record.id),
-                                }
-                            ]
-                        }}
-                        placement="bottomRight"
-                        trigger={['click']}
-                    >
-                        <Button
-                            type="text"
-                            icon={<FiMoreVertical size={16} />}
-                            className="action-button"
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                    </Dropdown>
-                </div>
+                <Dropdown
+                    menu={{
+                        items: [
+                            { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
+                            { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) }
+                        ]
+                    }}
+                    trigger={['click']}
+                    placement="bottomRight"
+                >
+                    <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+                </Dropdown>
             ),
         },
     ];
 
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
     return (
-        <>
-            <BulkActions />
-            <div className='holiday-list-container'>
-                <Table
-                    columns={columns}
-                    dataSource={holidays}
-                    loading={isLoading}
-                    rowKey="id"
-                    rowSelection={{
-                        type: 'checkbox',
-                        selectedRowKeys,
-                        onChange: (newSelectedRowKeys) => {
-                            setSelectedRowKeys(newSelectedRowKeys);
-                        },
-                    }}
-                    pagination={{
-                        current: currentPage,
-                        pageSize: pageSize,
-                        total: pagination.total,
-                        onChange: (page, size) => {
-                            setCurrentPage(page);
-                            setPageSize(size);
-                        },
-                        showSizeChanger: true,
-                        showTotal: (total) => `Total ${total} items`,
-                    }}
-                    // className="custom-table"
-                    scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
-                    style={{
-                        background: '#ffffff',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                    }}
-                />
-            </div>
-        </>
+        <div className='holiday-list-container'>
+            <Table
+                columns={columns}
+                dataSource={holidays}
+                loading={loading}
+                rowKey="id"
+                size="small"
+                className="compact-table"
+                pagination={{
+                    showTotal: (total) => `Total ${total} items`,
+                    pageSize: 10
+                }}
+                scroll={{ x: 'max-content' }}
+            />
+        </div>
     );
 };
 

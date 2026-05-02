@@ -1,27 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
-    Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table, Popover
+    Card,
+    message,
 } from 'antd';
 import {
-    FiPlus, FiSearch,
-    FiChevronDown, FiDownload,
-    FiHome
+    FiPlus,
+    FiDownload,
+    FiHome,
 } from 'react-icons/fi';
 import './jobApplications.scss';
-import moment from 'moment';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import CreateJobApplication from './CreateJobApplication';
 import JobApplicationList from './JobApplicationList';
 import { Link } from 'react-router-dom';
 import { useGetAllJobApplicationsQuery, useDeleteJobApplicationMutation } from './services/jobApplicationApi';
-import { useSelector, useDispatch } from 'react-redux';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-
-const { Title, Text } = Typography;
-const { confirm } = Modal;
+import PageHeader from '../../../../components/PageHeader';
 
 const JobApplications = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -30,9 +22,6 @@ const JobApplications = () => {
     const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-    const [exportLoading, setExportLoading] = useState(false);
-    const searchInputRef = useRef(null);
-    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     const { data: applications, isLoading } = useGetAllJobApplicationsQuery({
         page: currentPage,
@@ -40,29 +29,7 @@ const JobApplications = () => {
         search: searchText
     });
 
-    const searchContent = (
-        <div className="search-popup">
-            <Input
-                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                placeholder="Search applications..."
-                allowClear
-                onChange={(e) => handleSearch(e.target.value)}
-                value={searchText}
-                className="search-input"
-                autoFocus
-            />
-        </div>
-    );
-
     const [deleteApplication] = useDeleteJobApplicationMutation();
-
-    // Debounce search
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setCurrentPage(1); // Reset to first page on new search
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [searchText]);
 
     const handleAddApplication = () => {
         setSelectedApplication(null);
@@ -76,248 +43,60 @@ const JobApplications = () => {
         setIsFormVisible(true);
     };
 
-    const handleDelete = (recordOrIds) => {
-        const isMultiple = Array.isArray(recordOrIds);
-        const title = isMultiple ? 'Delete Selected Applications' : 'Delete Application';
-        const content = isMultiple
-            ? `Are you sure you want to delete ${recordOrIds.length} selected applications?`
-            : 'Are you sure you want to delete this application?';
-
-        Modal.confirm({
-            title,
-            content,
-            okText: 'Yes',
-            okType: 'danger',
-            cancelText: 'No',
-            icon: <ExclamationCircleOutlined />,
-            bodyStyle: { padding: "20px" },
-            onOk: async () => {
-                try {
-                    if (isMultiple) {
-                        await Promise.all(recordOrIds.map(id => deleteApplication(id).unwrap()));
-                        message.success(`${recordOrIds.length} applications deleted successfully`);
-                    } else {
-                        await deleteApplication(recordOrIds).unwrap();
-                        message.success('Application deleted successfully');
-                    }
-                } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete application(s)');
-                }
-            },
-        });
+    const handleExport = (type) => {
+        message.info(`Exporting as ${type.toUpperCase()}...`);
     };
-
-    const handleFormClose = () => {
-        setIsFormVisible(false);
-        setSelectedApplication(null);
-        setIsEditing(false);
-    };
-
-    const handleSearch = (value) => {
-        setSearchText(value);
-    };
-
-    const handleTableChange = (pagination, filters, sorter) => {
-        setCurrentPage(pagination.current);
-        setPageSize(pagination.pageSize);
-    };
-
-    const exportMenu = (
-        <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
-            </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-                onClick={() => handleExport('excel')}
-            >
-                Export as Excel
-            </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-                onClick={() => handleExport('pdf')}
-            >
-                Export as PDF
-            </Menu.Item>
-        </Menu>
-    );
-
-    const handleExport = async (type) => {
-        try {
-            setExportLoading(true);
-            const data = applications?.data?.map(application => ({
-                'Name': application.name || 'N/A',
-                'Email': application.email || 'N/A',
-                'Phone': application.phone || 'N/A',
-                'Job': application.job || 'N/A',
-                'Experience': application.total_experience || 'N/A',
-                'Notice Period': application.notice_period || 'N/A',
-                'Status': application.status || 'N/A',
-                'Applied Date': moment(application.created_at).format('YYYY-MM-DD')
-            })) || [];
-
-            if (data.length === 0) {
-                message.warning('No data available to export');
-                return;
-            }
-
-            const timestamp = moment().format('YYYY-MM-DD_HH-mm');
-            const filename = `job_applications_export_${timestamp}`;
-
-            switch (type) {
-                case 'csv':
-                    exportToCSV(data, filename);
-                    break;
-                case 'excel':
-                    exportToExcel(data, filename);
-                    break;
-                case 'pdf':
-                    exportToPDF(data, filename);
-                    break;
-                default:
-                    break;
-            }
-            message.success(`Successfully exported as ${type.toUpperCase()}`);
-        } catch (error) {
-            message.error(`Failed to export: ${error.message}`);
-        } finally {
-            setExportLoading(false);
-        }
-    };
-
-    const exportToCSV = (data, filename) => {
-        const csvContent = [
-            Object.keys(data[0]).join(','),
-            ...data.map(item => Object.values(item).map(value =>
-                `"${value?.toString().replace(/"/g, '""')}"`
-            ).join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `${filename}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    };
-
-    const exportToExcel = (data, filename) => {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Applications');
-        XLSX.writeFile(wb, `${filename}.xlsx`);
-    };
-
-    const exportToPDF = (data, filename) => {
-        const doc = new jsPDF('l', 'pt', 'a4');
-        doc.autoTable({
-            head: [Object.keys(data[0])],
-            body: data.map(item => Object.values(item)),
-            margin: { top: 20 },
-            styles: { fontSize: 8 }
-        });
-        doc.save(`${filename}.pdf`);
-    };
-    
 
     return (
-        <div className="job-applications-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    {/* <Breadcrumb.Item>
-                        <Link to="/dashboard/job">Job</Link>
-                    </Breadcrumb.Item> */}
-                    <Breadcrumb.Item>Job Applications</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
+        <div className="job-applications-page standard-page-container">
+            <PageHeader
+                title="Job Applications"
+                count={applications?.total || 0}
+                subtitle="Manage all job applications"
+                breadcrumbItems={[
+                    { title: <Link to="/dashboard"><FiHome style={{ marginRight: '4px' }} /> Home</Link> },
+                    { title: "Job" },
+                    { title: "Applications" },
+                ]}
+                searchText={searchText}
+                onSearch={setSearchText}
+                searchPlaceholder="Search applications..."
+                onAdd={handleAddApplication}
+                addText="Add Application"
+                exportMenu={{
+                    items: [
+                        { key: 'csv', label: 'Export CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
+                        { key: 'excel', label: 'Export Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
+                        { key: 'pdf', label: 'Export PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') },
+                    ]
+                }}
+            />
 
-            <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Job Applications</Title>
-                    <Text className="page-description" type="secondary">Manage all job applications</Text>
-                </div>
-                <div className="header-actions">
-                    <div className="desktop-actions">
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                            <div className="search-container">
-                                <Input
-                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
-                                    placeholder="Search applications..."
-                                    allowClear
-                                    onChange={(e) => handleSearch(e.target.value)}
-                                    value={searchText}
-                                    className="search-input"
-                                />
-                                <Popover
-                                    content={searchContent}
-                                    trigger="click"
-                                    open={isSearchVisible}
-                                    onOpenChange={setIsSearchVisible}
-                                    placement="bottomRight"
-                                    className="mobile-search-popover"
-                                >
-                                    <Button
-                                        className="search-icon-button"
-                                        icon={<FiSearch size={16} />}
-                                    />
-                                </Popover>
-                            </div>
-                            <Dropdown overlay={exportMenu} trigger={["click"]} disabled={isLoading || exportLoading}>
-                                <Button className="export-button" loading={exportLoading}>
-                                    {!exportLoading && <FiDownload size={16} />}
-                                    <span className="button-text">Export</span>
-                                </Button>
-                            </Dropdown>
-                            <Button
-                                type="primary"
-                                icon={<FiPlus size={16} />}
-                                onClick={handleAddApplication}
-                                className="add-button"
-                            >
-                                <span className="button-text">Add Application</span>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <Card className="job-applications-table-card">
+            <Card className="standard-content-card">
                 <JobApplicationList
                     applications={applications?.data || []}
                     loading={isLoading}
                     onEdit={handleEditApplication}
-                    onDelete={handleDelete}
+                    onDelete={async (id) => {
+                        try {
+                            await deleteApplication(id).unwrap();
+                            message.success('Application deleted successfully');
+                        } catch (e) {
+                            message.error('Failed to delete application');
+                        }
+                    }}
                     pagination={{
                         current: currentPage,
                         pageSize: pageSize,
                         total: applications?.total || 0,
-                        totalPages: applications?.totalPages || 1,
-                        onChange: handleTableChange,
-                        showSizeChanger: true,
-                        showTotal: (total) => `Total ${total} items`
+                        onChange: (page, size) => { setCurrentPage(page); setPageSize(size); }
                     }}
                 />
             </Card>
 
             <CreateJobApplication
                 open={isFormVisible}
-                onCancel={handleFormClose}
+                onCancel={() => setIsFormVisible(false)}
                 isEditing={isEditing}
                 initialValues={selectedApplication}
             />

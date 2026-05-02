@@ -8,61 +8,6 @@
     margin-bottom: 16px;
   }
 
-  .page-header {
-    margin-bottom: 24px;
-
-    .page-title {
-      margin-bottom: 16px;
-
-      h2 {
-        margin-bottom: 8px;
-        font-size: 28px;
-      }
-    }
-
-    .header-actions-wrapper {
-      margin-top: 16px;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #fff;
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-
-      .search-input {
-        flex: 1;
-        max-width: 400px;
-      }
-
-      .action-buttons {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-
-        .add-button {
-          height: 40px;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 0 20px;
-          background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-          border: none;
-          box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
-          transition: all 0.3s ease;
-
-          &:hover {
-            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
-          }
-        }
-      }
-    }
-  }
 
   .signature-list-card {
     background: #fff;

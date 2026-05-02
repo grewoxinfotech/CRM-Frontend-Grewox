@@ -1,14 +1,18 @@
 .dashboard-container {
-    padding: 24px;
+    padding: 12px;
     background-color: #f3f6fb;
     min-height: 100vh;
 
-    @media (max-width: 576px) {
-        padding: 16px;
-    }
-
-    @media (max-width: 360px) {
-        padding: 12px;
+    .standard-content-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        border-radius: 12px;
+        overflow: hidden;
+        
+        .ant-card-body {
+            flex-grow: 1;
+        }
     }
 
     .welcome-card {

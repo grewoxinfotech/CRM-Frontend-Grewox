@@ -8,7 +8,7 @@ $desktop: 1024px;
 .superadmin-layout {
     display: flex;
     min-height: 100vh;
-    background-color: $background-color;
+    background-color: #f8fafc;
     position: relative;
 
     @media (max-width: $desktop) {
@@ -80,7 +80,7 @@ $desktop: 1024px;
 
 // Mobile sidebar overlay
 @media (max-width: $desktop) {
-    .superadmin-sidebar {
+    .app-sidebar {
         position: fixed;
         top: 0;
         left: 0;

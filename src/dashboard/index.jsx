@@ -181,7 +181,7 @@ export default function Dashboard() {
       animate="animate"
       variants={staggerContainer}
     >
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 8]}>
         <Col span={24}>
           <WelcomeSection
             user={user}

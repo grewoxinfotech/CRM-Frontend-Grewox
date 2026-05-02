@@ -56,6 +56,7 @@ import Calendar from "../dashboard/module/communication/calendar/index.jsx";
 import TaskCalendar from "../dashboard/module/crm/taskcalendar/index.jsx";
 import SubscribedUser from "../superadmin/module/SubscribedUser/index.jsx";
 import Tickets from "../dashboard/module/support/ticket/index.jsx";
+import SuperAdminTickets from "../superadmin/module/support/ticket/index.jsx";
 import Proposal from "../dashboard/module/crm/proposal/index.jsx";
 import Tax from "../dashboard/module/settings/tax/index.jsx";
 import Attendance from "../dashboard/module/hrm/Attendance/index.jsx";
@@ -427,6 +428,10 @@ const routes = createBrowserRouter([
             path: "ticket",
             element: <Tickets />,
           },
+          {
+            path: "help-support",
+            element: <Tickets isSupport={true} />,
+          },
         ],
       },
       {
@@ -544,6 +549,15 @@ const routes = createBrowserRouter([
       {
         path: "inquiry",
         element: <Inquiry />,
+      },
+      {
+        path: "support",
+        children: [
+          {
+            path: "ticket",
+            element: <SuperAdminTickets />,
+          },
+        ],
       },
       // {
       //   path: "notes",
