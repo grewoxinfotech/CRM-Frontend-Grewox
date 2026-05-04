@@ -57,17 +57,10 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
   );
 
 
-  // Ensure payments is always an array and filter by related_id
+  // Ensure payments is always an array
   const payments = React.useMemo(() => {
-    const paymentData = Array.isArray(paymentsResponse?.data)
-      ? paymentsResponse.data
-      : paymentsResponse?.data
-      ? [paymentsResponse.data]
-      : [];
-
-    // Filter payments where related_id matches dealId
-    return paymentData.filter((payment) => payment.related_id === dealId);
-  }, [paymentsResponse, dealId]);
+    return Array.isArray(paymentsResponse?.data) ? paymentsResponse.data : [];
+  }, [paymentsResponse]);
 
   // Function to get currency details by ID or code
   const getCurrencyDetails = (currencyIdOrCode) => {
@@ -315,7 +308,13 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
   ];
 
   if (error) {
-    return <div>Error loading payments: {error.message}</div>;
+    return (
+      <div className="error-container">
+        <Text type="danger">
+          Error loading payments: {error.data?.message || error.message || "Unknown error"}
+        </Text>
+      </div>
+    );
   }
 
   return (

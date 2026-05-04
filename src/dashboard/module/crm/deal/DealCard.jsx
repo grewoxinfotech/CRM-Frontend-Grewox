@@ -874,7 +874,7 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
             perspective: 1000,
             alignItems: 'flex-start'
           }}>
-            <style jsx global>{`
+            <style jsx="true" global="true">{`
               .kanban-board-wrapper {
                 scrollbar-width: thin;
                 scrollbar-color: #d1d5db transparent;

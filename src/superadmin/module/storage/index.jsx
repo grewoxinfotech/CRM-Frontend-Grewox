@@ -19,6 +19,8 @@ import {
     AppstoreOutlined,
     HomeOutlined
 } from '@ant-design/icons';
+import { FiHome, FiDownload, FiList, FiGrid, FiCalendar } from 'react-icons/fi';
+import PageHeader from '../../../components/PageHeader';
 import './Storage.scss';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -28,7 +30,6 @@ import StorageCard from './StorageCard';
 import StorageStats from './StorageStats';
 import { Link } from 'react-router-dom';
 import { useGetClientStorageQuery } from './services/storageApi';
-import { FiDownload } from 'react-icons/fi';
 
 const { Title, Text } = Typography;
 
@@ -109,82 +110,30 @@ const Storage = () => {
 
     return (
         <div className="storage-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/superadmin">
-                            <HomeOutlined style={{ marginRight: "4px" }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Storage</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="header-content">
-                    <div className="page-title">
-                        <div className="title-row">
-                            <div className="page-title-content">
-                                <Title level={2}>Storage</Title>
-                                <Text type="secondary">Manage storage usage across all companies</Text>
-                            </div>
-                            <div className="header-actions">
-                                <div className="desktop-actions">
-                                    <div className="action-buttons">
-                                        <Button.Group className="view-toggle">
-                                            <Button
-                                                type={viewMode === 'table' ? 'primary' : 'default'}
-                                                icon={<UnorderedListOutlined size={16} />}
-                                                onClick={() => setViewMode('table')}
-                                            />
-                                            <Button
-                                                type={viewMode === 'card' ? 'primary' : 'default'}
-                                                icon={<AppstoreOutlined size={16} />}
-                                                onClick={() => setViewMode('card')}
-                                            />
-                                        </Button.Group>
-                                    </div>
-
-                                    <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
-                                        <div className="search-container" style={{ flex: 1 }}>
-                                            <Input
-                                                prefix={<SearchOutlined style={{ color: '#8c8c8c' }} />}
-                                                placeholder="Search storage..."
-                                                allowClear
-                                                onChange={(e) => setSearchText(e.target.value)}
-                                                value={searchText}
-                                                className="search-input"
-                                            />
-                                        </div>
-                                        <div className="action-buttons-group">
-                                            <Popover
-                                                content={searchContent}
-                                                trigger="click"
-                                                open={isSearchVisible}
-                                                onOpenChange={setIsSearchVisible}
-                                                placement="bottomRight"
-                                                className="mobile-search-popover"
-                                            >
-                                                <Button
-                                                    className="search-icon-button"
-                                                    icon={<SearchOutlined size={16} />}
-                                                />
-                                            </Popover>
-                                            <Dropdown menu={{ items: exportMenuItems }} trigger={["click"]}>
-                                                <Button className="export-button">
-                                                    <FiDownload size={16} />
-                                                    <span className="button-text">Export</span>
-                                                </Button>
-                                            </Dropdown>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title="Storage Settings"
+                subtitle="Manage and monitor system storage"
+                breadcrumbItems={[
+                    {
+                        title: (
+                            <Link to="/superadmin">
+                                <FiHome style={{ marginRight: '4px' }} />
+                                Home
+                            </Link>
+                        )
+                    },
+                    { title: 'Storage' }
+                ]}
+                searchText={searchText}
+                onSearch={(e) => setSearchText(e.target.value)}
+                viewMode={viewMode}
+                onViewChange={setViewMode}
+                showViewToggle={true}
+                exportMenu={{ items: exportMenuItems }}
+                mobileSearchContent={searchContent}
+                isSearchVisible={isSearchVisible}
+                onSearchVisibleChange={setIsSearchVisible}
+            />
 
             <StorageStats data={storageData?.data?.clientsStorage} />
 

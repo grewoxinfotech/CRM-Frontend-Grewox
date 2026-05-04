@@ -96,7 +96,7 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
       subItems: [
         { title: "Mail", icon: <FiMail />, path: "/dashboard/communication/mail", permission: "dashboards-communication" },
         { title: "Chat", icon: <FiMessageSquare />, path: "/dashboard/communication/chat", permission: "dashboards-communication" }
-      ]
+      ].filter(item => !item.permission || checkPermission(item.permission))
     },
     {
       title: "WhatsApp",
@@ -107,7 +107,7 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
         { title: "Inbox", icon: <FiMessageSquare />, path: "/dashboard/whatsapp/inbox", permission: "dashboards-communication" },
         { title: "Business setup", icon: <FiSettings />, path: "/dashboard/settings/whatsapp", permission: "dashboards-communication" },
         { title: "Message log", icon: <FiList />, path: "/dashboard/whatsapp/messages", permission: "dashboards-communication" }
-      ]
+      ].filter(item => !item.permission || checkPermission(item.permission))
     },
     {
       title: "HRM",
@@ -166,7 +166,7 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
       subItems: [
         { title: "Ticket", icon: <FiMessageSquare />, path: "/dashboard/support/ticket" },
         { title: "Help Support", icon: <FiHelpCircle />, path: "/dashboard/support/help-support" }
-      ]
+      ].filter(item => !item.permission || checkPermission(item.permission))
     }
 ];
 

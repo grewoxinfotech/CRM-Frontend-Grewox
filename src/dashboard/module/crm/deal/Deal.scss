@@ -1,7 +1,6 @@
 @import '../../../../styles/theme/theme.scss';
 
 .project-page {
-  padding: 24px;
   background-color: #f9fafb;
   // min-height: 100vh;
 
@@ -152,14 +151,14 @@
 }
 
 .deal-page {
-  padding: 0px 20px 20px;
+  padding: 0;
 
   @media (max-width: 768px) {
-    padding: 0px 16px;
+    padding: 0;
   }
 
   @media (max-width: 480px) {
-    padding: 0px 12px;
+    padding: 0;
   }
 
   .page-breadcrumb {
@@ -357,7 +356,7 @@
     .ant-table-pagination.ant-pagination {
       display: flex !important;
       visibility: visible !important;
-      padding: 0 10px !important; 
+      padding: 0 10px !important;
       width: 100% !important;
       justify-content: flex-end;
       align-items: center;
@@ -931,56 +930,58 @@
 }
 
 .delete-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 40px;
-    padding: 0 16px;
-    font-weight: 500;
-    font-size: 16px;
-    margin-left: 20px;
-    margin-top: 0;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    background: #ff4d4f !important;
-    border-color: #ff4d4f !important;
-    color: white !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  font-weight: 500;
+  font-size: 16px;
+  margin-left: 20px;
+  margin-top: 0;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background: #ff4d4f !important;
+  border-color: #ff4d4f !important;
+  color: white !important;
 
-    &:hover, &:focus {
-        background: #d9363e !important;
-        border-color: #d9363e !important;
-        color: #fff !important;
-    }
+  &:hover,
+  &:focus {
+    background: #d9363e !important;
+    border-color: #d9363e !important;
+    color: #fff !important;
+  }
 
-    svg {
-        width: 16px;
-        height: 16px;
-    }
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .action-dropdown-button {
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.3s ease;
 
-    &:hover {
-        background-color: rgba(0, 0, 0, 0.04);
-    }
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
 
-    svg {
-        font-size: 18px;
-        color: #8c8c8c;
-    }
+  svg {
+    font-size: 18px;
+    color: #8c8c8c;
+  }
 }
+
 .deal-bulk-actions {
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
 }

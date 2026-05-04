@@ -43,13 +43,17 @@ const RoleBasedRoute = ({ children }) => {
 
             if (userRole) {
                 const isSuperAdmin = userRole === 'super-admin';
+                const isSuperAdminCompanyLogin = localStorage.getItem('isSuperAdminCompanyLogin') === 'true';
                 const isInSuperAdminPath = location.pathname.startsWith('/superadmin');
                 const isInRegularDashboardPath = location.pathname.startsWith('/dashboard');
 
                 // Redirect based on role
-                if (isSuperAdmin && !isInSuperAdminPath && location.pathname !== '/auth-redirect') {
+                // If SuperAdmin but NOT logged in as company, they should be in /superadmin
+                if (isSuperAdmin && !isSuperAdminCompanyLogin && !isInSuperAdminPath && location.pathname !== '/auth-redirect') {
                     navigate('/superadmin', { replace: true });
-                } else if (!isSuperAdmin && !isInRegularDashboardPath && location.pathname !== '/auth-redirect') {
+                } 
+                // If regular user (not super-admin or super-admin logged in as company), they should be in /dashboard
+                else if ((!isSuperAdmin || isSuperAdminCompanyLogin) && !isInRegularDashboardPath && !isInSuperAdminPath && location.pathname !== '/auth-redirect') {
                     navigate('/dashboard', { replace: true });
                 }
             }

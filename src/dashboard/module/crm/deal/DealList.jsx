@@ -537,7 +537,7 @@ const DealList = ({
         />
       </div>
 
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         .deal-list-container {
           margin-right: 10px;
           .ant-table-pagination {

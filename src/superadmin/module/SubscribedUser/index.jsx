@@ -8,6 +8,7 @@ import {
     FiChevronDown, FiDownload,
     FiHome, FiCalendar, FiFilter
 } from 'react-icons/fi';
+import PageHeader from '../../../components/PageHeader';
 import './SubscribedUser.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
@@ -203,103 +204,39 @@ const SubscribedUser = () => {
 
     return (
         <div className="subscribed-user-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard/users">Users</Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Subscribed Users</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="header-content">
-                    <div className="page-title">
-                        <div className="title-row">
-                            <div className="title-column">
-                                <Title level={2}>Subscribed Users</Title>
-                                <Text type="secondary">Manage all subscribed users</Text>
-                            </div>
-                            <div className="mobile-actions">
-                                <Popover
-                                    content={searchContent}
-                                    trigger="click"
-                                    open={isSearchVisible}
-                                    onOpenChange={setIsSearchVisible}
-                                    placement="bottomRight"
-                                    overlayClassName="search-popover"
-                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                                >
-                                    <Button
-                                        icon={<FiSearch size={18} />}
-                                        className="mobile-search-button"
-                                    />
-                                </Popover>
-                                <Dropdown
-                                    overlay={filterMenu}
-                                    trigger={['click']}
-                                    open={isFilterVisible}
-                                    onOpenChange={setIsFilterVisible}
-                                    placement="bottomRight"
-                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                                >
-                                    <Button
-                                        icon={<FiFilter size={18} />}
-                                        className="mobile-filter-button"
-                                    />
-                                </Dropdown>
-                            </div>
-                        </div>
+            <PageHeader
+                title="Subscribed Users"
+                subtitle="Manage all subscribed users"
+                breadcrumbItems={[
+                    {
+                        title: (
+                            <Link to="/superadmin">
+                                <FiHome style={{ marginRight: '4px' }} />
+                                Home
+                            </Link>
+                        )
+                    },
+                    { title: 'Subscribed Users' }
+                ]}
+                searchText={searchText}
+                onSearch={handleSearch}
+                exportMenu={exportMenu}
+                mobileSearchContent={searchContent}
+                isSearchVisible={isSearchVisible}
+                onSearchVisibleChange={setIsSearchVisible}
+                extraActions={
+                    <div className="date-picker-container" style={{ width: '220px' }}>
+                        <RangePicker
+                            suffixIcon={<FiCalendar style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            onChange={(dates) => setDateRange(dates)}
+                            value={dateRange}
+                            allowClear
+                            style={{ width: '100%', height: '30px', borderRadius: '8px' }}
+                            placeholder={['Start Date', 'End Date']}
+                        />
                     </div>
-
-                    <div className="header-actions">
-                        <div className="desktop-actions">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
-                                <div className="search-container" style={{ flex: 1 }}>
-                                    <Input
-                                        prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                                        placeholder="Search by client name, plan, status..."
-                                        allowClear
-                                        onChange={(e) => handleSearch(e.target.value)}
-                                        value={searchText}
-                                        ref={searchInputRef}
-                                        className="search-input"
-                                    />
-                                </div>
-                                <div className="date-picker-container" style={{ flex: 1 }}>
-                                    <RangePicker
-                                        suffixIcon={<FiCalendar style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                                        onChange={(dates) => setDateRange(dates)}
-                                        value={dateRange}
-                                        allowClear
-                                        style={{ width: '100%', height: '40px' }}
-                                        placeholder={['Start Date', 'End Date']}
-                                    />
-                                </div>
-                                <div className="action-buttons-group">
-                                    <Dropdown 
-                                        menu={exportMenu} 
-                                        trigger={['click']}
-                                        disabled={loading || !subscribedUsersData?.data?.length}
-                                   
-                                    >
-                                        <Button className="export-button" loading={loading}>
-                                            <FiDownload size={16} />
-                                            <span className="button-text">Export</span>
-                                        </Button>
-                                    </Dropdown>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                }
+            />
 
             <Card className="user-table-card">
                 <SubscribedUserList 

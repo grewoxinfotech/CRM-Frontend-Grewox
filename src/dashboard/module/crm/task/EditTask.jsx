@@ -1292,7 +1292,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
         onSuccess={handleCreateUserSuccess}
       />
 
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         .edit-task-modal {
           .ant-select:not(.ant-select-customize-input) .ant-select-selector {
             background-color: #ffffff !important;

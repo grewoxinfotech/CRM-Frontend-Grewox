@@ -67,17 +67,19 @@ const PageHeader = ({
                       </Space>
                     )}
 
-                    <div className="search-container">
-                      <Input
-                        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                        placeholder={searchPlaceholder}
-                        allowClear
-                        onChange={(e) => onSearch(e.target.value)}
-                        value={searchText}
-                        className="search-input"
-                        style={{ borderRadius: '8px', height: '30px' }}
-                      />
-                    </div>
+                    {onSearch && (
+                      <div className="search-container">
+                        <Input
+                          prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                          placeholder={searchPlaceholder}
+                          allowClear
+                          onChange={(e) => onSearch?.(e.target.value)}
+                          value={searchText}
+                          className="search-input"
+                          style={{ borderRadius: '8px', height: '30px' }}
+                        />
+                      </div>
+                    )}
 
                     <Space size={12} className="action-buttons-group">
                       {mobileSearchContent && (

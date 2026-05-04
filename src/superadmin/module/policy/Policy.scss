@@ -10,7 +10,7 @@
 }
 
 .policy-page {
-    padding: 24px;
+    padding: 0;
     background: $background-color;
 
     .page-breadcrumb {
@@ -555,7 +555,7 @@
 // Add responsive styles
 @media (max-width: 768px) {
     .policy-page {
-        padding: 16px;
+        padding: 0;
 
 
         .policy-table-card {

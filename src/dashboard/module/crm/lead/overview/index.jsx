@@ -67,6 +67,7 @@ import LeadFiles from "./files";
 import LeadMembers from "./members";
 import LeadFollowup from "./followup/index.jsx";
 import LeadAI from "./ai";
+import PageHeader from "../../../../../components/PageHeader";
 import "./LeadOverview.scss";
 
 const { Title, Text } = Typography;
@@ -184,7 +185,7 @@ const LeadStageProgress = ({
           </button>
         );
       })}
-      <style jsx>{`
+      <style jsx="true">{`
         .lead-stage-progress-container {
           position: relative;
           display: flex;
@@ -678,7 +679,7 @@ console.log("leaddata", initialLeadData)
           </div>
         )}
 
-        <style jsx>{`
+        <style jsx="true">{`
           .info-card {
             background: #ffffff;
             border-radius: 16px;
@@ -1342,42 +1343,35 @@ const LeadOverview = () => {
 
   return (
     <div className="project-page">
-      <div className="page-breadcrumb">
-        <Breadcrumb>
-          <Breadcrumb.Item>
-            <Link to="/dashboard">
-              <FiHome /> Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to="/dashboard/crm/leads">
-              <FiUser /> Leads
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            {localLeadData?.leadTitle || "Lead Details"}
-          </Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
-
-      <div className="page-header">
-        <div className="header-left">
-          <Title level={2}>Lead Details</Title>
-          <Text type="secondary" className="subtitle">
-            Manage lead details and activities
-          </Text>
-          {localLeadData?.is_converted && (
-            <Tag
-              color="success"
-              style={{ marginLeft: "8px", fontSize: "14px" }}
-            >
-              Converted to Deal
-            </Tag>
-          )}
-        </div>
-        <div className="header-right">
+      <PageHeader
+        title={localLeadData?.leadTitle || "Lead Details"}
+        subtitle="Manage lead details and activities"
+        breadcrumbItems={[
+          {
+            title: (
+              <Link to="/dashboard">
+                <FiHome style={{ marginRight: "4px" }} /> Home
+              </Link>
+            ),
+          },
+          {
+            title: (
+              <Link to="/dashboard/crm/leads">
+                <FiUser style={{ marginRight: "4px" }} /> Leads
+              </Link>
+            ),
+          },
+          {
+            title: localLeadData?.leadTitle || "Lead Details",
+          },
+        ]}
+        extraActions={
           <Space>
-           
+            {localLeadData?.is_converted && (
+              <Tag color="success" style={{ margin: 0, fontSize: "14px" }}>
+                Converted to Deal
+              </Tag>
+            )}
             <Button
               type="primary"
               icon={<FiArrowLeft />}
@@ -1385,16 +1379,16 @@ const LeadOverview = () => {
               style={{
                 background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
                 border: "none",
-                height: "44px",
-                padding: "0 24px",
+                height: "30px",
+                padding: "0 16px",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                borderRadius: "10px",
+                borderRadius: "8px",
                 fontWeight: "500",
               }}
             >
-              Back to Leads
+              Back
             </Button>
             {!localLeadData?.is_converted && (
               <Button
@@ -1404,12 +1398,12 @@ const LeadOverview = () => {
                   background:
                     "linear-gradient(135deg, #52c41a 0%, #389e0d 100%)",
                   border: "none",
-                  height: "44px",
-                  padding: "0 24px",
+                  height: "30px",
+                  padding: "0 16px",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  borderRadius: "10px",
+                  borderRadius: "8px",
                   fontWeight: "500",
                 }}
               >
@@ -1417,8 +1411,8 @@ const LeadOverview = () => {
               </Button>
             )}
           </Space>
-        </div>
-      </div>
+        }
+      />
 
       <div className="page-contentt">
         <div className="content-main">

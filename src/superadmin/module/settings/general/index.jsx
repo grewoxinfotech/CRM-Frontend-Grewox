@@ -35,8 +35,9 @@ import {
   useUpdateSettingMutation,
 } from "./services/settingApi";
 import { applySiteSettings } from "../../../../utils/siteSettings";
+import PageHeader from '../../../../components/PageHeader';
 import "./general.scss";
-import { FiX } from "react-icons/fi";
+import { FiX, FiHome } from "react-icons/fi";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 
@@ -350,34 +351,44 @@ const GeneralSettings = () => {
 
   const ViewPage = () => (
     <div className="view-page">
-      <div className="view-header">
-        <div className="header-content">
-          <div className="header-info">
-            <h1>Current Settings</h1>
-            <p>View your general settings configuration</p>
-          </div>
-          <div className="header-actions">
+      <PageHeader
+        title="Current Settings"
+        subtitle="View your general settings configuration"
+        breadcrumbItems={[
+            {
+                title: (
+                    <Link to="/superadmin">
+                        <FiHome style={{ marginRight: '4px' }} />
+                        Home
+                    </Link>
+                )
+            },
+            { title: 'Settings' },
+            { title: 'General' }
+        ]}
+        extraActions={
             <Space>
               <Button
                 icon={<EditOutlined />}
                 onClick={handleEdit}
                 type="primary" 
                 style={{
-                  height: "40px",
+                  height: "30px",
+                  borderRadius: "8px"
                 }}
               >
                 Edit
               </Button>
               <Button icon={<DeleteOutlined />} onClick={handleDelete} danger style={{
-                  height: "40px",
+                  height: "30px",
+                  borderRadius: "8px"
                 }}
               >
                 Delete
               </Button>
             </Space>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       <div className="view-content">
         <Row gutter={[24, 24]}>
@@ -437,30 +448,22 @@ const GeneralSettings = () => {
         <ViewPage />
       ) : (
         <>
-          <div className="nav-container">
-            <div className="nav-breadcrumb">
-              <Link to="/" className="nav-link">
-                <HomeOutlined /> Home
-              </Link>
-              <span className="separator">/</span>
-              <Link to="/settings" className="nav-link">
-                Settings
-              </Link>
-              <span className="separator">/</span>
-              <span className="current">General</span>
-            </div>
-          </div>
-
-          <div className="header-section">
-            <div className="header-content">
-              <div className="header-info">
-                <h1>General Settings</h1>
-                <p>
-                  Manage your organization's general configuration and branding
-                </p>
-              </div>
-            </div>
-          </div>
+          <PageHeader
+            title="General Settings"
+            subtitle="Manage your organization's general configuration and branding"
+            breadcrumbItems={[
+                {
+                    title: (
+                        <Link to="/superadmin">
+                            <FiHome style={{ marginRight: '4px' }} />
+                            Home
+                        </Link>
+                    )
+                },
+                { title: 'Settings' },
+                { title: 'General' }
+            ]}
+          />
 
           <div className="main-content">
             <div className="content-grid">

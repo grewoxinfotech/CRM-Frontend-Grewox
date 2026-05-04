@@ -812,7 +812,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 </div>
             </Form>
 
-            <style jsx>{`
+            <style jsx="true">{`
                 .currency-select .ant-select-selector {
                     background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
                     border: none !important;

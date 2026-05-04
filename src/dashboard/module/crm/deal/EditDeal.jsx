@@ -577,7 +577,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   };
 
   // Add this style to make currency display better
-  <style jsx>{`
+  <style jsx="true">{`
     .currency-option {
       display: flex;
       align-items: center;
@@ -1237,7 +1237,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
             <Form.Item
               name="category"
               label={<span style={formItemStyle}>Category</span>}
-              rules={[{ required: true, message: "Category is required" }]}
             >
               <Select
                 ref={categorySelectRef}
@@ -1355,10 +1354,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
             <Form.Item
               name="closedDate"
-              label={<span style={formItemStyle}>Expected Close Date</span>}
-              rules={[
-                { required: true, message: "Expected close date is required" },
-              ]}
+              label={<span style={formItemStyle}>Expected Close Date (optional)</span>}
             >
               <DatePicker
                 size="large"

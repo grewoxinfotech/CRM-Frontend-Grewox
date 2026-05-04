@@ -25,6 +25,7 @@ import {
   FiList,
   FiHome,
 } from "react-icons/fi";
+import PageHeader from "../../../components/PageHeader";
 import "./Policy.scss";
 import moment from "moment";
 import * as XLSX from "xlsx";
@@ -327,67 +328,29 @@ const Policy = () => {
 
   return (
     <div className="policy-page">
-      <div className="page-breadcrumb">
-        <Breadcrumb>
-          <Breadcrumb.Item>
-            <Link to="/superadmin">
-              <FiHome style={{ marginRight: "4px" }} />
-              Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>Policy</Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
-
-      <div className="page-header">
-        <div className="page-title">
-          <Title level={2}>Policies</Title>
-          <Text type="secondary">Manage all policies in the system</Text>
-        </div>
-        <div className="header-actions">
-          <div className="desktop-actions">
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div className="search-container">
-                <Input
-                  prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                  placeholder="Search policies..."
-                  allowClear
-                  onChange={(e) => handleSearch(e.target.value)}
-                  value={searchText}
-                  className="search-input"
-                />
-                <Popover
-                  content={searchContent}
-                  trigger="click"
-                  open={isSearchVisible}
-                  onOpenChange={setIsSearchVisible}
-                  placement="bottomRight"
-                  className="mobile-search-popover"
-                >
-                  <Button
-                    className="search-icon-button"
-                    icon={<FiSearch size={16} />}
-                  />
-                </Popover>
-              </div>
-              <Dropdown overlay={exportMenu} trigger={["click"]}>
-                <Button className="export-button">
-                  <FiDownload size={16} />
-                  <span className="button-text">Export</span>
-                </Button>
-              </Dropdown>
-              <Button
-                type="primary"
-                icon={<FiPlus size={16} />}
-                onClick={handleAddPolicy}
-                className="add-button"
-              >
-                <span className="button-text">Add Policy</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Policies"
+        subtitle="Manage all policies in the system"
+        breadcrumbItems={[
+          {
+            title: (
+              <Link to="/superadmin">
+                <FiHome style={{ marginRight: "4px" }} />
+                Home
+              </Link>
+            )
+          },
+          { title: 'Policy' }
+        ]}
+        searchText={searchText}
+        onSearch={handleSearch}
+        onAdd={handleAddPolicy}
+        addText="Add Policy"
+        exportMenu={{ items: exportMenuItems }}
+        mobileSearchContent={searchContent}
+        isSearchVisible={isSearchVisible}
+        onSearchVisibleChange={setIsSearchVisible}
+      />
 
       <Card className="policy-table-card">
         {viewMode === "table" ? (

@@ -13,7 +13,7 @@ export const settingsApi = createApi({
             return headers;
         },
     }),
-    tagTypes: ['WhatsappSettings', 'WhatsappInbox'],
+    tagTypes: ['WhatsappSettings', 'WhatsappInbox', 'Currencies'],
     endpoints: (builder) => ({
         getAllCurrencies: builder.query({
             query: (params) => ({
@@ -25,6 +25,7 @@ export const settingsApi = createApi({
                 }
             }),
             transformResponse: (response) => response.data,
+            providesTags: ['Currencies'],
         }),
         getAllCountries: builder.query({
             query: (params) => ({
@@ -93,6 +94,13 @@ export const settingsApi = createApi({
                 body: data,
             }),
         }),
+        setDefaultCurrency: builder.mutation({
+            query: (id) => ({
+                url: `/currencies/${id}/set-default`,
+                method: 'PATCH',
+            }),
+            invalidatesTags: ['Currencies'],
+        }),
     }),
 });
 
@@ -105,4 +113,5 @@ export const {
     useGetWhatsappConversationsQuery,
     useGetApprovedCampaignsQuery,
     useSendBulkCampaignMutation,
+    useSetDefaultCurrencyMutation,
 } = settingsApi;

@@ -79,25 +79,38 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
         setResetPasswordVisible(true);
     };
 
-    const getActionMenu = (record) => (
-        <Menu className="action-menu">
-            <Menu.Item key="view" icon={<FiEye />} onClick={() => onView(record)}>
-                View Details
-            </Menu.Item>
-            <Menu.Item key="edit" icon={<FiEdit2 />} onClick={() => onEdit(record)}>
-                Edit Employee
-            </Menu.Item>
-            <Menu.Item key="status" icon={<FiUserCheck />}>
-                Change Status
-            </Menu.Item>
-            <Menu.Item key="reset" icon={<FiLock />} onClick={handleResetPassword}>
-                Reset Password
-            </Menu.Item>
-            <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => onDelete(record)}>
-                Delete Employee
-            </Menu.Item>
-        </Menu>
-    );
+    const getActionMenuItems = (record) => [
+        {
+            key: "view",
+            label: "View Details",
+            icon: <FiEye />,
+            onClick: () => onView(record)
+        },
+        {
+            key: "edit",
+            label: "Edit Employee",
+            icon: <FiEdit2 />,
+            onClick: () => onEdit(record)
+        },
+        {
+            key: "status",
+            label: "Change Status",
+            icon: <FiUserCheck />
+        },
+        {
+            key: "reset",
+            label: "Reset Password",
+            icon: <FiLock />,
+            onClick: handleResetPassword
+        },
+        {
+            key: "delete",
+            label: "Delete Employee",
+            icon: <FiTrash2 />,
+            danger: true,
+            onClick: () => onDelete(record)
+        }
+    ];
 
     const roleName = getRoleName(employee.role_id);
     const roleStyle = getRoleColor(roleName);
@@ -204,7 +217,7 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
                         </div>
                     </div>
                     <Dropdown
-                        overlay={getActionMenu(employee)}
+                        menu={{ items: getActionMenuItems(employee) }}
                         trigger={['click']}
                         placement="bottomRight"
                     >

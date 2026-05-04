@@ -10,7 +10,7 @@
 }
 
 .inquiry-page {
-    padding: 24px;
+    padding: 0;
     background: $background-color;
 
     .page-breadcrumb {
@@ -384,7 +384,7 @@
 // Add responsive styles
 @media (max-width: 768px) {
     .inquiry-page {
-        padding: 16px;
+        padding: 0;
 
 
         .inquiry-table-card {

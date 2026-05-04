@@ -7,6 +7,7 @@ import {
     FiHome, FiPlus
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import PageHeader from '../../../../components/PageHeader';
 import ESignatureList from './eSignatureList';
 import AddSignature from './AddSignature';
 import './eSignature.scss';
@@ -90,43 +91,28 @@ const ESignature = () => {
         message.error('Failed to load signatures. Using local storage as fallback.');
     }
 
+    const breadcrumbItems = [
+        {
+            title: (
+                <Link to="/superadmin">
+                    <FiHome style={{ marginRight: '4px' }} />
+                    Home
+                </Link>
+            ),
+        },
+        { title: 'Settings' },
+        { title: 'E-Signatures' },
+    ];
+
     return (
         <div className="esignature-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/superadmin">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Settings</Breadcrumb.Item>
-                    <Breadcrumb.Item>E-Signatures</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <Row justify="center" className="header-actions-wrapper">
-                    <Col xs={24} sm={24} md={24} lg={24} xl={24}>
-                        <div className="header-actions">
-                            <div className="page-title">
-                                <Title level={2} className="responsive-title">E-Signatures</Title>
-                                <Text type="secondary" className="responsive-subtitle">Create and manage your electronic signatures</Text>
-                            </div>
-                            <div className="action-buttons">
-                                <Button
-                                    type="primary"
-                                    icon={<FiPlus size={16} className="add-icon" />}
-                                    onClick={() => handleOpenModal()}
-                                    className="add-button"
-                                >
-                                    <span className="button-text">Create New Signature</span>
-                                </Button>
-                            </div>
-                        </div>
-                    </Col>
-                </Row>
-            </div>
+            <PageHeader
+                title="E-Signatures"
+                subtitle="Create and manage your electronic signatures"
+                breadcrumbItems={breadcrumbItems}
+                onAdd={() => handleOpenModal()}
+                addText="Create New Signature"
+            />
 
             <Card className="signature-list-card">
                 <ESignatureList

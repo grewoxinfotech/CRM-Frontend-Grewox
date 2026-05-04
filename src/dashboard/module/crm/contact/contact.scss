@@ -10,12 +10,12 @@
 }
 
 .contact-page {
-    padding: 24px;
+    padding: 0;
     background-color: #f9fafb; // Light grey background like the image
     min-height: 100vh;
 
     @media (max-width: 768px) {
-        padding: 16px;
+        padding: 0;
     }
 
     @media (max-width: 480px) {
@@ -224,7 +224,6 @@
     .contact-list-container {
         position: relative;
         margin-right: 10px;
-        padding:24px;
 
         .ant-table-wrapper {
             .ant-table {

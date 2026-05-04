@@ -995,7 +995,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
         }}
       />
 
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         .company-account-form {
           padding: 24px;
 

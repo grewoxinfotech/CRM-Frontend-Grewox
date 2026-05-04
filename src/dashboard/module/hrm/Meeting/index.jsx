@@ -21,6 +21,7 @@ import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi'
 import MeetingList from './MeetingList';
 import CreateMeeting from './CreateMeeting';
 import EditMeeting from './EditMeeting';
+import PageHeader from '../../../../components/PageHeader';
 import './meeting.scss';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
@@ -157,96 +158,40 @@ const Meeting = () => {
         </div>
       );
 
+    const breadcrumbItems = [
+        {
+            title: (
+                <Link to="/dashboard">
+                    <FiHome style={{ marginRight: '4px' }} />
+                    Home
+                </Link>
+            ),
+        },
+        { title: 'Meetings' },
+    ];
+
     return (
         <div className="meeting-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    {/* <Breadcrumb.Item>
-                        <Link to="/dashboard/hrm">HRM</Link>
-                    </Breadcrumb.Item> */}
-                    <Breadcrumb.Item>Meetings</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-            <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Meetings</Title>
-                    <Text className="page-description" type="secondary">Manage all meetings in the organization</Text>
-                </div>
-                <div className="header-actions">
-                    <div className="desktop-actions">
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                            <div className="search-container">
-                                <Input
-                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
-                                    placeholder="Search meetings..."
-                                    allowClear
-                                    onChange={(e) => handleSearch(e.target.value)}
-                                    value={searchText}
-                                    className="search-input"
-                                />
-                                <Popover
-                                    content={searchContent}
-                                    trigger="click"
-                                    open={isSearchVisible}
-                                    onOpenChange={setIsSearchVisible}
-                                    placement="bottomRight"
-                                    className="mobile-search-popover"
-                                >
-                                    <Button
-                                        className="search-icon-button"
-                                        icon={<FiSearch size={16} />}
-                                    />
-                                </Popover>
-                            </div>
-                            <Dropdown
-                                menu={{
-                                    items: [
-                                        {
-                                            key: 'csv',
-                                            label: 'Export as CSV',
-                                            icon: <FiDownload />,
-                                            onClick: () => handleExport('csv')
-                                        },
-                                        {
-                                            key: 'excel',
-                                            label: 'Export as Excel',
-                                            icon: <FiDownload />,
-                                            onClick: () => handleExport('excel')
-                                        },
-                                        {
-                                            key: 'pdf',
-                                            label: 'Export as PDF',
-                                            icon: <FiDownload />,
-                                            onClick: () => handleExport('pdf')
-                                        }
-                                    ]
-                                }}
-                                trigger={['click']}
-                                placement="bottomRight"
-                            >
-                                <Button className="export-button">
-                                    <FiDownload size={16} />
-                                    <span className="button-text">Export</span>
-                                </Button>
-                            </Dropdown>
-                            <Button
-                                type="primary"
-                                icon={<FiPlus size={16} />}
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="add-button"
-                            >
-                                <span className="button-text">Add Meeting</span>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title="Meetings"
+                subtitle="Manage all meetings in the organization"
+                breadcrumbItems={breadcrumbItems}
+                searchText={searchText}
+                onSearch={handleSearch}
+                searchPlaceholder="Search meetings..."
+                exportMenu={{
+                    items: [
+                        { key: 'csv', label: 'Export as CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
+                        { key: 'excel', label: 'Export as Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
+                        { key: 'pdf', label: 'Export as PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') }
+                    ]
+                }}
+                onAdd={() => setIsCreateModalOpen(true)}
+                addText="Add Meeting"
+                mobileSearchContent={searchContent}
+                isSearchVisible={isSearchVisible}
+                onSearchVisibleChange={setIsSearchVisible}
+            />
             <div className="meeting-table-card">
                 <MeetingList
                     loading={isLoading}

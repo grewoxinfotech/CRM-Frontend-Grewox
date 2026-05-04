@@ -14,6 +14,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useGetAllCountriesQuery } from '../services/settingsApi';
 import { Link } from 'react-router-dom';
+import PageHeader from '../../../../components/PageHeader';
 import './countries.scss';
 
 const { Title, Text } = Typography;
@@ -253,71 +254,39 @@ const Countries = () => {
         message.error('Failed to load countries');
     }
 
+    const breadcrumbItems = [
+        {
+            title: (
+                <Link to="/superadmin">
+                    <FiHome style={{ marginRight: '4px' }} />
+                    Home
+                </Link>
+            ),
+        },
+        { title: 'Settings' },
+        { title: 'Countries' },
+    ];
+
     return (
         <div className="countries-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/superadmin">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Settings</Breadcrumb.Item>
-                    <Breadcrumb.Item>Countries</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Countries</Title>
-                    <Text type="secondary">View system countries</Text>
-                </div>
-                <Row justify="center" className="header-actions-wrapper">
-                    <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-                        <div className="header-actions">
-                            {/* Desktop: show full input and export button */}
-                            <div className="desktop-actions">
-                                <Input
-                                    prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                                    placeholder="Search countries..."
-                                    allowClear
-                                    onChange={(e) => handleSearch(e.target.value)}
-                                    value={searchText}
-                                    className="search-input"
-                                />
-                                <Dropdown overlay={exportMenu} trigger={['click']}>
-                                    <Button className="export-button">
-                                        <FiDownload size={16} />
-                                        <span>Export</span>
-                                        <FiChevronDown size={14} />
-                                    </Button>
-                                </Dropdown>
-                            </div>
-                            {/* Mobile: show only icons */}
-                            <div className="mobile-actions">
-                                <Popover
-                                    content={searchContent}
-                                    trigger="click"
-                                    visible={isSearchVisible}                                                                       
-                                    onVisibleChange={setIsSearchVisible}
-                                    placement="bottomRight"
-                                    overlayClassName="search-popover"
-                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                                >
-                                    <Button
-                                        className="search-icon-btn"
-                                        icon={<FiSearch size={20} />}
-                                    />
-                                </Popover>
-                                <Dropdown overlay={exportMenu} trigger={['click']}>
-                                    <Button className="export-icon-btn" icon={<FiDownload size={20} />} />
-                                </Dropdown>
-                            </div>
-                        </div>
-                    </Col>
-                </Row>
-            </div>
+            <PageHeader
+                title="Countries"
+                subtitle="View system countries"
+                breadcrumbItems={breadcrumbItems}
+                searchText={searchText}
+                onSearch={handleSearch}
+                searchPlaceholder="Search countries..."
+                exportMenu={{
+                    items: [
+                        { key: 'csv', label: 'Export as CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
+                        { key: 'excel', label: 'Export as Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
+                        { key: 'pdf', label: 'Export as PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') }
+                    ]
+                }}
+                mobileSearchContent={searchContent}
+                isSearchVisible={isSearchVisible}
+                onSearchVisibleChange={setIsSearchVisible}
+            />
 
             <Card className="countries-table-card">
                 <div className="table-scroll-wrapper">

@@ -7,7 +7,8 @@ export {
     useGetWhatsappMessagesQuery,
     useGetWhatsappConversationsQuery,
     useGetApprovedCampaignsQuery,
-    useSendBulkCampaignMutation
+    useSendBulkCampaignMutation,
+    useSetDefaultCurrencyMutation
 } from '../../../../superadmin/module/settings/services/settingsApi';
 import { settingsApi } from '../../../../superadmin/module/settings/services/settingsApi';
 export default settingsApi;

@@ -196,6 +196,7 @@ const DealTasks = (deal) => {
 
     return (
         <div className="task-page">
+{/* 
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -249,7 +250,8 @@ const DealTasks = (deal) => {
                         </Button>
                     </div>
                 </div>
-            </div>
+            </div> 
+            */}
 
             <Card className="task-table-card">
                 <TaskList

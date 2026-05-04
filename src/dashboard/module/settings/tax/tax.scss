@@ -11,7 +11,7 @@
 }
 
 .tax-page {
-    padding: 24px;
+    padding: 0;
     background: $background-color;
 
     @media (max-width: 768px) {
@@ -294,7 +294,7 @@
     }
 
     .tax-cards-grid {
-        padding: 24px;
+        padding: 0;
     }
 }
 
@@ -441,7 +441,7 @@
         }
 
         .ant-modal-body {
-            padding: 24px;
+            padding: 0;
         }
 
         .ant-modal-footer {

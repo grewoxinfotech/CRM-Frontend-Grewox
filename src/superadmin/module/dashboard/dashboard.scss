@@ -19,18 +19,18 @@ $shimmer-gradient: linear-gradient(90deg,
         rgba(255, 255, 255, 0) 100%);
 
 .dashboard-container {
-    padding: 24px;
+    padding: 0;
     background: $background-color;
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
 
     @media (max-width: $desktop) {
-        padding: 20px;
+        padding: 0;
     }
 
     @media (max-width: $mobile) {
-        padding: 16px;
+        padding: 0;
     }
 
     .overview-header {
@@ -165,16 +165,16 @@ $shimmer-gradient: linear-gradient(90deg,
     // Row Gutter Adjustments
     .ant-row {
         margin: -12px;
-        width: calc(100% + 24px);
+
 
         @media (max-width: $tablet) {
             margin: -10px;
-            width: calc(100% + 20px);
+
         }
 
         @media (max-width: $mobile) {
             margin: -8px;
-            width: calc(100% + 16px);
+
         }
 
         &>.ant-col {

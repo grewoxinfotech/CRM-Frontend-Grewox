@@ -38,6 +38,7 @@ import {
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
+import PageHeader from "../../../components/PageHeader";
 
 const { Title, Text } = Typography;
 
@@ -86,15 +87,10 @@ const Notes = () => {
     let result = [...companies];
     if (searchText) {
       result = result.filter(
-        (company) =>
-          (company.name?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
-          (company.email?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
-          (company.phone || '').includes(searchText) ||
-          (company.firstName?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
-          (company.lastName?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
-          (company.city?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
-          (company.state?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
-          (company.gstIn?.toLowerCase() || '').includes(searchText.toLowerCase())
+        (note) =>
+          (note.title?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+          (note.type?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+          (note.description?.toLowerCase() || '').includes(searchText.toLowerCase())
       );
     }
     setFilteredCompanies(result);
@@ -270,68 +266,50 @@ const Notes = () => {
 
   return (
     <div className="notes-page">
-      <div className="page-breadcrumb">
-        <Breadcrumb>
-          <Breadcrumb.Item>
-            <Link to="/superadmin">
-              <FiHome style={{ marginRight: "4px" }} />
-              Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>Notes</Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
-
-      <div className="page-header">
-        <div className="page-title">
-          <Title level={2}>Notes</Title>
-          <Text type="secondary">Manage all notes in the system</Text>
-        </div>
-        <div className="header-actions">
-          <div className="desktop-actions">
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div className="search-container">
-                <Input
-                  prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                  placeholder="Search notes..."
-                  allowClear
-                  onChange={(e) => handleSearch(e.target.value)}
-                  value={searchText}
-                  className="search-input"
-                />
-                <Popover
-                  content={searchContent}
-                  trigger="click"
-                  open={isSearchVisible}
-                  onOpenChange={setIsSearchVisible}
-                  placement="bottomRight"
-                  className="mobile-search-popover"
-                >
-                  <Button
-                    className="search-icon-button"
-                    icon={<FiSearch size={16} />}
-                  />
-                </Popover>
-              </div>
-              <Dropdown overlay={exportMenu} trigger={["click"]}>
-                <Button className="export-button">
-                  <FiDownload size={16} />
-                  <span className="button-text">Export</span>
-                  {/* <FiChevronDown size={14} /> */}
-                </Button>
-              </Dropdown>
-              <Button
-                type="primary"
-                icon={<FiPlus size={16} />}
-                onClick={handleAddCompany}
-                className="add-button"
-              >
-                <span className="button-text">Add Note</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Notes"
+        subtitle="Manage all notes in the system"
+        breadcrumbItems={[
+          {
+            title: (
+              <Link to="/superadmin">
+                <FiHome style={{ marginRight: "4px" }} />
+                Home
+              </Link>
+            )
+          },
+          { title: 'Notes' }
+        ]}
+        searchText={searchText}
+                onSearch={handleSearch}
+                onAdd={handleAddCompany}
+                addText="Add Note"
+                exportMenu={{
+                    items: [
+                        {
+                            key: 'excel',
+                            label: 'Export as Excel',
+                            icon: <FiDownload />,
+                            onClick: () => handleExport('excel'),
+                        },
+                        {
+                            key: 'pdf',
+                            label: 'Export as PDF',
+                            icon: <FiDownload />,
+                            onClick: () => handleExport('pdf'),
+                        },
+                        {
+                            key: 'csv',
+                            label: 'Export as CSV',
+                            icon: <FiDownload />,
+                            onClick: () => handleExport('csv'),
+                        }
+                    ]
+                }}
+                mobileSearchContent={searchContent}
+                isSearchVisible={isSearchVisible}
+                onSearchVisibleChange={setIsSearchVisible}
+            />
 
       <Card className="company-table-card">
         {viewMode === "table" ? (

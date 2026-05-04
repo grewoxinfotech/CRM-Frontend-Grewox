@@ -14,6 +14,7 @@ import { useGetAllCompaniesQuery } from '../company/services/companyApi';
 import { useGetAllPlansQuery } from '../plans/services/planApi';
 import { useGetAllSubscribedUsersQuery } from '../SubscribedUser/services/SubscribedUserApi';
 import CountUp from 'react-countup';
+import PageHeader from '../../../components/PageHeader';
 import './dashboard.scss';
 
 const { Title, Text } = Typography;
@@ -91,22 +92,21 @@ const SuperAdminDashboard = () => {
             animate="animate"
             variants={staggerContainer}
         >
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/superadmin">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="overview-header">
-                <h1>Overview</h1>
-                <p>Welcome back! Super Admin</p>
-            </div>
+            <PageHeader
+                title="Overview"
+                subtitle="Welcome back! Super Admin"
+                breadcrumbItems={[
+                    {
+                        title: (
+                            <Link to="/superadmin">
+                                <FiHome style={{ marginRight: '4px' }} />
+                                Home
+                            </Link>
+                        )
+                    },
+                    { title: 'Dashboard' }
+                ]}
+            />
 
             <Row gutter={[24, 24]}>
                 {statsCards.map((card, index) => (

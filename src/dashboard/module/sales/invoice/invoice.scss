@@ -343,7 +343,6 @@ $border-radius: 6px;
 .invoice-page {
   border-radius: 12px;
   // box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  padding: 24px;
   // background: $background-color;
 
   @media (max-width: 768px) {
@@ -919,11 +918,12 @@ $border-radius: 6px;
     .ant-table-pagination {
       display: flex !important;
       visibility: visible !important;
-      
+
       .ant-pagination-options {
         display: flex !important;
         align-items: center;
         margin-bottom: 20px;
+
         .ant-select-selection-item {
           width: auto !important;
           min-width: 40px;
@@ -944,7 +944,7 @@ $border-radius: 6px;
   .invoice-list-container {
     .ant-table-pagination {
       .ant-pagination-options {
-        .ant-select-selection-item { 
+        .ant-select-selection-item {
           width: 100%;
           color: inherit;
         }
@@ -965,29 +965,34 @@ $border-radius: 6px;
     .invoice-items-table-wrapper {
       overflow-x: auto;
       overflow-y: hidden;
-      -ms-overflow-style: none;  /* IE and Edge */
-      scrollbar-width: thin;  /* Firefox */
-      position: relative; /* Add position relative */
-      
+      -ms-overflow-style: none;
+      /* IE and Edge */
+      scrollbar-width: thin;
+      /* Firefox */
+      position: relative;
+      /* Add position relative */
+
       &::-webkit-scrollbar {
-        height: 6px;  /* Height of horizontal scrollbar */
-        width: 6px;   /* Width of vertical scrollbar */
+        height: 6px;
+        /* Height of horizontal scrollbar */
+        width: 6px;
+        /* Width of vertical scrollbar */
       }
-      
+
       &::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 3px;
       }
-      
+
       &::-webkit-scrollbar-thumb {
         background: #d1d5db;
         border-radius: 3px;
-        
+
         &:hover {
           background: #555;
         }
       }
-      
+
       &::-webkit-scrollbar-corner {
         background: #f1f1f1;
       }
@@ -1010,6 +1015,7 @@ $border-radius: 6px;
 
     // Add styles for fixed action column
     @media (max-width: 1200px) {
+
       th:last-child,
       td:last-child {
         position: sticky;
@@ -1175,7 +1181,7 @@ $border-radius: 6px;
     .ant-table {
       background: transparent;
 
-      .ant-table-thead > tr > th {
+      .ant-table-thead>tr>th {
         background: #f9fafb;
         color: #4b5563;
         font-weight: 600;
@@ -1187,7 +1193,7 @@ $border-radius: 6px;
         }
       }
 
-      .ant-table-tbody > tr > td {
+      .ant-table-tbody>tr>td {
         padding: 16px 24px;
         border-bottom: 1px solid #f3f4f6;
       }

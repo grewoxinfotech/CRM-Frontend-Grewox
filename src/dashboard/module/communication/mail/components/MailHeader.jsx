@@ -71,7 +71,7 @@ const MailHeader = ({ searchText, setSearchText, onRefresh, isRefreshing, select
         </Tooltip>
       </div>
 
-      <style jsx>{`
+      <style jsx="true">{`
         .spin {
           animation: rotate 1s linear infinite;
         }

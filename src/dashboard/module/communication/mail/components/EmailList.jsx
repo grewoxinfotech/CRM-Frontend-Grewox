@@ -652,7 +652,7 @@ const EmailList = ({
         )}
       </Modal>
 
-      <style jsx>{`
+      <style jsx="true">{`
         .email-view-modal {
           border-radius: 12px;
           overflow: hidden;

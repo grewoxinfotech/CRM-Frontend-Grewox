@@ -37,6 +37,7 @@ import CompanyContactList from "./overview/companycontacts";
 // import CompanyNotes from './overview/notes';
 // import CompanyActivity from './overview/activity';
 import "./companyaccount.scss";
+import PageHeader from "../../../../components/PageHeader";
 import {
   useGetCompanyAccountsQuery,
   useUpdateCompanyAccountMutation,
@@ -172,69 +173,30 @@ const CompanyAccountDetails = () => {
 
   return (
     <div className="project-page">
-      <div className="page-breadcrumb">
-        <Breadcrumb>
-          <Breadcrumb.Item>
-            <Link to="/dashboard">
-              <FiHome /> Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to="/dashboard/crm/company-account">
-              <FiBriefcase /> Companies
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            {company?.company_name || "Company Details"}
-          </Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
-
-      <div className="page-header">
-        <div className="header-left">
-          <Title level={2}>{company?.company_name || "Company Details"}</Title>
-          <Text type="secondary" className="subtitle">
-            Manage company details and activities
-          </Text>
-        </div>
-        <div className="header-right">
+      <PageHeader
+        title={company?.company_name || "Company Details"}
+        subtitle="Manage company details and activities"
+        breadcrumbItems={[
+          {
+            title: (
+              <Link to="/dashboard">
+                <FiHome style={{ marginRight: "4px" }} /> Home
+              </Link>
+            ),
+          },
+          {
+            title: (
+              <Link to="/dashboard/crm/company-account">
+                <FiBriefcase style={{ marginRight: "4px" }} /> Companies
+              </Link>
+            ),
+          },
+          {
+            title: company?.company_name || "Company Details",
+          },
+        ]}
+        extraActions={
           <Space>
-            {/* <Button
-                            type="primary"
-                            icon={<FiTarget />}
-                            onClick={() => handleStatusChange('active')}
-                            style={{
-                                background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
-                                border: 'none',
-                                height: '44px',
-                                padding: '0 24px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                borderRadius: '10px',
-                                fontWeight: '500'
-                            }}
-                        >
-                            Set Active
-                        </Button>
-                        <Button
-                            type="primary"
-                            icon={<FiTarget />}
-                            onClick={() => handleStatusChange('inactive')}
-                            style={{
-                                background: 'linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%)',
-                                border: 'none',
-                                height: '44px',
-                                padding: '0 24px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                borderRadius: '10px',
-                                fontWeight: '500'
-                            }}
-                        >
-                            Set Inactive
-                        </Button> */}
             <Button
               type="primary"
               icon={<FiArrowLeft />}
@@ -242,20 +204,20 @@ const CompanyAccountDetails = () => {
               style={{
                 background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
                 border: "none",
-                height: "44px",
-                padding: "0 24px",
+                height: "30px",
+                padding: "0 16px",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                borderRadius: "10px",
+                borderRadius: "8px",
                 fontWeight: "500",
               }}
             >
-              Back to Companies
+              Back
             </Button>
           </Space>
-        </div>
-      </div>
+        }
+      />
 
       <Card loading={isLoading}>
         <Tabs

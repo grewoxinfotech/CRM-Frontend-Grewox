@@ -83,22 +83,33 @@ const EmployeeList = ({ employees, onEdit, onDelete, loading }) => {
     });
   };
 
-  const getActionMenu = (record) => (
-    <Menu className="action-menu">
-      <Menu.Item key="edit" icon={<FiEdit2 style={{color: '#52c41a'}}/>} onClick={() => onEdit(record)}>
-        Edit Employee
-      </Menu.Item>
-      <Menu.Item key="login" icon={<FiLogIn style={{color: '#1890ff'}}/>} onClick={() => handleEmployeeLogin(record)}>
-        Login as Employee
-      </Menu.Item>
-      <Menu.Item key="reset-password" icon={<FiLock style={{color: '#faad14'}}/>} onClick={() => { setSelectedEmployee(record); setResetPasswordModalVisible(true); }}>
-        Reset Password
-      </Menu.Item>
-      <Menu.Item key="delete" icon={<FiTrash2 style={{color: '#ff4d4f'}}/>} danger onClick={() => handleDelete(record.id)}>
-        Delete Employee
-      </Menu.Item>
-    </Menu>
-  );
+  const getActionMenuItems = (record) => [
+    {
+      key: "edit",
+      label: "Edit Employee",
+      icon: <FiEdit2 style={{color: '#52c41a'}}/>,
+      onClick: () => onEdit(record)
+    },
+    {
+      key: "login",
+      label: "Login as Employee",
+      icon: <FiLogIn style={{color: '#1890ff'}}/>,
+      onClick: () => handleEmployeeLogin(record)
+    },
+    {
+      key: "reset-password",
+      label: "Reset Password",
+      icon: <FiLock style={{color: '#faad14'}}/>,
+      onClick: () => { setSelectedEmployee(record); setResetPasswordModalVisible(true); }
+    },
+    {
+      key: "delete",
+      label: "Delete Employee",
+      icon: <FiTrash2 style={{color: '#ff4d4f'}}/>,
+      danger: true,
+      onClick: () => handleDelete(record.id)
+    }
+  ];
 
   const columns = [
     {
@@ -156,7 +167,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, loading }) => {
       fixed: "right",
       width: 80,
       render: (_, record) => (
-        <Dropdown overlay={getActionMenu(record)} trigger={["click"]} placement="bottomRight">
+        <Dropdown menu={{ items: getActionMenuItems(record) }} trigger={["click"]} placement="bottomRight">
           <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
         </Dropdown>
       ),

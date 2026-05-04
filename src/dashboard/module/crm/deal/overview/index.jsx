@@ -129,7 +129,7 @@ const DealStageProgress = ({
           </button>
         );
       })}
-      <style jsx>{`
+      <style jsx="true">{`
         .lead-stage-progress-container {
           position: relative;
           display: flex;
@@ -787,7 +787,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
           </div>
         )}
 
-        <style jsx>{`
+        <style jsx="true">{`
           .info-card {
             background: #ffffff;
             border-radius: 16px;
@@ -1192,7 +1192,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
         />
       )}
 
-      <style jsx>{`
+      <style jsx="true">{`
         .sub-value {
           font-size: 12px;
           color: #6b7280;

@@ -29,17 +29,13 @@ import {
 
 import ContactOverview from "./overview/index";
 import ContactDealList from "./overview/contactdeals/index";
-// import ContactFiles from './overview/files';
-// import ContactInvoices from './overview/invoices';
-// import ContactPayments from './overview/payments';
-// import ContactNotes from './overview/notes';
-// import ContactActivity from './overview/activity';
+import ContactLeadsList from "./overview/contactleads/index";
 import "./contact.scss";
+import PageHeader from "../../../../components/PageHeader";
 import {
   useGetContactsQuery,
   useUpdateContactMutation,
 } from "./services/contactApi";
-import ContactLeadsList from "./overview/contactleads/index";
 
 const { Title, Text } = Typography;
 
@@ -108,81 +104,33 @@ const ContactDetails = () => {
         <ContactDealList contact={contact} currentStatus={currentStatus} />
       ),
     },
-    //     {
-    //         key: 'files',
-    //         label: (
-    //             <span className="nav-item">
-    //                 <FiFile className="nav-icon" /> Files
-    //             </span>
-    //         ),
-    //         children: <ContactFiles contact={contact} />,
-    //     },
-    //     {
-    //         key: 'invoices',
-    //         label: (
-    //             <span className="nav-item">
-    //                 <FiFileText className="nav-icon" /> Invoices
-    //             </span>
-    //         ),
-    //         children: <ContactInvoices contact={contact} />,
-    //     },
-    //     {
-    //         key: 'payments',
-    //         label: (
-    //             <span className="nav-item">
-    //                 <FiCreditCard className="nav-icon" /> Payments
-    //             </span>
-    //         ),
-    //         children: <ContactPayments contact={contact} />,
-    //     },
-    //     {
-    //         key: 'notes',
-    //         label: (
-    //             <span className="nav-item">
-    //                 <FiBookmark className="nav-icon" /> Notes
-    //             </span>
-    //         ),
-    //         children: <ContactNotes contact={contact} />,
-    //     },
-    //     {
-    //         key: 'activity',
-    //         label: (
-    //             <span className="nav-item">
-    //                 <FiActivity className="nav-icon" /> Activity
-    //             </span>
-    //         ),
-    //         children: <ContactActivity contact={contact} />,
-    //     },
   ];
 
   return (
     <div className="project-page">
-      <div className="page-breadcrumb">
-        <Breadcrumb>
-          <Breadcrumb.Item>
-            <Link to="/dashboard">
-              <FiHome /> Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to="/dashboard/crm/contact">
-              <FiUsers /> Contacts
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            {contact?.name || "Contact Details"}
-          </Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
-
-      <div className="page-header">
-        <div className="header-left">
-          <Title level={2}>{contact?.name || "Contact Details"}</Title>
-          <Text type="secondary" className="subtitle">
-            Manage contact details and activities
-          </Text>
-        </div>
-        <div className="header-right">
+      <PageHeader
+        title={contact?.name || "Contact Details"}
+        subtitle="Manage contact details and activities"
+        breadcrumbItems={[
+          {
+            title: (
+              <Link to="/dashboard">
+                <FiHome style={{ marginRight: "4px" }} /> Home
+              </Link>
+            ),
+          },
+          {
+            title: (
+              <Link to="/dashboard/crm/contact">
+                <FiUsers style={{ marginRight: "4px" }} /> Contacts
+              </Link>
+            ),
+          },
+          {
+            title: contact?.name || "Contact Details",
+          },
+        ]}
+        extraActions={
           <Space>
             <Button
               type="primary"
@@ -191,20 +139,20 @@ const ContactDetails = () => {
               style={{
                 background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
                 border: "none",
-                height: "44px",
-                padding: "0 24px",
+                height: "30px",
+                padding: "0 16px",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                borderRadius: "10px",
+                borderRadius: "8px",
                 fontWeight: "500",
               }}
             >
-              Back to Contacts
+              Back
             </Button>
           </Space>
-        </div>
-      </div>
+        }
+      />
 
       <Card loading={isLoading}>
         <Tabs

@@ -182,7 +182,7 @@ const ScheduleModal = ({
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx="true">{`
         .schedule-header {
           display: flex;
           align-items: center;

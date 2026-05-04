@@ -10,6 +10,7 @@ import {
     FiEdit2, FiTrash2, FiEye, FiX, FiCheckCircle,
     FiBook, FiMoreVertical, FiBookmark
 } from 'react-icons/fi';
+import PageHeader from '../../../components/PageHeader';
 import './inquary.scss';
 import { Link } from 'react-router-dom';
 import CreateInquaryModal from './CreateInquaryModal';
@@ -367,67 +368,31 @@ const Inquiry = () => {
 
     return (
         <div className="inquiry-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/superadmin">
-                            <FiHome style={{ marginRight: "4px" }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Inquiry</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Inquiries</Title>
-                    <Text type="secondary">Manage all inquiries in the system</Text>
-                </div>
-                <div className="header-actions">
-                    <div className="desktop-actions">
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                            <div className="search-container">
-                                <Input
-                                    prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                                    placeholder="Search inquiries..."
-                                    allowClear
-                                    onChange={(e) => setSearchText(e.target.value)}
-                                    value={searchText}
-                                    className="search-input"
-                                />
-                                <Popover
-                                    content={searchContent}
-                                    trigger="click"
-                                    open={isSearchVisible}
-                                    onOpenChange={setIsSearchVisible}
-                                    placement="bottomRight"
-                                    className="mobile-search-popover"
-                                >
-                                    <Button
-                                        className="search-icon-button"
-                                        icon={<FiSearch size={16} />}
-                                    />
-                                </Popover>
-                            </div>
-                            <Dropdown menu={exportMenuItems} trigger={["click"]}>
-                                <Button className="export-button">
-                                    <FiDownload size={16} />
-                                    <span className="button-text">Export</span>
-                                </Button>
-                            </Dropdown>
-                            <Button
-                                type="primary"
-                                icon={<FiPlus size={16} />}
-                                onClick={() => setIsFormVisible(true)}
-                                className="add-button"
-                            >
-                                <span className="button-text">Add Inquiry</span>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title="Inquiries"
+                subtitle="Manage all inquiries in the system"
+                breadcrumbItems={[
+                    {
+                        title: (
+                            <Link to="/superadmin">
+                                <FiHome style={{ marginRight: "4px" }} />
+                                Home
+                            </Link>
+                        )
+                    },
+                    { title: 'Inquiry' }
+                ]}
+                searchText={searchText}
+                onSearch={handleSearch}
+                onAdd={() => setIsFormVisible(true)}
+                addText="Add Inquiry"
+                exportMenu={{
+                    items: exportMenuItems
+                }}
+                mobileSearchContent={searchContent}
+                isSearchVisible={isSearchVisible}
+                onSearchVisibleChange={setIsSearchVisible}
+            />
 
             <Card
                 className="inquiry-table-card"

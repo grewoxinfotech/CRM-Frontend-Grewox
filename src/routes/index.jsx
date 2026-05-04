@@ -347,10 +347,6 @@ const routes = createBrowserRouter([
             element: <Proposal />,
           },
           {
-            path: "proposal",
-            element: <Proposal />,
-          },
-          {
             path: "tasks",
             element: <Task />,
           },
@@ -593,14 +589,7 @@ const routes = createBrowserRouter([
       // },
     ],
   },
-  {
-    path: "/superadmin/storage",
-    element: (
-      <RoleBasedRoute allowedRoles={["super-admin"]}>
-        <Storage />
-      </RoleBasedRoute>
-    ),
-  },
+
   {
     path: "/forms/:formId",
     element: <PublicFormView />,

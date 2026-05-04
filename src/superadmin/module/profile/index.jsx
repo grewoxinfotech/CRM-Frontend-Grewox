@@ -28,6 +28,7 @@ import { selectCurrentUser, selectUserRole } from '../../../auth/services/authSl
 import { useUpdateSuperAdminProfileMutation, useGetSuperAdminProfileQuery } from './services/superadminProfileApi';
 import { resetUpdateStatus } from './services/superadminProfileSlice';
 import EditProfileModal from './EditProfileModal';
+import PageHeader from '../../../components/PageHeader';
 import './profile.scss';
 
 const { Title, Text } = Typography;
@@ -248,24 +249,21 @@ const Profile = () => {
 
     return (
         <div className="profile-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/superadmin">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Profile</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>My Profile</Title>
-                    <Text type="secondary">View and manage your account information</Text>
-                </div>
-            </div>
+            <PageHeader
+                title="My Profile"
+                subtitle="View and manage your account information"
+                breadcrumbItems={[
+                    {
+                        title: (
+                            <Link to="/superadmin">
+                                <FiHome style={{ marginRight: '4px' }} />
+                                Home
+                            </Link>
+                        )
+                    },
+                    { title: 'Profile' }
+                ]}
+            />
 
             <Card className="profile-details-card">
                 <ProfileHeader

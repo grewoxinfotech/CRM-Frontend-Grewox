@@ -1169,10 +1169,9 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 name="category"
                 label={
                   <span style={formItemStyle}>
-                    Category <span style={{ color: "#ff4d4f" }}>*</span>
+                    Category
                   </span>
                 }
-                rules={[{ required: true, message: "Category is required" }]}
               >
                 <Select
                   ref={categorySelectRef}
@@ -1833,7 +1832,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         }}
       />
 
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         .deal-form-modal {
           .currency-select,
           .phone-code-select {

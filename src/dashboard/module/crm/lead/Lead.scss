@@ -11,14 +11,14 @@
 
 
 .lead-page {
-    padding: 0 20px;
+    padding: 0;
 
     @media (max-width: 768px) {
-        padding: 16px;
+        padding: 0;
     }
 
     @media (max-width: 480px) {
-        padding: 12px;
+        padding: 0;
     }
 
     .page-breadcrumb {

@@ -126,12 +126,10 @@ const Role = () => {
         message.success(`Successfully exported as ${type.toUpperCase()}`);
     };
 
-    const exportMenu = (
-        <Menu>
-            <Menu.Item key="excel" onClick={() => handleExport('excel')}>Excel</Menu.Item>
-            <Menu.Item key="pdf" onClick={() => handleExport('pdf')}>PDF</Menu.Item>
-        </Menu>
-    );
+    const exportMenuItems = [
+        { key: 'excel', label: 'Excel', onClick: () => handleExport('excel') },
+        { key: 'pdf', label: 'PDF', onClick: () => handleExport('pdf') },
+    ];
 
     return (
         <div className="role-page standard-page-container">
@@ -147,7 +145,7 @@ const Role = () => {
                 onAdd={() => setIsCreateFormVisible(true)}
                 addText="Add Role"
                 extraActions={[
-                    <Dropdown key="export" overlay={exportMenu} trigger={['click']}>
+                    <Dropdown key="export" menu={{ items: exportMenuItems }} trigger={['click']}>
                         <Button icon={<FiDownload />}>Export</Button>
                     </Dropdown>
                 ]}

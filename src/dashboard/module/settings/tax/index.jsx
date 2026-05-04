@@ -16,6 +16,7 @@ import 'jspdf-autotable';
 import CreateTax from './CreateTax';
 import TaxList from './TaxList';
 import { Link } from 'react-router-dom';
+import PageHeader from '../../../../components/PageHeader';
 import { useGetAllTaxesQuery, useDeleteTaxMutation } from './services/taxApi';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 
@@ -107,31 +108,11 @@ const Tax = () => {
         setSearchText(value);
     };
 
-    const exportMenu = (
-        <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
-            </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-                onClick={() => handleExport('excel')}
-            >
-                Export as Excel
-            </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-                onClick={() => handleExport('pdf')}
-            >
-                Export as PDF
-            </Menu.Item>
-        </Menu>
-    );
+    const exportMenuItems = [
+        { key: 'csv', label: 'Export as CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
+        { key: 'excel', label: 'Export as Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
+        { key: 'pdf', label: 'Export as PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') },
+    ];
 
     const handleExport = async (type) => {
         try {
@@ -220,7 +201,7 @@ const Tax = () => {
         <Menu className="filter-menu">
             <Menu.Item key="export" className="filter-menu-item">
                 <div className="filter-section">
-                    <Dropdown overlay={exportMenu} trigger={['click']}>
+                    <Dropdown menu={{ items: exportMenuItems }} trigger={['click']}>
                         <Button className="export-button">
                             <FiDownload size={16} />
                             Export
@@ -231,97 +212,43 @@ const Tax = () => {
         </Menu>
     );
 
+    const breadcrumbItems = [
+        {
+            title: (
+                <Link to="/dashboard">
+                    <FiHome style={{ marginRight: '4px' }} />
+                    Home
+                </Link>
+            ),
+        },
+        {
+            title: <Link to="/dashboard/settings">Settings</Link>
+        },
+        { title: 'Tax' },
+    ];
+
     return (
         <div className="tax-page">
-            <div className="page-breadcrumb">   
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard/settings">Settings</Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Tax</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="header-content">
-                    <div className="page-title">
-                        <div className="title-row">
-                            <Title level={2}>Tax</Title>
-                            <div className="mobile-actions">
-                                <Button
-                                    type="primary"
-                                    icon={<FiPlus size={18} />}
-                                    onClick={handleAddTax}
-                                    className="mobile-add-button"
-                                />
-                                <Popover
-                                    content={searchContent}
-                                    trigger="click"
-                                    visible={isSearchVisible}
-                                    onVisibleChange={setIsSearchVisible}
-                                    placement="bottomRight"
-                                    overlayClassName="search-popover"
-                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                                >
-                                    <Button
-                                        icon={<FiSearch size={18} />}
-                                        className="mobile-search-button"
-                                    />
-                                </Popover>
-                                <Dropdown
-                                    overlay={filterMenu}
-                                    trigger={['click']}
-                                    visible={isFilterVisible}
-                                    onVisibleChange={setIsFilterVisible}
-                                    placement="bottomRight"
-                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                                >
-                                    <Button
-                                        icon={<FiFilter size={18} />}
-                                        className="mobile-filter-button"
-                                    />
-                                </Dropdown>
-                            </div>
-                        </div>
-                        <Text type="secondary">Manage all taxes in the organization</Text>
-                    </div>
-
-                    <div className="header-actions">
-                        <div className="desktop-actions">
-                            <Input
-                                prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                                placeholder="Search by GST name..."
-                                allowClear
-                                onChange={(e) => handleSearch(e.target.value)}
-                                value={searchText}
-                                ref={searchInputRef}
-                                className="search-input"
-                            />
-                            <Dropdown overlay={exportMenu} trigger={['click']}>
-                                <Button className="export-button">
-                                    <FiDownload size={16} />
-                                    <span>Export</span>
-                                    <FiChevronDown size={14} />
-                                </Button>
-                            </Dropdown>
-                            <Button
-                                type="primary"
-                                icon={<FiPlus size={16} />}
-                                onClick={handleAddTax}
-                                className="add-button"
-                            >
-                                Add Tax
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title="Tax"
+                subtitle="Manage all taxes in the organization"
+                breadcrumbItems={breadcrumbItems}
+                searchText={searchText}
+                onSearch={handleSearch}
+                searchPlaceholder="Search by GST name..."
+                exportMenu={{
+                    items: [
+                        { key: 'csv', label: 'Export as CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
+                        { key: 'excel', label: 'Export as Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
+                        { key: 'pdf', label: 'Export as PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') }
+                    ]
+                }}
+                onAdd={handleAddTax}
+                addText="Add Tax"
+                mobileSearchContent={searchContent}
+                isSearchVisible={isSearchVisible}
+                onSearchVisibleChange={setIsSearchVisible}
+            />
 
             <Card className="tax-table-card">
                 <TaxList

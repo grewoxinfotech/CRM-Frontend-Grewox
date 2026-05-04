@@ -22,6 +22,7 @@ import {
     FiList,
     FiHome
 } from 'react-icons/fi';
+import PageHeader from '../../../components/PageHeader';
 import './company.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
@@ -246,90 +247,53 @@ const Company = () => {
 
     return (
         <div className="company-pages">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/superadmin">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Company</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="header-content">
-                    <div className="page-title">
-                        <div className="title-row">
-                            <div className="page-title-content">
-                                <Title level={2}>Companies</Title>
-                                <Text type="secondary">Manage all companies in the system</Text>
-                            </div>
-                            <div className="header-actions">
-                                <div className="desktop-actions">
-                                    <div className="action-buttons">
-                                        <Button.Group className="view-toggle">
-                                            <Button
-                                                type={viewMode === 'table' ? 'primary' : 'default'}
-                                                icon={<FiList size={16} />}
-                                                onClick={() => setViewMode('table')}
-                                            />
-                                            <Button
-                                                type={viewMode === 'card' ? 'primary' : 'default'}
-                                                icon={<FiGrid size={16} />}
-                                                onClick={() => setViewMode('card')}
-                                            />
-                                        </Button.Group>
-                                    </div>
-
-                                    <div style={{display:"flex",alignItems:"center",gap:"12px", width: "100%"}}>
-                                        <div className="search-container" style={{flex: 1}}>
-                                            <Input
-                                                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                                                placeholder="Search companies..."
-                                                allowClear
-                                                onChange={(e) => handleSearch(e.target.value)}
-                                                value={searchText}
-                                                className="search-input"
-                                            />
-                                        </div>
-                                        <div className="action-buttons-group">
-                                            <Popover
-                                                content={searchContent}
-                                                trigger="click"
-                                                open={isSearchVisible}
-                                                onOpenChange={setIsSearchVisible}
-                                                placement="bottomRight"
-                                                className="mobile-search-popover"
-                                            >
-                                                <Button 
-                                                    className="search-icon-button"
-                                                    icon={<FiSearch size={16} />}
-                                                />
-                                            </Popover>
-                                            <Dropdown overlay={exportMenu} trigger={['click']}>
-                                                <Button className="export-button">
-                                                    <FiDownload size={16} />
-                                                    <span className="button-text">Export</span>
-                                                </Button>
-                                            </Dropdown>
-                                            <Button
-                                                type="primary"
-                                                icon={<FiPlus size={16} />}
-                                                onClick={handleAddCompany}
-                                                className="add-button"
-                                            >
-                                                <span className="button-text">Add Company</span>
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title="Companies"
+                subtitle="Manage all companies in the system"
+                breadcrumbItems={[
+                    {
+                        title: (
+                            <Link to="/superadmin">
+                                <FiHome style={{ marginRight: '4px' }} />
+                                Home
+                            </Link>
+                        )
+                    },
+                    { title: 'Company' }
+                ]}
+                searchText={searchText}
+                onSearch={handleSearch}
+                viewMode={viewMode}
+                onViewChange={setViewMode}
+                showViewToggle={true}
+                onAdd={handleAddCompany}
+                addText="Add Company"
+                exportMenu={{
+                    items: [
+                        {
+                            key: 'excel',
+                            label: 'Export as Excel',
+                            icon: <FiDownload />,
+                            onClick: () => handleExport('excel'),
+                        },
+                        {
+                            key: 'pdf',
+                            label: 'Export as PDF',
+                            icon: <FiDownload />,
+                            onClick: () => handleExport('pdf'),
+                        },
+                        {
+                            key: 'csv',
+                            label: 'Export as CSV',
+                            icon: <FiDownload />,
+                            onClick: () => handleExport('csv'),
+                        }
+                    ]
+                }}
+                mobileSearchContent={searchContent}
+                isSearchVisible={isSearchVisible}
+                onSearchVisibleChange={setIsSearchVisible}
+            />
 
             <Card className="company-table-card">
                 {viewMode === 'table' ? (

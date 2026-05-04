@@ -12,6 +12,7 @@ import {
   message,
   Popconfirm,
   InputNumber,
+  Space,
 } from "antd";
 import {
   FiFileText,
@@ -382,10 +383,9 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
                 label={
                   <span className="form-label">
                     <FiPhone />
-                    Phone Number <span className="required">*</span>
+                    Phone Number *
                   </span>
                 }
-                className="combined-input-item"
                 required
               >
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -427,9 +427,9 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
                     ]}
                   >
                     <Input
-                      style={{ width: 'calc(100% - 120px)', height: '48px' }}
+                      style={{ flex: 1, height: '48px' }}
                       placeholder="Enter phone number"
-                      className="form-input"
+                      className="form-input phone-number-input"
                       type="number"
                       onKeyDown={(e) => {
                         if (['e', 'E', '+', '-', '.'].includes(e.key)) {
@@ -847,7 +847,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
         }}
       />
 
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         .contact-form {
           padding: 24px;
           
@@ -1068,6 +1068,32 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
 
             .ant-select-item-empty {
               color: #9CA3AF !important;
+            }
+          }
+
+          /* Unified Phone Input Styles */
+          .ant-space-compact {
+            background-color: #f9fafb;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            overflow: hidden;
+
+            &:hover, &:focus-within {
+              border-color: #1890ff;
+              box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+            }
+
+            .phone-code-select-common .ant-select-selector,
+            .phone-number-input {
+              border: none !important;
+              box-shadow: none !important;
+              background-color: transparent !important;
+            }
+
+            .phone-code-select-common {
+              border-right: 1px solid #e5e7eb !important;
+              border-radius: 0 !important;
             }
           }
         }

@@ -766,7 +766,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
         }}
       />
 
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         .contact-form {
           padding: 24px;
 .phone-input-group .ant-select-selector .ant-select-selection-item div span:last-child {

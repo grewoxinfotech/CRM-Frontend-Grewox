@@ -1341,7 +1341,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
 
 export default EditEmployee; 
 
-<style jsx global>{`
+<style jsx="true" global="true">{`
   .price-input-group {
     display: flex !important;
     align-items: stretch !important;

@@ -367,7 +367,7 @@ const ComposeModal = ({
         </div>
       </Form>
 
-      <style jsx>{`
+      <style jsx="true">{`
         .modal-header {
           display: flex;
           align-items: center;

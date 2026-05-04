@@ -1,7 +1,7 @@
 @import '../../../../styles/theme/theme.scss';
 
 .task-calendar-page {
-    padding: 24px;
+    padding: 0;
     background: $background-color;
 
 
@@ -250,7 +250,7 @@
 
                         .ant-radio-button-wrapper {
                             height: 32px;
-                            padding: 0 20px;
+                            padding: 0;
                             border: none;
                             background: transparent;
                             color: #64748b;

@@ -11,10 +11,13 @@ import {
   InputNumber,
   Tag,
   Popconfirm,
+  Tabs,
+  AutoComplete,
 } from "antd";
 import {
   FiUser,
   FiMail,
+  FiPhone,
   FiX,
   FiBriefcase,
   FiMapPin,
@@ -39,6 +42,7 @@ import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import AddCompanyModal from "../companyacoount/CreateCompanyAccount";
 import AddContactModal from "../contact/CreateContact";
+import CommonSelect from "../../../../components/CommonSelect";
 import { useGetCompanyAccountsQuery } from '../companyacoount/services/companyAccountApi';
 import { useGetContactsQuery, useCreateContactMutation } from '../contact/services/contactApi';
 import AddStageModal from "../crmsystem/leadstage/AddLeadStageModal";
@@ -52,9 +56,47 @@ const { Option } = Select;
 const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countries, categoriesData, sourcesData, statusesData }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = React.useState([]);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [newCompanyName, setNewCompanyName] = useState("");
+  const [phoneSearchText, setPhoneSearchText] = useState("");
   const dispatch = useDispatch();
   const [updateLead, { isLoading }] = useUpdateLeadMutation();
   const [createContact] = useCreateContactMutation();
+
+  const selectedCompanyId = Form.useWatch('company_id', form);
+  const { data: contactSuggestions } = useGetContactsQuery(
+    { 
+      search: phoneSearchText,
+      ...(selectedCompanyId && { company_name: selectedCompanyId })
+    },
+    { skip: !phoneSearchText || phoneSearchText.length < 2 }
+  );
+
+  const handleContactSelect = (value, option) => {
+    const contact = option.contact;
+    if (contact) {
+      const selectedCode = countries?.find(c => c.id === contact.phone_code || c.id === form.getFieldValue('phoneCode'));
+      let displayPhone = contact.phone || '';
+      
+      // If the phone number starts with the selected code's phone code, strip it
+      if (selectedCode && displayPhone.startsWith(`+${selectedCode.phoneCode.replace('+', '')}`)) {
+        displayPhone = displayPhone.replace(`+${selectedCode.phoneCode.replace('+', '')}`, '').trim();
+      } else if (selectedCode && displayPhone.startsWith(selectedCode.phoneCode.replace('+', ''))) {
+        displayPhone = displayPhone.replace(selectedCode.phoneCode.replace('+', ''), '').trim();
+      }
+
+      form.setFieldsValue({
+        firstName: contact.first_name || '',
+        lastName: contact.last_name || '',
+        email: contact.email || '',
+        telephone: displayPhone,
+        address: contact.address || '',
+        company_id: contact.company_name || undefined,
+        contact_id: contact.id,
+        phoneCode: contact.phone_code || form.getFieldValue('phoneCode')
+      });
+    }
+  };
   const loggedInUser = useSelector(selectCurrentUser);
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
   const [teamMembersOpen, setTeamMembersOpen] = useState(false);
@@ -65,7 +107,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
   const { data: contactsData, refetch: refetchContacts } = useGetContactsQuery();
-  const selectedCompanyId = Form.useWatch('company_id', form);
+
   const selectedContactId = Form.useWatch('contact_id', form);
   const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
   const [isAddContactVisible, setIsAddContactVisible] = useState(false);
@@ -167,14 +209,44 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   // Set form values when initialValues changes
   useEffect(() => {
     if (initialValues) {
-      // Parse phone number to extract country code and number
-      const phoneMatch = initialValues.telephone?.match(/^\+(\d+)\s(.*)$/);
-      const phoneNumber = phoneMatch ? phoneMatch[2] : initialValues.telephone || '';
+      // Find contact and its company if contact_id exists
+      const existingContact = contactsData?.data?.find(c => c.id === initialValues.contact_id);
+      
+      // Parse phone number from existingContact
+      const contactPhone = existingContact?.phone || '';
+      let phoneNumber = contactPhone;
+      let phoneCode = existingContact?.phone_code || '';
+
+      if (contactPhone.startsWith('+')) {
+        // Try space-based first
+        const spaceMatch = contactPhone.match(/^\+(\d+)\s(.*)$/);
+        if (spaceMatch) {
+          phoneCode = spaceMatch[1];
+          phoneNumber = spaceMatch[2];
+        } else {
+          // If no space, try to match against known countries
+          const digitsOnly = contactPhone.substring(1);
+          // Sort countries by phone code length descending to match the longest code first (e.g. +1242 vs +1)
+          const sortedCountries = [...(countries || [])].sort((a, b) => b.phoneCode.length - a.phoneCode.length);
+          
+          for (const country of sortedCountries) {
+            const codeDigits = country.phoneCode.replace(/\D/g, '');
+            if (digitsOnly.startsWith(codeDigits)) {
+              phoneCode = codeDigits;
+              phoneNumber = digitsOnly.substring(codeDigits.length);
+              break;
+            }
+          }
+        }
+      }
 
       // Find country by phone code
-      const phoneCode = phoneMatch ? phoneMatch[1] : '';
-      const country = countries?.find(c => c.phoneCode.replace('+', '') === phoneCode);
+      const country = countries?.find(c => c.phoneCode.replace(/\D/g, '') === phoneCode.replace(/\D/g, ''));
       const countryId = country?.id || defaultPhoneCode;
+
+      const company_id = existingContact?.company_name || initialValues.company_id || null;
+
+      console.log("Setting form with contact:", existingContact, "company_id:", company_id);
 
       // Find currency by code
       const currencyObj = currencies?.find(c => c.currencyCode === initialValues.currency);
@@ -222,14 +294,11 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         }
       }
 
-      // Find contact and its company if contact_id exists
-      const existingContact = contactsData?.data?.find(c => c.id === initialValues.contact_id);
-      const company_id = existingContact?.company_name || initialValues.company_id || null;
-
-      console.log("Setting form with contact:", existingContact, "company_id:", company_id);
-
       form.setFieldsValue({
         ...initialValues,
+        firstName: existingContact?.first_name || initialValues.firstName || '',
+        lastName: existingContact?.last_name || initialValues.lastName || '',
+        email: existingContact?.email || initialValues.email || '',
         phoneCode: countryId,
         telephone: phoneNumber,
         currency: currencyId,
@@ -405,10 +474,6 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     backgroundColor: "#f8fafc",
     border: "1px solid #e6e8eb",
     transition: "all 0.3s ease",
-    '&.ant-select-focused': {
-      borderColor: '#1890ff',
-      boxShadow: '0 0 0 2px rgba(24, 144, 255, 0.2)',
-    }
   };
 
   const prefixIconStyle = {
@@ -534,7 +599,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
 
   // Global styles to fix Select cursor alignment
   const globalStyles = (
-    <style jsx global>{`
+    <style jsx="true" global="true">{`
       .ant-select-selection-search-input {
         display: flex !important;
         align-items: center !important;
@@ -548,12 +613,22 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         display: flex !important;
         align-items: center !important;
       }
-      .select-with-prefix-icon.ant-select:not(.ant-select-customize-input) .ant-select-selector {
-        padding-left: 40px !important;
-      }
+
       .ant-select-single .ant-select-selector .ant-select-selection-search {
         display: flex !important;
         align-items: center !important;
+      }
+      
+      .ant-select:not(.ant-select-customize-input) .ant-select-selector:hover,
+      .ant-input:hover {
+        border-color: #1890ff !important;
+      }
+
+      .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector,
+      .ant-input:focus,
+      .ant-input-focused {
+        border-color: #1890ff !important;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
       }
     `}</style>
   );
@@ -866,31 +941,13 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             label={<span style={formItemStyle}>Pipeline</span>}
             rules={[{ required: true, message: "Please select a pipeline" }]}
           >
-            <Select
-              ref={selectRef}
-              open={dropdownOpen}
-              onDropdownVisibleChange={setDropdownOpen}
+            <CommonSelect
               placeholder="Select pipeline"
+              options={pipelines.map(p => ({ id: p.id, name: p.pipeline_name }))}
               onChange={handlePipelineChange}
-              style={{
-                ...selectStyle,
-                dropdownStyle: {
-                  maxHeight: '400px',
-                  overflow: 'hidden'
-                }
-              }}
-              listHeight={350}
-              popupClassName="custom-select-dropdown sticky-add-button"
-              showSearch
-              optionFilterProp="label"
-              optionLabelProp="label"
-            >
-              {pipelines.map((pipeline) => (
-                <Option key={pipeline.id} value={pipeline.id} label={pipeline.pipeline_name}>
-                  {pipeline.pipeline_name}
-                </Option>
-              ))}
-            </Select>
+              onAddClick={handleAddPipelineClick}
+              addButtonText="Add Pipeline"
+            />
           </Form.Item>
 
           <Form.Item
@@ -898,140 +955,19 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             label={<span style={formItemStyle}>Stage</span>}
             rules={[{ required: true, message: "Please select a stage" }]}
           >
-            <Select
+            <CommonSelect
               placeholder={selectedPipeline ? "Select stage" : "Select pipeline first"}
               disabled={!selectedPipeline}
-              style={{
-                ...selectStyle,
-                dropdownStyle: {
-                  maxHeight: '400px',
-                  overflow: 'hidden'
-                }
-              }}
-              suffixIcon={<FiChevronDown size={14} />}
-              popupClassName="custom-select-dropdown sticky-add-button"
-              optionLabelProp="label"
-              showSearch
-              optionFilterProp="label"
-              dropdownRender={(menu) => (
-                <div
-                  style={{
-                    position: 'relative',
-                    maxHeight: '400px'
-                  }}
-                >
-                  <div style={{
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    paddingBottom: '48px'
-                  }}>
-                    {menu}
-                  </div>
-                  <div style={{
-                    position: 'sticky',
-                    bottom: 0,
-                    padding: '8px 12px',
-                    borderTop: '1px solid #f0f0f0',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}>
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={handleAddStageClick}
-                      disabled={!selectedPipeline}
-                      style={{
-                        width: '100%',
-                        background: selectedPipeline ? 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)' : '#f5f5f5',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: selectedPipeline ? '0 2px 8px rgba(24, 144, 255, 0.15)' : 'none',
-                        fontWeight: '500',
-                        opacity: selectedPipeline ? 1 : 0.5,
-                        cursor: selectedPipeline ? 'pointer' : 'not-allowed',
-                        color: selectedPipeline ? '#ffffff' : 'rgba(0, 0, 0, 0.25)'
-                      }}
-                    >
-                      Add Stage
-                    </Button>
-                  </div>
-                </div>
-              )}
-            >
-              {filteredStages.map((stage) => (
-                <Option key={stage.id} value={stage.id} label={stage.stageName}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '8px 0'
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      <div style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: stage.color || '#1890ff'
-                      }} />
-                      <span style={{ marginRight: '8px' }}>{stage.stageName}</span>
-                      {stage.isDefault && (
-                        <Tag
-                          color="blue"
-                          style={{
-                            margin: 0,
-                            fontSize: '12px',
-                            padding: '0 8px',
-                            borderRadius: '4px',
-                            background: '#e6f4ff',
-                            border: '1px solid #91caff',
-                            color: '#0958d9'
-                          }}
-                        >
-                          Default
-                        </Tag>
-                      )}
-                    </div>
-                    {form.getFieldValue('leadStage') !== stage.id && (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <Button
-                          type="text"
-                          icon={<FiTrash2 style={{ fontSize: '16px' }} />}
-                          onClick={(e) => handleDeleteStage(e, stage.id, stage.stageName)}
-                          className="delete-stage-btn"
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: 0,
-                            border: 'none',
-                            borderRadius: '6px',
-                            color: '#ff4d4f',
-                            transition: 'all 0.2s'
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </Option>
-              ))}
-            </Select>
+              options={filteredStages.map(s => ({ 
+                id: s.id, 
+                name: s.stageName,
+                color: s.color 
+              }))}
+              onAddClick={handleAddStageClick}
+              addButtonText="Add Stage"
+              onDelete={handleDeleteStage}
+              deleteTitle="Delete Stage"
+            />
           </Form.Item>
 
           {/* Interest Level */}
@@ -1039,31 +975,14 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             name="interest_level"
             label={<span style={formItemStyle}>Interest Level</span>}
           >
-            <Select
+            <CommonSelect
               placeholder="Select interest level"
-              style={{
-                ...selectStyle,
-                dropdownStyle: {
-                  maxHeight: '400px',
-                  overflow: 'hidden'
-                }
-              }}
-              popupClassName="custom-select-dropdown sticky-add-button"
-            >
-              {interestLevels.map((level) => (
-                <Option key={level.value} value={level.value}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: level.color
-                    }} />
-                    {level.label}
-                  </div>
-                </Option>
-              ))}
-            </Select>
+              options={interestLevels.map(level => ({
+                id: level.value,
+                name: level.label,
+                color: level.color
+              }))}
+            />
           </Form.Item>
 
           <Form.Item
@@ -1078,31 +997,16 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                 initialValue={defaultCurrency}
                 rules={[{ required: true, message: 'Please select currency' }]}
               >
-                <Select
-                  style={{
-                    width: '120px',
-                    height: '48px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                  className="currency-select-common"
-                  suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
-                  popupClassName="custom-select-dropdown"
-                  showSearch
-                  optionFilterProp="value"
-                  filterOption={(input, option) =>
-                    (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
-                >
-                  {currencies?.map((currency) => (
-                    <Option key={currency.id} value={currency.id}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
-                        <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
+                <CommonSelect
+                  style={{ width: '120px' }}
+                  options={currencies?.map(currency => ({
+                    id: currency.id,
+                    name: currency.currencyIcon === currency.currencyCode 
+                      ? currency.currencyCode 
+                      : `${currency.currencyIcon} ${currency.currencyCode}`
+                  }))}
+                  allowClear={false}
+                />
               </Form.Item>
               <Form.Item
                 name="leadValue"
@@ -1132,121 +1036,14 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             label={<span style={formItemStyle}>Source</span>}
             rules={[{ required: true, message: "Please select source" }]}
           >
-            <Select
-              ref={sourceSelectRef}
-              open={sourceDropdownOpen}
-              onDropdownVisibleChange={setSourceDropdownOpen}
+            <CommonSelect
               placeholder="Select source"
-              style={{
-                ...selectStyle,
-                dropdownStyle: {
-                  maxHeight: '400px',
-                  overflow: 'hidden'
-                }
-              }}
-              popupClassName="custom-select-dropdown sticky-add-button"
-              optionLabelProp="label"
-              showSearch
-              optionFilterProp="label"
-              dropdownRender={(menu) => (
-                <div
-                  style={{
-                    position: 'relative',
-                    maxHeight: '400px'
-                  }}
-                >
-                  <div style={{
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    paddingBottom: '48px'
-                  }}>
-                    {menu}
-                  </div>
-                  <div style={{
-                    position: 'sticky',
-                    bottom: 0,
-                    padding: '8px 12px',
-                    borderTop: '1px solid #f0f0f0',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}>
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={handleAddSourceClick}
-                      style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Add Source
-                    </Button>
-                  </div>
-                </div>
-              )}
-            >
-              {sourcesData?.data?.map((source) => (
-                <Option key={source.id} value={source.id} label={source.name}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: source.color || '#1890ff'
-                        }}
-                      />
-                      {source.name}
-                    </div>
-                    {form.getFieldValue('source') !== source.id && (
-                      <Popconfirm
-                        title="Delete Source"
-                        description="Are you sure you want to delete this source?"
-                        onConfirm={(e) => handleDeleteSource(e, source.id)}
-                        onCancel={(e) => e.stopPropagation()}
-                        okText="Yes"
-                        cancelText="No"
-                        placement="left"
-                      >
-                        <Button
-                          type="text"
-                          icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
-                          size="small"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            opacity: 0.8,
-                            transition: 'opacity 0.2s',
-                            ':hover': {
-                              opacity: 1,
-                              backgroundColor: 'transparent'
-                            }
-                          }}
-                        />
-                      </Popconfirm>
-                    )}
-                  </div>
-                </Option>
-              ))}
-            </Select>
+              options={sourcesData?.data}
+              onAddClick={handleAddSourceClick}
+              addButtonText="Add Source"
+              onDelete={handleDeleteSource}
+              deleteTitle="Delete Source"
+            />
           </Form.Item>
 
           {/* Status Select */}
@@ -1254,121 +1051,14 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             name="status"
             label={<span style={formItemStyle}>Status</span>}
           >
-            <Select
-              ref={statusSelectRef}
-              open={statusDropdownOpen}
-              onDropdownVisibleChange={setStatusDropdownOpen}
+            <CommonSelect
               placeholder="Select status"
-              style={{
-                ...selectStyle,
-                dropdownStyle: {
-                  maxHeight: '400px',
-                  overflow: 'hidden'
-                }
-              }}
-              popupClassName="custom-select-dropdown sticky-add-button"
-              optionLabelProp="label"
-              showSearch
-              optionFilterProp="label"
-              dropdownRender={(menu) => (
-                <div
-                  style={{
-                    position: 'relative',
-                    maxHeight: '400px'
-                  }}
-                >
-                  <div style={{
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    paddingBottom: '48px'
-                  }}>
-                    {menu}
-                  </div>
-                  <div style={{
-                    position: 'sticky',
-                    bottom: 0,
-                    padding: '8px 12px',
-                    borderTop: '1px solid #f0f0f0',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}>
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={handleAddStatusClick}
-                      style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Add Status
-                    </Button>
-                  </div>
-                </div>
-              )}
-            >
-              {statusesData?.data?.map((status) => (
-                <Option key={status.id} value={status.id} label={status.name}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: status.color || '#1890ff'
-                        }}
-                      />
-                      {status.name}
-                    </div>
-                    {form.getFieldValue('status') !== status.id && (
-                      <Popconfirm
-                        title="Delete Status"
-                        description="Are you sure you want to delete this status?"
-                        onConfirm={(e) => handleDeleteStatus(e, status.id)}
-                        onCancel={(e) => e.stopPropagation()}
-                        okText="Yes"
-                        cancelText="No"
-                        placement="left"
-                      >
-                        <Button
-                          type="text"
-                          icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
-                          size="small"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            opacity: 0.8,
-                            transition: 'opacity 0.2s',
-                            ':hover': {
-                              opacity: 1,
-                              backgroundColor: 'transparent'
-                            }
-                          }}
-                        />
-                      </Popconfirm>
-                    )}
-                  </div>
-                </Option>
-              ))}
-            </Select>
+              options={statusesData?.data}
+              onAddClick={handleAddStatusClick}
+              addButtonText="Add Status"
+              onDelete={handleDeleteStatus}
+              deleteTitle="Delete Status"
+            />
           </Form.Item>
 
           {/* Category Select */}
@@ -1376,121 +1066,14 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             name="category"
             label={<span style={formItemStyle}>Category</span>}
           >
-            <Select
-              ref={categorySelectRef}
-              open={categoryDropdownOpen}
-              onDropdownVisibleChange={setCategoryDropdownOpen}
-              placeholder="Select or type to filter categories"
-              style={{
-                ...selectStyle,
-                dropdownStyle: {
-                  maxHeight: '400px',
-                  overflow: 'hidden'
-                }
-              }}
-              optionLabelProp="label"
-              showSearch
-              allowClear
-              optionFilterProp="label"
-              dropdownRender={(menu) => (
-                <div
-                  style={{
-                    position: 'relative',
-                    maxHeight: '400px'
-                  }}
-                >
-                  <div style={{
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    paddingBottom: '48px'
-                  }}>
-                    {menu}
-                  </div>
-                  <div style={{
-                    position: 'sticky',
-                    bottom: 0,
-                    padding: '8px 12px',
-                    borderTop: '1px solid #f0f0f0',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}>
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={handleAddCategoryClick}
-                      style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Add Category
-                    </Button>
-                  </div>
-                </div>
-              )}
-            >
-              {categoriesData?.data?.map((category) => (
-                <Option key={category.id} value={category.id} label={category.name}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: category.color || '#1890ff'
-                        }}
-                      />
-                      {category.name}
-                    </div>
-                    {form.getFieldValue('category') !== category.id && (
-                      <Popconfirm
-                        title="Delete Category"
-                        description="Are you sure you want to delete this category?"
-                        onConfirm={(e) => handleDeleteCategory(e, category.id)}
-                        onCancel={(e) => e.stopPropagation()}
-                        okText="Yes"
-                        cancelText="No"
-                        placement="left"
-                      >
-                        <Button
-                          type="text"
-                          icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
-                          size="small"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            opacity: 0.8,
-                            transition: 'opacity 0.2s',
-                            ':hover': {
-                              opacity: 1,
-                              backgroundColor: 'transparent'
-                            }
-                          }}
-                        />
-                      </Popconfirm>
-                    )}
-                  </div>
-                </Option>
-              ))}
-            </Select>
+            <CommonSelect
+              placeholder="Select category"
+              options={categoriesData?.data}
+              onAddClick={handleAddCategoryClick}
+              addButtonText="Add Category"
+              onDelete={handleDeleteCategory}
+              deleteTitle="Delete Category"
+            />
           </Form.Item>
         </div>
 
@@ -1501,181 +1084,21 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             label={<span style={formItemStyle}>Team Members</span>}
             style={{ marginBottom: '16px' }}
           >
-            <Select
+            <CommonSelect
               mode="multiple"
               placeholder="Select team members"
-              style={{
-                width: '100%',
-                height: 'auto',
-                minHeight: '48px'
-              }}
-              popupClassName="custom-select-dropdown sticky-add-button"
-              showSearch
-              optionFilterProp="children"
-              maxTagCount={2}
-              maxTagTextLength={15}
-              loading={usersLoading}
-              open={teamMembersOpen}
-              onDropdownVisibleChange={setTeamMembersOpen}
-              filterOption={(input, option) => {
-                const username = option?.username?.toLowerCase();
-                return username?.includes(input.toLowerCase());
-              }}
-              dropdownRender={(menu) => (
-                <>
-                  {menu}
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    padding: '0 8px',
-                    justifyContent: 'flex-end'
-                  }}>
-                    <Button
-                      type="text"
-                      icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
-                      onClick={handleCreateUser}
-                      style={{
-                        height: '36px',
-                        padding: '8px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '6px'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
-                      }}
-                    >
-                      Add New User
-                    </Button>
-                    <Button
-                      type="text"
-                      icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTeamMembersOpen(false);
-                      }}
-                      style={{
-                        height: '36px',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        background: '#ffffff',
-                        border: '1px solid #1890ff',
-                        color: '#1890ff',
-                        fontWeight: '500'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#e6f4ff';
-                        e.currentTarget.style.borderColor = '#69b1ff';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#ffffff';
-                        e.currentTarget.style.borderColor = '#1890ff';
-                      }}
-                    >
-                      Done
-                    </Button>
-                  </div>
-                </>
-              )}
-            >
-              {Array.isArray(users) && users.map(user => {
+              options={users.map(user => {
                 const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-                const roleStyle = getRoleColor(userRole?.role_name);
-
-                return (
-                  <Option key={user.id} value={user.id} username={user.username}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '4px 0'
-                    }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: '#e6f4ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#1890ff',
-                        fontSize: '16px',
-                        fontWeight: '500',
-                        textTransform: 'uppercase'
-                      }}>
-                        {user.profilePic ? (
-                          <img
-                            src={user.profilePic}
-                            alt={user.username}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              borderRadius: '50%',
-                              objectFit: 'cover'
-                            }}
-                          />
-                        ) : (
-                          user.username?.charAt(0) || <FiUser />
-                        )}
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        flex: 1
-                      }}>
-                        <span style={{
-                          fontWeight: 500,
-                          color: 'rgba(0, 0, 0, 0.85)',
-                          fontSize: '14px'
-                        }}>
-                          {user.username}
-                        </span>
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <div
-                          className="role-indicator"
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: roleStyle.color,
-                            boxShadow: `0 0 8px ${roleStyle.color}`,
-                            animation: 'pulse 2s infinite'
-                          }}
-                        />
-                        <span style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          background: roleStyle.bg,
-                          color: roleStyle.color,
-                          border: `1px solid ${roleStyle.border}`,
-                          fontWeight: 500,
-                          textTransform: 'capitalize'
-                        }}>
-                          {userRole?.role_name || 'User'}
-                        </span>
-                      </div>
-                    </div>
-                  </Option>
-                );
+                return {
+                  id: user.id,
+                  name: user.username,
+                  subLabel: userRole?.role_name || 'User',
+                  image: user.profilePic
+                };
               })}
-            </Select>
+              onAddClick={handleCreateUser}
+              addButtonText="Add New User"
+            />
           </Form.Item>
         </div>
 
@@ -1694,218 +1117,48 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             name="company_id"
             label={<span style={formItemStyle}>Select Company</span>}
           >
-            <div style={{ position: 'relative' }}>
-              <FiBriefcase
-                style={{
-                  position: 'absolute',
-                  left: 14,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#1890ff',
-                  fontSize: 16,
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                }}
-              />
-              <Select
-                placeholder="Select company"
-                onChange={handleCompanyChange}
-                style={selectStyle}
-                className="select-with-prefix-icon"
-                allowClear
-                showSearch
-                optionFilterProp="children"
-                suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
-                filterOption={(input, option) => {
-                  const company = companyAccountsData?.data?.find(c => c.id === option.value);
-                  return company?.company_name?.toLowerCase().includes(input.toLowerCase());
-                }}
-                dropdownRender={(menu) => (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}>
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddCompanyClick}
-                        style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
-                        }}
-                      >
-                        Add Company
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              >
-                {companyAccountsData?.data?.map((company) => (
-                  <Option key={company.id} value={company.id}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '4px 0'
-                    }}>
-                      <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{
-                          fontWeight: '500',
-                          color: '#111827'
-                        }}>{company.company_name}</span>
-                        {company.company_site && (
-                          <span style={{
-                            fontSize: '12px',
-                            color: '#6B7280'
-                          }}>{company.company_site}</span>
-                        )}
-                      </div>
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </div>
+            <CommonSelect
+              placeholder="Select company"
+              options={companyAccountsData?.data?.map(c => ({ 
+                id: c.id, 
+                name: c.company_name,
+                icon: FiBriefcase
+              }))}
+              onChange={handleCompanyChange}
+              onAddClick={handleAddCompanyClick}
+              addButtonText="Add Company"
+              icon={FiBriefcase}
+            />
           </Form.Item>
 
           <Form.Item
             name="contact_id"
             label={<span style={formItemStyle}>Select Contact Name</span>}
           >
-            <div style={{ position: 'relative' }}>
-              <FiUser
-                style={{
-                  position: 'absolute',
-                  left: 14,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#1890ff',
-                  fontSize: 16,
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                }}
-              />
-              <Select
-                placeholder="Select contact name"
-                style={selectStyle}
-                className="select-with-prefix-icon"
-                suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
-                showSearch
-                allowClear
-                onChange={handleContactChange}
-                filterOption={(input, option) => {
-                  const contact = contactsData?.data?.find(
-                    (c) => c.id === option.value
-                  );
-                  if (!contact) return false;
-                  const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase();
-                  const companyName = companyAccountsData?.data?.find(
-                    (c) => c.id === contact.company_name
-                  )?.company_name?.toLowerCase() || '';
-                  return fullName.includes(input.toLowerCase()) ||
-                    companyName.includes(input.toLowerCase());
-                }}
-                dropdownRender={(menu) => (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}>
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddContactClick}
-                        style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
-                        }}
-                      >
-                        Add Contact
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              >
-                {contactsData?.data?.filter(contact => {
-                  const selectedCompanyId = form.getFieldValue('company_id');
-                  if (!selectedCompanyId) return true; // Show all if no company selected
-                  return contact.company_name === selectedCompanyId; // Only show contacts for selected company
-                }).map((contact) => {
-                  const companyName = companyAccountsData?.data?.find(
-                    (c) => c.id === contact.company_name
-                  )?.company_name || "No Company";
-
-                  return (
-                    <Option
-                      key={contact.id}
-                      value={contact.id}
-                    >
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '4px 0'
-                      }}>
-                        <FiUser style={{ color: '#1890FF', fontSize: '16px' }} />
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          flex: 1,
-                          minWidth: 0
-                        }}>
-                          <span style={{
-                            fontWeight: '500',
-                            color: '#111827',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}>{`${contact.first_name || ''} ${contact.last_name || ''}`}</span>
-                          <span style={{
-                            color: '#6B7280',
-                            fontSize: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}>
-                            <FiBriefcase style={{ fontSize: '12px' }} />
-                            {companyName}
-                          </span>
-                        </div>
-                      </div>
-                    </Option>
-                  );
-                })}
-              </Select>
-            </div>
+            <CommonSelect
+              placeholder="Select contact name"
+              options={contactsData?.data?.filter(contact => {
+                const selectedCompanyId = form.getFieldValue('company_id');
+                if (!selectedCompanyId) return true;
+                const companyId = typeof contact.company_name === 'object' ? contact.company_name?._id || contact.company_name?.id : contact.company_name;
+                return companyId === selectedCompanyId;
+              }).map(contact => {
+                const companyId = typeof contact.company_name === 'object' ? contact.company_name?._id || contact.company_name?.id : contact.company_name;
+                const companyName = typeof contact.company_name === 'object' ? contact.company_name?.company_name || contact.company_name?.name : companyAccountsData?.data?.find(c => c.id === companyId)?.company_name;
+                
+                return {
+                  id: contact.id,
+                  name: `${contact.first_name || ''} ${contact.last_name || ''}`,
+                  icon: FiUser,
+                  subLabel: companyName || "No Company",
+                  subIcon: FiBriefcase
+                };
+              })}
+              onChange={handleContactChange}
+              onAddClick={handleAddContactClick}
+              addButtonText="Add Contact"
+              icon={FiUser}
+            />
           </Form.Item>
 
           <Form.Item
@@ -1952,7 +1205,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           <Form.Item
             name="phoneGroup"
             label={<span style={formItemStyle}>Phone Number</span>}
-            className="combined-input-item"
+            dependencies={['telephone']}
             rules={[
               {
                 validator: (_, value) => {
@@ -1972,45 +1225,76 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           >
             <div style={{ display: 'flex', gap: '8px' }}>
               <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
-                <Select
-                  style={{
-                    width: '120px',
-                    height: '48px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                  className="phone-code-select-common"
-                  suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
-                  popupClassName="custom-select-dropdown"
-                  showSearch
-                  optionFilterProp="children"
-                  filterOption={(input, option) =>
-                    option?.children?.props?.children[0]?.props?.children?.toLowerCase().includes(input.toLowerCase())
-                  }
-                >
-                  {countries?.map((country) => (
-                    <Option key={country.id} value={country.id}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
-                        <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
+                <CommonSelect
+                  style={{ width: '120px' }}
+                  options={countries?.map(country => ({
+                    id: country.id,
+                    name: `${country.countryCode} +${country.phoneCode.replace('+', '')}`
+                  }))}
+                  allowClear={false}
+                />
               </Form.Item>
               <Form.Item
                 name="telephone"
                 noStyle
               >
-                <Input
-                  style={inputStyle}
-                  placeholder="Enter phone number"
-                  type="number"
-                  onKeyDown={(e) => {
-                    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-                      e.preventDefault();
-                    }
+                <AutoComplete
+                  style={{ 
+                    ...inputStyle, 
+                    flex: 1, 
+                    padding: 0
                   }}
+                  placeholder="Enter phone number"
+                  onSearch={(val) => setPhoneSearchText(val)}
+                  onSelect={handleContactSelect}
+                  popupClassName="custom-select-dropdown"
+                  options={contactSuggestions?.data?.map(c => ({
+                    value: c.phone,
+                    label: (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
+                          <div style={{ 
+                            width: '28px', 
+                            height: '28px', 
+                            borderRadius: '50%', 
+                            backgroundColor: '#e6f7ff', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: '#1890ff',
+                            flexShrink: 0
+                          }}>
+                            <FiUser size={14} />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <span style={{ fontWeight: '500', fontSize: '13px', color: '#1f1f1f', lineHeight: '1.4', display: 'block' }}>
+                              {c.first_name} {c.last_name || ''}
+                            </span>
+                            <span style={{ fontSize: '11px', color: '#8c8c8c', display: 'flex', alignItems: 'center', gap: '4px', lineHeight: '1.4' }}>
+                              <FiPhone size={9} /> {c.phone}
+                            </span>
+                          </div>
+                        </div>
+                        {c.company_name && (
+                          <Tag 
+                            icon={<FiBriefcase size={10} />} 
+                            color="blue" 
+                            style={{ 
+                              margin: 0, 
+                              borderRadius: '4px', 
+                              fontSize: '11px',
+                              marginLeft: '8px'
+                            }}
+                          >
+                            {typeof c.company_name === 'object' 
+                              ? (c.company_name.company_name || c.company_name.name) 
+                              : (companyAccountsData?.data?.find(acc => acc.id === c.company_name)?.company_name || c.company_name)}
+                          </Tag>
+                        )}
+                      </div>
+                    ),
+                    contact: c
+                  }))}
                 />
               </Form.Item>
             </div>
@@ -2278,7 +1562,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         </div>
       </Modal>
 
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         .lead-form-modal {
           .currency-select, .phone-code-select {
             cursor: pointer;
@@ -2307,9 +1591,40 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           }
 
           .ant-input-number {
+          .ant-select-single .ant-select-selector .ant-select-selection-item,
+          .ant-select-single .ant-select-selector .ant-select-selection-placeholder,
+          .ant-select-single .ant-select-selector .ant-select-selection-search,
+          .ant-select-single .ant-select-selector .ant-select-selection-search-input {
+            line-height: 48px !important;
+            height: 48px !important;
             display: flex !important;
             align-items: center !important;
             padding: 0 !important;
+          }
+
+          .ant-select-auto-complete .ant-select-selector {
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            height: 48px !important;
+            display: flex !important;
+            align-items: center !important;
+          }
+          
+          .ant-select-auto-complete .ant-select-selection-search {
+            inset-inline-start: 16px !important;
+            inset-inline-end: 16px !important;
+            height: 100% !important;
+          }
+
+          .ant-select-single .ant-select-selector .ant-select-selection-search,
+          .ant-select-single .ant-select-selector .ant-select-selection-search-input {
+            height: 100% !important;
+            line-height: 48px !important;
+            display: flex !important;
+            align-items: center !important;
+          }
 
             .ant-input-number-input-wrap {
               height: 100%;

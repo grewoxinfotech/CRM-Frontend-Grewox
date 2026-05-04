@@ -5,6 +5,9 @@ import {
   useGetPaymentGatewaySettingsQuery,
   useUpdatePaymentGatewaySettingsMutation,
 } from './services/paymentGatewayApi';
+import PageHeader from '../../../../components/PageHeader';
+import { FiHome } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -44,15 +47,24 @@ const PaymentGateway = () => {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card 
-        title={
-          <Space direction="vertical" size={0}>
-            <Title level={4} style={{ margin: 0 }}>Payment Gateway Settings</Title>
-            <Text type="secondary">Configure Razorpay payment gateway credentials</Text>
-          </Space>
-        }
-      >
+    <div className="payment-gateway-page">
+      <PageHeader
+        title="Payment Gateway"
+        subtitle="Configure Razorpay payment gateway credentials"
+        breadcrumbItems={[
+          {
+            title: (
+              <Link to="/superadmin">
+                <FiHome style={{ marginRight: "4px" }} />
+                Home
+              </Link>
+            )
+          },
+          { title: 'Settings' },
+          { title: 'Payment Gateway' }
+        ]}
+      />
+      <Card style={{ margin: '16px' }}>
         <Alert
           message="Environment Variables Pre-filled"
           description="On first access, Razorpay credentials from your .env file are automatically loaded here for easy management."

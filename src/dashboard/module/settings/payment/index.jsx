@@ -3,6 +3,7 @@ import { Card, Form, Input, Switch, Button, message, Row, Col, Typography, Bread
 import { SaveOutlined } from '@ant-design/icons';
 import { FiHome } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import PageHeader from '../../../../components/PageHeader';
 import './payment.scss';
 
 const { Title, Text } = Typography;
@@ -22,29 +23,28 @@ const PaymentSettings = () => {
         }
     };
 
+    const breadcrumbItems = [
+        {
+            title: (
+                <Link to="/dashboard">
+                    <FiHome style={{ marginRight: '4px' }} />
+                    Home
+                </Link>
+            ),
+        },
+        {
+            title: <Link to="/dashboard/settings">Settings</Link>
+        },
+        { title: 'Payment' },
+    ];
+
     return (
         <div className="payment-settings-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard/settings">Settings</Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>Payment</Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Payment</Title>
-                    <Text type="secondary">Configure your payment gateway settings</Text>
-                </div>
-            </div>
+            <PageHeader
+                title="Payment"
+                subtitle="Configure your payment gateway settings"
+                breadcrumbItems={breadcrumbItems}
+            />
 
             <div className="page-contents">
                 <Form

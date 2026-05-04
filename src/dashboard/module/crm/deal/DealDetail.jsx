@@ -23,6 +23,7 @@ import DealActivity from './overview/activity';
 import './Deal.scss';
 import { useGetDealsQuery, useUpdateDealMutation } from './services/DealApi';
 import DealFollowup from './overview/followup';
+import PageHeader from "../../../../components/PageHeader";
 
 const { Title, Text } = Typography;
 
@@ -192,32 +193,29 @@ const DealDetail = () => {
 
     return (
         <div className="project-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome /> Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard/crm/deals">
-                            <FiBriefcase /> Deals
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        {localDeal?.data?.deal_name || 'Deal Details'}
-                    </Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="header-left">
-                    <Title level={2}>{localDeal?.data?.deal_name || 'Deal Details'}</Title>
-                    <Text type="secondary" className="subtitle">
-                        Manage deal details and activities
-                    </Text>
-                </div>
-                <div className="header-right">
+            <PageHeader
+                title={localDeal?.dealTitle || 'Deal Details'}
+                subtitle="Manage deal details and activities"
+                breadcrumbItems={[
+                    {
+                        title: (
+                            <Link to="/dashboard">
+                                <FiHome style={{ marginRight: "4px" }} /> Home
+                            </Link>
+                        )
+                    },
+                    {
+                        title: (
+                            <Link to="/dashboard/crm/deals">
+                                <FiBriefcase style={{ marginRight: "4px" }} /> Deals
+                            </Link>
+                        )
+                    },
+                    {
+                        title: localDeal?.dealTitle || 'Deal Details'
+                    }
+                ]}
+                extraActions={
                     <Space>
                         {shouldShowStatusButtons() && (
                             <>
@@ -228,12 +226,12 @@ const DealDetail = () => {
                                     style={{
                                         background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
                                         border: 'none',
-                                        height: '44px',
-                                        padding: '0 24px',
+                                        height: '30px',
+                                        padding: '0 16px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        borderRadius: '10px',
+                                        borderRadius: '8px',
                                         fontWeight: '500'
                                     }}
                                 >
@@ -246,12 +244,12 @@ const DealDetail = () => {
                                     style={{
                                         background: 'linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%)',
                                         border: 'none',
-                                        height: '44px',
-                                        padding: '0 24px',
+                                        height: '30px',
+                                        padding: '0 16px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        borderRadius: '10px',
+                                        borderRadius: '8px',
                                         fontWeight: '500'
                                     }}
                                 >
@@ -266,20 +264,17 @@ const DealDetail = () => {
                             style={{
                                 background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
                                 border: 'none',
-                                height: '44px',
-                                padding: '0 24px',
+                                height: '30px',
+                                padding: '0 16px',
                                 display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                borderRadius: '10px',
-                                fontWeight: '500'
+                                alignItems: 'center'
                             }}
                         >
-                            Back to Deals
+                            Back
                         </Button>
                     </Space>
-                </div>
-            </div>
+                }
+            />
 
             <Card loading={isLoading}>
                 <Tabs

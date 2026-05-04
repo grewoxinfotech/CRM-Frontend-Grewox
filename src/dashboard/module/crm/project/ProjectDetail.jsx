@@ -19,6 +19,7 @@ import ProjectPayments from './overview/payments';
 import ProjectNotes from './overview/notes';
 import ProjectActivity from './overview/activity';
 import './project.scss';
+import PageHeader from "../../../../components/PageHeader";
 
 const { Title, Text } = Typography;
 
@@ -131,32 +132,29 @@ const ProjectDetail = () => {
 
     return (
         <div className="project-page">
-            <div className="page-breadcrumb">
-                <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome /> Home
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard/crm/project">
-                            <FiBriefcase /> Projects
-                        </Link>
-                    </Breadcrumb.Item>
-                    <Breadcrumb.Item>
-                        {project?.data?.project_name || 'Project Details'}
-                    </Breadcrumb.Item>
-                </Breadcrumb>
-            </div>
-
-            <div className="page-header">
-                <div className="header-left">
-                    <Title level={2}>{project?.data?.project_name || 'Project Details'}</Title>
-                    <Text type="secondary" className="subtitle">
-                        Manage project details and activities
-                    </Text>
-                </div>
-                <div className="header-right">
+            <PageHeader
+                title={project?.data?.project_name || 'Project Details'}
+                subtitle="Manage project details and activities"
+                breadcrumbItems={[
+                    {
+                        title: (
+                            <Link to="/dashboard">
+                                <FiHome style={{ marginRight: "4px" }} /> Home
+                            </Link>
+                        )
+                    },
+                    {
+                        title: (
+                            <Link to="/dashboard/crm/project">
+                                <FiBriefcase style={{ marginRight: "4px" }} /> Projects
+                            </Link>
+                        )
+                    },
+                    {
+                        title: project?.data?.project_name || 'Project Details'
+                    }
+                ]}
+                extraActions={
                     <Button
                         type="primary"
                         icon={<FiArrowLeft />}
@@ -164,19 +162,19 @@ const ProjectDetail = () => {
                         style={{
                             background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
                             border: 'none',
-                            height: '44px',
-                            padding: '0 24px',
+                            height: '30px',
+                            padding: '0 16px',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            borderRadius: '10px',
+                            borderRadius: '8px',
                             fontWeight: '500'
                         }}
                     >
-                        Back to Projects
+                        Back
                     </Button>
-                </div>
-            </div>
+                }
+            />
 
             <Card loading={isLoading}>
                 <Tabs
