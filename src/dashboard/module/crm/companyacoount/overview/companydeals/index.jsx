@@ -175,7 +175,7 @@ const CompanyDealList = () => {
             </Button>
           </Dropdown>
           <Button type="primary" icon={<FiPlus />} onClick={handleCreate}>
-            Add Deal
+            Create Deal
           </Button>
         </div>
       </div> */}

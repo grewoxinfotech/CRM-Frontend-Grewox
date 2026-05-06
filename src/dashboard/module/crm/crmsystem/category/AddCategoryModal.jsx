@@ -119,7 +119,7 @@ const AddCategoryModal = ({ visible, onCancel }) => {
                 color: "#ffffff",
               }}
             >
-              Add Category
+              Create Category
             </h2>
             <Text
               style={{
@@ -192,7 +192,7 @@ const AddCategoryModal = ({ visible, onCancel }) => {
               boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
             }}
           >
-            Add Category
+            Create Category
           </Button>
         </div>
       </Form>

@@ -302,7 +302,8 @@ const LeadOverviewContent = ({
   pipelineStages,
   onStageUpdate,
   isUpdating,
-  setIsEditModalOpen
+  setIsEditModalOpen,
+  pipelines
 }) => { 
 
 console.log("leaddata", initialLeadData)
@@ -362,6 +363,11 @@ console.log("leaddata", initialLeadData)
     if (!phoneNumber) return "-";
     const country = countries.find((c) => c.id === phoneCode);
     return country ? `${country.phoneCode} ${phoneNumber}` : phoneNumber;
+  };
+
+  const getPipelineName = (pipelineId) => {
+    const pipeline = pipelines?.find((p) => p.id === pipelineId);
+    return pipeline?.pipeline_name || pipeline?.name || "N/A";
   };
 
   const handleLocalStageUpdate = async (newStageId) => {
@@ -718,7 +724,7 @@ console.log("leaddata", initialLeadData)
 
           .company-names {
             font-size: 24px;
-            font-weight: 600;
+            font-weight: 700;
             color: #1f2937;
             margin-bottom: 8px;
             line-height: 1.3;
@@ -836,7 +842,7 @@ console.log("leaddata", initialLeadData)
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
             padding-top: 24px;
-            background: #ffffff;
+            background: transparent;
           }
 
           .stat-item {
@@ -1097,6 +1103,74 @@ console.log("leaddata", initialLeadData)
             </div>
           </Col>
         </Row>
+        <Row gutter={[24, 24]} style={{ marginTop: "24px" }}>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
+            <div className="detail-card source-card">
+              <div className="detail-content">
+                <div className="detail-icon">
+                  <FiBox />
+                </div>
+                <div className="detail-info">
+                  <div className="detail-label">Pipeline</div>
+                  <div className="detail-value">
+                    {getPipelineName(localLeadData?.pipeline)}
+                  </div>
+                </div>
+                <div className="detail-indicator" />
+              </div>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
+            <div className="detail-card category-card">
+              <div className="detail-content">
+                <div className="detail-icon">
+                  <FiUser />
+                </div>
+                <div className="detail-info">
+                  <div className="detail-label">Created By</div>
+                  <div className="detail-value" style={{ textTransform: 'capitalize' }}>
+                    {localLeadData?.created_by || "-"}
+                  </div>
+                </div>
+                <div className="detail-indicator" />
+              </div>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
+            <div className="detail-card status-card">
+              <div className="detail-content">
+                <div className="detail-icon">
+                  <FiActivity />
+                </div>
+                <div className="detail-info">
+                  <div className="detail-label">Created Via</div>
+                  <div className="detail-value" style={{ textTransform: 'capitalize' }}>
+                    {localLeadData?.created_via || "-"}
+                  </div>
+                </div>
+                <div className="detail-indicator" />
+              </div>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
+            <div className="detail-card updated-card">
+              <div className="detail-content">
+                <div className="detail-icon">
+                  <FiTrendingUp />
+                </div>
+                <div className="detail-info">
+                  <div className="detail-label">Lead Score</div>
+                  <div className="detail-value">
+                    {localLeadData?.lead_score !== null && localLeadData?.lead_score !== undefined
+                      ? localLeadData.lead_score
+                      : "-"}
+                  </div>
+                </div>
+                <div className="detail-indicator" />
+              </div>
+            </div>
+          </Col>
+        </Row>
       </div>
     </div>
   );
@@ -1280,6 +1354,7 @@ const LeadOverview = () => {
           onStageUpdate={handleStageUpdate}
           isUpdating={isUpdatingLead}
           setIsEditModalOpen={setIsEditModalOpen}
+          pipelines={pipelines}
         />
       ),
     },

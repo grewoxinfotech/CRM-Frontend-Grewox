@@ -160,7 +160,7 @@ const ProjectTasks = ({ project }) => {
                         icon={<FiPlus />}
                         onClick={handleAddTask}
                     >
-                        Add Task
+                        Create Task
                     </Button>
                 }
             >
@@ -181,7 +181,7 @@ const ProjectTasks = ({ project }) => {
                 open={isModalVisible}
                 onOk={handleModalOk}
                 onCancel={() => setIsModalVisible(false)}
-                okText="Add Task"
+                okText="Create Task"
             >
                 <Form
                     form={form}

@@ -498,7 +498,7 @@
 //                           fontWeight: '500',
 //                         }}
 //                       >
-//                         Add Category
+//                         Create Category
 //                       </Button>
 //                     </div>
 //                   </div>
@@ -1429,7 +1429,7 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
                           fontWeight: '500',
                         }}
                       >
-                        Add Category
+                        Create Category
                       </Button>
                     </div>
                   </div>

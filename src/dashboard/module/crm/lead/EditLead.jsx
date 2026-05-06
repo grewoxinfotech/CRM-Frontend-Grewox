@@ -946,7 +946,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
               options={pipelines.map(p => ({ id: p.id, name: p.pipeline_name }))}
               onChange={handlePipelineChange}
               onAddClick={handleAddPipelineClick}
-              addButtonText="Add Pipeline"
+              addButtonText="Create Pipeline"
             />
           </Form.Item>
 
@@ -1040,7 +1040,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
               placeholder="Select source"
               options={sourcesData?.data}
               onAddClick={handleAddSourceClick}
-              addButtonText="Add Source"
+              addButtonText="Create Source"
               onDelete={handleDeleteSource}
               deleteTitle="Delete Source"
             />
@@ -1070,7 +1070,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
               placeholder="Select category"
               options={categoriesData?.data}
               onAddClick={handleAddCategoryClick}
-              addButtonText="Add Category"
+              addButtonText="Create Category"
               onDelete={handleDeleteCategory}
               deleteTitle="Delete Category"
             />
@@ -1126,7 +1126,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
               }))}
               onChange={handleCompanyChange}
               onAddClick={handleAddCompanyClick}
-              addButtonText="Add Company"
+              addButtonText="Create Company"
               icon={FiBriefcase}
             />
           </Form.Item>
@@ -1156,7 +1156,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
               })}
               onChange={handleContactChange}
               onAddClick={handleAddContactClick}
-              addButtonText="Add Contact"
+              addButtonText="Create Contact"
               icon={FiUser}
             />
           </Form.Item>

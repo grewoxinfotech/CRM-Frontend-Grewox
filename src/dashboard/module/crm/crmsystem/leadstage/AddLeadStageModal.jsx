@@ -158,7 +158,7 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
                   color: "#ffffff",
                 }}
               >
-                Add Lead Stage
+                Create Lead Stage
               </h2>
               <Text
                 style={{
@@ -231,7 +231,7 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
                         marginBottom: "4px",
                       }}
                     >
-                      Add Pipeline
+                      Create Pipeline
                     </Button>
                   </div>
                 )}

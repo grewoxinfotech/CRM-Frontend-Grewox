@@ -181,7 +181,7 @@ const CompanyContactList = ({ company }) => {
               onClick={handleCreate}
               className="add-button"
             >
-              Add Contact
+              Create Contact
             </Button>
           </div>
         </div>

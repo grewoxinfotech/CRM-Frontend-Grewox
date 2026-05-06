@@ -323,7 +323,7 @@ const Lead = () => {
         viewMode={viewMode}
         onViewChange={setViewMode}
         onAdd={handleCreate}
-        addText="Add Lead"
+        addText="Create Lead"
         isQuickMode={isQuickMode}
         onQuickModeToggle={setIsQuickMode}
         showQuickMode={true}

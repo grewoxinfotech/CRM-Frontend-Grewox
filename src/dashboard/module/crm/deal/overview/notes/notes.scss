@@ -542,9 +542,7 @@
 
 // Add responsive styles
 @media (max-width: 768px) {
-    .company-page {
-
-    }
+    .company-page {}
 }
 
 // Enhanced Company Card Styles
@@ -879,8 +877,7 @@
 
 // Lead Notes Styles
 .lead-notes {
-    padding: 16px;
-    
+
     .notes-header {
         display: flex;
         justify-content: space-between;
@@ -1057,12 +1054,12 @@
                 .stats-card {
                     min-width: 120px;
                     padding: 10px 16px;
-                    
+
                     .stats-icon {
                         width: 36px;
                         height: 36px;
                     }
-                    
+
                     .stats-value {
                         font-size: 18px;
                     }
@@ -1095,7 +1092,7 @@
                     justify-content: center;
                     width: 100%;
                     margin-top: 16px;
-                    
+
                     .filter-button {
                         flex: 1;
                         justify-content: center;
@@ -1121,12 +1118,12 @@
             .notes-stats {
                 .stats-card {
                     padding: 8px 12px;
-                    
+
                     .stats-icon {
                         width: 32px;
                         height: 32px;
                     }
-                    
+
                     .stats-value {
                         font-size: 16px;
                     }
@@ -1147,9 +1144,11 @@
     .lead-notes {
         .notes-header {
             flex-wrap: nowrap !important;
+
             .notes-stats {
                 flex-wrap: nowrap !important;
             }
+
             .add-note-btn {
                 width: 44px !important;
                 height: 44px !important;
@@ -1164,6 +1163,7 @@
                 box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
                 transition: all 0.3s;
                 margin-left: 8px; // space from filter buttons
+
                 .add-note-text {
                     display: none !important; // Hide the text
                 }

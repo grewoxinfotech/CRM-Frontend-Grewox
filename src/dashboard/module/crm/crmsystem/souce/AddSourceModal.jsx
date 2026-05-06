@@ -166,7 +166,7 @@ const AddSourceModal = ({ isOpen, onClose }) => {
                 color: "#ffffff",
               }}
             >
-              Add Source
+              Create Source
             </h2>
             <Text
               style={{
@@ -276,7 +276,7 @@ const AddSourceModal = ({ isOpen, onClose }) => {
               boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
             }}
           >
-            Add Source
+            Create Source
           </Button>
         </div>
       </Form>

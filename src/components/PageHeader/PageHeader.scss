@@ -19,6 +19,7 @@
 
             .ant-breadcrumb-link {
                 color: $text-color-light;
+                text-transform: capitalize;
                 transition: all 0.3s ease;
 
                 a {

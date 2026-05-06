@@ -88,7 +88,7 @@ const CustomFormPage = () => {
                 onSearch={setSearchText}
                 searchPlaceholder="Search forms..."
                 onAdd={() => setCreateModalVisible(true)}
-                addText="New Form"
+                addText="Create Form"
                 exportMenu={{
                     items: [
                         { key: 'csv', label: 'Export CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },

@@ -233,7 +233,7 @@ const CompanyLeadsList = () => {
                   onClick={handleCreate}
                   className="add-button"
                 >
-                  Add Lead
+                  Create Lead
             </Button>
         </div>
               </div>

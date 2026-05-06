@@ -158,15 +158,17 @@ const LeadFiles = ({ leadId }) => {
           </Title>
           <Text className="file-count">{files.length} files uploaded</Text>
         </div>
-        <Button
-          type="primary"
-          icon={<FiPlus />}
-          onClick={() => setIsModalVisible(true)}
-          className="add-files-btn"
-          style={{height: '40px'}}
-        >
-          Upload New File
-        </Button>
+
+
+         <Button
+                            type="primary"
+                            icon={<FiPlus style={{ fontSize: '18px' }} />}
+                            onClick={() => setIsModalVisible(true)}
+                            className={`add-note-btn`}
+                        >
+                            <span className="add-note-text">Upload File</span>
+                        </Button>
+
       </div>
 
       <div className="files-grid">

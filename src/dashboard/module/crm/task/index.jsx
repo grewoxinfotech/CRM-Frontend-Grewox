@@ -65,7 +65,7 @@ const Task = () => {
         onSearch={setSearchText}
         searchPlaceholder="Search tasks..."
         onAdd={() => { setSelectedTask(null); setIsCreateModalOpen(true); }}
-        addText="Add Task"
+        addText="Create Task"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
         exportMenu={{

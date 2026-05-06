@@ -288,7 +288,7 @@ const EditLeadStageModal = ({ isOpen, onClose, stage }) => {
                       marginBottom: "4px",
                     }}
                   >
-                    Add Pipeline
+                    Create Pipeline
                   </Button>
                 </div>
               )}

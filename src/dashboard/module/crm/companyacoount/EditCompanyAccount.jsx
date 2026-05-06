@@ -474,7 +474,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                             fontWeight: "500",
                           }}
                         >
-                          Add Source
+                          Create Source
                         </Button>
                       </div>
                     </div>
@@ -635,7 +635,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                         fontWeight: '500',
                       }}
                     >
-                      Add Category
+                      Create Category
                     </Button>
                   </div>
                 </div>

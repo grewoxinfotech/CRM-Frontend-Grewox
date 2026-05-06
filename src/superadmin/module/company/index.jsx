@@ -267,7 +267,7 @@ const Company = () => {
                 onViewChange={setViewMode}
                 showViewToggle={true}
                 onAdd={handleAddCompany}
-                addText="Add Company"
+                addText="Create Company"
                 exportMenu={{
                     items: [
                         {

@@ -267,7 +267,7 @@ const Deal = () => {
         viewMode={viewMode}
         onViewChange={setViewMode}
         onAdd={handleCreate}
-        addText="Add Deal"
+        addText="Create Deal"
         isQuickMode={isQuickMode}
         onQuickModeToggle={setIsQuickMode}
         showQuickMode={true}

@@ -39,7 +39,7 @@ import { useCreateLeadMutation, useGetLeadsQuery } from "./services/LeadApi";
 import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetCompanyAccountsQuery } from '../companyacoount/services/companyAccountApi';
-import { useGetContactsQuery, useCreateContactMutation } from '../contact/services/contactApi';
+import { useGetContactsQuery, useCreateContactMutation, contactApi } from '../contact/services/contactApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import CreateUser from '../../user-management/users/CreateUser';
@@ -264,6 +264,9 @@ const CreateLead = ({
 
       // Create the lead with all the data (Backend handles contact matching/creation)
       await createLead(leadFormData).unwrap();
+      
+      // Force the Contacts list to refresh so the auto-created contact appears immediately
+      dispatch(contactApi.util.invalidateTags(['Contacts']));
       message.success("Lead created successfully");
       form.resetFields();
       onCancel();
@@ -301,18 +304,22 @@ const CreateLead = ({
   };
 
   const inputStyle = {
-    height: "48px",
+    height: "40px",
     borderRadius: "10px",
-    padding: "8px 16px",
+    padding: "4px 12px",
     backgroundColor: "#f8fafc",
     border: "1px solid #e6e8eb",
     transition: "all 0.3s ease",
+    display: "flex",
+    alignItems: "center",
   };
 
   const prefixIconStyle = {
     color: "#1890ff",
     fontSize: "16px",
-    marginRight: "8px"
+    marginRight: "8px",
+    display: "flex",
+    alignItems: "center",
   };
 
   // Update the selectStyle
@@ -661,16 +668,13 @@ const CreateLead = ({
 
           <Form.Item
             name="phoneGroup"
-            label={<span style={formItemStyle}>Phone Number <span style={{ color: "#ff4d4f" }}>*</span></span>}
-            style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+            label={<span style={formItemStyle}>Phone Number <span style={{ color: '#8c8c8c', fontWeight: 'normal', fontSize: '12px' }}>(Optional)</span></span>}
+            style={{ gridColumn: 'span 1', marginBottom: '0px' }}
             dependencies={['telephone']}
             rules={[
               {
                 validator: (_, value) => {
                   const telephone = form.getFieldValue('telephone');
-                  if (!telephone) {
-                    return Promise.reject(new Error('Please enter phone number'));
-                  }
                   if (telephone) {
                     if (!/^\d+$/.test(telephone)) {
                       return Promise.reject(new Error('Phone number must contain only digits'));
@@ -684,7 +688,7 @@ const CreateLead = ({
               }
             ]}
           >
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <Form.Item
                 name="phoneCode"
                 noStyle
@@ -692,10 +696,11 @@ const CreateLead = ({
                 rules={[{ required: true, message: 'Please select code' }]}
               >
                 <CommonSelect
-                  style={{ width: '120px' }}
+                  className="phone-code-select"
+                  style={{ width: '100px' }}
                   options={countries?.map(country => ({
                     id: country.id,
-                    name: `${country.countryCode} +${country.phoneCode.replace('+', '')}`
+                    name: `+${country.phoneCode.replace('+', '')}`
                   }))}
                   allowClear={false}
                 />
@@ -706,9 +711,7 @@ const CreateLead = ({
               >
                 <AutoComplete
                   style={{ 
-                    ...inputStyle, 
                     flex: 1, 
-                    padding: 0
                   }}
                   placeholder="Enter phone number"
                   onSearch={(val) => setPhoneSearchText(val)}
@@ -761,9 +764,34 @@ const CreateLead = ({
                     ),
                     contact: c
                   }))}
-                />
+                >
+                   <Input 
+                     prefix={<FiPhone style={prefixIconStyle} />}
+                     style={inputStyle}
+                   />
+                </AutoComplete>
               </Form.Item>
             </div>
+          </Form.Item>
+
+          <Form.Item
+            name="email"
+            label={<span style={formItemStyle}>Email <span style={{ color: '#8c8c8c', fontWeight: 'normal', fontSize: '12px' }}>(Optional)</span></span>}
+            style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+            rules={[
+              {
+                type: "email",
+                message: "Please enter a valid email",
+                validateTrigger: ['onChange', 'onBlur'],
+                transform: (value) => value?.trim() || null
+              }
+            ]}
+          >
+            <Input
+              prefix={<FiMail style={prefixIconStyle} />}
+              placeholder="Enter email address"
+              style={inputStyle}
+            />
           </Form.Item>
 
           {/* Description / Note field for both modes */}
@@ -799,7 +827,7 @@ const CreateLead = ({
                 options={pipelines.map(p => ({ id: p.id, name: p.pipeline_name }))}
                 onChange={handlePipelineChange}
                 onAddClick={handleAddPipelineClick}
-                addButtonText="Add Pipeline"
+                addButtonText="Create Pipeline"
               />
             </Form.Item>
 
@@ -826,7 +854,7 @@ const CreateLead = ({
                 placeholder="Select source"
                 options={sourcesData?.data}
                 onAddClick={handleAddSourceClick}
-                addButtonText="Add Source"
+                addButtonText="Create Source"
                 onDelete={handleDeleteSource}
                 deleteTitle="Delete Source"
               />
@@ -840,7 +868,7 @@ const CreateLead = ({
                 placeholder="Select category"
                 options={categoriesData?.data}
                 onAddClick={handleAddCategoryClick}
-                addButtonText="Add Category"
+                addButtonText="Create Category"
                 onDelete={handleDeleteCategory}
                 deleteTitle="Delete Category"
               />
@@ -872,29 +900,12 @@ const CreateLead = ({
                   options={companyAccountsResponse?.data?.map(c => ({ id: c.id, name: c.company_name }))}
                   onChange={handleCompanyChange}
                   onAddClick={handleAddCompanyClick}
-                  addButtonText="Add Company"
+                  addButtonText="Create Company"
                   icon={FiBriefcase}
                 />
               </Form.Item>
 
-              <Form.Item
-                name="email"
-                label={<span style={formItemStyle}>Email</span>}
-                rules={[
-                  {
-                    type: "email",
-                    message: "Please enter a valid email",
-                    validateTrigger: ['onChange', 'onBlur'],
-                    transform: (value) => value?.trim() || null
-                  }
-                ]}
-              >
-                <Input
-                  prefix={<FiMail style={prefixIconStyle} />}
-                  placeholder="Enter email address"
-                  style={inputStyle}
-                />
-              </Form.Item>
+
 
               <Form.Item
                 name="address"
@@ -1011,44 +1022,52 @@ const CreateLead = ({
           .currency-select, .phone-code-select {
             cursor: pointer;
             .ant-select-selector {
-              padding: 8px 8px !important;
-              height: 48px !important;
+              padding: 0 8px !important;
+              height: 40px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
             }
             
             .ant-select-selection-search {
               input {
                 height: 100% !important;
-                color: #fff !important;
+                color: #000000 !important;
               }
             }
 
             .ant-select-selection-item {
-              padding-right: 20px !important;
-              // font-weight: 500 !important;
-              color: #fff !important;
+              padding-right: 0 !important;
+              color: #000000 !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              width: 100% !important;
+              font-weight: 400 !important;
             }
 
             .ant-select-selection-placeholder {
-              color: #fff !important;
+              color: #000000 !important;
             }
           }
 
           .ant-select-dropdown {
-            padding: 8px !important;
-            border-radius: 10px !important;
+            padding: 4px !important;
+            border-radius: 8px !important;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
 
             .ant-select-item {
-              padding: 8px 12px !important;
+              padding: 5px 12px !important;
               border-radius: 6px !important;
               min-height: 32px !important;
               display: flex !important;
               align-items: center !important;
+              justify-content: flex-start !important;
               color: #1f2937 !important;
 
               &-option-selected {
                 background-color: #E6F4FF !important;
-                font-weight: 500 !important;
+                font-weight: 400 !important;
                 color: #1890ff !important;
               }
 
@@ -1058,7 +1077,11 @@ const CreateLead = ({
             }
 
             .ant-select-item-option-content {
-              font-size: 14px !important;
+              font-size: 13px !important;
+              line-height: 1.2 !important;
+              display: flex !important;
+              align-items: center !important;
+              font-weight: 400 !important;
             }
 
             .ant-select-item-empty {
@@ -1078,9 +1101,9 @@ const CreateLead = ({
             }
 
             .ant-input-number-input {
-              height: 48px !important;
-              padding: 0 16px !important;
-              line-height: 48px !important;
+              height: 40px !important;
+              padding: 0 12px !important;
+              line-height: 40px !important;
             }
           }
 
@@ -1106,8 +1129,9 @@ const CreateLead = ({
             background-color: #f8fafc !important;
             border: 1px solid #e6e8eb !important;
             border-radius: 10px !important;
-            min-height: 48px !important;
-            padding: 0 16px !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            padding: 0 12px !important;
             display: flex !important;
             align-items: center !important;
           }
@@ -1117,12 +1141,17 @@ const CreateLead = ({
             box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
           }
 
+          .ant-select-single {
+            height: 40px !important;
+            font-size: 14px !important;
+          }
+
           .ant-select-single .ant-select-selector .ant-select-selection-item,
           .ant-select-single .ant-select-selector .ant-select-selection-placeholder,
           .ant-select-single .ant-select-selector .ant-select-selection-search,
           .ant-select-single .ant-select-selector .ant-select-selection-search-input {
-            line-height: 48px !important;
-            height: 48px !important;
+            line-height: 40px !important;
+            height: 40px !important;
             display: flex !important;
             align-items: center !important;
             padding: 0 !important;
@@ -1131,7 +1160,7 @@ const CreateLead = ({
           .ant-select-single .ant-select-selector .ant-select-selection-search,
           .ant-select-single .ant-select-selector .ant-select-selection-search-input {
             height: 100% !important;
-            line-height: 48px !important;
+            line-height: 40px !important;
             display: flex !important;
             align-items: center !important;
             padding: 0 !important;
@@ -1142,15 +1171,16 @@ const CreateLead = ({
             box-shadow: none !important;
             background: transparent !important;
             padding: 0 !important;
-            height: 48px !important;
+            height: 40px !important;
             display: flex !important;
             align-items: center !important;
           }
           
           .ant-select-auto-complete .ant-select-selection-search {
-            inset-inline-start: 16px !important;
-            inset-inline-end: 16px !important;
+            inset-inline-start: 0 !important;
+            inset-inline-end: 0 !important;
             height: 100% !important;
+            width: 100% !important;
           }
 
           .ant-select-arrow {
@@ -1320,35 +1350,7 @@ const CreateLead = ({
             }
           }
 
-          .ant-select {
-            .ant-select-selector {
-              padding-left: 16px !important;
-              
-              .ant-select-selection-item {
-                padding-left: 0 !important;
-                display: flex !important;
-                align-items: center !important;
-                gap: '8px' !important;
 
-                > div {
-                  display: flex !important;
-                  align-items: center !important;
-                  gap: 8px !important;
-                  width: 100% !important;
-                  
-                  span {
-                    flex-shrink: 0 !important;
-                    
-                    &:last-child {
-                      flex-shrink: 1 !important;
-                      overflow: hidden !important;
-                      text-overflow: ellipsis !important;
-                    }
-                  }
-                }
-              }
-            }
-          }
 
 
 
@@ -1391,9 +1393,36 @@ const CreateLead = ({
 
           .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector,
           .ant-input:focus,
-          .ant-input-focused {
+          .ant-input-focused,
+          .ant-input-affix-wrapper-focused {
             border-color: #1890ff !important;
             box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+          }
+
+          .ant-input-affix-wrapper,
+          .ant-select-auto-complete .ant-select-selection-search-input.ant-input-affix-wrapper {
+            height: 40px !important;
+            padding: 0 12px !important;
+            display: flex !important;
+            align-items: center !important;
+            background-color: #f8fafc !important;
+            border: 1px solid #e6e8eb !important;
+            border-radius: 10px !important;
+
+            .ant-input {
+              background: transparent !important;
+              border: none !important;
+              &:focus {
+                box-shadow: none !important;
+              }
+            }
+
+            .ant-input-prefix {
+              margin-inline-end: 8px !important;
+              display: flex !important;
+              align-items: center !important;
+              color: #1890ff !important;
+            }
           }
         `}</style>
     </Modal>

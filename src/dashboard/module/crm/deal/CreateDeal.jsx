@@ -883,7 +883,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                             fontWeight: "500",
                           }}
                         >
-                          Add Pipeline
+                          Create Pipeline
                         </Button>
                       </div>
                     </div>
@@ -1095,7 +1095,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                             fontWeight: "500",
                           }}
                         >
-                          Add Source
+                          Create Source
                         </Button>
                       </div>
                     </div>
@@ -1217,7 +1217,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                             fontWeight: "500",
                           }}
                         >
-                          Add Category
+                          Create Category
                         </Button>
                       </div>
                     </div>
@@ -1441,7 +1441,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                             fontWeight: "500",
                           }}
                         >
-                          Add Company
+                          Create Company
                         </Button>
                       </div>
                     </div>
@@ -1549,7 +1549,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                             fontWeight: "500",
                           }}
                         >
-                          Add Contact
+                          Create Contact
                         </Button>
                       </div>
                     </div>

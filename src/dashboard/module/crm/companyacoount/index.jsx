@@ -64,7 +64,7 @@ const CompanyAccount = () => {
         onSearch={handleSearchChange}
         searchPlaceholder="Search companies..."
         onAdd={() => { setSelectedCompany(null); setIsCreateModalOpen(true); }}
-        addText="Add Company"
+        addText="Create Company"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
         exportMenu={{

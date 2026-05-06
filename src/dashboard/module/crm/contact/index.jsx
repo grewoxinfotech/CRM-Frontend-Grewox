@@ -61,7 +61,7 @@ const Contact = () => {
         onSearch={handleSearch}
         searchPlaceholder="Search contacts..."
         onAdd={() => { setSelectedContact(null); setIsCreateModalOpen(true); }}
-        addText="Add Contact"
+        addText="Create Contact"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
         exportMenu={{

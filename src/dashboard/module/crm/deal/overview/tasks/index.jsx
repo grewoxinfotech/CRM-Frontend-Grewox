@@ -246,7 +246,7 @@ const DealTasks = (deal) => {
                             onClick={handleCreate}
                             className="add-button"
                         >
-                            Add Task
+                            Create Task
                         </Button>
                     </div>
                 </div>
@@ -460,7 +460,7 @@ export default DealTasks;
 //                         icon={<FiPlus />}
 //                         onClick={handleAddTask}
 //                     >
-//                         Add Task
+//                         Create Task
 //                     </Button>
 //                 }
 //             >
@@ -481,7 +481,7 @@ export default DealTasks;
 //                 open={isModalVisible}
 //                 onOk={handleModalOk}
 //                 onCancel={() => setIsModalVisible(false)}
-//                 okText="Add Task"
+//                 okText="Create Task"
 //             >
 //                 <Form
 //                     form={form}

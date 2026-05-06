@@ -41,7 +41,7 @@ const PageHeader = ({
           <div className="page-title">
             <div className="title-row">
               <div className="page-title-content">
-                <Title level={2}>
+                <Title level={2} style={{ textTransform: 'capitalize' }}>
                   {title} {count !== undefined && `(${count})`}
                 </Title>
                 {subtitle && <Text type="secondary">{subtitle}</Text>}

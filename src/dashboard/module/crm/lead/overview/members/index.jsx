@@ -170,9 +170,10 @@ const LeadMembers = ({ leadId }) => {
             key: 'username',
             render: (_, record) => {
                 const user = users.find(u => u.id === record) || {};
+                const isMe = user.username === loggedInUser?.username;
                 return (
                     <Text style={{ fontSize: '14px' }}>
-                        {user.username}
+                        {user.username} {isMe && <Tag color="blue" style={{ marginLeft: '8px', borderRadius: '4px' }}>Me</Tag>}
                     </Text>
                 );
             }

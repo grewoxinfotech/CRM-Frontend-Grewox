@@ -57,7 +57,7 @@ $border-radius: 6px;
     }
 
     .revenue-filters {
-        margin:0 24px 24px;
+        margin: 0 24px 24px;
 
         .ant-select {
             width: 100%;
@@ -160,21 +160,21 @@ $border-radius: 6px;
                     color: #1a1a1a;
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
-                    
+
                     @media (max-width: 1200px) {
                         padding: 12px 20px;
                         font-size: 14px;
                     }
-                    
+
                     @media (max-width: 992px) {
                         padding: 10px 16px;
                         font-size: 13px;
                     }
-                    
+
                     @media (max-width: 768px) {
                         padding: 8px 14px;
                     }
-                    
+
                     @media (max-width: 576px) {
                         padding: 6px 12px;
                     }
@@ -184,22 +184,22 @@ $border-radius: 6px;
                     padding: 16px 24px;
                     border-bottom: 1px solid #f0f0f0;
                     transition: all 0.3s ease;
-                    
+
                     @media (max-width: 1200px) {
                         padding: 12px 20px;
                         font-size: 14px;
                     }
-                    
+
                     @media (max-width: 992px) {
                         padding: 10px 16px;
                         font-size: 13px;
                     }
-                    
+
                     @media (max-width: 768px) {
                         padding: 8px 14px;
                         font-size: 12px;
                     }
-                    
+
                     @media (max-width: 576px) {
                         padding: 6px 12px;
                         font-size: 11px;
@@ -219,6 +219,7 @@ $border-radius: 6px;
                         @media (max-width: 768px) {
                             font-size: 13px;
                         }
+
                         @media (max-width: 576px) {
                             font-size: 12px;
                         }
@@ -236,7 +237,7 @@ $border-radius: 6px;
                             font-weight: 500;
                             margin-bottom: 4px;
                         }
- 
+
                         .product-meta {
                             font-size: 12px;
                             color: $text-color-light;
@@ -253,31 +254,31 @@ $border-radius: 6px;
 
                         @media (max-width: 768px) {
                             margin-bottom: 8px;
-                            
+
                             .product-name {
                                 font-size: 13px;
                             }
-                            
+
                             .product-meta {
                                 font-size: 11px;
                             }
-                            
+
                             .product-total {
                                 font-size: 12px;
                             }
                         }
-                        
+
                         @media (max-width: 576px) {
                             margin-bottom: 6px;
-                            
+
                             .product-name {
                                 font-size: 12px;
                             }
-                            
+
                             .product-meta {
                                 font-size: 10px;
                             }
-                            
+
                             .product-total {
                                 font-size: 11px;
                             }
@@ -308,18 +309,18 @@ $border-radius: 6px;
                                 font-size: 13px;
                                 gap: 4px;
                             }
-                            
+
                             .profit-percentage {
                                 font-size: 11px;
                             }
                         }
-                        
+
                         @media (max-width: 576px) {
                             .profit-amount {
                                 font-size: 12px;
                                 gap: 3px;
                             }
-                            
+
                             .profit-percentage {
                                 font-size: 10px;
                             }
@@ -331,19 +332,19 @@ $border-radius: 6px;
                     @media (max-width: 1200px) {
                         height: auto;
                     }
-                    
+
                     @media (max-width: 992px) {
                         height: auto;
                     }
-                    
+
                     @media (max-width: 768px) {
                         height: auto;
                     }
-                    
+
                     @media (max-width: 576px) {
                         height: auto;
                     }
-                    
+
                     transition: all 0.3s ease;
 
                     &:hover {
@@ -355,29 +356,29 @@ $border-radius: 6px;
             .ant-table-pagination {
                 @media (max-width: 768px) {
                     margin: 12px;
-                    
+
                     .ant-pagination-item {
                         min-width: 28px;
                         height: 28px;
                         line-height: 26px;
                     }
-                    
+
                     .ant-pagination-prev,
                     .ant-pagination-next {
                         min-width: 28px;
                         height: 28px;
                     }
                 }
-                
+
                 @media (max-width: 576px) {
                     margin: 8px;
-                    
+
                     .ant-pagination-item {
                         min-width: 24px;
                         height: 24px;
                         line-height: 22px;
                     }
-                    
+
                     .ant-pagination-prev,
                     .ant-pagination-next {
                         min-width: 24px;
@@ -561,9 +562,10 @@ $border-radius: 6px;
             //     background: #f9fafb;
             //     cursor: pointer;
 
-                .action-button {
-                    opacity: 1;
-                }
+            .action-button {
+                opacity: 1;
+            }
+
             // }
         }
 
@@ -637,7 +639,6 @@ $border-radius: 6px;
 }
 
 .overview-content {
-    padding: 24px;
 
     .metrics-row {
         margin-bottom: 24px;
@@ -963,10 +964,12 @@ $border-radius: 6px;
             text-align: left;
             width: auto;
             margin-bottom: 0;
+
             h2 {
                 font-size: 18px;
             }
         }
+
         .header-actions {
             display: flex !important;
             flex-direction: row !important;
@@ -974,16 +977,19 @@ $border-radius: 6px;
             align-items: center !important;
             justify-content: flex-end;
             min-width: max-content;
+
             .desktop-actions {
                 display: flex !important;
                 flex-direction: row !important;
                 width: auto;
                 gap: 8px;
-                > div {
+
+                >div {
                     width: auto;
                     justify-content: flex-end;
                     display: flex !important;
                 }
+
                 .search-container {
                     max-width: 400px;
                     display: flex !important;
@@ -1030,7 +1036,8 @@ $border-radius: 6px;
                 border: 1px solid #e6e6e6;
                 transition: all 0.3s ease;
 
-                &:hover, &:focus {
+                &:hover,
+                &:focus {
                     border-color: #1677ff;
                     box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
                 }
@@ -1041,7 +1048,7 @@ $border-radius: 6px;
 
                 input {
                     font-size: 14px;
-                    
+
                     &::placeholder {
                         color: #999;
                     }
@@ -1058,7 +1065,7 @@ $border-radius: 6px;
             .search-input {
                 .ant-input-affix-wrapper {
                     height: 34px;
-                    
+
                     input {
                         font-size: 13px;
                     }
@@ -1075,7 +1082,7 @@ $border-radius: 6px;
             .search-input {
                 .ant-input-affix-wrapper {
                     height: 32px;
-                    
+
                     input {
                         font-size: 12px;
                     }
@@ -1107,10 +1114,12 @@ $border-radius: 6px;
             justify-content: center !important;
             align-items: center !important;
             visibility: visible !important;
+
             .ant-pagination-options {
                 display: flex !important;
                 align-items: center;
                 margin-bottom: 10px;
+
                 .ant-select-selection-item {
                     width: auto !important;
                     min-width: 40px;

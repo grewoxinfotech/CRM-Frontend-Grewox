@@ -879,7 +879,7 @@
 
 // Lead Notes Styles
 .lead-notes {
-    padding: 16px;
+    /* padding: 16px; */
     
     .notes-header {
         display: flex;
@@ -887,7 +887,7 @@
         align-items: center;
         margin-bottom: 24px;
         background: white;
-        padding: 20px;
+        padding: 12px 20px;
         border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         flex-wrap: wrap;
@@ -976,7 +976,7 @@
             background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
             border: none;
             border-radius: 12px;
-            height: 44px;
+            height: 36px;
             padding: 0 24px;
             display: flex;
             align-items: center;

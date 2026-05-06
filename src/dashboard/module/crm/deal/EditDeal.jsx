@@ -989,7 +989,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                           fontWeight: "500",
                         }}
                       >
-                        Add Pipeline
+                        Create Pipeline
                       </Button>
                     </div>
                   </div>
@@ -1164,7 +1164,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                           fontWeight: "500",
                         }}
                       >
-                        Add Source
+                        Create Source
                       </Button>
                     </div>
                   </div>
@@ -1282,7 +1282,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                           fontWeight: "500",
                         }}
                       >
-                        Add Category
+                        Create Category
                       </Button>
                     </div>
                   </div>

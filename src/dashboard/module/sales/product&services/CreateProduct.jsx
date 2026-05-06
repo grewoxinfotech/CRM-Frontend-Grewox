@@ -500,7 +500,7 @@ const CreateProduct = ({
                         fontWeight: "500",
                       }}
                     >
-                      Add Category
+                      Create Category
                     </Button>
                   </div>
                 </div>

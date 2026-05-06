@@ -165,7 +165,7 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                                 color: "#ffffff",
                             }}
                         >
-                            Add Category
+                            Create Category
                         </h2>
                         <Text
                             style={{
@@ -275,7 +275,7 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                             boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
                         }}
                     >
-                        Add Category
+                        Create Category
                     </Button>
                 </div>
             </Form>

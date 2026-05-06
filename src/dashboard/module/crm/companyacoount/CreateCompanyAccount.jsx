@@ -464,7 +464,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                             fontWeight: "500",
                           }}
                         >
-                          Add Source
+                          Create Source
                         </Button>
                       </div>
                     </div>
@@ -631,7 +631,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                                 fontWeight: '500',
                               }}
                             >
-                              Add Category
+                              Create Category
                             </Button>
                           </div>
                         </div>

@@ -156,7 +156,7 @@ const Categories = () => {
           icon={<FiPlus />}
           onClick={() => setAddModalVisible(true)}
         >
-          Add Category
+          Create Category
         </Button>
       </div>
 

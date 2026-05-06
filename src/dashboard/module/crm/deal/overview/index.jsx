@@ -135,7 +135,7 @@ const DealStageProgress = ({
           display: flex;
           gap: 2px;
           width: 100%;
-          margin: 20px 0;
+          margin: 15px 0;
           padding: 0 16px;
         }
 

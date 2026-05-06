@@ -331,7 +331,7 @@ const EditDealStageModal = ({ isOpen, onClose, stage }) => {
             >
               <Select.Option
                 value="add-pipeline"
-                label="Add Pipeline"
+                label="Create Pipeline"
               >
                 <Button
                   type="text"
@@ -351,7 +351,7 @@ const EditDealStageModal = ({ isOpen, onClose, stage }) => {
                     marginBottom: "4px",
                   }}
                 >
-                  Add Pipeline
+                  Create Pipeline
                 </Button>
               </Select.Option>
             </Select>

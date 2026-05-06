@@ -93,7 +93,7 @@ const AddPipelineModal = ({ isOpen, onClose }) => {
                 color: "#ffffff",
               }}
             >
-              Add Pipeline
+              Create Pipeline
             </h2>
             <Text
               style={{
@@ -165,7 +165,7 @@ const AddPipelineModal = ({ isOpen, onClose }) => {
               boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
             }}
           >
-            Add Pipeline
+            Create Pipeline
           </Button>
         </div>
       </Form>
