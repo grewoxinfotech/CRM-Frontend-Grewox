@@ -25,7 +25,8 @@ const AddContractTypeModal = ({ isOpen, onClose }) => {
       form.resetFields();
       onClose();
     } catch (error) {
-      message.error(error?.data?.message || "Failed to add contract type");
+      console.error("Failed to add contract type:", error);
+      message.error(error?.data?.message || error?.message || "Failed to add contract type");
     }
   };
 

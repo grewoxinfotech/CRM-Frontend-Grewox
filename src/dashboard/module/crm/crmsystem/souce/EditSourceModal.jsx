@@ -44,7 +44,7 @@ const EditSourceModal = ({ isOpen, onClose, source }) => {
       message.success("Source updated successfully");
       onClose();
     } catch (error) {
-      message.error(error?.message || "Failed to update source");
+      message.error(error?.data?.message || error?.message || "Failed to update source");
     }
   };
 

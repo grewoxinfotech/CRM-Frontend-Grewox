@@ -26,6 +26,7 @@ const EditPipelineModal = ({ isOpen, onClose, pipeline }) => {
       onClose();
     } catch (error) {
       console.error("Failed to update pipeline:", error);
+      message.error(error?.data?.message || error?.message || "Failed to update pipeline");
     }
   };
 

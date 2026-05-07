@@ -148,7 +148,12 @@ const TaskCalendarPage = () => {
                         ) : (
                             <>
                                 {displayedTasks.map(task => (
-                                    <div key={task.id} className="task-card">
+                                    <div 
+                                        key={task.id} 
+                                        className="task-card"
+                                        onClick={() => console.log('View calendar task:', task)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <div className="card-content">
                                             <div className="task-info">
                                                 <div className="task-name">{task.taskName}</div>
@@ -224,8 +229,10 @@ const TaskCalendarPage = () => {
                                 border: '1px solid #f1f5f9',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '12px'
+                                gap: '12px',
+                                cursor: 'pointer'
                             }}
+                            onClick={() => console.log('View calendar task:', task)}
                         >
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>{task.taskName}</div>

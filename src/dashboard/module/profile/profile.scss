@@ -61,7 +61,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 24px 16px 32px;
+            padding: 16px 16px 20px;
             position: relative;
             margin-bottom: 16px;
             background: linear-gradient(to right, rgba(24, 144, 255, 0.02), rgba(24, 144, 255, 0.05), rgba(24, 144, 255, 0.02));
@@ -91,12 +91,12 @@
 
             .profile-avatar-container {
                 position: relative;
-                min-width: 120px;
+                min-width: 80px;
             }
 
             .profile-avatar {
-                width: 120px;
-                height: 120px;
+                width: 80px;
+                height: 80px;
                 border-radius: 50%;
                 overflow: hidden;
                 background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
@@ -115,7 +115,7 @@
 
                 .avatar-initials {
                     color: white;
-                    font-size: 42px;
+                    font-size: 32px;
                     font-weight: 500;
                 }
 
@@ -213,20 +213,20 @@
                     animation: pulse 2s infinite;
 
                     @media (min-width: 768px) {
-                        margin-top: 70px;
-                        right: 20px;
+                        margin-top: 60px !important;
+                        right: 8px !important;
                     }
 
                     @media (max-width: 767px) {
-                        margin-top: 65px;
-                        right: 12px;
+                        margin-top: 60px !important;
+                        right: 8px !important;
                     }
                 }
             }
         }
 
         .profile-info-section {
-            padding: 24px 0;
+            padding: 0;
 
             h4.ant-typography {
                 margin-bottom: 24px;

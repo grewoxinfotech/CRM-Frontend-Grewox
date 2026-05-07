@@ -91,7 +91,7 @@ const LeadsTable = ({
                 <Radio.Group value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} size="small">
                     <Radio.Button value="all">All</Radio.Button>
                     <Radio.Button value="today">Today</Radio.Button>
-                    <Radio.Button value="month">Month</Radio.Button>
+                    <Radio.Button value="month">This Month</Radio.Button>
                 </Radio.Group>
             }
         >

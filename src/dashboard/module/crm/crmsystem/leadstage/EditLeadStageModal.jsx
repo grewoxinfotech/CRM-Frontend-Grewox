@@ -94,7 +94,7 @@ const EditLeadStageModal = ({ isOpen, onClose, stage }) => {
       refetchStages();
     } catch (error) {
       console.error('Stage operation error:', error);
-      message.error(error?.data?.message || 'Failed to update stages');
+      message.error(error?.data?.message || error?.message || 'Failed to update stages');
       setIsDefault(true); // Revert back to default
       setIsSelectDefaultModalOpen(false);
     }
@@ -114,7 +114,7 @@ const EditLeadStageModal = ({ isOpen, onClose, stage }) => {
       refetchStages();
       onClose();
     } catch (error) {
-      message.error(error?.data?.message || 'Failed to update lead stage');
+      message.error(error?.data?.message || error?.message || 'Failed to update lead stage');
     }
   };
 

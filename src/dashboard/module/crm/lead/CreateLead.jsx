@@ -33,6 +33,7 @@ import {
   FiUserPlus,
   FiShield,
   FiTrash2,
+  FiPlus,
 } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { useCreateLeadMutation, useGetLeadsQuery } from "./services/LeadApi";
@@ -100,12 +101,19 @@ const CreateLead = ({
   const [isAddContactVisible, setIsAddContactVisible] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [newCompanyName, setNewCompanyName] = useState("");
+  const [isQuick, setIsQuick] = useState(isQuickMode);
   const [createContact] = useCreateContactMutation();
   const [phoneSearchText, setPhoneSearchText] = useState("");
   const selectedCompanyId = Form.useWatch('company_id', form);
 
+  useEffect(() => {
+    if (open) {
+      setIsQuick(isQuickMode);
+    }
+  }, [open, isQuickMode]);
+
   const { data: contactSuggestions } = useGetContactsQuery(
-    { 
+    {
       search: phoneSearchText,
       ...(selectedCompanyId && { company_name: selectedCompanyId })
     },
@@ -117,7 +125,7 @@ const CreateLead = ({
     if (contact) {
       const selectedCode = countries?.find(c => c.id === contact.phone_code || c.id === form.getFieldValue('phoneCode'));
       let displayPhone = contact.phone || '';
-      
+
       // If the phone number starts with the selected code's phone code, strip it
       if (selectedCode && displayPhone.startsWith(`+${selectedCode.phoneCode.replace('+', '')}`)) {
         displayPhone = displayPhone.replace(`+${selectedCode.phoneCode.replace('+', '')}`, '').trim();
@@ -253,7 +261,7 @@ const CreateLead = ({
         company_id: values.company_id || null,
         contact_id: values.contact_id || null,
         description: values.description || null,
-        created_via: isQuickMode ? 'quick' : 'normal',
+        created_via: isQuick ? 'quick' : 'normal',
         // Auto-contact fields
         phone: values.telephone ? values.telephone.toString() : null,
         first_name: values.firstName || null,
@@ -264,7 +272,7 @@ const CreateLead = ({
 
       // Create the lead with all the data (Backend handles contact matching/creation)
       await createLead(leadFormData).unwrap();
-      
+
       // Force the Contacts list to refresh so the auto-created contact appears immediately
       dispatch(contactApi.util.invalidateTags(['Contacts']));
       message.success("Lead created successfully");
@@ -531,23 +539,25 @@ const CreateLead = ({
             <FiUser style={{ fontSize: "24px", color: "#ffffff" }} />
           </div>
           <div>
-            <h2
-              style={{
-                margin: "0",
-                fontSize: "24px",
-                fontWeight: "600",
-                color: "#ffffff",
-              }}
-            >
-              Create New Lead
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h2
+                style={{
+                  margin: "0",
+                  fontSize: "24px",
+                  fontWeight: "600",
+                  color: "#ffffff",
+                }}
+              >
+                {isQuick ? "Quick Create Lead" : "Create New Lead"}
+              </h2>
+            </div>
             <Text
               style={{
                 fontSize: "14px",
                 color: "rgba(255, 255, 255, 0.85)",
               }}
             >
-              Fill in the information to create lead
+              {isQuick ? "Fill essential info to quickly create a lead" : "Fill in the information to create lead"}
             </Text>
           </div>
         </div>
@@ -574,7 +584,7 @@ const CreateLead = ({
           gap: '16px',
           marginBottom: '24px'
         }}>
-          {!isQuickMode && (
+          {!isQuick && (
             <Form.Item
               name="leadTitle"
               label={<span style={formItemStyle}>Lead Title <span style={{ color: "#ff4d4f" }}>*</span></span>}
@@ -592,7 +602,7 @@ const CreateLead = ({
             </Form.Item>
           )}
 
-          {!isQuickMode && (
+          {!isQuick && (
             <Form.Item
               name="leadValueGroup"
               label={<span style={formItemStyle}>Lead Value</span>}
@@ -606,16 +616,16 @@ const CreateLead = ({
                   initialValue={defaultCurrency}
                   rules={[{ required: true, message: 'Please select currency' }]}
                 >
-                <CommonSelect
-                  style={{ width: '120px' }}
-                  options={currencies?.map(currency => ({
-                    id: currency.id,
-                    name: currency.currencyIcon === currency.currencyCode 
-                      ? currency.currencyCode 
-                      : `${currency.currencyIcon} ${currency.currencyCode}`
-                  }))}
-                  allowClear={false}
-                />
+                  <CommonSelect
+                    style={{ width: '120px' }}
+                    options={currencies?.map(currency => ({
+                      id: currency.id,
+                      name: currency.currencyIcon === currency.currencyCode
+                        ? currency.currencyCode
+                        : `${currency.currencyIcon} ${currency.currencyCode}`
+                    }))}
+                    allowClear={false}
+                  />
                 </Form.Item>
                 <Form.Item
                   name="leadValue"
@@ -710,8 +720,8 @@ const CreateLead = ({
                 noStyle
               >
                 <AutoComplete
-                  style={{ 
-                    flex: 1, 
+                  style={{
+                    flex: 1,
                   }}
                   placeholder="Enter phone number"
                   onSearch={(val) => setPhoneSearchText(val)}
@@ -722,13 +732,13 @@ const CreateLead = ({
                     label: (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', width: '100%' }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
-                          <div style={{ 
-                            width: '28px', 
-                            height: '28px', 
-                            borderRadius: '50%', 
-                            backgroundColor: '#e6f7ff', 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <div style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '50%',
+                            backgroundColor: '#e6f7ff',
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
                             color: '#1890ff',
                             flexShrink: 0
@@ -745,18 +755,18 @@ const CreateLead = ({
                           </div>
                         </div>
                         {c.company_name && (
-                          <Tag 
-                            icon={<FiBriefcase size={10} />} 
-                            color="blue" 
-                            style={{ 
-                              margin: 0, 
-                              borderRadius: '4px', 
+                          <Tag
+                            icon={<FiBriefcase size={10} />}
+                            color="blue"
+                            style={{
+                              margin: 0,
+                              borderRadius: '4px',
                               fontSize: '11px',
                               marginLeft: '8px'
                             }}
                           >
-                            {typeof c.company_name === 'object' 
-                              ? (c.company_name.company_name || c.company_name.name) 
+                            {typeof c.company_name === 'object'
+                              ? (c.company_name.company_name || c.company_name.name)
                               : (companyAccountsResponse?.data?.find(acc => acc.id === c.company_name)?.company_name || c.company_name)}
                           </Tag>
                         )}
@@ -765,10 +775,10 @@ const CreateLead = ({
                     contact: c
                   }))}
                 >
-                   <Input 
-                     prefix={<FiPhone style={prefixIconStyle} />}
-                     style={inputStyle}
-                   />
+                  <Input
+                    prefix={<FiPhone style={prefixIconStyle} />}
+                    style={inputStyle}
+                  />
                 </AutoComplete>
               </Form.Item>
             </div>
@@ -797,18 +807,42 @@ const CreateLead = ({
           {/* Description / Note field for both modes */}
           <Form.Item
             name="description"
-            label={<span style={formItemStyle}>{isQuickMode ? "Note / Requirement" : "Description"} <span style={{ color: '#8c8c8c', fontWeight: 'normal', fontSize: '12px' }}>(Optional)</span></span>}
+            label={<span style={formItemStyle}>{isQuick ? "Note / Requirement" : "Description"} <span style={{ color: '#8c8c8c', fontWeight: 'normal', fontSize: '12px' }}>(Optional)</span></span>}
             style={{ gridColumn: 'span 2', marginBottom: '0px' }}
           >
             <Input.TextArea
-              placeholder={isQuickMode ? "Enter requirement details" : "Enter lead description"}
+              placeholder={isQuick ? "Enter requirement details" : "Enter lead description"}
               style={{ ...inputStyle, height: 'auto', minHeight: '80px', padding: '12px 16px' }}
               rows={3}
             />
           </Form.Item>
+
+          {isQuick && (
+            <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-start' }}>
+              <div
+                onClick={() => setIsQuick(false)}
+                style={{
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#1890ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.3s ease',
+                  padding: '4px 0'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.color = '#40a9ff'}
+                onMouseOut={(e) => e.currentTarget.style.color = '#1890ff'}
+              >
+                <FiPlus style={{ fontSize: '14px' }} />
+                <span>Add More Details</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {!isQuickMode && (
+        {!isQuick && (
           <div className="form-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
@@ -842,7 +876,7 @@ const CreateLead = ({
                 disabled={!form.getFieldValue('pipeline')}
                 options={stages
                   .filter(stage => stage.pipeline === form.getFieldValue('pipeline'))
-                  .map(s => ({ id: s.id, name: s.name, color: s.color }))}
+                  .map(s => ({ id: s.id, name: s.stageName, color: s.color }))}
               />
             </Form.Item>
             <Form.Item
@@ -876,7 +910,7 @@ const CreateLead = ({
           </div>
         )}
 
-        {!isQuickMode && (
+        {!isQuick && (
           <>
             <Divider style={{ margin: '32px 0' }} />
             <div style={{ marginBottom: '24px' }}>

@@ -8,13 +8,12 @@ import {
 } from "./services/dealStageApi";
 import { useGetPipelinesQuery } from "../pipeline/services/pipelineApi";
 import "./dealstage.scss";
-import { Button, Modal, message, Table, Typography, Tag, Dropdown } from "antd";
+import { Button, Modal, message, Table, Typography, Tag, Dropdown, Tabs } from "antd";
 import { useGetDealsQuery } from "../../deal/services/DealApi";
 
 const { Text } = Typography;
 
-const DealStages = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const DealStages = ({ isModalOpen, setIsModalOpen }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState(null);
 
@@ -127,21 +126,60 @@ const DealStages = () => {
     },
   ];
 
-  return (
-    <div className="deal-stages-wrapper">
+  const items = pipelines.map(pipeline => ({
+    key: pipeline.id,
+    label: (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px' }}>
+        <FiLayers size={14} />
+        <span style={{ fontWeight: '500' }}>{pipeline.pipeline_name}</span>
+        <Tag 
+          style={{ 
+            margin: 0, 
+            borderRadius: '10px', 
+            fontSize: '11px',
+            backgroundColor: 'rgba(24, 144, 255, 0.1)',
+            color: '#1890ff',
+            border: 'none'
+          }}
+        >
+          {dealStages.filter(s => s.pipeline === pipeline.id).length}
+        </Tag>
+      </div>
+    ),
+    children: (
       <Table
         columns={columns}
-        dataSource={dealStages}
+        dataSource={dealStages.filter(s => s.pipeline === pipeline.id)}
         rowKey="id"
         size="small"
         loading={isLoading}
-        className="compact-table"
+        className="compact-table stage-table"
         pagination={{
             pageSize: 10,
             showTotal: (total) => `Total ${total} stages`
         }}
         scroll={{ x: 'max-content' }}
       />
+    )
+  }));
+
+  return (
+    <div className="deal-stages-wrapper">
+      <div className="pipeline-tabs-container">
+        {pipelines.length > 0 ? (
+          <Tabs
+            defaultActiveKey={pipelines[0]?.id}
+            items={items}
+            className="custom-pipeline-tabs"
+            type="line"
+            animated={{ inkBar: true, tabPane: true }}
+          />
+        ) : (
+          <div className="no-pipelines-placeholder">
+             <Text type="secondary">No pipelines found. Please create a pipeline first.</Text>
+          </div>
+        )}
+      </div>
 
       <AddDealStageModal
         isOpen={isModalOpen}

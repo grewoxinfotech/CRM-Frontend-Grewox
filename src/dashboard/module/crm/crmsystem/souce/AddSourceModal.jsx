@@ -29,7 +29,7 @@ const AddSourceModal = ({ isOpen, onClose }) => {
       form.resetFields();
       onClose();
     } catch (error) {
-      message.error(error?.message || "Failed to create source");
+      message.error(error?.data?.message || error?.message || "Failed to create source");
     }
   };
 

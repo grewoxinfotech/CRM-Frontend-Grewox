@@ -6,8 +6,10 @@ import { Link } from 'react-router-dom';
 import { UnorderedListOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
-import { useGetWhatsappSettingsQuery, useSaveWhatsappSettingsMutation } from '../services/settingsApi';
+import { useGetWhatsappSettingsQuery, useSaveWhatsappSettingsMutation, useWhatsappEmbeddedSignupMutation } from '../services/settingsApi';
 import { BASE_URL } from '../../../../config/config';
+import { FB_APP_ID } from '../../../../config/config';
+import { FacebookOutlined, WhatsAppOutlined } from '@ant-design/icons';
 import './whatsapp.scss';
 
 const { Title, Text } = Typography;
@@ -17,6 +19,77 @@ const WhatsappSettings = () => {
     const currentUser = useSelector(selectCurrentUser);
     const { data: settings, isLoading } = useGetWhatsappSettingsQuery();
     const [saveSettings, { isLoading: isSaving }] = useSaveWhatsappSettingsMutation();
+    const [embeddedSignup, { isLoading: isConnecting }] = useWhatsappEmbeddedSignupMutation();
+
+    useEffect(() => {
+        // Load Facebook SDK
+        if (!window.FB && FB_APP_ID) {
+            window.fbAsyncInit = function() {
+                window.FB.init({
+                    appId      : FB_APP_ID,
+                    cookie     : true,
+                    xfbml      : true,
+                    version    : 'v21.0'
+                });
+            };
+
+            (function(d, s, id) {
+                var js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = "https://connect.facebook.net/en_US/sdk.js";
+                fjs.parentNode.insertBefore(js, fjs);
+            }(document, 'script', 'facebook-jssdk'));
+        }
+    }, []);
+
+    const handleEmbeddedSignup = () => {
+        if (!FB_APP_ID) {
+            message.error('Facebook App ID is not configured.');
+            return;
+        }
+
+        if (!window.FB) {
+            message.error('Facebook SDK not loaded yet. Please refresh.');
+            return;
+        }
+
+        window.FB.login((response) => {
+            if (response.authResponse) {
+                const code = response.authResponse.code;
+                processEmbeddedSignup(code);
+            } else {
+                message.error('User cancelled login or did not fully authorize.');
+            }
+        }, {
+            config_id: '1540830403160431', // This is standard Meta config ID for embedded signup, or use your own
+            response_type: 'code',
+            override_default_response_type: true,
+            extras: {
+                setup: {
+                    // Any extra setup params
+                }
+            }
+        });
+    };
+
+    const processEmbeddedSignup = async (code) => {
+        try {
+            const res = await embeddedSignup({ code }).unwrap();
+            
+            // Populate form with fetched data
+            form.setFieldsValue({
+                phone_number_id: res.data.phone_number_id,
+                business_id: res.data.business_id,
+                access_token: res.data.access_token,
+            });
+
+            message.success(`Successfully connected ${res.data.display_phone_number || res.data.business_name}! Please click Save to finish.`);
+        } catch (error) {
+            console.error('Embedded signup processing failed:', error);
+            message.error(error?.data?.message || 'Failed to fetch WhatsApp details from Meta');
+        }
+    };
 
     useEffect(() => {
         // Generate a unique verify token for this specific client based on username
@@ -76,11 +149,23 @@ const WhatsappSettings = () => {
                     <Title level={2}>WhatsApp Settings</Title>
                     <Text type="secondary">Configure your WhatsApp Business API credentials</Text>
                 </div>
-                <Link to="/dashboard/whatsapp/messages">
-                    <Button icon={<UnorderedListOutlined />} size="large">
-                        Open message log
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <Button 
+                        type="primary" 
+                        icon={<WhatsAppOutlined />} 
+                        size="large"
+                        onClick={handleEmbeddedSignup}
+                        loading={isConnecting}
+                        style={{ background: '#25D366', borderColor: '#25D366' }}
+                    >
+                        Connect WhatsApp
                     </Button>
-                </Link>
+                    <Link to="/dashboard/whatsapp/messages">
+                        <Button icon={<UnorderedListOutlined />} size="large">
+                            Open message log
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             <div className="page-contents">

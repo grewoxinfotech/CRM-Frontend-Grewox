@@ -13,8 +13,7 @@ import { useGetDealsQuery } from "../../deal/services/DealApi";
 
 const { Text } = Typography;
 
-const Pipeline = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const Pipeline = ({ isModalOpen, setIsModalOpen }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPipeline, setSelectedPipeline] = useState(null);
 

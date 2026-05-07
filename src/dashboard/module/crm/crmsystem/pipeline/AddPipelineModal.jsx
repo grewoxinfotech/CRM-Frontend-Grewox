@@ -16,6 +16,7 @@ const AddPipelineModal = ({ isOpen, onClose }) => {
       onClose();
     } catch (error) {
       console.error("Failed to add pipeline:", error);
+      message.error(error?.data?.message || error?.message || "Failed to add pipeline");
     }
   };
 

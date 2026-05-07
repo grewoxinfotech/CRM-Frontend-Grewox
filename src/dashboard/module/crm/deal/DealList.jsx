@@ -288,25 +288,7 @@ const DealList = ({
                   marginTop: "4px",
                 }}
               >
-                {company && (
-                  <Tag
-                    icon={<FiBriefcase style={{ fontSize: "12px" }} />}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      backgroundColor: "#e6f7ff",
-                      color: "#1890ff",
-                      border: "none",
-                      fontSize: "11px",
-                      fontWeight: "500"
-                    }}
-                  >
-                    {company.company_name}
-                  </Tag>
-                )}
+
                 {contact && (
                   <Tag
                     icon={<FiUser style={{ fontSize: "12px" }} />}
@@ -331,6 +313,29 @@ const DealList = ({
           </div>
         );
       },
+    },
+    {
+      title: "Company",
+      key: "company",
+      width: 150,
+      render: (_, record) => {
+        const company = companyAccountsResponse?.data?.find(
+          (c) => c.id === record.company_id
+        );
+        const city = company?.city || company?.billing_city || company?.shipping_city;
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <Text strong style={{ fontSize: "13px", color: "#1e293b" }}>
+              {company ? company.company_name : "N/A"}
+            </Text>
+            {city && (
+              <Text type="secondary" style={{ fontSize: "12px" }}>
+                {city}
+              </Text>
+            )}
+          </div>
+        );
+      }
     },
     {
       title: "Source",

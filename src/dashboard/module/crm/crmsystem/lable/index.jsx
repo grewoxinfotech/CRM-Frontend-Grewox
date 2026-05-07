@@ -10,8 +10,7 @@ import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 
-const Lable = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const Lable = ({ isModalOpen, setIsModalOpen }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedLable, setSelectedLable] = useState(null);
   const userdata = useSelector(selectCurrentUser);

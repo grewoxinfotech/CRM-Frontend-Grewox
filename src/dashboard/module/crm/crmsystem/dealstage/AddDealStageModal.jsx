@@ -62,7 +62,7 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
       refetchStages();
       onClose(true);
     } catch (error) {
-      message.error("Failed to add deal stage: " + error.message);
+      message.error(error?.data?.message || error?.message || "Failed to add deal stage");
     }
   };
 

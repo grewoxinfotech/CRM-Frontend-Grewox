@@ -13,8 +13,7 @@ import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 
-const Source = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const Source = ({ isModalOpen, setIsModalOpen }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedSource, setSelectedSource] = useState(null);
   const userdata = useSelector(selectCurrentUser);
@@ -84,12 +83,12 @@ const Source = () => {
       width: 80,
       render: (_, record) => (
         <Dropdown
-            menu={{
-                items: [
-                    { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => handleEdit(record) },
-                    { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) }
-                ]
-            }}
+          menu={{
+            items: [
+              { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => handleEdit(record) },
+              { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) }
+            ]
+          }}
           trigger={['click']}
           placement="bottomRight"
         >
@@ -109,9 +108,9 @@ const Source = () => {
         loading={isLoading}
         className="compact-table"
         pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} sources`
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} sources`
         }}
       />
 

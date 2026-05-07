@@ -7,13 +7,13 @@ export const taskCalendarApi = createApi({
     tagTypes: ['TaskCalendar'],
     endpoints: (builder) => ({
         getAllTaskCalendarEvents: builder.query({
-            query: () => 'taskcalendars',
+            query: () => 'task-calendars',
             providesTags: ['TaskCalendar'],
         }),
 
         createTaskCalendarEvent: builder.mutation({
             query: (data) => ({
-                url: 'taskcalendars',
+                url: 'task-calendars',
                 method: 'POST',
                 body: data,
             }),
@@ -22,7 +22,7 @@ export const taskCalendarApi = createApi({
 
         deleteTaskCalendarEvent: builder.mutation({
             query: (id) => ({
-                url: `taskcalendars/${id}`,
+                url: `task-calendars/${id}`,
                 method: 'DELETE',
             }),
             invalidatesTags: ['TaskCalendar'],

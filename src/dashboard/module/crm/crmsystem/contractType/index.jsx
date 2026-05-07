@@ -10,8 +10,7 @@ import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 
-const ContractType = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const ContractType = ({ isModalOpen, setIsModalOpen }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedContractType, setSelectedContractType] = useState(null);
   const userdata = useSelector(selectCurrentUser);

@@ -30,7 +30,8 @@ const EditContractTypeModal = ({ isOpen, onClose, contractType }) => {
       form.resetFields();
       onClose();
     } catch (error) {
-      message.error(error?.data?.message || "Failed to update contract type");
+      console.error("Failed to update contract type:", error);
+      message.error(error?.data?.message || error?.message || "Failed to update contract type");
     }
   };
 

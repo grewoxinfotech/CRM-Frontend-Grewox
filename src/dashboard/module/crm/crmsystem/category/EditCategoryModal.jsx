@@ -50,7 +50,7 @@ const EditCategoryModal = ({ visible, onCancel, category }) => {
       message.success("Category updated successfully");
       onCancel();
     } catch (error) {
-      message.error(error?.data?.message || "Failed to update category");
+      message.error(error?.data?.message || error?.message || "Failed to update category");
     }
   };
 

@@ -72,106 +72,131 @@ const Profile = () => {
                     { title: <Link to="/dashboard"><FiHome style={{ marginRight: '4px' }} /> Home</Link> },
                     { title: "Profile" },
                 ]}
-                extraActions={[
-                    <Button key="edit" type="primary" icon={<FiSettings />} onClick={() => setIsEditModalVisible(true)}>
-                        Edit Profile
-                    </Button>
-                ]}
             />
 
             <Card className="standard-content-card profile-details-card">
-                <div className="profile-header-standard">
-                    <div className="profile-avatar-wrapper">
-                        <Badge dot status="success" offset={[-5, 35]}>
-                            <div className="profile-avatar-circle">
-                                {user?.profilePic ? (
-                                    <img src={user.profilePic} alt={getUserFullName(user)} />
-                                ) : (
-                                    <div className="avatar-initials-large">{getInitials(getUserFullName(user))}</div>
-                                )}
-                            </div>
-                        </Badge>
-                    </div>
-                    <div className="profile-main-info">
-                        <Title level={3} style={{ margin: 0 }}>{getUserFullName(user)}</Title>
-                        <Text type="secondary">@{user?.username || 'user'}</Text>
-                        <div className="role-tag-premium">
-                            <FiShield size={12} />
-                            {formatRole(userRole)}
+                <div className="profile-header">
+                    <div className="profile-header-content">
+                        <div className="profile-avatar-container">
+                            <Badge dot status="success" className="status-badge">
+                                <div className="profile-avatar">
+                                    {user?.profilePic ? (
+                                        <img src={user.profilePic} alt={getUserFullName(user)} />
+                                    ) : (
+                                        <div className="avatar-initials">{getInitials(getUserFullName(user))}</div>
+                                    )}
+                                </div>
+                            </Badge>
                         </div>
+                        <div className="profile-title">
+                            <Title level={3} style={{ textTransform: 'capitalize' }}>{getUserFullName(user)}</Title>
+                            <span className="username">@{user?.username || 'user'}</span>
+                            <div className="role-badge">
+                                <FiShield size={12} />
+                                {formatRole(userRole)}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="profile-actions">
+                        <Button type="primary" icon={<FiSettings />} onClick={() => setIsEditModalVisible(true)}>
+                            Edit Profile
+                        </Button>
                     </div>
                 </div>
 
-                <Divider style={{ margin: '24px 0' }} />
+                <div className="profile-info-section">
+                    <Title level={4}>Personal Information</Title>
+                    <Row gutter={[24, 24]}>
+                        <Col xs={24} sm={12} md={6}>
+                            <div className="info-item">
+                                <div className="info-label">
+                                    <FiUser className="info-icon" />
+                                    <Text>First Name</Text>
+                                </div>
+                                <Text strong>{user?.firstName || 'Not provided'}</Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} sm={12} md={6}>
+                            <div className="info-item">
+                                <div className="info-label">
+                                    <FiUser className="info-icon" />
+                                    <Text>Last Name</Text>
+                                </div>
+                                <Text strong>{user?.lastName || 'Not provided'}</Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} sm={12} md={6}>
+                            <div className="info-item">
+                                <div className="info-label">
+                                    <FiMail className="info-icon" />
+                                    <Text>Email</Text>
+                                </div>
+                                <Text strong>{user?.email || 'Not provided'}</Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} sm={12} md={6}>
+                            <div className="info-item">
+                                <div className="info-label">
+                                    <FiPhone className="info-icon" />
+                                    <Text>Phone</Text>
+                                </div>
+                                <Text strong>{user?.phone || 'Not provided'}</Text>
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
 
-                <div className="profile-info-grid">
-                    <div className="info-group">
-                        <Title level={5} className="group-title">Personal Information</Title>
-                        <Row gutter={[24, 16]}>
-                            <Col xs={24} sm={12}>
-                                <div className="info-detail-item">
-                                    <Text type="secondary" className="detail-label"><FiUser /> First Name</Text>
-                                    <Text strong className="detail-value">{user?.firstName || 'Not provided'}</Text>
-                                </div>
-                            </Col>
-                            <Col xs={24} sm={12}>
-                                <div className="info-detail-item">
-                                    <Text type="secondary" className="detail-label"><FiUser /> Last Name</Text>
-                                    <Text strong className="detail-value">{user?.lastName || 'Not provided'}</Text>
-                                </div>
-                            </Col>
-                            <Col xs={24} sm={12}>
-                                <div className="info-detail-item">
-                                    <Text type="secondary" className="detail-label"><FiMail /> Email</Text>
-                                    <Text strong className="detail-value">{user?.email}</Text>
-                                </div>
-                            </Col>
-                            <Col xs={24} sm={12}>
-                                <div className="info-detail-item">
-                                    <Text type="secondary" className="detail-label"><FiPhone /> Phone</Text>
-                                    <Text strong className="detail-value">{user?.phone || 'Not provided'}</Text>
-                                </div>
-                            </Col>
-                        </Row>
-                    </div>
+                <Divider style={{ margin: '12px 0' }} />
 
-                    <Divider style={{ margin: '24px 0' }} />
-
-                    <div className="info-group">
-                        <Title level={5} className="group-title">Additional Information</Title>
-                        <Row gutter={[24, 16]}>
-                            <Col xs={24} sm={12} md={8}>
-                                <div className="info-detail-item">
-                                    <Text type="secondary" className="detail-label"><FiMapPin /> Address</Text>
-                                    <Text strong className="detail-value">{user?.address || 'Not provided'}</Text>
+                <div className="profile-info-section">
+                    <Title level={4}>Additional Information</Title>
+                    <Row gutter={[24, 24]}>
+                        <Col xs={24} sm={12} md={8}>
+                            <div className="info-item">
+                                <div className="info-label">
+                                    <FiMapPin className="info-icon" />
+                                    <Text>Address</Text>
                                 </div>
-                            </Col>
-                            <Col xs={24} sm={12} md={8}>
-                                <div className="info-detail-item">
-                                    <Text type="secondary" className="detail-label"><FiHome /> City</Text>
-                                    <Text strong className="detail-value">{user?.city || 'Not provided'}</Text>
+                                <Text strong>{user?.address || 'Not provided'}</Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} sm={12} md={8}>
+                            <div className="info-item">
+                                <div className="info-label">
+                                    <FiHome className="info-icon" />
+                                    <Text>City</Text>
                                 </div>
-                            </Col>
-                            <Col xs={24} sm={12} md={8}>
-                                <div className="info-detail-item">
-                                    <Text type="secondary" className="detail-label"><FiMap /> State</Text>
-                                    <Text strong className="detail-value">{user?.state || 'Not provided'}</Text>
+                                <Text strong>{user?.city || 'Not provided'}</Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} sm={12} md={8}>
+                            <div className="info-item">
+                                <div className="info-label">
+                                    <FiMap className="info-icon" />
+                                    <Text>State</Text>
                                 </div>
-                            </Col>
-                            <Col xs={24} sm={12} md={8}>
-                                <div className="info-detail-item">
-                                    <Text type="secondary" className="detail-label"><FiGlobe /> Country</Text>
-                                    <Text strong className="detail-value">{user?.country || 'Not provided'}</Text>
+                                <Text strong>{user?.state || 'Not provided'}</Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} sm={12} md={8}>
+                            <div className="info-item">
+                                <div className="info-label">
+                                    <FiGlobe className="info-icon" />
+                                    <Text>Country</Text>
                                 </div>
-                            </Col>
-                            <Col xs={24} sm={12} md={8}>
-                                <div className="info-detail-item">
-                                    <Text type="secondary" className="detail-label"><FiMapPin /> Zip Code</Text>
-                                    <Text strong className="detail-value">{user?.zipCode || 'Not provided'}</Text>
+                                <Text strong>{user?.country || 'Not provided'}</Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} sm={12} md={8}>
+                            <div className="info-item">
+                                <div className="info-label">
+                                    <FiMapPin className="info-icon" />
+                                    <Text>Zip Code</Text>
                                 </div>
-                            </Col>
-                        </Row>
-                    </div>
+                                <Text strong>{user?.zipCode || 'Not provided'}</Text>
+                            </div>
+                        </Col>
+                    </Row>
                 </div>
             </Card>
 

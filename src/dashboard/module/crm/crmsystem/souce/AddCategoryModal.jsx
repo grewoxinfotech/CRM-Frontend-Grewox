@@ -29,7 +29,7 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
             form.resetFields();
             onClose();
         } catch (error) {
-            message.error(error?.message || "Failed to create category");
+            message.error(error?.data?.message || error?.message || "Failed to add category");
         }
     };
 

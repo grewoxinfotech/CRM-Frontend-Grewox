@@ -42,7 +42,7 @@ const AddCategoryModal = ({ visible, onCancel }) => {
       form.resetFields();
       onCancel();
     } catch (error) {
-      message.error(error?.data?.message || "Failed to create category");
+      message.error(error?.data?.message || error?.message || "Failed to add category");
     }
   };
 

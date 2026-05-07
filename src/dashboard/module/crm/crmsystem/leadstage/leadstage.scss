@@ -1,6 +1,56 @@
 .lead-stages-wrapper {
   min-height: 100%;
 
+  .pipeline-tabs-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    .custom-pipeline-tabs {
+      .ant-tabs-nav {
+        margin-bottom: 0;
+        &::before {
+          border-bottom: 1px solid rgba(24, 144, 255, 0.08);
+        }
+      }
+
+      .ant-tabs-tab {
+        padding: 16px 12px;
+        margin: 0 12px 0 0;
+        transition: all 0.3s ease;
+
+        &:hover {
+          color: #1890ff;
+        }
+
+        &-active {
+          .ant-tabs-tab-btn {
+            color: #1890ff;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .ant-tabs-ink-bar {
+        height: 3px;
+        background: linear-gradient(90deg, #1890ff, #096dd9);
+        border-radius: 3px 3px 0 0;
+      }
+
+      .ant-tabs-content-holder {
+        margin-top: 24px;
+      }
+    }
+  }
+
+  .no-pipelines-placeholder {
+    padding: 48px;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px dashed #e6e8eb;
+  }
+
   .lead-stages-container {
     .stage-grid {
       display: grid;

@@ -29,7 +29,7 @@ const AddStatusModal = ({ isOpen, onClose }) => {
             form.resetFields();
             onClose();
         } catch (error) {
-            message.error(error?.message || "Failed to create status");
+            message.error(error?.data?.message || error?.message || "Failed to add status");
         }
     };
 

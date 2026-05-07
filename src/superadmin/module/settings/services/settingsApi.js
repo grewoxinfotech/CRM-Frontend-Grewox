@@ -54,6 +54,13 @@ export const settingsApi = createApi({
             }),
             invalidatesTags: ['WhatsappSettings'],
         }),
+        whatsappEmbeddedSignup: builder.mutation({
+            query: (data) => ({
+                url: '/whatsapp/embedded-signup',
+                method: 'POST',
+                body: data,
+            }),
+        }),
         getWhatsappMessages: builder.query({
             query: (params) => ({
                 url: '/whatsapp/messages',
@@ -114,4 +121,5 @@ export const {
     useGetApprovedCampaignsQuery,
     useSendBulkCampaignMutation,
     useSetDefaultCurrencyMutation,
+    useWhatsappEmbeddedSignupMutation,
 } = settingsApi;

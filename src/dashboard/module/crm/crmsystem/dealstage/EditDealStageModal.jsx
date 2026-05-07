@@ -90,7 +90,7 @@ const EditDealStageModal = ({ isOpen, onClose, stage }) => {
         await submitStage(values, selectedPipeline);
       }
     } catch (error) {
-      message.error("Failed to update deal stage: " + error.message);
+      message.error(error?.data?.message || error?.message || "Failed to update deal stage");
     }
   };
 
@@ -110,7 +110,7 @@ const EditDealStageModal = ({ isOpen, onClose, stage }) => {
       refetchStages(); // Refetch stages to update the list
       onClose(true);
     } catch (error) {
-      message.error("Failed to update deal stage");
+      message.error(error?.data?.message || error?.message || "Failed to update deal stage");
     }
   };
 
@@ -186,7 +186,7 @@ const EditDealStageModal = ({ isOpen, onClose, stage }) => {
       refetchStages();
     } catch (error) {
       console.error('Stage operation error:', error);
-      message.error(error?.data?.message || 'Failed to update stages');
+      message.error(error?.data?.message || error?.message || 'Failed to update stages');
       setIsDefault(true); // Revert back to default
       setIsSelectDefaultModalOpen(false);
     }

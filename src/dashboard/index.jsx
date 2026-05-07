@@ -19,12 +19,16 @@ import { useGetStatusesQuery } from "./module/crm/crmsystem/souce/services/Sourc
 import { useNavigate } from "react-router-dom";
 import { useGetLeadStagesQuery } from "./module/crm/crmsystem/leadstage/services/leadStageApi";
 import { useGetMeetingsQuery } from "./module/hrm/Meeting/services/meetingApi";
+import { useGetContactsQuery } from "./module/crm/contact/services/contactApi";
+import { useGetCompanyAccountsQuery } from "./module/crm/companyacoount/services/companyAccountApi";
 import WelcomeSection from "./DashboardComponents/WelcomeSection";
 import StatsCards from "./DashboardComponents/StatsCards";
 import LeadsTable from "./DashboardComponents/LeadsTable";
 import DealsTable from "./DashboardComponents/DealsTable";
 import TasksTable from "./DashboardComponents/TasksTable";
 import MeetingsTable from "./DashboardComponents/MeetingsTable";
+import ContactsTable from "./DashboardComponents/ContactsTable";
+import CompanyTable from "./DashboardComponents/CompanyTable";
 import Analytics from "./DashboardComponents/Analytics/index.jsx";
 import { useGetRevenueQuery } from "./module/sales/revenue/services/revenueApi";
 import BrandConfig from "../utils/brandName.js";
@@ -49,6 +53,10 @@ export default function Dashboard() {
   const { data: statusesData } = useGetStatusesQuery(user?.id);
   const { data: stagesData } = useGetLeadStagesQuery(user?.id);
   const { data: meetings, isLoading: meetingsLoading } = useGetMeetingsQuery();
+  const { data: contactsData, isLoading: contactsLoading } = useGetContactsQuery({ page: 1, pageSize: -1 });
+  const { data: companiesData, isLoading: companiesLoading } = useGetCompanyAccountsQuery({ page: 1, pageSize: -1 });
+  const [contactsDateFilter, setContactsDateFilter] = useState("all");
+  const [companiesDateFilter, setCompaniesDateFilter] = useState("all");
   const [leadsDateFilter, setLeadsDateFilter] = useState("all");
   const { data: leadsData } = useGetLeadsQuery({
     page: 1,
@@ -245,6 +253,27 @@ export default function Dashboard() {
                 loading={meetingsLoading}
                 dateFilter={meetingsDateFilter}
                 setDateFilter={setMeetingsDateFilter}
+                navigate={navigate}
+              />
+            </Col>
+
+            <Col xs={24} lg={12}>
+              <ContactsTable
+                contacts={contactsData?.data}
+                companies={companiesData?.data}
+                loading={contactsLoading}
+                dateFilter={contactsDateFilter}
+                setDateFilter={setContactsDateFilter}
+                navigate={navigate}
+              />
+            </Col>
+
+            <Col xs={24} lg={12}>
+              <CompanyTable
+                companies={companiesData?.data}
+                loading={companiesLoading}
+                dateFilter={companiesDateFilter}
+                setDateFilter={setCompaniesDateFilter}
                 navigate={navigate}
               />
             </Col>

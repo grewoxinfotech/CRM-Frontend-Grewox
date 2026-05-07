@@ -309,12 +309,10 @@ const CreateTaskCalendar = ({ open, onCancel, selectedDate }) => {
             name="taskDescription"
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Task Description
+                Task Description <span style={{ color: "#94a3b8", fontWeight: "400", fontSize: "12px" }}>(optional)</span>
               </span>
             }
-            rules={[
-              { required: true, message: "Please enter task description" },
-            ]}
+            rules={[]}
             className="full-width"
           >
             <TextArea

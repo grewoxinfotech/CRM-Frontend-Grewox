@@ -29,7 +29,7 @@ const AddLableModal = ({ isOpen, onClose }) => {
       form.resetFields();
       onClose();
     } catch (error) {
-      message.error(error?.data?.message || "Failed to create label");
+      message.error(error?.data?.message || error?.message || "Failed to create label");
     }
   };
 

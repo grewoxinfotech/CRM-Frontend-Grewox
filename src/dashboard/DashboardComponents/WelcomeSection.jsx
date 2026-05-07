@@ -45,7 +45,7 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
                 </Space>
                 <div className="greeting-text-group" style={{ marginTop: '4px' }}>
                   <Title level={1} style={{ margin: 0, fontSize: "clamp(22px, 3vw, 26px)", fontWeight: 800, letterSpacing: '-0.02em', color: '#0f172a' }}>
-                    {getGreeting()}, <span className="highlight-name">{displayName}</span>
+                    {getGreeting()}, <span className="highlight-name" style={{ textTransform: 'capitalize' }}>{displayName}</span>
                   </Title>
                   <Text style={{ fontSize: '14px', color: '#475569', display: 'block', marginTop: '4px', maxWidth: '650px', lineHeight: 1.5 }}>
                     Welcome back to <strong style={{ color: '#1e293b', fontWeight: 600 }}>{displayCompany}</strong>. Your business performance is looking <span style={{ color: '#10b981', fontWeight: 600, background: 'rgba(16, 185, 129, 0.1)', padding: '0 4px', borderRadius: '4px' }}>healthy</span> today.
