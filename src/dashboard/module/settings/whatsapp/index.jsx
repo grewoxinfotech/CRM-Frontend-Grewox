@@ -87,7 +87,6 @@ const WhatsappSettings = () => {
 
             message.success(`Successfully connected ${res.data.display_phone_number || res.data.business_name}! Please click Save to finish.`);
         } catch (error) {
-            console.error('Embedded signup processing failed:', error);
             message.error(error?.data?.message || 'Failed to fetch WhatsApp details from Meta');
         }
     };
@@ -117,7 +116,6 @@ const WhatsappSettings = () => {
             await saveSettings(values).unwrap();
             message.success('WhatsApp settings saved successfully!');
         } catch (error) {
-            console.error('Save failed:', error);
             message.error(error?.data?.message || 'Failed to save WhatsApp settings');
         }
     };
