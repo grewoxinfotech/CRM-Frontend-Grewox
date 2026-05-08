@@ -7,3 +7,4 @@ export const APP_CONFIG = {
 }; 
 
 export const FB_APP_ID = import.meta.env.VITE_FB_APP_ID;
+export const FB_CONFIG_ID = import.meta.env.VITE_FB_CONFIG_ID;

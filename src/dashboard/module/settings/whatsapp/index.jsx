@@ -8,7 +8,7 @@ import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useGetWhatsappSettingsQuery, useSaveWhatsappSettingsMutation, useWhatsappEmbeddedSignupMutation } from '../services/settingsApi';
 import { BASE_URL } from '../../../../config/config';
-import { FB_APP_ID } from '../../../../config/config';
+import { FB_APP_ID, FB_CONFIG_ID } from '../../../../config/config';
 import { FacebookOutlined, WhatsAppOutlined } from '@ant-design/icons';
 import './whatsapp.scss';
 
@@ -62,20 +62,21 @@ const WhatsappSettings = () => {
                 message.error('User cancelled login or did not fully authorize.');
             }
         }, {
-            config_id: '1540830403160431', // This is standard Meta config ID for embedded signup, or use your own
+            config_id: FB_CONFIG_ID, // Your Meta config ID from .env
             response_type: 'code',
             override_default_response_type: true,
             extras: {
-                setup: {
-                    // Any extra setup params
-                }
+                feature: 'whatsapp_embedded_signup',
+                sessionInfoVersion: 2
             }
         });
     };
 
     const processEmbeddedSignup = async (code) => {
         try {
-            const res = await embeddedSignup({ code }).unwrap();
+            const res = await embeddedSignup({ 
+                code
+            }).unwrap();
             
             // Populate form with fetched data
             form.setFieldsValue({
