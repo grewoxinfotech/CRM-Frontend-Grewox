@@ -94,22 +94,22 @@ const DealPayments = (deal) => {
 
   return (
     <div className="payment-page">
-      <div className="page-header">
-        <div className="page-title">
+      <div className="page-headers">
+        <div className="page-titles">
           <Title level={2}>Payments</Title>
-          <Text className="page-description" type="secondary">Manage your payments</Text>
+          <Text className="page-descriptions" type="secondary">Manage your payments</Text>
         </div>
         <div className="header-actions">
           <div className="desktop-actions">
             <div className="action-buttons">
-              <div className="search-container">
+              <div className="search-containers">
                 <Input
                   prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
                   placeholder="Search payments..."
                   allowClear
                   onChange={(e) => setSearchText(e.target.value)}
                   value={searchText}
-                  className="search-input"
+                  className="search-inputs"
                 />
                 <Popover
                   content={searchContent}
@@ -117,27 +117,27 @@ const DealPayments = (deal) => {
                   open={isSearchVisible}
                   onOpenChange={setIsSearchVisible}
                   placement="bottomRight"
-                  className="mobile-search-popover"
+                  className="mobile-search-popovers"
                 >
                   <Button
-                    className="search-icon-button"
+                    className="search-icon-buttons"
                     icon={<FiSearch size={16} />}
                   />
                 </Popover>
               </div>
-              <Dropdown overlay={exportMenu} trigger={["click"]}>
-                <Button className="export-button">
+              <Dropdown menu={exportMenu} trigger={["click"]}>
+                <Button className="export-buttons">
                   <FiDownload size={16} />
-                  <span className="button-text">Export</span>
+                  <span className="button-texts">Export</span>
                 </Button>
               </Dropdown>
               <Button
                 type="primary"
                 icon={<FiPlus size={16} />}
                 onClick={handleCreate}
-                className="add-button"
+                className="add-buttons"
               >
-                <span className="button-text">Add Payment</span>
+                <span className="button-texts">Add Payment</span>
               </Button>
             </div>
           </div>

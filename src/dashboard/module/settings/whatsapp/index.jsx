@@ -66,8 +66,9 @@ const WhatsappSettings = () => {
             response_type: 'code',
             override_default_response_type: true,
             extras: {
-                feature: 'whatsapp_embedded_signup',
-                sessionInfoVersion: 2
+                setup: {
+                    // Any extra setup params
+                }
             }
         });
     };
@@ -75,7 +76,8 @@ const WhatsappSettings = () => {
     const processEmbeddedSignup = async (code) => {
         try {
             const res = await embeddedSignup({ 
-                code
+                code,
+                redirect_uri: 'https://biaxial-lovella-semisuburban.ngrok-free.dev'
             }).unwrap();
             
             // Populate form with fetched data

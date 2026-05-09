@@ -203,7 +203,7 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        initialValues={initialValues}
+        initialValues={{ notetype: "general", ...initialValues }}
         requiredMark={false}
         style={{
           padding: "24px",

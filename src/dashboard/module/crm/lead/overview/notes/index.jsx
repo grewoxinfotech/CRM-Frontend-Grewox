@@ -637,6 +637,7 @@ const LeadNotes = ({ leadId }) => {
                     layout="vertical"
                     onFinish={handleModalSubmit}
                     requiredMark={false}
+                    initialValues={{ notetype: "general" }}
                     style={{
                         padding: "24px",
                     }}
@@ -723,7 +724,6 @@ const LeadNotes = ({ leadId }) => {
                                 Description
                             </span>
                         }
-                        rules={[{ required: true, message: "Please enter description" }]}
                     >
                         <TextArea
                             placeholder="Enter description"

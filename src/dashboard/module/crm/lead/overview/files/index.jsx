@@ -235,7 +235,6 @@ const LeadFiles = ({ leadId }) => {
         open={isModalVisible}
         onCancel={() => {
           setIsModalVisible(false);
-          form.resetFields();
         }}
         footer={null}
         width={520}

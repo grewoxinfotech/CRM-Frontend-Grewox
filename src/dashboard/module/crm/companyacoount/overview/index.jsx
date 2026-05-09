@@ -38,7 +38,7 @@ const CompanyDetails = () => {
     const [editModalVisible, setEditModalVisible] = useState(false);
 
 
-    const company = companyAccountsResponse?.data;
+    const company = companyAccountsResponse;
 
     const sources = sourcesData?.data || [];
 

@@ -44,7 +44,9 @@ const ContactList = ({
     const list = contactsResponse?.data || [];
     return list.map(c => ({
       ...c,
-      company_display_name: companyMap[c.company_name] || c.company_name || 'N/A'
+      company_display_name: companyMap[c.company_name] || c.company_name || 'N/A',
+      // normalize date field so table doesn't treat missing value as "today"
+      created_at: c.created_at || c.createdAt || c.created_at_gmt || c.created_at_utc || null,
     }));
   }, [contactsResponse, companyMap]);
 
@@ -70,8 +72,9 @@ const ContactList = ({
       dataIndex: "created_at",
       key: "date",
       width: 150,
-      render: (date) => {
-        const itemDate = dayjs(date);
+      render: (date, record) => {
+        const raw = date || record?.createdAt || record?.created_at;
+        const itemDate = raw ? dayjs(raw) : dayjs.invalid();
         const today = dayjs().startOf('day');
         const yesterday = dayjs().subtract(1, 'day').startOf('day');
         const thisWeek = dayjs().subtract(7, 'day').startOf('day');
@@ -82,11 +85,11 @@ const ContactList = ({
           border: "#ffa39e"
         };
 
-        if (itemDate.isSame(today, 'day')) {
+        if (itemDate.isValid() && itemDate.isSame(today, 'day')) {
           colors = { bg: "#f6ffed", text: "#389e0d", border: "#b7eb8f" };
-        } else if (itemDate.isSame(yesterday, 'day')) {
+        } else if (itemDate.isValid() && itemDate.isSame(yesterday, 'day')) {
           colors = { bg: "#e6f7ff", text: "#096dd9", border: "#91d5ff" };
-        } else if (itemDate.isAfter(thisWeek)) {
+        } else if (itemDate.isValid() && itemDate.isAfter(thisWeek)) {
           colors = { bg: "#fff7e6", text: "#d46b08", border: "#ffd591" };
         }
 
@@ -104,8 +107,9 @@ const ContactList = ({
               textTransform: 'uppercase'
             }}
           >
-            {itemDate.isSame(today, 'day') ? "Today" : 
-             itemDate.isSame(yesterday, 'day') ? "Yesterday" : 
+            {!itemDate.isValid() ? "N/A" :
+             itemDate.isSame(today, 'day') ? "Today" :
+             itemDate.isSame(yesterday, 'day') ? "Yesterday" :
              itemDate.format("DD MMM YYYY")}
           </Tag>
         );

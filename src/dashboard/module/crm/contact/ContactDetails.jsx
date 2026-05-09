@@ -158,7 +158,7 @@ const ContactDetails = () => {
         <Tabs
           defaultActiveKey="overview"
           items={items}
-          className="contact-tabs"
+          className="project-tabs"
           type="card"
           size="large"
           animated={{ inkBar: true, tabPane: true }}

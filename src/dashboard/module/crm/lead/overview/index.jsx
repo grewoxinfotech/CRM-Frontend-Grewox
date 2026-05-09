@@ -46,7 +46,7 @@ import {
   useGetAllCountriesQuery,
 } from "../../../../module/settings/services/settingsApi";
 import { useGetCompanyAccountsQuery } from "../../companyacoount/services/companyAccountApi";
-import { useGetContactsQuery } from "../../contact/services/contactApi";
+import { useGetContactsQuery, useGetContactByIdQuery } from "../../contact/services/contactApi";
 import CreateDeal from "../../deal/CreateDeal";
 import EditLead from "../EditLead";
 import { useGetPipelinesQuery } from "../../crmsystem/pipeline/services/pipelineApi";
@@ -316,7 +316,9 @@ console.log("leaddata", initialLeadData)
   const { data: categoriesData = [] } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: statusesData = [] } = useGetStatusesQuery(loggedInUser?.id);
   const { data: companyData = [] } = useGetCompanyAccountsQuery();
-  const { data: contactData = [] } = useGetContactsQuery();
+  const { data: associatedContact } = useGetContactByIdQuery(localLeadData?.contact_id, { 
+    skip: !localLeadData?.contact_id 
+  });
   const { data: countries = [] } = useGetAllCountriesQuery();
 
   const sources = sourcesData?.data || [];
@@ -431,7 +433,7 @@ console.log("leaddata", initialLeadData)
                 {localLeadData?.company_id &&
                   companyData?.data?.[0] &&
                   localLeadData?.contact_id &&
-                  contactData?.data ? (
+                  associatedContact ? (
                   <div className="combined-info">
                     <div className="info-section company-section">
                       <div className="icon-wrapper company">
@@ -461,16 +463,7 @@ console.log("leaddata", initialLeadData)
                         <FiUser className="icon" />
                       </div>
                       <span className="name">
-                        {
-                          contactData.data.find(
-                            (c) => c.id === localLeadData.contact_id
-                          )?.first_name
-                        }{" "}
-                        {
-                          contactData.data.find(
-                            (c) => c.id === localLeadData.contact_id
-                          )?.last_name
-                        }
+                        {associatedContact?.first_name} {associatedContact?.last_name}
                       </span>
                     </div>
                     </div>
@@ -497,22 +490,13 @@ console.log("leaddata", initialLeadData)
                       </a>
                     )}
                   </div>
-                ) : localLeadData?.contact_id && contactData?.data ? (
+                ) : localLeadData?.contact_id && associatedContact ? (
                   <div className="contact-info">
                     <div className="icon-wrapper contact">
                       <FiUser className="icon" />
                     </div>
                     <span className="name">
-                      {
-                        contactData.data.find(
-                          (c) => c.id === localLeadData.contact_id
-                        )?.first_name
-                      }{" "}
-                      {
-                        contactData.data.find(
-                          (c) => c.id === localLeadData.contact_id
-                        )?.last_name
-                      }
+                      {associatedContact?.first_name} {associatedContact?.last_name}
                     </span>
                   </div>
                 ) : (
@@ -535,17 +519,12 @@ console.log("leaddata", initialLeadData)
               </div>
               <div className="stat-content">
                 <div className="stat-label">Email Address</div>
-                {localLeadData?.contact_id && contactData?.data ? (
+                {localLeadData?.contact_id && associatedContact ? (
                   <a
-                    href={`mailto:${contactData.data.find(
-                      (c) => c.id === localLeadData.contact_id
-                    )?.email
-                      }`}
+                    href={`mailto:${associatedContact?.email}`}
                     className="stat-value"
                   >
-                    {contactData.data.find(
-                      (c) => c.id === localLeadData.contact_id
-                    )?.email || "-"}
+                    {associatedContact?.email || "-"}
                   </a>
                 ) : (
                   <span className="stat-value">-</span>
@@ -558,21 +537,14 @@ console.log("leaddata", initialLeadData)
               </div>
               <div className="stat-content">
                 <div className="stat-label">Phone Number</div>
-                {localLeadData?.contact_id && contactData?.data ? (
+                {localLeadData?.contact_id && associatedContact ? (
                   <a
-                    href={`tel:${contactData.data.find(
-                      (c) => c.id === localLeadData.contact_id
-                    )?.phone
-                      }`}
+                    href={`tel:${associatedContact?.phone}`}
                     className="stat-value"
                   >
                     {getPhoneWithCode(
-                      contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.phone_code,
-                      contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.phone
+                      associatedContact?.phone_code,
+                      associatedContact?.phone
                     )}
                   </a>
                 ) : localLeadData?.company_id && companyData?.data?.[0] ? (
@@ -596,62 +568,15 @@ console.log("leaddata", initialLeadData)
               </div>
               <div className="stat-content">
                 <div className="stat-label">Location</div>
-                {localLeadData?.contact_id && contactData?.data ? (
+                {localLeadData?.contact_id && associatedContact ? (
                   <Tooltip
-                    title={`${contactData.data.find(
-                      (c) => c.id === localLeadData.contact_id
-                    )?.address || ""
-                      } ${contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.city
-                        ? `, ${contactData.data.find(
-                          (c) => c.id === localLeadData.contact_id
-                        )?.city
-                        }`
-                        : ""
-                      }${contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.state
-                        ? `, ${contactData.data.find(
-                          (c) => c.id === localLeadData.contact_id
-                        )?.state
-                        }`
-                        : ""
-                      }${contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.country
-                        ? `, ${contactData.data.find(
-                          (c) => c.id === localLeadData.contact_id
-                        )?.country
-                        }`
-                        : ""
-                      }`}
+                    title={`${associatedContact?.address || ""} ${associatedContact?.city ? `, ${associatedContact?.city}` : ""}${associatedContact?.state ? `, ${associatedContact?.state}` : ""}${associatedContact?.country ? `, ${associatedContact?.country}` : ""}`}
                   >
                     <div className="stat-value truncate">
-                      {contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.address || "-"}
-                      {contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.city &&
-                        `, ${contactData.data.find(
-                          (c) => c.id === localLeadData.contact_id
-                        )?.city
-                        }`}
-                      {contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.state &&
-                        `, ${contactData.data.find(
-                          (c) => c.id === localLeadData.contact_id
-                        )?.state
-                        }`}
-                      {contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.country &&
-                        `, ${contactData.data.find(
-                          (c) => c.id === localLeadData.contact_id
-                        )?.country
-                        }`}
+                      {associatedContact?.address || "-"}
+                      {associatedContact?.city && `, ${associatedContact?.city}`}
+                      {associatedContact?.state && `, ${associatedContact?.state}`}
+                      {associatedContact?.country && `, ${associatedContact?.country}`}
                     </div>
                   </Tooltip>
                 ) : localLeadData?.company_id && companyData?.data?.[0] ? (

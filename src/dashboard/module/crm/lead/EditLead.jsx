@@ -43,8 +43,8 @@ import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import AddCompanyModal from "../companyacoount/CreateCompanyAccount";
 import AddContactModal from "../contact/CreateContact";
 import CommonSelect from "../../../../components/CommonSelect";
-import { useGetCompanyAccountsQuery } from '../companyacoount/services/companyAccountApi';
-import { useGetContactsQuery, useCreateContactMutation } from '../contact/services/contactApi';
+import { useGetCompanyAccountsQuery, useUpdateCompanyAccountMutation, useGetCompanyAccountByIdQuery } from '../companyacoount/services/companyAccountApi';
+import { useGetContactsQuery, useCreateContactMutation, useUpdateContactMutation, useGetContactByIdQuery } from '../contact/services/contactApi';
 import AddStageModal from "../crmsystem/leadstage/AddLeadStageModal";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
@@ -62,10 +62,21 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const dispatch = useDispatch();
   const [updateLead, { isLoading }] = useUpdateLeadMutation();
   const [createContact] = useCreateContactMutation();
+  const [updateContact] = useUpdateContactMutation();
+  const [updateCompanyAccount] = useUpdateCompanyAccountMutation();
 
   const selectedCompanyId = Form.useWatch('company_id', form);
+  const selectedContactId = Form.useWatch('contact_id', form);
+  const pendingLeadStageIdRef = useRef(null);
+
+  const normalizeCompanyId = (value) => {
+    if (!value) return undefined;
+    if (typeof value === 'object') return value.id || value._id || value.value;
+    return value;
+  };
+
   const { data: contactSuggestions } = useGetContactsQuery(
-    { 
+    {
       search: phoneSearchText,
       ...(selectedCompanyId && { company_name: selectedCompanyId })
     },
@@ -77,7 +88,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     if (contact) {
       const selectedCode = countries?.find(c => c.id === contact.phone_code || c.id === form.getFieldValue('phoneCode'));
       let displayPhone = contact.phone || '';
-      
+
       // If the phone number starts with the selected code's phone code, strip it
       if (selectedCode && displayPhone.startsWith(`+${selectedCode.phoneCode.replace('+', '')}`)) {
         displayPhone = displayPhone.replace(`+${selectedCode.phoneCode.replace('+', '')}`, '').trim();
@@ -91,7 +102,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         email: contact.email || '',
         telephone: displayPhone,
         address: contact.address || '',
-        company_id: contact.company_name || undefined,
+        company_id: normalizeCompanyId(contact.company_name) || undefined,
         contact_id: contact.id,
         phoneCode: contact.phone_code || form.getFieldValue('phoneCode')
       });
@@ -108,7 +119,10 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
   const { data: contactsData, refetch: refetchContacts } = useGetContactsQuery();
 
-  const selectedContactId = Form.useWatch('contact_id', form);
+
+  const { data: watchedContact } = useGetContactByIdQuery(selectedContactId, { skip: !selectedContactId });
+  const { data: watchedCompany } = useGetCompanyAccountByIdQuery(selectedCompanyId, { skip: !selectedCompanyId });
+
   const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
   const [isAddContactVisible, setIsAddContactVisible] = useState(false);
   const [isAddStageVisible, setIsAddStageVisible] = useState(false);
@@ -209,9 +223,10 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   // Set form values when initialValues changes
   useEffect(() => {
     if (initialValues) {
+      const { leadStage: _ignoredLeadStage, ...restInitialValues } = initialValues || {};
       // Find contact and its company if contact_id exists
       const existingContact = contactsData?.data?.find(c => c.id === initialValues.contact_id);
-      
+
       // Parse phone number from existingContact
       const contactPhone = existingContact?.phone || '';
       let phoneNumber = contactPhone;
@@ -228,7 +243,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           const digitsOnly = contactPhone.substring(1);
           // Sort countries by phone code length descending to match the longest code first (e.g. +1242 vs +1)
           const sortedCountries = [...(countries || [])].sort((a, b) => b.phoneCode.length - a.phoneCode.length);
-          
+
           for (const country of sortedCountries) {
             const codeDigits = country.phoneCode.replace(/\D/g, '');
             if (digitsOnly.startsWith(codeDigits)) {
@@ -261,6 +276,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
 
       // Set selected pipeline
       setSelectedPipeline(pipelineId);
+      pendingLeadStageIdRef.current = leadStageId || null;
 
       // Parse lead_members from string if needed
       let leadMembers = [];
@@ -295,7 +311,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       }
 
       form.setFieldsValue({
-        ...initialValues,
+        ...restInitialValues,
         firstName: existingContact?.first_name || initialValues.firstName || '',
         lastName: existingContact?.last_name || initialValues.lastName || '',
         email: existingContact?.email || initialValues.email || '',
@@ -305,7 +321,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         leadValue: initialValues.leadValue,
         lead_members: leadMembers,
         pipeline: pipelineId,
-        leadStage: leadStageId,
+        // leadStage is set after filteredStages are ready to avoid showing raw ID
         status: statusId,
         source: sourceId,
         category: categoryId,
@@ -325,6 +341,17 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       }
     }
   }, [initialValues, form, defaultPhoneCode, defaultCurrency, countries, currencies, contactsData, usersResponse, loggedInUser, stagesData]);
+
+  // Set leadStage only after stage options are available (prevents showing raw id)
+  useEffect(() => {
+    const pendingId = pendingLeadStageIdRef.current;
+    if (!pendingId) return;
+    if (!filteredStages?.length) return;
+    const exists = filteredStages.some(s => String(s.id) === String(pendingId));
+    if (!exists) return;
+    form.setFieldValue('leadStage', pendingId);
+    pendingLeadStageIdRef.current = null;
+  }, [filteredStages, form]);
 
   const handleSubmit = async (values) => {
     try {
@@ -359,18 +386,12 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       // A new contact should be created ONLY if NO existing contact is selected
       // AND there is enough information to create a contact
       const hasManualContactInfo = (values.firstName || values.lastName || values.telephone || values.email);
-      const shouldCreateContact = !values.contact_id && hasManualContactInfo;
+      // Auto-create should only happen when we have the minimum required fields.
+      // If user typed partial info, do NOT block lead save with validation errors.
+      const canAutoCreateContact = Boolean(values.firstName && values.telephone);
+      const shouldCreateContact = !values.contact_id && hasManualContactInfo && canAutoCreateContact;
 
       if (shouldCreateContact) {
-        if (!values.firstName) {
-          message.error('First Name is required to auto-create a contact');
-          return;
-        }
-        if (!values.telephone) {
-          message.error('Phone Number is required to auto-create a contact');
-          return;
-        }
-
         try {
           // Create contact first
           const contactData = {
@@ -436,6 +457,43 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       console.log("Submitting form data:", formData);
 
       await updateLead({ id: initialValues.id, data: formData }).unwrap();
+
+      // Sync updates to Contact if it exists
+      if (contactId && !shouldCreateContact) {
+        try {
+          const contactUpdateData = {
+            contact_owner: watchedContact?.contact_owner || loggedInUser?.id || "",
+            first_name: values.firstName || "",
+            last_name: values.lastName || "",
+            email: values.email || "",
+            phone_code: values.phoneCode || defaultPhoneCode,
+            phone: values.telephone ? values.telephone.toString() : "",
+            address: values.address || "",
+            company_name: company_id || ""
+          };
+          await updateContact({ id: contactId, data: contactUpdateData }).unwrap();
+        } catch (contactError) {
+          console.error("Failed to sync contact details:", contactError);
+        }
+      }
+
+      // Sync updates to Company if it exists
+      if (company_id) {
+        try {
+          const companyUpdateData = {
+            account_owner: watchedCompany?.account_owner || loggedInUser?.id || "",
+            company_name: watchedCompany?.company_name || "",
+            email: values.email || "",
+            phone_code: values.phoneCode || defaultPhoneCode,
+            phone_number: values.telephone ? values.telephone.toString() : "",
+            billing_address: values.address || ""
+          };
+          await updateCompanyAccount({ id: company_id, data: companyUpdateData }).unwrap();
+        } catch (companyError) {
+          console.error("Failed to sync company details:", companyError);
+        }
+      }
+
       message.success("Lead updated successfully");
       onCancel();
     } catch (error) {
@@ -514,30 +572,103 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         email: contact.email || '',
         telephone: contact.phone ? contact.phone.replace(/^\+\d+\s/, '') : '',
         address: contact.address || '',
-        company_id: contact.company_name || undefined
+        company_id: normalizeCompanyId(contact.company_name) || undefined
       });
     }
   };
 
   const handleCompanyChange = (companyId) => {
     const prevCompanyId = form.getFieldValue('company_id');
-    form.setFieldsValue({ company_id: companyId || undefined });
+    const normalizedCompanyId = normalizeCompanyId(companyId);
+    const normalizedPrevCompanyId = normalizeCompanyId(prevCompanyId);
+    form.setFieldsValue({ company_id: normalizedCompanyId || undefined });
 
-    const companyChanged = prevCompanyId !== (companyId || undefined);
-    const companyCleared = !companyId;
+    const companyChanged = normalizedPrevCompanyId !== (normalizedCompanyId || undefined);
+    const companyCleared = !normalizedCompanyId;
 
-    // Always clear dependent contact + contact-filled fields when company changes/clears
     if (companyChanged || companyCleared) {
+      // Clear dependent contact info
       form.setFieldsValue({
         contact_id: undefined,
         firstName: '',
         lastName: '',
         email: '',
         telephone: '',
-        address: '',
       });
+
+      if (companyId) {
+        // Try to find company in currently loaded data to fill address immediately
+        const company = companyAccountsData?.data?.find(c => c.id === normalizedCompanyId);
+        if (company) {
+          form.setFieldsValue({
+            address: company.billing_address || '',
+            email: company.email || '',
+            telephone: company.phone_number || '',
+            phoneCode: company.phone_code || form.getFieldValue('phoneCode')
+          });
+
+          // Auto-select first contact for this company
+          const firstContact = contactsData?.data?.find(c => {
+            const cCompanyId = normalizeCompanyId(c.company_name);
+            return cCompanyId === normalizedCompanyId;
+          });
+
+          if (firstContact) {
+            handleContactChange(firstContact.id);
+          }
+        }
+      } else {
+        form.setFieldsValue({ address: '' });
+      }
     }
   };
+
+  // When a company is selected and no contact is selected, auto-select the first contact for that company
+  useEffect(() => {
+    const companyId = normalizeCompanyId(selectedCompanyId);
+    if (!companyId) return;
+    if (selectedContactId) return;
+
+    const firstContact = contactsData?.data?.find((c) => normalizeCompanyId(c.company_name) === companyId);
+    if (firstContact) {
+      form.setFieldsValue({ contact_id: firstContact.id });
+      handleContactChange(firstContact.id);
+    }
+  }, [selectedCompanyId, selectedContactId, contactsData?.data, form]);
+
+  // Auto-fill contact details when contact is selected and data is loaded
+  useEffect(() => {
+    if (watchedContact) {
+      const currentValues = form.getFieldsValue();
+
+      // We only want to auto-fill if the fields are currently empty
+      form.setFieldsValue({
+        firstName: currentValues.firstName || watchedContact.first_name || '',
+        lastName: currentValues.lastName || watchedContact.last_name || '',
+        email: currentValues.email || watchedContact.email || '',
+        telephone: currentValues.telephone || (watchedContact.phone ? watchedContact.phone.replace(/^\+\d+\s/, '') : ''),
+        address: currentValues.address || watchedContact.address || '',
+        company_id: currentValues.company_id || normalizeCompanyId(watchedContact.company_name) || undefined
+      });
+    }
+  }, [watchedContact, form]);
+
+  // Auto-fill company details when company is selected and data is loaded
+  useEffect(() => {
+    if (watchedCompany) {
+      const currentValues = form.getFieldsValue();
+
+      // If no contact is selected, we want to use company info for these fields
+      if (!currentValues.contact_id) {
+        form.setFieldsValue({
+          address: currentValues.address || watchedCompany.billing_address || '',
+          email: currentValues.email || watchedCompany.email || '',
+          telephone: currentValues.telephone || watchedCompany.phone_number || '',
+          phoneCode: currentValues.phoneCode || watchedCompany.phone_code || defaultPhoneCode
+        });
+      }
+    }
+  }, [watchedCompany, form]);
 
   // If company changes and selected contact doesn't belong to it, clear contact + fields
   useEffect(() => {
@@ -546,7 +677,10 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     const contact = contactsData?.data?.find(c => c.id === selectedContactId);
     if (!contact) return;
 
-    if (selectedCompanyId && contact.company_name !== selectedCompanyId) {
+    const contactCompanyId = normalizeCompanyId(contact.company_name);
+    const currentCompanyId = normalizeCompanyId(selectedCompanyId);
+
+    if (currentCompanyId && contactCompanyId !== currentCompanyId) {
       form.setFieldsValue({
         contact_id: undefined,
         firstName: '',
@@ -958,10 +1092,10 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             <CommonSelect
               placeholder={selectedPipeline ? "Select stage" : "Select pipeline first"}
               disabled={!selectedPipeline}
-              options={filteredStages.map(s => ({ 
-                id: s.id, 
+              options={filteredStages.map(s => ({
+                id: s.id,
                 name: s.stageName,
-                color: s.color 
+                color: s.color
               }))}
               onAddClick={handleAddStageClick}
               addButtonText="Add Stage"
@@ -1001,8 +1135,8 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                   style={{ width: '120px' }}
                   options={currencies?.map(currency => ({
                     id: currency.id,
-                    name: currency.currencyIcon === currency.currencyCode 
-                      ? currency.currencyCode 
+                    name: currency.currencyIcon === currency.currencyCode
+                      ? currency.currencyCode
                       : `${currency.currencyIcon} ${currency.currencyCode}`
                   }))}
                   allowClear={false}
@@ -1119,8 +1253,8 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           >
             <CommonSelect
               placeholder="Select company"
-              options={companyAccountsData?.data?.map(c => ({ 
-                id: c.id, 
+              options={companyAccountsData?.data?.map(c => ({
+                id: c.id,
                 name: c.company_name,
                 icon: FiBriefcase
               }))}
@@ -1138,14 +1272,16 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             <CommonSelect
               placeholder="Select contact name"
               options={contactsData?.data?.filter(contact => {
-                const selectedCompanyId = form.getFieldValue('company_id');
-                if (!selectedCompanyId) return true;
-                const companyId = typeof contact.company_name === 'object' ? contact.company_name?._id || contact.company_name?.id : contact.company_name;
-                return companyId === selectedCompanyId;
+                const selectedCompany = normalizeCompanyId(form.getFieldValue('company_id'));
+                if (!selectedCompany) return true;
+                const companyId = normalizeCompanyId(contact.company_name);
+                return companyId === selectedCompany;
               }).map(contact => {
-                const companyId = typeof contact.company_name === 'object' ? contact.company_name?._id || contact.company_name?.id : contact.company_name;
-                const companyName = typeof contact.company_name === 'object' ? contact.company_name?.company_name || contact.company_name?.name : companyAccountsData?.data?.find(c => c.id === companyId)?.company_name;
-                
+                const companyId = normalizeCompanyId(contact.company_name);
+                const companyName = typeof contact.company_name === 'object'
+                  ? (contact.company_name?.company_name || contact.company_name?.name)
+                  : companyAccountsData?.data?.find(c => c.id === companyId)?.company_name;
+
                 return {
                   id: contact.id,
                   name: `${contact.first_name || ''} ${contact.last_name || ''}`,
@@ -1239,9 +1375,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                 noStyle
               >
                 <AutoComplete
-                  style={{ 
-                    ...inputStyle, 
-                    flex: 1, 
+                  style={{
+                    ...inputStyle,
+                    flex: 1,
                     padding: 0
                   }}
                   placeholder="Enter phone number"
@@ -1253,13 +1389,13 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                     label: (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', width: '100%' }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
-                          <div style={{ 
-                            width: '28px', 
-                            height: '28px', 
-                            borderRadius: '50%', 
-                            backgroundColor: '#e6f7ff', 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <div style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '50%',
+                            backgroundColor: '#e6f7ff',
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
                             color: '#1890ff',
                             flexShrink: 0
@@ -1276,18 +1412,18 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                           </div>
                         </div>
                         {c.company_name && (
-                          <Tag 
-                            icon={<FiBriefcase size={10} />} 
-                            color="blue" 
-                            style={{ 
-                              margin: 0, 
-                              borderRadius: '4px', 
+                          <Tag
+                            icon={<FiBriefcase size={10} />}
+                            color="blue"
+                            style={{
+                              margin: 0,
+                              borderRadius: '4px',
                               fontSize: '11px',
                               marginLeft: '8px'
                             }}
                           >
-                            {typeof c.company_name === 'object' 
-                              ? (c.company_name.company_name || c.company_name.name) 
+                            {typeof c.company_name === 'object'
+                              ? (c.company_name.company_name || c.company_name.name)
                               : (companyAccountsData?.data?.find(acc => acc.id === c.company_name)?.company_name || c.company_name)}
                           </Tag>
                         )}

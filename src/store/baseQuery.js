@@ -7,7 +7,7 @@ const baseQuery = fetchBaseQuery({
         // For verification endpoints, use verification token from localStorage
         if (endpoint === 'verifySignup' || endpoint === 'resendSignupOtp') {
             const verificationToken = localStorage.getItem('verificationToken');
-            if (verificationToken) {
+            if (verificationToken && verificationToken !== 'null' && verificationToken !== 'undefined') {
                 headers.set('authorization', `Bearer ${verificationToken}`);
                 return headers;
             }

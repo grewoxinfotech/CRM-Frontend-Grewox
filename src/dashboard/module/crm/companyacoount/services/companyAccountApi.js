@@ -56,6 +56,7 @@ export const companyAccountApi = createApi({
         url: `company-accounts/${id}`,
         method: "GET",
       }),
+      transformResponse: (response) => response.data,
       providesTags: ["CompanyAccounts"],
     }),
   }),

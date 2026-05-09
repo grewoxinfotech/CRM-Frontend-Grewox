@@ -742,6 +742,7 @@ const DealNotes = ({ deal }) => {
                     layout="vertical"
                     onFinish={handleModalSubmit}
                     requiredMark={false}
+                    initialValues={{ notetype: "general" }}
                     style={{
                         padding: "24px",
                     }}
@@ -828,7 +829,6 @@ const DealNotes = ({ deal }) => {
                                 Description
                             </span>
                         }
-                        rules={[{ required: true, message: "Please enter description" }]}
                     >
                         <TextArea
                             placeholder="Enter description"

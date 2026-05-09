@@ -25,9 +25,9 @@
             }
         }
 
-        .add-files-btn {
-            height: 36px;
-            padding: 0;
+        .add-note-btn {
+            height: 40px;
+            padding: 0 20px;
             font-size: 14px;
             border-radius: 8px;
             display: flex;
@@ -42,6 +42,10 @@
                 background: #40a9ff;
                 transform: translateY(-1px);
                 box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+            }
+
+            .add-note-text {
+                font-weight: 500;
             }
         }
     }

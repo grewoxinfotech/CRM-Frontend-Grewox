@@ -62,7 +62,8 @@ export const employeeApi = createApi({
           console.error("Error transforming employees response:", error);
           return { data: [], total: 0, error: true };
         }
-      }
+      },
+      providesTags: ["Employees"]
     }),
     createEmployee: builder.mutation({
       query: (data) => ({

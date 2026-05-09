@@ -18,7 +18,7 @@ import {
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useGetContactsQuery, useUpdateContactMutation } from '../services/contactApi';
+import { useGetContactsQuery, useUpdateContactMutation, useGetContactByIdQuery } from '../services/contactApi';
 import { useGetLeadsQuery } from '../../../crm/lead/services/LeadApi';
 import { useGetDealsQuery } from '../../../crm/deal/services/DealApi';
 import { useGetCompanyAccountsQuery } from '../../companyacoount/services/companyAccountApi';
@@ -37,7 +37,7 @@ const ContactDetails = () => {
     const { contactId } = useParams();
     const navigate = useNavigate();
     const loggedInUser = useSelector(selectCurrentUser);
-    const { data: contactsResponse, isLoading } = useGetContactsQuery();
+    const { data: contact, isLoading: isContactLoading } = useGetContactByIdQuery(contactId);
     const { data: lead } = useGetLeadsQuery();
     const { data: deal } = useGetDealsQuery();
     const { data: companyAccounts } = useGetCompanyAccountsQuery();
@@ -49,14 +49,8 @@ const ContactDetails = () => {
     const leadsData = lead?.data || [];
     const sources = sourcesData?.data || [];
     const dealsData = deal || [];
-    const contacts = Array.isArray(contactsResponse?.data)
-        ? contactsResponse.data
-        : Array.isArray(contactsResponse)
-            ? contactsResponse
-            : [];
 
-    const contact = contacts.find(contact => contact.id === contactId);
-
+    if (isContactLoading) return <div>Loading...</div>;
     if (!contact) return <div>Contact not found</div>;
 
     // Get all leads and separate converted/non-converted
@@ -593,11 +587,6 @@ const ContactDetails = () => {
                     open={editModalVisible}
                     onCancel={() => setEditModalVisible(false)}
                     contactData={contact}
-                    isLoading={isLoading}
-                    loggedInUser={loggedInUser}
-                    contactsResponse={contactsResponse}
-                    companyAccountsResponse={companyAccounts}
-                    isCompanyAccountsLoading={false}
                 />
             )}
         </div>

@@ -105,6 +105,7 @@ const CreateLead = ({
   const [createContact] = useCreateContactMutation();
   const [phoneSearchText, setPhoneSearchText] = useState("");
   const selectedCompanyId = Form.useWatch('company_id', form);
+  const selectedPipelineId = Form.useWatch('pipeline', form);
 
   useEffect(() => {
     if (open) {
@@ -157,6 +158,18 @@ const CreateLead = ({
 
   // Filter stages to only show lead type stages
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
+
+  const normalizeId = (value) => {
+    if (!value) return undefined;
+    if (typeof value === 'object') return value.id || value._id || value.value;
+    return value;
+  };
+
+  const filteredStages = React.useMemo(() => {
+    const pipelineId = normalizeId(selectedPipelineId);
+    if (!pipelineId) return [];
+    return stages.filter((stage) => normalizeId(stage.pipeline) === pipelineId);
+  }, [stages, selectedPipelineId]);
 
   // Get the pending status ID
   const pendingStatus = statusesData?.data?.find(status => status.name.toLowerCase() === "pending");
@@ -246,11 +259,28 @@ const CreateLead = ({
 
   const handleSubmit = async (values) => {
     try {
+      // Ensure pipeline & leadStage are always set (quick mode may not show these fields)
+      const fallbackPipelineId = values.pipeline || pipelines?.[0]?.id;
+      const normalizedPipelineId = normalizeId(fallbackPipelineId);
+
+      if (!normalizedPipelineId) {
+        message.error('Please select a pipeline');
+        return;
+      }
+
+      const stagesForPipeline = stages.filter((s) => normalizeId(s.pipeline) === normalizedPipelineId);
+      const fallbackStageId = values.leadStage || stagesForPipeline?.[0]?.id;
+
+      if (!fallbackStageId) {
+        message.error('No stage found for the selected pipeline');
+        return;
+      }
+
       // Prepare the lead data with auto-logic for contact and defaults
       const leadFormData = {
         leadTitle: values.leadTitle || `${values.firstName || ''} ${values.lastName || ''} - New Lead`.trim(),
-        leadStage: values.leadStage,
-        pipeline: values.pipeline,
+        leadStage: fallbackStageId,
+        pipeline: normalizedPipelineId,
         currency: values.currency,
         leadValue: values.leadValue || 0,
         source: values.source || (isQuickMode ? "manual" : undefined),
@@ -286,7 +316,19 @@ const CreateLead = ({
   // Handle pipeline selection change
   const handlePipelineChange = (value) => {
     setSelectedPipeline(value);
+    // Clear stage when pipeline changes; we'll auto-select a default below
+    form.setFieldValue('leadStage', undefined);
   };
+
+  // Auto-select first stage when pipeline selected (and stage not set)
+  useEffect(() => {
+    const pipelineId = normalizeId(selectedPipelineId);
+    if (!pipelineId) return;
+    const currentStage = form.getFieldValue('leadStage');
+    if (currentStage) return;
+    if (!filteredStages.length) return;
+    form.setFieldValue('leadStage', filteredStages[0].id);
+  }, [selectedPipelineId, filteredStages, form]);
 
   // Handle add pipeline click
   const handleAddPipelineClick = (e) => {
@@ -874,9 +916,7 @@ const CreateLead = ({
               <CommonSelect
                 placeholder="Select stage"
                 disabled={!form.getFieldValue('pipeline')}
-                options={stages
-                  .filter(stage => stage.pipeline === form.getFieldValue('pipeline'))
-                  .map(s => ({ id: s.id, name: s.stageName, color: s.color }))}
+                options={filteredStages.map(s => ({ id: s.id, name: s.stageName, color: s.color }))}
               />
             </Form.Item>
             <Form.Item

@@ -68,6 +68,11 @@ const LeadMembers = ({ leadId }) => {
         }
       })();
 
+    const resolveUser = (memberKey) => {
+        if (!memberKey) return null;
+        return users.find(u => u.id === memberKey || u.username === memberKey) || null;
+    };
+
     // Parse lead members from string
     useEffect(() => {
         if (leadData?.data?.lead_members) {
@@ -75,7 +80,20 @@ const LeadMembers = ({ leadId }) => {
                 const parsedMembers = typeof leadData.data.lead_members === 'string'
                     ? JSON.parse(leadData.data.lead_members)
                     : leadData.data.lead_members;
-                setSelectedMembers(parsedMembers?.lead_members || []);
+                const rawMembers = parsedMembers?.lead_members || [];
+
+                // Normalize + dedupe: if backend stored usernames and ids together, treat them as same user
+                const seen = new Set();
+                const normalized = [];
+                for (const m of rawMembers) {
+                    const user = resolveUser(m);
+                    const key = user?.id || user?.username || String(m);
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    normalized.push(user?.id || m);
+                }
+
+                setSelectedMembers(normalized);
             } catch (error) {
                 console.error('Error parsing lead members:', error);
                 setSelectedMembers([]);
@@ -146,7 +164,7 @@ const LeadMembers = ({ leadId }) => {
             key: 'profile',
             width: 80,
             render: (_, record) => {
-                const user = users.find(u => u.id === record) || {};
+                const user = resolveUser(record) || {};
                 return (
                     <div style={{
                         width: '40px',
@@ -169,7 +187,7 @@ const LeadMembers = ({ leadId }) => {
             title: 'Username',
             key: 'username',
             render: (_, record) => {
-                const user = users.find(u => u.id === record) || {};
+                const user = resolveUser(record) || {};
                 const isMe = user.username === loggedInUser?.username;
                 return (
                     <Text style={{ fontSize: '14px' }}>
@@ -182,7 +200,7 @@ const LeadMembers = ({ leadId }) => {
             title: 'Email',
             key: 'email',
             render: (_, record) => {
-                const user = users.find(u => u.id === record) || {};
+                const user = resolveUser(record) || {};
                 return (
                     <Text style={{ fontSize: '14px', color: '#4B5563' }}>
                         {user.email}
@@ -194,7 +212,7 @@ const LeadMembers = ({ leadId }) => {
             title: 'Role',
             key: 'role',
             render: (_, record) => {
-                const user = users.find(u => u.id === record) || {};
+                const user = resolveUser(record) || {};
                 const userRole = rolesData?.data?.find(role => role.id === user.role_id);
                 const roleStyle = getRoleColor(userRole?.role_name);
 

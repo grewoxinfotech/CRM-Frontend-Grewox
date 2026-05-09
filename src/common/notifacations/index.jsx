@@ -9,6 +9,14 @@ import {
   notification,
 } from "antd";
 import { BiBell, BiCalendarEvent } from "react-icons/bi";
+import { 
+  FiUsers, 
+  FiBriefcase, 
+  FiCheckSquare, 
+  FiCalendar, 
+  FiUser,
+  FiBell 
+} from "react-icons/fi";
 import {
   useGetAllNotificationsQuery,
   useMarkAsReadMutation,
@@ -28,27 +36,27 @@ const SECTIONS = {
   lead: {
     name: "Lead",
     route: "/dashboard/crm/leads",
-    icon: "👥",
+    icon: <FiUsers style={{ marginRight: '8px' }} />,
   },
   deal: {
     name: "Deal",
     route: "/dashboard/crm/deals",
-    icon: "💰",
+    icon: <FiBriefcase style={{ marginRight: '8px' }} />,
   },
   task: {
     name: "Task",
     route: "/dashboard/crm/tasks",
-    icon: "✅",
+    icon: <FiCheckSquare style={{ marginRight: '8px' }} />,
   },
   meeting: {
     name: "Meeting",
     route: "/dashboard/crm/meetings",
-    icon: "📅",
+    icon: <FiCalendar style={{ marginRight: '8px' }} />,
   },
   client: {
     name: "Client",
     route: "/dashboard/crm/clients",
-    icon: "👤",
+    icon: <FiUser style={{ marginRight: '8px' }} />,
   },
 };
 
@@ -285,9 +293,14 @@ const NotificationsComponent = () => {
     {
       key: "1",
       label: (
-        <Badge count={normalNotifications.length} size="small">
-          <span>Notifications</span>
-        </Badge>
+        <span>
+          Notifications
+          <Badge
+            count={normalNotifications.length}
+            size="small"
+            style={{ marginLeft: 8, backgroundColor: "#1890ff" }}
+          />
+        </span>
       ),
       children: (
         <div className="notifications-list">
@@ -296,11 +309,11 @@ const NotificationsComponent = () => {
               ([section, notifications]) => {
                 const sectionConfig = SECTIONS[section] || {
                   name: section,
-                  icon: "🔔",
+                  icon: <FiBell style={{ marginRight: '8px' }} />,
                 };
                 return (
                   <div key={section} className="notification-section">
-                    <Typography.Title level={5}>
+                    <Typography.Title level={5} style={{ display: 'flex', alignItems: 'center' }}>
                       {sectionConfig.icon} {sectionConfig.name} Notifications
                     </Typography.Title>
                     {notifications.map((notification) => (
@@ -324,17 +337,46 @@ const NotificationsComponent = () => {
                               {notification.message}
                             </Typography.Text>
                             {notification.description && (
-                              <div className="notification-description">
+                              <div className="notification-details-list">
                                 {notification.description
-                                  .split(",")
-                                  .map((detail, index) => (
-                                    <div
-                                      key={index}
-                                      className="description-item"
-                                    >
-                                      {detail.trim()}
-                                    </div>
-                                  ))}
+                                  .split(/[\n,]/)
+                                  .filter(item => item.trim())
+                                  .map((detail, index) => {
+                                    const cleanDetail = detail.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]|•/gu, '').trim();
+                                    if (!cleanDetail || cleanDetail.toLowerCase().includes('call details')) return null;
+
+                                    const parts = cleanDetail.split(':');
+                                    const label = parts[0]?.trim();
+                                    let value = parts[1]?.trim();
+
+                                    // Format time if the label is 'time'
+                                    if (label?.toLowerCase() === 'time' && value) {
+                                      try {
+                                        // Handle HH:mm:ss format
+                                        const timeParts = value.split(':');
+                                        if (timeParts.length >= 2) {
+                                          const hours = parseInt(timeParts[0]);
+                                          const minutes = timeParts[1];
+                                          const ampm = hours >= 12 ? 'PM' : 'AM';
+                                          const hours12 = hours % 12 || 12;
+                                          value = `${hours12}:${minutes} ${ampm}`;
+                                        }
+                                      } catch (e) {
+                                        console.error("Error formatting time:", e);
+                                      }
+                                    }
+
+                                    let valueClass = '';
+                                    if (label?.toLowerCase() === 'priority') valueClass = `priority-${value?.toLowerCase()}`;
+                                    if (label?.toLowerCase() === 'status') valueClass = `status-${value?.toLowerCase()}`;
+
+                                    return (
+                                      <div key={index} className="detail-row">
+                                        <span className="detail-label">{label}</span>
+                                        <span className={`detail-value ${valueClass}`}>{value}</span>
+                                      </div>
+                                    );
+                                  })}
                               </div>
                             )}
                             {(notification.date || notification.time) && (
@@ -390,9 +432,14 @@ const NotificationsComponent = () => {
     {
       key: "2",
       label: (
-        <Badge count={reminders.length} size="small">
-          <span>Reminders</span>
-        </Badge>
+        <span>
+          Reminders
+          <Badge
+            count={reminders.length}
+            size="small"
+            style={{ marginLeft: 8, backgroundColor: "#1890ff" }}
+          />
+        </span>
       ),
       children: (
         <div className="notifications-list">
@@ -409,11 +456,11 @@ const NotificationsComponent = () => {
             ).map(([section, sectionReminders]) => {
               const sectionConfig = SECTIONS[section] || {
                 name: section,
-                icon: "🔔",
+                icon: <FiBell style={{ marginRight: '8px' }} />,
               };
               return (
                 <div key={section} className="notification-section">
-                  <Typography.Title level={5}>
+                  <Typography.Title level={5} style={{ display: 'flex', alignItems: 'center' }}>
                     {sectionConfig.icon} {sectionConfig.name} Reminders
                   </Typography.Title>
                   {sectionReminders.map((reminder) => (

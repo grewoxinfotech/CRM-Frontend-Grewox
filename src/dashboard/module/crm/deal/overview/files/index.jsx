@@ -156,12 +156,11 @@ const DealFiles = ({ deal }) => {
         </div>
         <Button
           type="primary"
-          icon={<FiPlus />}
+          icon={<FiPlus style={{ fontSize: '18px' }} />}
           onClick={() => setIsModalVisible(true)}
-          className="add-files-btn"
-          style={{height: '40px'}}
+          className="add-note-btn"
         >
-          Upload New File
+          <span className="add-note-text">Upload New File</span>
         </Button>
       </div>
 
@@ -222,7 +221,6 @@ const DealFiles = ({ deal }) => {
         open={isModalVisible}
         onCancel={() => {
           setIsModalVisible(false);
-          form.resetFields();
         }}
         footer={null}
         width={520}
