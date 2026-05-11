@@ -202,9 +202,10 @@ const CreateLead = ({
         setSelectedPipeline(pipelines[0].id);
       }
 
-      // Auto-select first source if available
+      // Auto-select "Manual" source if available, otherwise first source
       if (sourcesData?.data?.length > 0 && !form.getFieldValue('source')) {
-        updates.source = sourcesData.data[0].id;
+        const manualSource = sourcesData.data.find(s => s.name.toLowerCase() === 'manual');
+        updates.source = manualSource ? manualSource.id : sourcesData.data[0].id;
       }
 
       form.setFieldsValue(updates);
@@ -283,7 +284,7 @@ const CreateLead = ({
         pipeline: normalizedPipelineId,
         currency: values.currency,
         leadValue: values.leadValue || 0,
-        source: values.source || (isQuickMode ? "manual" : undefined),
+        source: values.source || (isQuickMode ? "Manual" : undefined),
         category: values.category || (isQuickMode ? undefined : othersCategory?.id),
         status: isQuickMode ? undefined : pendingStatus?.id,
         interest_level: "medium",

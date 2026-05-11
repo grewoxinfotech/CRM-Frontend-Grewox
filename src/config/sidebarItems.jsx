@@ -35,7 +35,8 @@ import {
     FiBox,
     FiHardDrive,
     FiGrid,
-    FiDollarSign
+    FiDollarSign,
+    FiCpu
 } from "react-icons/fi";
 
 export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) => [
@@ -232,6 +233,11 @@ export const getSuperAdminMenuItems = () => [
                 path: '/superadmin/settings/payment-gateway'
             }
         ]
+    },
+    {
+        title: 'AI Management',
+        icon: <FiCpu />,
+        path: '/superadmin/settings/ai'
     },
     {
         title: 'Inquiry',

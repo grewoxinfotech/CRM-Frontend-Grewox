@@ -13,7 +13,7 @@ export const settingsApi = createApi({
             return headers;
         },
     }),
-    tagTypes: ['WhatsappSettings', 'WhatsappInbox', 'Currencies'],
+    tagTypes: ['WhatsappSettings', 'WhatsappInbox', 'Currencies', 'AiSettings', 'AiUsage'],
     endpoints: (builder) => ({
         getAllCurrencies: builder.query({
             query: (params) => ({
@@ -60,6 +60,14 @@ export const settingsApi = createApi({
                 method: 'POST',
                 body: data,
             }),
+        }),
+        getWhatsappTemplates: builder.query({
+            query: () => ({
+                url: '/whatsapp/templates',
+                method: 'GET',
+            }),
+            transformResponse: (response) => response.data,
+            providesTags: ['WhatsappSettings'],
         }),
         getWhatsappMessages: builder.query({
             query: (params) => ({
@@ -108,6 +116,36 @@ export const settingsApi = createApi({
             }),
             invalidatesTags: ['Currencies'],
         }),
+        syncWhatsappTemplates: builder.mutation({
+            query: () => ({
+                url: '/whatsapp/sync-templates',
+                method: 'POST',
+            }),
+        }),
+        getAiSettings: builder.query({
+            query: () => ({
+                url: '/super-admin/ai/settings',
+                method: 'GET',
+            }),
+            transformResponse: (response) => response.data,
+            providesTags: ['AiSettings'],
+        }),
+        updateAiSettings: builder.mutation({
+            query: (data) => ({
+                url: '/super-admin/ai/settings',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['AiSettings'],
+        }),
+        getAiUsageStats: builder.query({
+            query: () => ({
+                url: '/super-admin/ai/usage',
+                method: 'GET',
+            }),
+            transformResponse: (response) => response.data,
+            providesTags: ['AiUsage'],
+        }),
     }),
 });
 
@@ -122,4 +160,9 @@ export const {
     useSendBulkCampaignMutation,
     useSetDefaultCurrencyMutation,
     useWhatsappEmbeddedSignupMutation,
+    useSyncWhatsappTemplatesMutation,
+    useGetWhatsappTemplatesQuery,
+    useGetAiSettingsQuery,
+    useUpdateAiSettingsMutation,
+    useGetAiUsageStatsQuery,
 } = settingsApi;

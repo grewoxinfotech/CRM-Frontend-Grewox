@@ -1,15 +1,24 @@
-import React, { useEffect } from 'react';
-import { Card, Form, Input, Switch, Button, message, Row, Col, Typography, Breadcrumb, Spin } from 'antd';
-import { SaveOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Card, Form, Input, Switch, Button, message, Row, Col, Typography, Breadcrumb, Spin, Divider, List, Tag, Alert, Steps, Space, Tooltip } from 'antd';
+import { 
+    SaveOutlined, ReloadOutlined, WhatsAppOutlined, CheckCircleOutlined, 
+    InfoCircleOutlined, LayoutOutlined, EditOutlined, LockOutlined, 
+    CopyOutlined, LinkOutlined, SettingOutlined, SendOutlined,
+    SyncOutlined, ClockCircleOutlined, CloseCircleOutlined
+} from '@ant-design/icons';
 import { FiHome } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { UnorderedListOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
-import { useGetWhatsappSettingsQuery, useSaveWhatsappSettingsMutation, useWhatsappEmbeddedSignupMutation } from '../services/settingsApi';
-import { BASE_URL } from '../../../../config/config';
-import { FB_APP_ID, FB_CONFIG_ID } from '../../../../config/config';
-import { FacebookOutlined, WhatsAppOutlined } from '@ant-design/icons';
+import { 
+    useGetWhatsappSettingsQuery, 
+    useSaveWhatsappSettingsMutation, 
+    useWhatsappEmbeddedSignupMutation, 
+    useSyncWhatsappTemplatesMutation,
+    useGetWhatsappTemplatesQuery
+} from '../services/settingsApi';
+import { FB_APP_ID, FB_CONFIG_ID, WHATSAPP_WEBHOOK_URL } from '../../../../config/config';
 import './whatsapp.scss';
 
 const { Title, Text } = Typography;
@@ -17,12 +26,29 @@ const { Title, Text } = Typography;
 const WhatsappSettings = () => {
     const [form] = Form.useForm();
     const currentUser = useSelector(selectCurrentUser);
-    const { data: settings, isLoading } = useGetWhatsappSettingsQuery();
+    
+    const { data: settings, isLoading: isSettingsLoading } = useGetWhatsappSettingsQuery();
+    const { data: metaTemplates, isLoading: isMetaTemplatesLoading, refetch: refetchTemplates } = useGetWhatsappTemplatesQuery(undefined, {
+        skip: !settings?.business_id
+    });
+
     const [saveSettings, { isLoading: isSaving }] = useSaveWhatsappSettingsMutation();
     const [embeddedSignup, { isLoading: isConnecting }] = useWhatsappEmbeddedSignupMutation();
+    const [syncTemplates, { isLoading: isSyncing }] = useSyncWhatsappTemplatesMutation();
+    
+    const [isEditing, setIsEditing] = useState(false);
+
+    const webhookUrl = WHATSAPP_WEBHOOK_URL;
+
+    const commonTemplates = [
+        { name: 'welcome_customer_msg', label: 'Welcome Message', category: 'Marketing' },
+        { name: 'follow_up_lead_msg', label: 'Lead Follow-up', category: 'Marketing' },
+        { name: 'meeting_reminder', label: 'Meeting Reminder', category: 'Utility' },
+        { name: 'payment_request', label: 'Payment Request', category: 'Utility' },
+        { name: 'status_update_msg', label: 'Status Update', category: 'Utility' },
+    ];
 
     useEffect(() => {
-        // Load Facebook SDK
         if (!window.FB && FB_APP_ID) {
             window.fbAsyncInit = function() {
                 window.FB.init({
@@ -32,7 +58,6 @@ const WhatsappSettings = () => {
                     version    : 'v21.0'
                 });
             };
-
             (function(d, s, id) {
                 var js, fjs = d.getElementsByTagName(s)[0];
                 if (d.getElementById(id)) return;
@@ -44,32 +69,19 @@ const WhatsappSettings = () => {
     }, []);
 
     const handleEmbeddedSignup = () => {
-        if (!FB_APP_ID) {
-            message.error('Facebook App ID is not configured.');
-            return;
-        }
-
-        if (!window.FB) {
-            message.error('Facebook SDK not loaded yet. Please refresh.');
-            return;
-        }
+        if (!FB_APP_ID) return message.error('Facebook App ID is not configured.');
+        if (!window.FB) return message.error('Facebook SDK not loaded yet. Please refresh.');
 
         window.FB.login((response) => {
             if (response.authResponse) {
-                const code = response.authResponse.code;
-                processEmbeddedSignup(code);
+                processEmbeddedSignup(response.authResponse.code);
             } else {
                 message.error('User cancelled login or did not fully authorize.');
             }
         }, {
-            config_id: FB_CONFIG_ID, // Your Meta config ID from .env
+            config_id: FB_CONFIG_ID,
             response_type: 'code',
             override_default_response_type: true,
-            extras: {
-                setup: {
-                    // Any extra setup params
-                }
-            }
         });
     };
 
@@ -80,23 +92,20 @@ const WhatsappSettings = () => {
                 redirect_uri: 'https://biaxial-lovella-semisuburban.ngrok-free.dev'
             }).unwrap();
             
-            // Populate form with fetched data
+            setIsEditing(true);
             form.setFieldsValue({
                 phone_number_id: res.data.phone_number_id,
                 business_id: res.data.business_id,
                 access_token: res.data.access_token,
             });
-
-            message.success(`Successfully connected ${res.data.display_phone_number || res.data.business_name}! Please click Save to finish.`);
+            message.success(`Successfully connected ${res.data.display_phone_number || res.data.business_name}!`);
         } catch (error) {
-            message.error(error?.data?.message || 'Failed to fetch WhatsApp details from Meta');
+            message.error(error?.data?.message || 'Failed to fetch WhatsApp details');
         }
     };
 
     useEffect(() => {
-        // Generate a unique verify token for this specific client based on username
         const uniqueToken = `raiser_v1_${currentUser?.username || 'user'}`;
-
         if (settings) {
             form.setFieldsValue({
                 phone_number_id: settings.phone_number_id,
@@ -107,9 +116,10 @@ const WhatsappSettings = () => {
                 is_active: settings.is_active,
                 ai_auto_reply: settings.ai_auto_reply !== false,
             });
+            setIsEditing(false);
         } else {
-            // For new setup, provide the username-based token automatically
             form.setFieldValue('verify_token', uniqueToken);
+            setIsEditing(true);
         }
     }, [settings, form, currentUser]);
 
@@ -117,188 +127,250 @@ const WhatsappSettings = () => {
         try {
             await saveSettings(values).unwrap();
             message.success('WhatsApp settings saved successfully!');
+            setIsEditing(false);
         } catch (error) {
-            message.error(error?.data?.message || 'Failed to save WhatsApp settings');
+            message.error(error?.data?.message || 'Failed to save settings');
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="whatsapp-settings-loading">
-                <Spin size="large" />
-            </div>
-        );
-    }
+    const handleSyncTemplates = async () => {
+        try {
+            await syncTemplates().unwrap();
+            message.success('Template synchronization request sent to Meta.');
+            refetchTemplates();
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to sync templates');
+        }
+    };
+
+    const copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text);
+        message.success('Copied to clipboard!');
+    };
+
+    const getTemplateStatusTag = (templateName) => {
+        if (isMetaTemplatesLoading) return <Tag icon={<SyncOutlined spin />} color="processing">Checking...</Tag>;
+        
+        const metaTemplate = metaTemplates?.find(t => t.name === templateName);
+        
+        if (!metaTemplate) return <Tag color="orange">Pending Sync</Tag>;
+        
+        switch (metaTemplate.status) {
+            case 'APPROVED':
+                return <Tag icon={<CheckCircleOutlined />} color="success">Approved</Tag>;
+            case 'REJECTED':
+                return <Tag icon={<CloseCircleOutlined />} color="error">Rejected</Tag>;
+            case 'PENDING':
+                return <Tag icon={<ClockCircleOutlined />} color="warning">In Review</Tag>;
+            default:
+                return <Tag color="blue">{metaTemplate.status}</Tag>;
+        }
+    };
+
+    if (isSettingsLoading) return <div className="whatsapp-settings-loading"><Spin size="large" /></div>;
+
+    const isLocked = !isEditing && settings;
 
     return (
         <div className="whatsapp-settings-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
-                    <Breadcrumb.Item>
-                        <Link to="/dashboard">
-                            <FiHome />
-                            Home
-                        </Link>
-                    </Breadcrumb.Item>
+                    <Breadcrumb.Item><Link to="/dashboard"><FiHome /> Home</Link></Breadcrumb.Item>
                     <Breadcrumb.Item>Settings</Breadcrumb.Item>
                     <Breadcrumb.Item>WhatsApp</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
-            <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div className="page-header">
                 <div className="page-title">
-                    <Title level={2}>WhatsApp Settings</Title>
-                    <Text type="secondary">Configure your WhatsApp Business API credentials</Text>
+                    <Title level={2}>WhatsApp Business API</Title>
+                    <Text type="secondary">Automate your customer communication with official WhatsApp integration</Text>
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="header-actions">
+                    {settings && (
+                        <Button 
+                            icon={isEditing ? <LockOutlined /> : <EditOutlined />} 
+                            onClick={() => setIsEditing(!isEditing)}
+                            size="large"
+                            className={isEditing ? 'btn-active' : ''}
+                        >
+                            {isEditing ? 'Lock Config' : 'Edit Config'}
+                        </Button>
+                    )}
                     <Button 
                         type="primary" 
                         icon={<WhatsAppOutlined />} 
                         size="large"
                         onClick={handleEmbeddedSignup}
                         loading={isConnecting}
-                        style={{ background: '#25D366', borderColor: '#25D366' }}
+                        className="btn-connect"
+                        disabled={isLocked && !isEditing}
                     >
                         Connect WhatsApp
                     </Button>
-                    <Link to="/dashboard/whatsapp/messages">
-                        <Button icon={<UnorderedListOutlined />} size="large">
-                            Open message log
-                        </Button>
-                    </Link>
                 </div>
             </div>
 
             <div className="page-contents">
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSave}
-                    className="settings-form"
-                    initialValues={{ is_active: true, ai_auto_reply: true }}
-                >
+                <Form form={form} layout="vertical" onFinish={handleSave} className="settings-form">
                     <Row gutter={[24, 24]}>
                         <Col xs={24} lg={16}>
-                            <Card className="settings-card">
-                                <Form.Item
-                                    label="Phone Number ID"
-                                    name="phone_number_id"
-                                    rules={[{ required: true, message: 'Please enter Phone Number ID' }]}
-                                    extra="Find this in your Meta App Dashboard under WhatsApp > Getting Started"
-                                >
-                                    <Input placeholder="e.g. 106123456789012" className="settings-input" />
+                            <Card className={`settings-card shadow-sm ${isLocked ? 'card-locked' : ''}`} title={
+                                <Space>
+                                    <SettingOutlined />
+                                    <span>API Credentials</span>
+                                    {isLocked && <Tag color="blue" variant="soft">Secured</Tag>}
+                                </Space>
+                            }>
+                                <Row gutter={16}>
+                                    <Col span={12}>
+                                        <Form.Item label="Phone Number ID" name="phone_number_id" rules={[{ required: true }]}>
+                                            <Input placeholder="e.g. 106123456789012" disabled={isLocked} />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Form.Item label="Business Account ID" name="business_id" rules={[{ required: true }]}>
+                                            <Input placeholder="e.g. 102123456789012" disabled={isLocked} />
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
+
+                                <Form.Item label="Facebook Page ID" name="facebook_page_id" rules={[{ required: true }]}>
+                                    <Input placeholder="e.g. 104567890123456" disabled={isLocked} />
                                 </Form.Item>
 
-                                <Form.Item
-                                    label="WhatsApp Business Account ID"
-                                    name="business_id"
-                                    rules={[{ required: true, message: 'Please enter Business Account ID' }]}
-                                    extra="Find this in your Meta App Dashboard under WhatsApp > Getting Started"
-                                >
-                                    <Input placeholder="e.g. 102123456789012" className="settings-input" />
+                                <Form.Item label="Permanent Access Token" name="access_token" rules={[{ required: true }]}>
+                                    <Input.TextArea placeholder="Enter your system user access token" rows={3} disabled={isLocked} />
                                 </Form.Item>
 
-                                <Form.Item
-                                    label="Facebook Page ID"
-                                    name="facebook_page_id"
-                                    rules={[{ required: true, message: 'Please enter Facebook Page ID' }]}
-                                    extra="Find this in your Facebook Page > About > Page Transparency."
-                                >
-                                    <Input placeholder="e.g. 104567890123456" className="settings-input" />
-                                </Form.Item>
+                                <Divider style={{ margin: '12px 0 24px' }} />
 
-                                <Form.Item
-                                    label="Permanent Access Token"
-                                    name="access_token"
-                                    rules={[{ required: true, message: 'Please enter Access Token' }]}
-                                    extra="Generate a permanent token from Meta Business Settings > System Users"
-                                >
-                                    <Input.TextArea 
-                                        placeholder="Enter your system user access token" 
-                                        className="settings-input"
-                                        rows={4}
-                                    />
-                                </Form.Item>
+                                <Row gutter={24}>
+                                    <Col span={12}>
+                                        <Form.Item label="Webhook Verify Token" name="verify_token" rules={[{ required: true }]}>
+                                            <Input placeholder="Verify token for callback" disabled={isLocked} />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={6}>
+                                        <Form.Item label="Service Status" name="is_active" valuePropName="checked">
+                                            <Switch checkedChildren="Active" unCheckedChildren="Inactive" disabled={isLocked} />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={6}>
+                                        <Form.Item label="AI Auto-Reply" name="ai_auto_reply" valuePropName="checked">
+                                            <Switch checkedChildren="On" unCheckedChildren="Off" />
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
 
-                                <Form.Item
-                                    label="Webhook Verify Token"
-                                    name="verify_token"
-                                    rules={[{ required: true, message: 'Please enter Verify Token' }]}
-                                    extra="Choose a random string and set it in Meta App Dashboard under WhatsApp > Configuration"
-                                >
-                                    <Input placeholder="e.g. my_custom_verify_token" className="settings-input" />
-                                </Form.Item>
+                                {isEditing && (
+                                    <div className="form-actions">
+                                        <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={isSaving} size="large" block>
+                                            Save & Update Configuration
+                                        </Button>
+                                    </div>
+                                )}
+                            </Card>
 
-                                <Form.Item
-                                    label="Status"
-                                    name="is_active"
-                                    valuePropName="checked"
-                                >
-                                    <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
-                                </Form.Item>
-
-                                <Form.Item
-                                    label="AI auto-reply (Gemini)"
-                                    name="ai_auto_reply"
-                                    valuePropName="checked"
-                                    extra="When on, incoming WhatsApp messages get a short AI reply (needs GEMINI_API_KEY on the server). When off, the static thank-you template is used."
-                                >
-                                    <Switch checkedChildren="On" unCheckedChildren="Off" />
-                                </Form.Item>
-
-                                <div className="form-actions">
+                            <Card 
+                                title={<Space><LayoutOutlined /> <span>Message Templates</span></Space>} 
+                                className="templates-card shadow-sm" 
+                                style={{ marginTop: '24px' }}
+                                extra={<Button size="small" type="link" icon={<SyncOutlined />} onClick={() => refetchTemplates()} loading={isMetaTemplatesLoading}>Refresh Status</Button>}
+                            >
+                                <div style={{ marginBottom: '24px' }}>
+                                    <Text type="secondary">
+                                        Professional templates for every stage of your customer journey. Sync these to your Meta account to start using them.
+                                    </Text>
+                                </div>
+                                <List
+                                    itemLayout="horizontal"
+                                    dataSource={commonTemplates}
+                                    renderItem={item => (
+                                        <List.Item
+                                            extra={getTemplateStatusTag(item.name)}
+                                        >
+                                            <List.Item.Meta
+                                                title={<Text strong>{item.label}</Text>}
+                                                description={
+                                                    <Space size="small">
+                                                        <Text type="secondary" style={{fontSize: '12px'}}>ID: <code>{item.name}</code></Text>
+                                                        <Tag size="small" bordered={false}>{item.category}</Tag>
+                                                    </Space>
+                                                }
+                                            />
+                                        </List.Item>
+                                    )}
+                                />
+                                <div style={{ marginTop: '24px' }}>
                                     <Button 
                                         type="primary" 
-                                        htmlType="submit" 
-                                        icon={<SaveOutlined />}
-                                        loading={isSaving}
+                                        block 
+                                        icon={<ReloadOutlined />} 
+                                        onClick={handleSyncTemplates} 
+                                        loading={isSyncing}
                                         size="large"
+                                        disabled={!settings}
+                                        className="btn-sync"
                                     >
-                                        Save Settings
+                                        Sync Templates to Meta Account
                                     </Button>
                                 </div>
                             </Card>
                         </Col>
                         
                         <Col xs={24} lg={8}>
-                            <Card title="Webhook Information" className="info-card">
-                                <Text type="secondary">Use this URL in your Meta Developer Portal:</Text>
-                                <div className="webhook-url-box">
-                                    <code>https://api.raiser.in/api/v1/whatsapp/webhook</code>
-                                </div>
-                                <div style={{ marginTop: '16px' }}>
-                                    <Title level={5}>WhatsApp Setup Guide:</Title>
-                                    
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <Text strong style={{ color: '#1890ff' }}>Step 1: Meta Portal Configuration</Text>
-                                        <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
-                                            <li>Go to Meta Developers portal & select your App.</li>
-                                            <li>Set Callback URL to the one shown above.</li>
-                                            <li>Set Verify Token to the one generated in form.</li>
-                                            <li>Subscribe to <Text code>messages</Text> field.</li>
-                                        </ul>
-                                    </div>
-
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <Text strong style={{ color: '#eb2f96' }}>Step 2: Meta Lead Ads Setup (Crucial)</Text>
-                                        <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
-                                            <li><b>1. App Dashboard:</b> Go to Meta App {'>'} Webhooks. Select 'Page' from dropdown.</li>
-                                            <li><b>2. Subscription:</b> Click 'Subscribe to this object' and subscribe to the <Text code>leadgen</Text> field.</li>
-                                            <li><b>3. Permissions:</b> In App Settings, ensure your System User Token has <Text code>leads_retrieval</Text>, <Text code>pages_read_engagement</Text>, and <Text code>pages_show_list</Text> permissions.</li>
-                                            <li><b>4. CRM Connect:</b> Go to Meta Business Suite {'>'} All Tools {'>'} Instant Forms. Click 'CRM Setup' or 'Connected CRM' tab. Search for your Meta App name and click 'Connect' to link it to the Page.</li>
-                                            <li><b>5. Test:</b> Use the <a href="https://developers.facebook.com/tools/lead-ads-testing" target="_blank" rel="noreferrer">Lead Ads Testing Tool</a> to send a test lead and verify it appears in CRM.</li>
-                                        </ul>
-                                    </div>
-
-                                    <div style={{ marginBottom: '16px' }}>
-                                        <Text strong style={{ color: '#722ed1' }}>Step 3: Collect Leads (Automatic)</Text>
-                                        <ul style={{ paddingLeft: '20px', marginTop: '4px' }}>
-                                            <li><b>Auto-Capture:</b> Once a user fills your Meta Lead Ad form, the data is instantly sent to our CRM.</li>
-                                            <li><b>Lead Creation:</b> A new lead will be automatically created in your CRM with all form details.</li>
-                                            <li><b>Centralized:</b> All your leads from Facebook and Instagram Ads are managed in one place.</li>
-                                        </ul>
+                            <Card title={<Space><InfoCircleOutlined /> <span>Quick Setup Guide</span></Space>} className="guide-card shadow-sm">
+                                <div className="webhook-section">
+                                    <Text strong size="small">Webhook Callback URL</Text>
+                                    <div className="webhook-copy-box">
+                                        <Text code ellipsis style={{maxWidth: '80%'}}>{webhookUrl}</Text>
+                                        <Tooltip title="Copy URL">
+                                            <Button type="text" icon={<CopyOutlined />} onClick={() => copyToClipboard(webhookUrl)} />
+                                        </Tooltip>
                                     </div>
                                 </div>
+
+                                <Divider style={{ margin: '20px 0' }} />
+                                
+                                <Steps
+                                    direction="vertical"
+                                    size="small"
+                                    current={-1}
+                                    className="setup-steps-visual"
+                                    items={[
+                                        {
+                                            title: 'Meta App Configuration',
+                                            description: <Text type="secondary" size="small">Go to Meta Developers, set Callback URL and Verify Token. Subscribe to <Text code>messages</Text> field.</Text>,
+                                            icon: <SettingOutlined />,
+                                        },
+                                        {
+                                            title: 'Lead Ads Integration',
+                                            description: <Text type="secondary" size="small">In Meta Business Suite, link your Page to the App and subscribe to <Text code>leadgen</Text> field.</Text>,
+                                            icon: <LinkOutlined />,
+                                        },
+                                        {
+                                            title: 'Verify & Go Live',
+                                            description: <Text type="secondary" size="small">Use the Testing Tool to send a lead. Check logs below to verify data arrival.</Text>,
+                                            icon: <SendOutlined />,
+                                        },
+                                    ]}
+                                />
+
+                                <div style={{ marginTop: '24px' }}>
+                                    <Link to="/dashboard/whatsapp/messages">
+                                        <Button block icon={<UnorderedListOutlined />}>View Live Message Logs</Button>
+                                    </Link>
+                                </div>
+                            </Card>
+
+                            <Card className="ai-status-card shadow-sm" style={{ marginTop: '24px', background: 'linear-gradient(135deg, #f0f7ff 0%, #e6f7ff 100%)', border: 'none' }}>
+                                <Title level={5} style={{ color: '#003a8c' }}><LayoutOutlined /> System Behavior</Title>
+                                <ul style={{ paddingLeft: '20px', fontSize: '13px', color: '#003a8c' }}>
+                                    <li><b>AI Response:</b> Handles inquiries if enabled.</li>
+                                    <li><b>Fallback:</b> Uses <code>welcome_customer_msg</code>.</li>
+                                    <li><b>Logging:</b> All interactions are logged in real-time.</li>
+                                </ul>
                             </Card>
                         </Col>
                     </Row>

@@ -3,12 +3,6 @@
     min-height: 100vh;
 
     .page-breadcrumb {
-        // margin-bottom: 24px;
-        padding: 16px 0px;
-        // background: white;
-        border-radius: 12px;
-        // box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-
         .ant-breadcrumb {
             font-size: 14px;
 
@@ -118,7 +112,18 @@
     }
 }
 
-.overview-card {
+.pointer-rows {
+  .ant-table-row {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: #f8fafc !important;
+    }
+  }
+}
+
+.lead-overview-page {
     margin-bottom: 24px;
     border-radius: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);

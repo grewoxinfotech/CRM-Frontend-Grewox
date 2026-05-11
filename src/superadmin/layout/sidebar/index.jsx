@@ -13,7 +13,8 @@ import {
     FiEdit3,
     FiBox,
     FiHardDrive,
-    FiHelpCircle
+    FiHelpCircle,
+    FiCpu
 } from 'react-icons/fi';
 import CommonSidebar from '../../../components/Sidebar/Sidebar';
 
@@ -80,6 +81,11 @@ const SuperAdminSidebar = ({ collapsed, onCollapsedChange }) => {
                     path: '/superadmin/settings/payment-gateway'
                 }
             ]
+        },
+        {
+            title: 'AI Management',
+            icon: <FiCpu />,
+            path: '/superadmin/settings/ai'
         },
         {
             title: 'Inquiry',

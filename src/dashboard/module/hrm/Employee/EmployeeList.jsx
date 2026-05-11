@@ -32,7 +32,7 @@ import ResetPasswordModal from "../../../../superadmin/module/company/ResetPassw
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 
-const EmployeeList = ({ employees, onEdit, onDelete, loading }) => {
+const EmployeeList = ({ employees, onEdit, onViewOverview, onDelete, loading }) => {
   const navigate = useNavigate();
   const [adminLogin] = useAdminLoginMutation();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -84,6 +84,12 @@ const EmployeeList = ({ employees, onEdit, onDelete, loading }) => {
   };
 
   const getActionMenuItems = (record) => [
+    {
+      key: "overview",
+      label: "View Overview",
+      icon: <FiEye style={{color: '#1890ff'}}/>,
+      onClick: () => navigate(`/dashboard/hrm/employee/${record.id}`)
+    },
     {
       key: "edit",
       label: "Edit Employee",
@@ -187,8 +193,11 @@ const EmployeeList = ({ employees, onEdit, onDelete, loading }) => {
             showSizeChanger: true,
             showTotal: (total) => `Total ${total} employees`,
         }}
-        className="compact-table"
+        className="compact-table pointer-rows"
         scroll={{ x: 'max-content' }}
+        onRow={(record) => ({
+            onClick: () => navigate(`/dashboard/hrm/employee/${record.id}`),
+        })}
       />
 
       <ResetPasswordModal

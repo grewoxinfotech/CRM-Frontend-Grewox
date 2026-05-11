@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Tag } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RiSendPlane2Fill, RiRobot2Line, RiCloseLine, RiUserLine } from 'react-icons/ri';
 import './AIChatWindow.scss';
@@ -89,7 +90,11 @@ const AIChatWindow = ({ isOpen, onClose }) => {
                             </div>
                             <div className="title-area">
                                 <h3>Grewox CRM AI Assistant</h3>
-                                <span>Online</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span className="status-indicator"></span>
+                                    <span style={{ fontSize: '12px', color: '#64748b' }}>Online</span>
+                                    <Tag color="purple" style={{ fontSize: '10px', borderRadius: '10px', border: 'none', fontWeight: '600' }}>BETA</Tag>
+                                </div>
                             </div>
                         </div>
                         <button className="close-btn" onClick={onClose}>
@@ -137,6 +142,11 @@ const AIChatWindow = ({ isOpen, onClose }) => {
                             <RiSendPlane2Fill size={20} />
                         </button>
                     </form>
+                    <div style={{ textAlign: 'center', padding: '4px 0', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+                        <span style={{ fontSize: '9px', color: '#94a3b8', fontStyle: 'italic' }}>
+                            AI can make mistakes. Please verify important info.
+                        </span>
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>

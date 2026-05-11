@@ -7,11 +7,13 @@ import { useGetRolesQuery } from '../../../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
 import CreateUser from '../../../../user-management/users/CreateUser';
+import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 const { Option } = Select;
 
 const LeadMembers = ({ leadId }) => {
+    const navigate = useNavigate();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [form] = Form.useForm();
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -25,7 +27,6 @@ const LeadMembers = ({ leadId }) => {
         search: '',
     });
 
-    console.log("leadData", leadData)
     const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery({
         page: 1,
         pageSize: -1,
@@ -310,6 +311,10 @@ const LeadMembers = ({ leadId }) => {
                     pagination={false}
                     style={{ padding: '0 24px 24px' }}
                     scroll={{ x: 1000, y: 'hidden' }}
+                    className="pointer-rows"
+                    onRow={(record) => ({
+                        onClick: () => navigate(`/dashboard/hrm/employee/${record}`),
+                    })}
                 />
             </Card>
 

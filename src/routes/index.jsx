@@ -13,6 +13,7 @@ import SuperAdminCurrencies from "../superadmin/module/settings/currencies/index
 import SuperAdminCountries from "../superadmin/module/settings/countries/index.jsx";
 import SuperAdminESignature from "../superadmin/module/settings/eSignature/index.jsx";
 import SuperAdminPaymentGateway from "../superadmin/module/settings/payment-gateway/index.jsx";
+import AiManagement from "../superadmin/module/settings/ai-management/AiManagement.jsx";
 import Currencies from "../dashboard/module/settings/currencies/index.jsx";
 import Countries from "../dashboard/module/settings/countries/index.jsx";
 import ESignature from "../dashboard/module/settings/eSignature/index.jsx";
@@ -83,6 +84,9 @@ import WhatsappSettings from "../dashboard/module/settings/whatsapp/index.jsx";
 import WhatsAppMessages from "../dashboard/module/whatsapp/WhatsAppMessages.jsx";
 import WhatsAppInbox from "../dashboard/module/whatsapp/WhatsAppInbox.jsx";
 import Storage from "../superadmin/module/storage/index.jsx";
+import Project from "../dashboard/module/crm/project/index.jsx";
+import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail.jsx";
+import EmployeeOverview from "../dashboard/module/hrm/Employee/overview/index.jsx";
 
 
 const PermissionRoute = ({ children, permissionKey }) => {
@@ -172,7 +176,16 @@ const routes = createBrowserRouter([
         children: [
           {
             path: "employee",
-            element: <Employee />,
+            children: [
+              {
+                path: "",
+                element: <Employee />,
+              },
+              {
+                path: ":employeeId",
+                element: <EmployeeOverview />,
+              },
+            ],
           },
           {
             path: "payroll",
@@ -286,19 +299,19 @@ const routes = createBrowserRouter([
               },
             ],
           },
-          // {
-          //   path: "project",
-          //   children: [
-          //     {
-          //       path: "",
-          //       element: <Project />,
-          //     },
-          //     {
-          //       path: ":projectId",
-          //       element: <ProjectDetail />,
-          //     },
-          //   ],
-          // },
+          {
+            path: "project",
+            children: [
+              {
+                path: "",
+                element: <Project />,
+              },
+              {
+                path: ":projectId",
+                element: <ProjectDetail />,
+              },
+            ],
+          },
           {
             path: "company-account",
             children: [
@@ -541,6 +554,10 @@ const routes = createBrowserRouter([
       {
         path: "settings/payment-gateway",
         element: <SuperAdminPaymentGateway />,
+      },
+      {
+        path: "settings/ai",
+        element: <AiManagement />,
       },
       {
         path: "inquiry",

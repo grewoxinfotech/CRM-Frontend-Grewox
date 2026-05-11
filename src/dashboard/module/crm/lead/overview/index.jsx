@@ -5,13 +5,15 @@ import {
   Tabs,
   Breadcrumb,
   Button,
-  Typography,
+  Table,
   Tag,
+  Typography,
+  message,
   Space,
+  Progress,
   Row,
   Col,
   Descriptions,
-  message,
   Tooltip,
 } from "antd";
 import {
@@ -40,6 +42,7 @@ import {
   FiEdit2,
   FiCpu,
 } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import { useGetLeadQuery, useGetLeadsQuery, useUpdateLeadMutation } from "../services/LeadApi";
 import {
   useGetAllCurrenciesQuery,
@@ -67,6 +70,7 @@ import LeadFiles from "./files";
 import LeadMembers from "./members";
 import LeadFollowup from "./followup/index.jsx";
 import LeadAI from "./ai";
+import LeadWhatsapp from "./LeadWhatsapp.jsx";
 import PageHeader from "../../../../../components/PageHeader";
 import "./LeadOverview.scss";
 
@@ -1331,11 +1335,35 @@ const LeadOverview = () => {
     {
       key: "ai",
       label: (
-        <span>
-          <FiCpu /> AI Assistant
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          <FiCpu style={{ marginRight: '8px' }} /> 
+          AI Assistant
+          <Tag 
+            color="purple" 
+            style={{ 
+              fontSize: '10px', 
+              marginLeft: '8px', 
+              borderRadius: '10px',
+              border: 'none',
+              fontWeight: '600',
+              padding: '0 8px',
+              lineHeight: '18px'
+            }}
+          >
+            BETA
+          </Tag>
         </span>
       ),
       children: <LeadAI leadId={leadId} leadData={localLeadData} />,
+    },
+    {
+      key: "whatsapp",
+      label: (
+        <span>
+          <FaWhatsapp style={{ color: '#25D366', marginRight: '6px' }} /> WhatsApp
+        </span>
+      ),
+      children: <LeadWhatsapp leadId={leadId} />,
     }
   ], [localLeadData, pipelineStages, handleStageUpdate, isUpdatingLead, setIsEditModalOpen]);
 
@@ -1344,7 +1372,56 @@ const LeadOverview = () => {
   return (
     <div className="project-page">
       <PageHeader
-        title={localLeadData?.leadTitle || "Lead Details"}
+        title={
+          <Space size="middle">
+            {localLeadData?.leadTitle || "Lead Details"}
+            {localLeadData?.lead_score !== undefined && (
+              <Tooltip title={`AI Lead Score: ${localLeadData.lead_score}%`}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(24, 144, 255, 0.05)',
+                  padding: '2px 10px',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(24, 144, 255, 0.2)',
+                  gap: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                }}>
+                  <div style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    background: localLeadData.lead_score > 70 ? '#52c41a' : localLeadData.lead_score > 40 ? '#faad14' : '#ff4d4f',
+                    boxShadow: `0 0 8px ${localLeadData.lead_score > 70 ? '#52c41a80' : localLeadData.lead_score > 40 ? '#faad1480' : '#ff4d4f80'}`
+                  }} />
+                  <span style={{ 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    color: '#475569',
+                    letterSpacing: '0.5px'
+                  }}>
+                    LEAD SCORE: <span style={{ color: '#1e293b', fontSize: '14px' }}>{localLeadData.lead_score}</span>
+                  </span>
+                  <Tag 
+                    color="blue" 
+                    style={{ 
+                      margin: 0, 
+                      fontSize: '10px', 
+                      borderRadius: '4px', 
+                      border: 'none', 
+                      background: 'rgba(24, 144, 255, 0.1)',
+                      color: '#096dd9',
+                      fontWeight: 'bold',
+                      padding: '0 4px'
+                    }}
+                  >
+                    AI
+                  </Tag>
+                </div>
+              </Tooltip>
+            )}
+          </Space>
+        }
         subtitle="Manage lead details and activities"
         breadcrumbItems={[
           {

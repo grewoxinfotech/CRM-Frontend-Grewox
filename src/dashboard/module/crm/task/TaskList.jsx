@@ -75,9 +75,12 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             render: (status) => {
                 let color = 'default';
                 if (status === 'pending') color = 'warning';
-                if (status === 'in_progress') color = 'processing';
+                if (status === 'in_progress' || status === 'in-progress') color = 'processing';
                 if (status === 'completed') color = 'success';
-                return <Tag color={color} className="status-tag">{status}</Tag>;
+                if (status === 'not_started' || status === 'not-started') color = 'default';
+
+                const displayStatus = status?.replace(/[_-]/g, ' ').toUpperCase() || 'N/A';
+                return <Tag color={color} className="status-tag">{displayStatus}</Tag>;
             }
         },
         {
@@ -90,7 +93,9 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 if (priority === 'high' || priority === 'highest') color = 'error';
                 if (priority === 'medium') color = 'warning';
                 if (priority === 'low') color = 'success';
-                return <Tag color={color} className="status-tag">{priority}</Tag>;
+
+                const displayPriority = priority?.replace(/[_-]/g, ' ').toUpperCase() || 'N/A';
+                return <Tag color={color} className="status-tag">{displayPriority}</Tag>;
             }
         },
         {

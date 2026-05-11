@@ -8,3 +8,4 @@ export const APP_CONFIG = {
 
 export const FB_APP_ID = import.meta.env.VITE_FB_APP_ID;
 export const FB_CONFIG_ID = import.meta.env.VITE_FB_CONFIG_ID;
+export const WHATSAPP_WEBHOOK_URL = import.meta.env.VITE_WHATSAPP_WEBHOOK_URL || 'https://api.grewoxinfotech.com/api/v1/whatsapp/webhook';

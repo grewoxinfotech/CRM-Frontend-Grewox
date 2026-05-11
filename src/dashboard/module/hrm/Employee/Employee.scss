@@ -326,26 +326,12 @@
 
     .employee-table-card {
         @include hover-shadow;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
-
-        .ant-table-wrapper {
-            .ant-table {
-                .ant-table-thead>tr>th {
-                    background: #fafafa;
-                    font-weight: 600;
-                    color: #262626;
-                }
-
                 .ant-table-tbody>tr>td {
                     vertical-align: middle;
                 }
             }
         }
-    }
-}
-
+ 
 // Search Popover Styles
 .search-popover {
     .ant-popover-inner {
@@ -1107,5 +1093,16 @@
 
     &:active {
         background: rgba(0, 0, 0, 0.08);
+    }
+}
+
+.pointer-rows {
+    .ant-table-row {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            background-color: #f8fafc !important;
+        }
     }
 }

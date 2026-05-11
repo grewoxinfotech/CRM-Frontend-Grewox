@@ -36,6 +36,7 @@ import LeadCard from "./LeadCard";
 import LeadList from "./LeadList";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import EditLead from "./EditLead";
+import ImportLeadsModal from "./import/ImportLeadsModal";
 import PageHeader from "../../../../components/PageHeader";
 import { useDeleteLeadMutation, useGetLeadsQuery } from "./services/LeadApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
@@ -65,6 +66,7 @@ const Lead = () => {
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [viewMode, setViewMode] = useState("table");
   const [searchText, setSearchText] = useState("");
@@ -353,18 +355,27 @@ const Lead = () => {
           ]
         }}
         extraActions={
-          <DatePicker.RangePicker
-            value={dateRange}
-            onChange={(dates) => {
-              setDateRange(dates);
-              setPagination(prev => ({ ...prev, current: 1 }));
-            }}
-            style={{
-              borderRadius: '8px',
-              height: '30px',
-              width: '260px'
-            }}
-          />
+          <Space size={12}>
+            <Button
+              icon={<FiDownload style={{ transform: 'rotate(180deg)' }} />}
+              onClick={() => setIsImportModalOpen(true)}
+              style={{ borderRadius: '8px', height: '30px' }}
+            >
+              Import
+            </Button>
+            <DatePicker.RangePicker
+              value={dateRange}
+              onChange={(dates) => {
+                setDateRange(dates);
+                setPagination(prev => ({ ...prev, current: 1 }));
+              }}
+              style={{
+                borderRadius: '8px',
+                height: '30px',
+                width: '260px'
+              }}
+            />
+          </Space>
         }
       />
 
@@ -416,6 +427,11 @@ const Lead = () => {
           </>
         )}
       </Card>
+
+      <ImportLeadsModal
+        open={isImportModalOpen}
+        onCancel={() => setIsImportModalOpen(false)}
+      />
 
       <CreateLead
         open={isModalOpen}

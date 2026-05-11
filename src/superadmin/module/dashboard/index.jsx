@@ -13,25 +13,11 @@ import { Link } from 'react-router-dom';
 import { useGetAllCompaniesQuery } from '../company/services/companyApi';
 import { useGetAllPlansQuery } from '../plans/services/planApi';
 import { useGetAllSubscribedUsersQuery } from '../SubscribedUser/services/SubscribedUserApi';
-import CountUp from 'react-countup';
 import PageHeader from '../../../components/PageHeader';
+import StatCard from '../../../components/StatCard';
 import './dashboard.scss';
 
 const { Title, Text } = Typography;
-
-const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.5 }
-};
-
-const staggerContainer = {
-    animate: {
-        transition: {
-            staggerChildren: 0.1
-        }
-    }
-};
 
 const SuperAdminDashboard = () => {
     const user = useSelector(selectCurrentUser);
@@ -55,42 +41,14 @@ const SuperAdminDashboard = () => {
 
     const mostPurchasedPlan = plansData?.data?.[0]?.name || 'Basic';
 
-    const statsCards = [
-        {
-            title: 'Total Companies',
-            value: totalClients,
-            description: 'Total registered clients',
-            icon: <FiUsers />,
-            iconGradient: 'linear-gradient(135deg, #1890ff, #096dd9)',
-            color: '#1890ff',
-            tag: `Paid Users: ${activeSubscriptions}`
-        },
-        {
-            title: 'Total Plans',
-            value: plansData?.data?.length || 0,
-            description: 'Available subscription plans',
-            icon: <FiCreditCard />,
-            iconGradient: 'linear-gradient(135deg, #722ed1, #531dab)',
-            color: '#722ed1',
-            tag: `Most Purchase Plan: ${mostPurchasedPlan}`
-        },
-        {
-            title: 'Total Revenue',
-            value: totalRevenue,
-            description: 'Revenue from active subscriptions',
-            icon: <FiDollarSign />,
-            iconGradient: 'linear-gradient(135deg, #52c41a, #389e0d)',
-            color: '#52c41a',
-            tag: `Total Order Amount: ₹${totalRevenue.toLocaleString()}`
-        },
-    ];
-
     return (
         <motion.div
             className="dashboard-container"
             initial="initial"
             animate="animate"
-            variants={staggerContainer}
+            variants={{
+                animate: { transition: { staggerChildren: 0.1 } }
+            }}
         >
             <PageHeader
                 title="Overview"
@@ -108,46 +66,36 @@ const SuperAdminDashboard = () => {
                 ]}
             />
 
-            <Row gutter={[24, 24]}>
-                {statsCards.map((card, index) => (
-                    <Col xs={24} lg={8} key={index}>
-                        <motion.div variants={fadeInUp}>
-                            <Card className="stats-card">
-                                <div className="stats-content">
-                                    <div className="stats-header">
-                                        <div
-                                            className="icon-wrapper"
-                                            style={{ background: card.iconGradient }}
-                                        >
-                                            {card.icon}
-                                        </div>
-                                        <div
-                                            className="tag-wrapper"
-                                            style={{ color: card.color }}
-                                        >
-                                            {card.tag}
-                                        </div>
-                                    </div>
-                                    <div className="stats-info">
-                                        <h3>{card.title}</h3>
-                                        <div className="stats-value" style={{ color: card.color }}>
-                                            {card.title === 'Total Revenue' && '₹'}
-                                            <CountUp
-                                                start={0}
-                                                end={card.value}
-                                                duration={2}
-                                                separator=","
-                                                decimal="."
-                                                decimals={card.title === 'Total Revenue' ? 2 : 0}
-                                            />
-                                        </div>
-                                        <p>{card.description}</p>
-                                    </div>
-                                </div>
-                            </Card>
-                        </motion.div>
-                    </Col>
-                ))}
+            <Row gutter={[12, 12]}>
+                <StatCard 
+                    icon={<FiUsers />}
+                    title="Total Companies"
+                    value={totalClients}
+                    subtitle="Total registered clients"
+                    tag={`Paid Users: ${activeSubscriptions}`}
+                    color="#1890ff"
+                    gradient="linear-gradient(135deg, #1890ff, #096dd9)"
+                />
+                <StatCard 
+                    icon={<FiCreditCard />}
+                    title="Total Plans"
+                    value={plansData?.data?.length || 0}
+                    subtitle="Available subscription plans"
+                    tag={`Most Purchase Plan: ${mostPurchasedPlan}`}
+                    color="#722ed1"
+                    gradient="linear-gradient(135deg, #722ed1, #531dab)"
+                />
+                <StatCard 
+                    icon={<FiDollarSign />}
+                    title="Total Revenue"
+                    value={totalRevenue}
+                    subtitle="Revenue from active subscriptions"
+                    tag={`Total Order Amount: ₹${totalRevenue.toLocaleString()}`}
+                    color="#52c41a"
+                    gradient="linear-gradient(135deg, #52c41a, #389e0d)"
+                    prefix="₹"
+                    decimals={2}
+                />
             </Row>
         </motion.div>
     );

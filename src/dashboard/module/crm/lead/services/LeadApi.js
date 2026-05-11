@@ -155,6 +155,15 @@ export const leadApi = createApi({
       }),
       invalidatesTags: ["Lead"],
     }),
+    bulkImportLeads: builder.mutation({
+      query: (data) => ({
+        url: "/leads/bulk-import",
+        method: "POST",
+        body: data,
+        formData: true,
+      }),
+      invalidatesTags: ["Lead"],
+    }),
   }),
 });
 
@@ -174,4 +183,5 @@ export const {
   useUpdateFollowupMutation,
   useDeleteFollowupMutation,
   useDeleteLeadFileMutation,
+  useBulkImportLeadsMutation,
 } = leadApi;

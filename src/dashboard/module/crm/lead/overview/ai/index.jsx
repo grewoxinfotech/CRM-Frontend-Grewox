@@ -120,7 +120,12 @@ const LeadAI = ({ leadId, leadData }) => {
     // If it's a structured AI response object, render it
     if (typeof content === 'object') {
       const { strategy, actions, script, source } = content;
-      const actionsList = (actions || []).map(a => a.replace(/^-/, "").trim());
+      const actionsList = (actions || []).map(a => {
+        if (typeof a === 'object' && a !== null) {
+          return `${a.action || a.title || ''} ${a.date ? `- ${a.date}` : ''}`.trim();
+        }
+        return typeof a === 'string' ? a.replace(/^-/, "").trim() : String(a || "");
+      });
       const normalizedSource = (source || "ai").toLowerCase();
       const sourceLabel = normalizedSource === "mixed" ? "Mixed" : normalizedSource === "fallback" ? "Fallback" : "AI";
       const sourceColor = normalizedSource === "mixed" ? "orange" : normalizedSource === "fallback" ? "red" : "green";
@@ -155,14 +160,25 @@ const LeadAI = ({ leadId, leadData }) => {
           <div>
             <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "4px" }}>💬 Script</div>
             <div style={{ background: "#eef2ff", padding: "12px", borderRadius: "8px", border: "1px solid #c7d2fe", color: "#3730a3", fontStyle: "italic" }}>
-              {(script || '').replace(/"/g, "").trim()}
+              {(() => {
+                if (typeof script === 'object' && script !== null) {
+                  return `${script.intro || ''} ${script.body || ''} ${script.callToAction || ''}`.trim();
+                }
+                return typeof script === 'string' ? script.replace(/"/g, "").trim() : String(script || "");
+              })()}
             </div>
             <Button
               size="small"
               icon={<FiMessageSquare />}
               style={{ marginTop: "8px" }}
               onClick={() => {
-                navigator.clipboard.writeText((script || '').replace(/"/g, "").trim());
+                let scriptText = "";
+                if (typeof script === 'object' && script !== null) {
+                  scriptText = `${script.intro || ''} ${script.body || ''} ${script.callToAction || ''}`.trim();
+                } else {
+                  scriptText = typeof script === 'string' ? script.replace(/"/g, "").trim() : String(script || "");
+                }
+                navigator.clipboard.writeText(scriptText);
                 message.success("Script copied!");
               }}
             >
@@ -268,9 +284,14 @@ const LeadAI = ({ leadId, leadData }) => {
         style={{ borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
       >
         <div style={{ marginBottom: "20px" }}>
-          <Text type="secondary">
+          <Text type="secondary" style={{ fontSize: '13px' }}>
             AI has analyzed this lead's data, notes, and activity history to provide you with actionable recommendations.
           </Text>
+          <div style={{ marginTop: '4px' }}>
+            <Text type="danger" style={{ fontSize: '11px', fontStyle: 'italic' }}>
+              * AI can make mistakes. Please verify important information before taking action.
+            </Text>
+          </div>
         </div>
 
         {isLoading ? (
@@ -350,29 +371,46 @@ const LeadAI = ({ leadId, leadData }) => {
                         <div>
                           <Text strong>💡 Strategy</Text>
                           <Paragraph style={{ margin: "4px 0 0 0" }}>
-                            {item.strategy?.replace(/^💡\s*/, "")}
+                            {typeof item.strategy === 'string' ? item.strategy.replace(/^💡\s*/, "") : String(item.strategy || "")}
                           </Paragraph>
                         </div>
 
                         <div>
                           <Text strong>✅ Actions</Text>
                           <ul style={{ paddingLeft: "20px", margin: "4px 0 0 0" }}>
-                            {item.actions?.map((action, i) => (
-                              <li key={i}>{action?.replace(/^✅\s*/, "")}</li>
-                            ))}
+                            {Array.isArray(item.actions) && item.actions.map((action, i) => {
+                              let actionText = "";
+                              if (typeof action === 'object' && action !== null) {
+                                actionText = `${action.action || action.title || ''} ${action.date ? `- ${action.date}` : ''}`.trim();
+                              } else {
+                                actionText = typeof action === 'string' ? action.replace(/^✅\s*/, "") : String(action || "");
+                              }
+                              return <li key={i}>{actionText}</li>;
+                            })}
                           </ul>
                         </div>
 
                         <div style={{ background: "#f0f5ff", padding: "12px", borderRadius: "8px", border: "1px solid #d6e4ff" }}>
                           <Text strong>💬 Suggested Script</Text>
                           <Paragraph style={{ margin: "4px 0 8px 0", fontStyle: "italic" }}>
-                            {item.script?.replace(/^💬\s*/, "")}
+                            {(() => {
+                              if (typeof item.script === 'object' && item.script !== null) {
+                                return `${item.script.intro || ''} ${item.script.body || ''} ${item.script.callToAction || ''}`.trim();
+                              }
+                              return typeof item.script === 'string' ? item.script.replace(/^💬\s*/, "") : String(item.script || "");
+                            })()}
                           </Paragraph>
                           <Button
                             size="small"
                             icon={<FiMessageSquare />}
                             onClick={() => {
-                              navigator.clipboard.writeText(item.script?.replace(/^💬\s*/, ""));
+                              let scriptText = "";
+                              if (typeof item.script === 'object' && item.script !== null) {
+                                scriptText = `${item.script.intro || ''} ${item.script.body || ''} ${item.script.callToAction || ''}`.trim();
+                              } else {
+                                scriptText = typeof item.script === 'string' ? item.script.replace(/^💬\s*/, "") : String(item.script || "");
+                              }
+                              navigator.clipboard.writeText(scriptText);
                               message.success("Script copied!");
                             }}
                           >
@@ -557,6 +595,11 @@ const LeadAI = ({ leadId, leadData }) => {
                 loading={isChatLoading || isThinking || isPlanning}
                 disabled={!chatMessage.trim()}
               />
+            </div>
+            <div style={{ textAlign: 'center', marginTop: '8px' }}>
+              <Text type="secondary" style={{ fontSize: '10px', fontStyle: 'italic' }}>
+                AI-generated responses can be inaccurate. Please verify before use.
+              </Text>
             </div>
           </div>
         </Card>

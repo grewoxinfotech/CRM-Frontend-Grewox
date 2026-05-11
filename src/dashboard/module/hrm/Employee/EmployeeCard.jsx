@@ -81,6 +81,12 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
 
     const getActionMenuItems = (record) => [
         {
+            key: "overview",
+            label: "View Overview",
+            icon: <FiEye />,
+            onClick: () => navigate(`/dashboard/hrm/employee/${record.id}`)
+        },
+        {
             key: "view",
             label: "View Details",
             icon: <FiEye />,
