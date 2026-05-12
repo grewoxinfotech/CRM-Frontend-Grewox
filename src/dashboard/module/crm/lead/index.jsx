@@ -101,9 +101,53 @@ const Lead = () => {
   // Handle automatic form opening
   useEffect(() => {
     if (location.state?.openCreateForm) {
-      // Only set the inquiry_id from the submission
+      const submissionData = location.state.submissionData || {};
+      
+      // Smart helper to find values by keywords OR value patterns
+      const extractValue = (keywords, pattern = null) => {
+        // 1. Try keyword matching on keys
+        const key = Object.keys(submissionData).find(k => 
+          keywords.some(kw => k.toLowerCase().includes(kw.toLowerCase()))
+        );
+        if (key && submissionData[key]) return submissionData[key];
+
+        // 2. If pattern provided, try matching values
+        if (pattern) {
+          const value = Object.values(submissionData).find(v => 
+            v && typeof v === 'string' && pattern.test(v.trim())
+          );
+          if (value) return value;
+        }
+        return null;
+      };
+
+      // Patterns
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const phonePattern = /^(\+?\d{1,4}[\s-])?(?!0+\s+,?$)\d{10}\s*,?$/;
+
+      const fullName = extractValue(['full name', 'first name', 'name', 'participant', 'customer', 'naam', 'user', 'title', 'lead']);
+      const email = extractValue(['email', 'mail'], emailPattern);
+      const phone = extractValue(['phone', 'mobile', 'contact', 'whatsapp', 'number', 'tele'], phonePattern);
+
+      // Split name if possible
+      let firstName = fullName;
+      let lastName = '';
+      if (fullName && typeof fullName === 'string') {
+        const parts = fullName.trim().split(/\s+/);
+        if (parts.length > 1) {
+          firstName = parts[0];
+          lastName = parts.slice(1).join(' ');
+        }
+      }
+
+      // Pre-fill the form data
       const formData = {
         inquiry_id: location.state.formSubmissionId,
+        leadTitle: fullName || `Lead from Form #${location.state.formSubmissionId}`,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        telephone: phone,
       };
 
       // Get the first available currency if not provided

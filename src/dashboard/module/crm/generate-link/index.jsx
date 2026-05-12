@@ -82,7 +82,7 @@ const CustomFormPage = () => {
                 breadcrumbItems={[
                     { title: <Link to="/dashboard"><FiHome style={{ marginRight: "4px" }} /> Home</Link> },
                     { title: "CRM" },
-                    { title: "Custom Forms" },
+                    { title: <span style={{ color: '#1f2937', fontWeight: 500 }}>Custom Forms</span> },
                 ]}
                 searchText={searchText}
                 onSearch={setSearchText}

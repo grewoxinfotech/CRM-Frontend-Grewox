@@ -87,6 +87,8 @@ import Storage from "../superadmin/module/storage/index.jsx";
 import Project from "../dashboard/module/crm/project/index.jsx";
 import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail.jsx";
 import EmployeeOverview from "../dashboard/module/hrm/Employee/overview/index.jsx";
+import Automation from "../dashboard/module/crm/automation/index.jsx";
+
 
 
 const PermissionRoute = ({ children, permissionKey }) => {
@@ -367,8 +369,13 @@ const routes = createBrowserRouter([
             path: "task-calendar",
             element: <TaskCalendar />,
           },
+          {
+            path: "automation",
+            element: <Automation />,
+          },
         ],
       },
+
       {
         path: "purchase",
         children: [

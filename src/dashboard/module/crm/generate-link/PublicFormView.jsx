@@ -99,6 +99,42 @@ const FormCountdown = ({ startDate }) => {
     );
 };
 
+const FormSuccess = ({ onReset, title }) => (
+    <div className="form-status-container success" style={{ padding: '40px 20px', textAlign: 'center' }}>
+        <div 
+            className="status-icon success-animation" 
+            style={{ 
+                background: '#f6ffed', 
+                border: '1px solid #b7eb8f', 
+                color: '#52c41a',
+                width: '64px',
+                height: '64px',
+                fontSize: '32px',
+                margin: '0 auto 20px'
+            }}
+        >
+            <FiCheck />
+        </div>
+        <Title level={3} style={{ color: '#1f2937', marginBottom: '8px' }}>Response Submitted!</Title>
+        <Paragraph style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>
+            Your details for <b>{title}</b> have been recorded.
+        </Paragraph>
+        <Button 
+            type="primary" 
+            onClick={onReset}
+            style={{ 
+                borderRadius: '8px', 
+                height: '40px', 
+                padding: '0 24px',
+                background: '#52c41a',
+                borderColor: '#52c41a'
+            }}
+        >
+            Fill Again
+        </Button>
+    </div>
+);
+
 const PublicFormView = () => {
     const { formId } = useParams();
     const navigate = useNavigate();
@@ -108,6 +144,7 @@ const PublicFormView = () => {
     const [fields, setFields] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const [checkboxStates, setCheckboxStates] = useState({});
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
     // Initialize checkbox states
     useEffect(() => {
@@ -172,7 +209,7 @@ const PublicFormView = () => {
             }).unwrap();
 
             if (response.success) {
-                message.success('Form submitted successfully');
+                setIsSubmitted(true);
                 form.resetFields();
                 setCheckboxStates({});
             }
@@ -425,29 +462,36 @@ const PublicFormView = () => {
             </div>
 
             <Card className="form-card">
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSubmit}
-                    onFieldsChange={onFieldsChange}
-                    className="custom-form"
-                    validateTrigger={['onBlur', 'onChange']}
-                >
-                    {Object.entries(fields).map(([fieldName, field]) =>
-                        renderField(fieldName, field)
-                    )}
+                {isSubmitted ? (
+                    <FormSuccess 
+                        title={formData?.data?.title} 
+                        onReset={() => setIsSubmitted(false)} 
+                    />
+                ) : (
+                    <Form 
+                        form={form}
+                        layout="vertical"
+                        onFinish={handleSubmit}
+                        onFieldsChange={onFieldsChange}
+                        className="custom-form"
+                        validateTrigger={['onBlur', 'onChange']}
+                    >
+                        {Object.entries(fields).map(([fieldName, field]) =>
+                            renderField(fieldName, field)
+                        )}
 
-                    <Form.Item className="form-submit">
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            size="large"
-                            loading={isSubmitting}
-                        >
-                            {isSubmitting ? 'Submitting...' : 'Submit Form'}
-                        </Button>
-                    </Form.Item>
-                </Form>
+                        <Form.Item className="form-submit">
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                size="large"
+                                loading={isSubmitting}
+                            >
+                                {isSubmitting ? 'Submitting...' : 'Submit Form'}
+                            </Button>
+                        </Form.Item>
+                    </Form>
+                )}
             </Card>
         </div>
     );

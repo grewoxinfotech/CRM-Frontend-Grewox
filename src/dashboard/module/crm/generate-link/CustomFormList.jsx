@@ -17,7 +17,10 @@ import {
     FiFileText,
     FiMoreVertical
 } from 'react-icons/fi';
-import { QrcodeOutlined } from '@ant-design/icons';
+import { 
+    QrcodeOutlined, 
+    EyeOutlined 
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
@@ -73,25 +76,80 @@ const CustomFormList = ({ data = [], onEdit, onDelete, loading }) => {
             render: (text) => <Text type="secondary" style={{ fontSize: '12px' }}>{text || '-'}</Text>
         },
         {
+            title: 'Total Inquiry',
+            dataIndex: 'responses_count',
+            key: 'responses_count',
+            align: 'center',
+            render: (count, record) => (
+                <div 
+                    onClick={() => navigate(`/dashboard/crm/custom-form/${record.id}/submissions`)}
+                    style={{ 
+                        background: '#e0e7ff', 
+                        color: '#4338ca', 
+                        padding: '4px 12px', 
+                        borderRadius: '20px', 
+                        fontSize: '12px', 
+                        fontWeight: '700',
+                        display: 'inline-block',
+                        border: '1px solid #c7d2fe',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                    }}
+                    className="responses-badge-clickable"
+                >
+                    {count || 0} Inquiries
+                </div>
+            )
+        },
+        {
+            title: 'Status',
+            dataIndex: 'status',
+            key: 'status',
+            render: (status) => (
+                <Tag color={status === 'active' || status === 1 ? 'success' : 'default'} style={{ borderRadius: '4px', textTransform: 'capitalize' }}>
+                    {status === 'active' || status === 1 ? 'Active' : 'Inactive'}
+                </Tag>
+            )
+        },
+        {
             title: 'Actions',
             key: 'actions',
             width: 80,
             fixed: 'right',
             render: (_, record) => (
-                <Dropdown
-                    menu={{
-                        items: [
-                            { key: 'submissions', icon: <FiEye />, label: 'Submissions', onClick: () => navigate(`/dashboard/crm/custom-form/${record.id}/submissions`) },
-                            { key: 'edit', icon: <FiEdit2 />, label: 'Edit Form', onClick: () => onEdit(record) },
-                            { key: 'copy', icon: <FiLink />, label: 'Copy Link', onClick: () => copyLink(record.id) },
-                            { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
-                        ]
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                >
-                    <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-                </Dropdown>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <Button 
+                        type="primary" 
+                        size="small"
+                        icon={<EyeOutlined />} 
+                        onClick={() => navigate(`/dashboard/crm/custom-form/${record.id}/submissions`)}
+                        style={{ 
+                            background: '#1890ff', 
+                            borderColor: '#1890ff',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            height: '32px',
+                            padding: '0 12px'
+                        }}
+                    >
+                        View Inquiries
+                    </Button>
+                    <Dropdown
+                        menu={{
+                            items: [
+                                { key: 'edit', icon: <FiEdit2 />, label: 'Edit Form', onClick: () => onEdit(record) },
+                                { key: 'copy', icon: <FiLink />, label: 'Copy Link', onClick: () => copyLink(record.id) },
+                                { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
+                            ]
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+                    </Dropdown>
+                </div>
             ),
         },
     ];

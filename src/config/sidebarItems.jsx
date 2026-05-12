@@ -53,6 +53,7 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
         { title: "Contact", icon: <FiFileText />, path: "/dashboard/crm/contact", permission: "dashboards-crm-contact" },
         { title: "Custom Form", icon: <FiFileText />, path: "/dashboard/crm/custom-form", permission: "dashboards-custom-form" },
         { title: "Task", icon: <FiCheckSquare />, path: "/dashboard/crm/tasks", permission: "dashboards-task" },
+        { title: "Automation", icon: <FiSliders />, path: "/dashboard/crm/automation" },
         { title: "Task Calendar", icon: <FiCalendar />, path: "/dashboard/crm/task-calendar", permission: "dashboards-TaskCalendar" },
         { title: "CRM System Setup", icon: <FiSettings />, path: "/dashboard/crm-setup", permission: "dashboards-systemsetup" }
       ].filter(item => !item.permission || checkPermission(item.permission))

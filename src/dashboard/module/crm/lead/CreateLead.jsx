@@ -202,15 +202,15 @@ const CreateLead = ({
         setSelectedPipeline(pipelines[0].id);
       }
 
-      // Auto-select "Manual" source if available, otherwise first source
-      if (sourcesData?.data?.length > 0 && !form.getFieldValue('source')) {
+      // Only set defaults if initialValues are NOT providing them
+      if (!initialValues?.source && sourcesData?.data?.length > 0 && !form.getFieldValue('source')) {
         const manualSource = sourcesData.data.find(s => s.name.toLowerCase() === 'manual');
         updates.source = manualSource ? manualSource.id : sourcesData.data[0].id;
       }
 
       form.setFieldsValue(updates);
     }
-  }, [open, pipelines, sourcesData, currencies, countries, form]);
+  }, [open, pipelines, sourcesData, currencies, countries, form, initialValues]);
 
   useEffect(() => {
     if (initialValues) {

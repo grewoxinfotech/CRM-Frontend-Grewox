@@ -45,7 +45,7 @@ export default function Crmsystem() {
         subtitle={`Configure your platform's ${activeSection.toLowerCase()} architecture`}
         breadcrumbItems={[
             { title: <Link to="/dashboard"><FiHome style={{ marginRight: '4px' }} /> Home</Link> },
-            { title: "CRM Setup" },
+            { title: <span style={{ color: '#1f2937', fontWeight: 500 }}>CRM Setup</span> },
         ]}
         onAdd={() => setIsModalOpen(true)}
         addText={`Add ${activeSection}`}

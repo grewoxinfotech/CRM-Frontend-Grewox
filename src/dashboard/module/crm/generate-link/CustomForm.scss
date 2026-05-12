@@ -719,4 +719,142 @@
         }
     }
 
+
+    // Fields Grid Container
+    .fields-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-top: 20px;
+
+        @media (max-width: 992px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // Field Config Container
+    .field-config-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        &:hover {
+            border-color: #1890ff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            
+            .remove-field-btn {
+                opacity: 1;
+            }
+        }
+
+        .field-row-top {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            
+            .label-input {
+                flex: 1;
+            }
+        }
+
+        .field-row-bottom {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+
+            .type-select {
+                flex: 1;
+            }
+
+            .action-group {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .req-toggle-item {
+                    margin-bottom: 0;
+                    
+                    .ant-form-item-control-input {
+                        min-height: auto;
+                    }
+                }
+
+                .remove-field-btn {
+                    height: 32px;
+                    width: 32px;
+                    padding: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    color: #bfbfbf;
+                    transition: all 0.2s ease;
+                    border: none;
+                    background: transparent;
+                    
+                    &:hover {
+                        background: #fff1f0;
+                        color: #ff4d4f;
+                        transform: scale(1.1);
+                    }
+                }
+
+                .ant-switch {
+                    background: #e2e8f0;
+                    min-width: 65px;
+                    height: 26px;
+                    border: none;
+                    
+                    &.ant-switch-checked {
+                        background: #1890ff;
+                        box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+                    }
+
+                    .ant-switch-inner {
+                        font-size: 10px;
+                        font-weight: 800;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        padding-inline-start: 8px;
+                        padding-inline-end: 8px;
+                    }
+                }
+            }
+        }
+
+        .field-validation-area {
+            margin-top: 4px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px dashed #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+    }
+
+    .add-field-btn {
+        height: 50px;
+        border-radius: 12px;
+        border: 2px dashed #e2e8f0;
+        color: #64748b;
+        font-weight: 500;
+        font-size: 15px;
+        transition: all 0.3s ease;
+
+        &:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+            background: #f0f7ff;
+        }
+    }
 }

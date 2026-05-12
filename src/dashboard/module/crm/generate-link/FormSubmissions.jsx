@@ -7,7 +7,7 @@ import {
     useGetCustomFormByIdQuery,
 } from './services/customFormApi';
 import dayjs from 'dayjs';
-import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiArrowLeft, FiUserPlus, FiCheck, FiChevronRight, FiChevronLeft, FiCalendar, FiUser, FiPhone, FiBriefcase, FiAward, FiMail, FiMapPin, FiClock, FiClipboard, FiFileText } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiArrowLeft, FiUserPlus, FiCheck, FiChevronRight, FiChevronLeft, FiCalendar, FiUser, FiPhone, FiBriefcase, FiAward, FiMail, FiMapPin, FiClock, FiClipboard, FiFileText, FiInfo } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import './CustomForm.scss';
 import { useGetLeadsQuery } from '../lead/services/LeadApi';
@@ -152,11 +152,14 @@ const FormSubmissions = () => {
             return;
         }
 
-        // Navigate to lead page with only the submission ID
+        const parsedSubmission = parseSubmissionData(submission);
+
+        // Navigate to lead page with submission ID and data for pre-filling
         navigate('/dashboard/crm/leads', {
             state: {
                 openCreateForm: true,
-                formSubmissionId: submission.id
+                formSubmissionId: submission.id,
+                submissionData: parsedSubmission.submission_data
             }
         });
 
@@ -284,58 +287,125 @@ const FormSubmissions = () => {
             return 0;
         });
 
+        // Date column
+        const dateColumn = {
+            title: 'Date',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            width: 130,
+            render: (date) => {
+                const day = dayjs(date);
+                const today = dayjs().startOf('day');
+                const yesterday = dayjs().subtract(1, 'day').startOf('day');
+                
+                let tagColor = { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0' };
+                let label = day.format('DD MMM YYYY');
+
+                if (day.isSame(today, 'day')) {
+                    tagColor = { bg: '#f0fdf4', text: '#16a34a', border: '#bcf6d4' };
+                    label = 'Today';
+                } else if (day.isSame(yesterday, 'day')) {
+                    tagColor = { bg: '#eff6ff', text: '#3b82f6', border: '#bfdbfe' };
+                    label = 'Yesterday';
+                }
+
+                return (
+                    <Tag style={{
+                        backgroundColor: tagColor.bg,
+                        color: tagColor.text,
+                        border: `1px solid ${tagColor.border}`,
+                        borderRadius: '6px',
+                        fontWeight: '600',
+                        fontSize: '11px',
+                        padding: '2px 8px',
+                        textTransform: 'uppercase'
+                    }}>
+                        {label}
+                    </Tag>
+                );
+            }
+        };
+
         // Status column
         const statusColumn = {
             title: 'Status',
             key: 'status',
-            width: 120,
+            width: 140,
             fixed: 'right',
             render: (_, record) => {
                 const isConverted = leads?.data?.some(lead => lead.inquiry_id === record.id);
                 return (
-                    <Tag color={isConverted ? 'success' : 'default'} style={{
-                        margin: 0,
-                        borderRadius: '16px',
-                        padding: '4px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        border: 'none',
-                        background: isConverted ? '#e6f4ff' : '#f5f5f5',
-                        color: isConverted ? '#1890ff' : '#666',
-                        height: '24px'
-                    }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {isConverted ? (
                             <>
-                                <FiCheck style={{ fontSize: '14px' }} />
-                                Converted
+                                <FiCheck style={{ color: '#52c41a', fontSize: '16px' }} />
+                                <Text style={{ color: '#52c41a', fontWeight: '500' }}>Converted</Text>
                             </>
-                        ) : 'Not Converted'}
-                    </Tag>
+                        ) : (
+                            <>
+                                <FiInfo style={{ color: '#8c8c8c', fontSize: '16px' }} />
+                                <Text style={{ color: '#8c8c8c', fontWeight: '500' }}>Not Converted</Text>
+                            </>
+                        )}
+                    </div>
                 );
             }
         };
 
         // First 5 fields from sorted list
         const visibleFields = sortedFields.slice(0, 5);
-        const dataColumns = visibleFields.map((field) => ({
-            title: formatFieldName(field),
-            dataIndex: ['submission_data', field],
-            key: field,
-            width: 200,
-            render: (_, record) => {
-                const parsed = parseSubmissionData(record);
-                const value = parsed.submission_data?.[field];
-                return renderCellContent(value, field);
-            }
-        }));
+        const dataColumns = visibleFields.map((field) => {
+            const isName = field.toLowerCase().includes('name');
+            const isPhone = field.toLowerCase().includes('phone') || field.toLowerCase().includes('mobile');
+            
+            return {
+                title: (
+                    <Space size={6}>
+                        {getFieldIcon(field)}
+                        {formatFieldName(field)}
+                    </Space>
+                ),
+                dataIndex: ['submission_data', field],
+                key: field,
+                width: 200,
+                render: (_, record) => {
+                    const parsed = parseSubmissionData(record);
+                    const value = parsed.submission_data?.[field];
+                    
+                    if (isName) {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Avatar size={24} style={{ backgroundColor: '#f0f2f5', color: '#1890ff', fontSize: '12px' }}>
+                                    <FiUser size={12} />
+                                </Avatar>
+                                <Text strong style={{ fontSize: '13px', color: '#1f2937' }}>{renderValue(value)}</Text>
+                            </div>
+                        );
+                    }
+                    
+                    if (isPhone) {
+                        return (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+                                <FiPhone size={12} />
+                                <Text style={{ fontSize: '13px' }}>{renderValue(value)}</Text>
+                            </div>
+                        );
+                    }
+
+                    return renderCellContent(value, field);
+                }
+            };
+        });
 
         // Remaining fields from sorted list
         const remainingFields = sortedFields.slice(5);
         const remainingColumns = remainingFields.map((field) => ({
-            title: formatFieldName(field),
+            title: (
+                <Space size={6}>
+                    {getFieldIcon(field)}
+                    {formatFieldName(field)}
+                </Space>
+            ),
             dataIndex: ['submission_data', field],
             key: field,
             width: 200,
@@ -348,37 +418,28 @@ const FormSubmissions = () => {
 
         // Action column
         const actionColumn = {
-            title: (
-                <div style={{
-                    padding: '0 12px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#262626'
-                }}>
-                    Action
-                </div>
-            ),
+            title: 'Action',
             key: 'actions',
-            width: 100,
+            width: 80,
             fixed: 'right',
+            align: 'center',
             render: (_, record) => (
-                <div className="action-cell">
-                    <Dropdown
-                        menu={getDropdownItems(record)}
-                        trigger={['click']}
-                        placement="bottomRight"
-                    >
-                        <Button
-                            type="text"
-                            icon={<FiMoreVertical style={{ fontSize: '16px' }} />}
-                            className="action-button"
-                        />
-                    </Dropdown>
-                </div>
+                <Dropdown
+                    menu={getDropdownItems(record)}
+                    trigger={['click']}
+                    placement="bottomRight"
+                >
+                    <Button
+                        type="text"
+                        icon={<FiMoreVertical style={{ fontSize: '16px' }} />}
+                        className="action-dropdown-button"
+                    />
+                </Dropdown>
             )
         };
 
         return [
+            dateColumn,
             ...dataColumns,
             ...remainingColumns,
             statusColumn,

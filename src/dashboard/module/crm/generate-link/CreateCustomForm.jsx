@@ -55,6 +55,15 @@ const fieldTypes = [
 const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
     const [form] = Form.useForm();
 
+    const inputStyle = {
+        height: "40px",
+        borderRadius: "10px",
+        padding: "4px 12px",
+        backgroundColor: "#f8fafc",
+        border: "1px solid #e6e8eb",
+        transition: "all 0.3s ease",
+    };
+
     const handleSubmit = async (values) => {
         try {
             // Transform fields array to object format with validation rules
@@ -287,10 +296,9 @@ const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
                     label={
                         <span style={{ fontSize: "14px", fontWeight: "500" }}>
                             <FiMapPin style={{ marginRight: "8px", color: "#1890ff" }} />
-                            Event Location <span style={{ color: '#ff4d4f' }}>*</span>
+                            Event Location <span style={{ fontWeight: "normal", color: "#8c8c8c", fontSize: "12px" }}>(optional)</span>
                         </span>
                     }
-                    rules={[{ required: true, message: "Please enter event location" }]}
                     style={{ marginTop: "22px" }}
                 >
                     <Input
@@ -335,169 +343,138 @@ const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
 
                 <Form.List
                     name="fields"
-                    initialValue={[{ name: '', type: 'text', required: false }]}
-                    style={{ marginTop: "22px" }}
+                    initialValue={[
+                        { name: 'Full Name', type: 'text', required: true },
+                        { name: 'Phone Number', type: 'phone', required: true }
+                    ]}
                 >
                     {(fields, { add, remove }) => (
-                        <>
-                            {fields.map(({ key, name, ...restField }) => {
-                                const selectedType = form.getFieldValue(['fields', name, 'type']) || 'text';
-                                const fieldType = fieldTypes.find(t => t.value === selectedType);
+                        <div style={{ marginTop: "20px" }}>
+                            <div className="fields-grid">
+                                {fields.map(({ key, name, ...restField }) => {
+                                    const selectedType = form.getFieldValue(['fields', name, 'type']) || 'text';
+                                    const fieldType = fieldTypes.find(t => t.value === selectedType);
 
-                                return (
-                                    <div key={key} className="field-config-container">
-                                        <Space style={{ display: 'flex', marginBottom: 8, width: '100%' }} align="baseline">
-                                            <Form.Item
-                                                {...restField}
-                                                name={[name, 'name']}
-                                                rules={[{ required: true, message: 'Missing field name' }]}
-                                                style={{ flex: 1 }}
-                                            >
-                                                <Input
-                                                    placeholder="Field name"
-                                                    style={{
-                                                        borderRadius: "10px",
-                                                        padding: "8px 16px",
-                                                        backgroundColor: "#f8fafc",
-                                                        border: "1px solid #e6e8eb",
-                                                    }}
-                                                />
-                                            </Form.Item>
-                                            <Form.Item
-                                                {...restField}
-                                                name={[name, 'type']}
-                                                rules={[{ required: true, message: 'Missing field type' }]}
-                                                initialValue="text"
-                                            >
-                                                <Select
-                                                    style={{
-                                                        width: 180,
-                                                        borderRadius: "10px",
-                                                    }}
-                                                    placeholder="Field type"
-                                                    onChange={(value) => {
-                                                        // Clear validation values when type changes
-                                                        const currentValues = form.getFieldValue(['fields', name, 'validation']) || {};
-                                                        Object.keys(currentValues).forEach(key => {
-                                                            form.setFieldValue(['fields', name, 'validation', key], undefined);
-                                                        });
-                                                        // Clear options when type changes
-                                                        form.setFieldValue(['fields', name, 'options'], undefined);
-
-                                                        // Force re-render by updating the form
-                                                        form.setFieldsValue({
-                                                            fields: form.getFieldValue('fields')
-                                                        });
-                                                    }}
+                                    return (
+                                        <div key={key} className="field-config-card">
+                                            <div className="field-row-top">
+                                                <Form.Item
+                                                    {...restField}
+                                                    name={[name, 'name']}
+                                                    rules={[{ required: true, message: 'Missing label' }]}
+                                                    style={{ marginBottom: 0 }}
                                                 >
-                                                    {fieldTypes.map(type => (
-                                                        <Option key={type.value} value={type.value}>
-                                                            <Space>
-                                                                {type.icon}
-                                                                {type.label}
-                                                            </Space>
-                                                        </Option>
-                                                    ))}
-                                                </Select>
-                                            </Form.Item>
-                                            <Form.Item
-                                                {...restField}
-                                                name={[name, 'required']}
-                                                valuePropName="checked"
-                                                initialValue={false}
-                                            >
-                                                <Switch checkedChildren="Required" unCheckedChildren="Optional" />
-                                            </Form.Item>
-                                            <Button
-                                                type="text"
-                                                icon={<FiMinus />}
-                                                onClick={() => remove(name)}
-                                                style={{
-                                                    color: "#ff4d4f",
-                                                    borderRadius: "8px",
-                                                }}
-                                            />
-                                        </Space>
+                                                    <Input
+                                                        prefix={<FiFileText style={{ color: '#1890ff' }} />}
+                                                        placeholder="Field Label (e.g. Full Name)"
+                                                        style={{ ...inputStyle, height: '44px' }}
+                                                    />
+                                                </Form.Item>
+                                            </div>
 
-                                        {selectedType && fieldType && fieldType.validations && fieldType.validations.length > 0 && (
-                                            <div className="field-validation-container" style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '10px' }}>
-                                                {fieldType.hasOptions && (
+                                            <div className="field-row-bottom">
+                                                <Form.Item
+                                                    {...restField}
+                                                    name={[name, 'type']}
+                                                    rules={[{ required: true, message: 'Missing type' }]}
+                                                    className="type-select"
+                                                    style={{ marginBottom: 0 }}
+                                                >
+                                                    <Select
+                                                        placeholder="Select Type"
+                                                        style={{ height: '44px' }}
+                                                        onChange={() => {
+                                                            const currentValues = form.getFieldValue(['fields', name, 'validation']) || {};
+                                                            Object.keys(currentValues).forEach(k => {
+                                                                form.setFieldValue(['fields', name, 'validation', k], undefined);
+                                                            });
+                                                            form.setFieldValue(['fields', name, 'options'], undefined);
+                                                            form.setFieldsValue({ fields: form.getFieldValue('fields') });
+                                                        }}
+                                                    >
+                                                        {fieldTypes.map(type => (
+                                                            <Option key={type.value} value={type.value}>
+                                                                <Space>
+                                                                    <span style={{ color: '#1890ff' }}>{type.icon}</span>
+                                                                    <span>{type.label}</span>
+                                                                </Space>
+                                                            </Option>
+                                                        ))}
+                                                    </Select>
+                                                </Form.Item>
+
+                                                <div className="action-group">
                                                     <Form.Item
                                                         {...restField}
-                                                        name={[name, 'options']}
-                                                        label={
-                                                            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                                                                <FiList style={{ marginRight: "8px", color: "#1890ff" }} />
-                                                                Options (comma-separated)
-                                                            </span>
-                                                        }
-                                                        rules={[{ required: true, message: 'Please enter options' }]}
+                                                        name={[name, 'required']}
+                                                        valuePropName="checked"
+                                                        className="req-toggle-item"
                                                     >
-                                                        <Input
-                                                            placeholder="Option 1, Option 2, Option 3"
-                                                            style={{
-                                                                borderRadius: "8px",
-                                                                backgroundColor: "#ffffff",
-                                                            }}
+                                                        <Switch 
+                                                            checkedChildren="Req" 
+                                                            unCheckedChildren="Opt" 
                                                         />
                                                     </Form.Item>
-                                                )}
 
-                                                {fieldType.validations?.map(validation => (
-                                                    <Form.Item
-                                                        key={validation}
-                                                        {...restField}
-                                                        name={[name, 'validation', validation]}
-                                                        label={
-                                                            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                                                                <FiFileText style={{ marginRight: "8px", color: "#1890ff" }} />
-                                                                {validation.charAt(0).toUpperCase() + validation.slice(1)}
-                                                            </span>
-                                                        }
-                                                    >
-                                                        {validation === 'minDate' || validation === 'maxDate' ? (
-                                                            <DatePicker
-                                                                style={{
-                                                                    width: '100%',
-                                                                    borderRadius: "8px",
-                                                                    backgroundColor: "#ffffff",
-                                                                }}
-                                                            />
-                                                        ) : (
-                                                            <InputNumber
-                                                                placeholder={`Enter ${validation}`}
-                                                                min={0}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    borderRadius: "8px",
-                                                                    backgroundColor: "#ffffff",
-                                                                }}
-                                                            />
-                                                        )}
-                                                    </Form.Item>
-                                                ))}
+                                                    <Button
+                                                        type="text"
+                                                        icon={<FiMinus />}
+                                                        className="remove-field-btn"
+                                                        onClick={() => remove(name)}
+                                                    />
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                            <Form.Item>
+
+                                            {(fieldType?.hasOptions || (fieldType?.validations?.length > 0)) && (
+                                                <div className="field-validation-area">
+                                                    {fieldType.hasOptions && (
+                                                        <Form.Item
+                                                            {...restField}
+                                                            name={[name, 'options']}
+                                                            label={<Text strong style={{ fontSize: '12px' }}>Options (comma-separated)</Text>}
+                                                            rules={[{ required: true, message: 'Required' }]}
+                                                            style={{ marginBottom: 0 }}
+                                                        >
+                                                            <Input placeholder="A, B, C" style={{ ...inputStyle, height: '44px' }} />
+                                                        </Form.Item>
+                                                    )}
+
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                                        {fieldType.validations?.map(validation => (
+                                                            <Form.Item
+                                                                key={validation}
+                                                                {...restField}
+                                                                name={[name, 'validation', validation]}
+                                                                label={<Text strong style={{ fontSize: '12px' }}>{validation.charAt(0).toUpperCase() + validation.slice(1)}</Text>}
+                                                                style={{ marginBottom: 0 }}
+                                                            >
+                                                                {validation.includes('Date') ? (
+                                                                    <DatePicker style={{ ...inputStyle, width: '100%', height: '40px' }} />
+                                                                ) : (
+                                                                    <InputNumber style={{ ...inputStyle, width: '100%', height: '40px' }} />
+                                                                )}
+                                                            </Form.Item>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            
+                            <div style={{ marginTop: '20px' }}>
                                 <Button
                                     type="dashed"
-                                    onClick={() => {
-                                        add({ name: '', type: 'text', required: false });
-                                    }}
+                                    onClick={() => add({ name: '', type: 'text', required: false })}
                                     block
                                     icon={<FiPlus />}
-                                    style={{
-                                        borderRadius: "10px",
-                                        height: "44px",
-                                    }}
+                                    className="add-field-btn"
                                 >
-                                    Add Field
+                                    Add New Field
                                 </Button>
-                            </Form.Item>
-                        </>
+                            </div>
+                        </div>
                     )}
                 </Form.List>
 
