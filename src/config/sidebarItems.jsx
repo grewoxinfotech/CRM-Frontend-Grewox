@@ -36,7 +36,9 @@ import {
     FiHardDrive,
     FiGrid,
     FiDollarSign,
-    FiCpu
+    FiCpu,
+    FiLink,
+    FiZap,
 } from "react-icons/fi";
 
 export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) => [
@@ -48,13 +50,14 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
       permission: 'dashboards-crm',
       subItems: [
         { title: "Leads", icon: <FiTarget />, path: "/dashboard/crm/leads", permission: "dashboards-lead" },
+        { title: "Task", icon: <FiCheckSquare />, path: "/dashboard/crm/tasks", permission: "dashboards-task" },
+        { title: "Follow-up", icon: <FiClock />, path: "/dashboard/crm/followups", permission: "dashboards-lead" },
+        { title: "Task Calendar", icon: <FiCalendar />, path: "/dashboard/crm/task-calendar", permission: "dashboards-TaskCalendar" },
+        { title: "Custom Form", icon: <FiFileText />, path: "/dashboard/crm/custom-form", permission: "dashboards-custom-form" },
         { title: "Deals", icon: <FiShoppingBag />, path: "/dashboard/crm/deals", permission: "dashboards-deal" },
         { title: "Company", icon: <FiBriefcase />, path: "/dashboard/crm/company-account", permission: "dashboards-crm-company-account" },
+        { title: "Automation", icon: <FiSliders />, path: "/dashboard/crm/automation", permission: "dashboards-automation" },
         { title: "Contact", icon: <FiFileText />, path: "/dashboard/crm/contact", permission: "dashboards-crm-contact" },
-        { title: "Custom Form", icon: <FiFileText />, path: "/dashboard/crm/custom-form", permission: "dashboards-custom-form" },
-        { title: "Task", icon: <FiCheckSquare />, path: "/dashboard/crm/tasks", permission: "dashboards-task" },
-        { title: "Automation", icon: <FiSliders />, path: "/dashboard/crm/automation" },
-        { title: "Task Calendar", icon: <FiCalendar />, path: "/dashboard/crm/task-calendar", permission: "dashboards-TaskCalendar" },
         { title: "CRM System Setup", icon: <FiSettings />, path: "/dashboard/crm-setup", permission: "dashboards-systemsetup" }
       ].filter(item => !item.permission || checkPermission(item.permission))
     },
@@ -106,10 +109,24 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
       isDropdown: true,
       permission: "dashboards-communication",
       subItems: [
-        { title: "Inbox", icon: <FiMessageSquare />, path: "/dashboard/whatsapp/inbox", permission: "dashboards-communication" },
-        { title: "Business setup", icon: <FiSettings />, path: "/dashboard/settings/whatsapp", permission: "dashboards-communication" },
+        { title: "WhatsApp Chat", icon: <FiMessageSquare />, path: "/dashboard/whatsapp-chat", permission: "dashboards-communication" },
         { title: "Message log", icon: <FiList />, path: "/dashboard/whatsapp/messages", permission: "dashboards-communication" }
       ].filter(item => !item.permission || checkPermission(item.permission))
+    },
+    {
+      title: "Integrations",
+      icon: <FiZap />,
+      isDropdown: true,
+      badge: "NEW",
+      subItems: [
+        { title: "Justdial", icon: <FiGlobe />, path: "/dashboard/integrations/justdial" },
+        { title: "Indiamart", icon: <FiShoppingCart />, path: "/dashboard/integrations/indiamart" },
+        { title: "Google Meet", icon: <FiVideo />, path: "/dashboard/integrations/google-meet" },
+        { title: "Zoom Meet", icon: <FiVideo />, path: "/dashboard/integrations/zoom-meet" },
+        { title: "Meta Ads", icon: <FiTarget />, path: "/dashboard/integrations/meta-ads" },
+        { title: "WhatsApp API", icon: <FiPhone />, path: "/dashboard/settings/whatsapp" },
+        { title: "Website Webhooks", icon: <FiLink />, path: "/dashboard/integrations/webhooks" }
+      ]
     },
     {
       title: "HRM",

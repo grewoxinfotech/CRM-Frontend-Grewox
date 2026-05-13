@@ -43,7 +43,7 @@ import {
   FiCpu,
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
-import { useGetLeadQuery, useGetLeadsQuery, useUpdateLeadMutation } from "../services/LeadApi";
+import { useGetLeadQuery, useGetLeadsQuery, useUpdateLeadMutation, useGetLeadAiSuggestionsQuery } from "../services/LeadApi";
 import {
   useGetAllCurrenciesQuery,
   useGetAllCountriesQuery,
@@ -1129,6 +1129,11 @@ const LeadOverview = () => {
   const { data: sourcesData = [] } = useGetSourcesQuery(currentUser?.id);
   const { data: categoriesData = [] } = useGetCategoriesQuery(currentUser?.id);
   const { data: statusesData = [] } = useGetStatusesQuery(currentUser?.id);
+  
+  // TRIGGER BACKGROUND AI ANALYSIS: This ensures score is updated even if user doesn't click AI tab
+  const { data: aiSuggestionsData, isFetching: isAiAnalyzing } = useGetLeadAiSuggestionsQuery(leadId, {
+    skip: !leadId,
+  });
 
   console.log("asdsads",localLeadData)
 
@@ -1375,51 +1380,57 @@ const LeadOverview = () => {
         title={
           <Space size="middle">
             {localLeadData?.leadTitle || "Lead Details"}
-            {localLeadData?.lead_score !== undefined && (
-              <Tooltip title={`AI Lead Score: ${localLeadData.lead_score}%`}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  background: 'rgba(24, 144, 255, 0.05)',
-                  padding: '2px 10px',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(24, 144, 255, 0.2)',
-                  gap: '8px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+            <Tooltip title={(!localLeadData?.lead_score) ? "AI Analysis pending or low interest" : `AI Lead Score: ${localLeadData.lead_score}%`}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'rgba(24, 144, 255, 0.05)',
+                padding: '2px 10px',
+                borderRadius: '20px',
+                border: '1px solid rgba(24, 144, 255, 0.2)',
+                gap: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+              }}>
+                <div style={{ 
+                  width: '8px', 
+                  height: '8px', 
+                  borderRadius: '50%', 
+                  background: (localLeadData?.lead_score > 70) ? '#52c41a' : (localLeadData?.lead_score > 40) ? '#faad14' : '#ff4d4f',
+                  boxShadow: `0 0 8px ${(localLeadData?.lead_score > 70) ? '#52c41a80' : (localLeadData?.lead_score > 40) ? '#faad1480' : '#ff4d4f80'}`
+                }} />
+                <span style={{ 
+                  fontSize: '12px', 
+                  fontWeight: '600', 
+                  color: '#475569',
+                  letterSpacing: '0.5px'
                 }}>
-                  <div style={{ 
-                    width: '8px', 
-                    height: '8px', 
-                    borderRadius: '50%', 
-                    background: localLeadData.lead_score > 70 ? '#52c41a' : localLeadData.lead_score > 40 ? '#faad14' : '#ff4d4f',
-                    boxShadow: `0 0 8px ${localLeadData.lead_score > 70 ? '#52c41a80' : localLeadData.lead_score > 40 ? '#faad1480' : '#ff4d4f80'}`
-                  }} />
-                  <span style={{ 
-                    fontSize: '12px', 
-                    fontWeight: '600', 
-                    color: '#475569',
-                    letterSpacing: '0.5px'
-                  }}>
-                    LEAD SCORE: <span style={{ color: '#1e293b', fontSize: '14px' }}>{localLeadData.lead_score}</span>
+                  LEAD SCORE: <span style={{ color: '#1e293b', fontSize: '14px' }}>
+                    {isAiAnalyzing 
+                      ? "Analyzing..." 
+                      : (aiSuggestionsData?.data?.score !== undefined && aiSuggestionsData?.data?.score !== null
+                        ? aiSuggestionsData.data.score
+                        : (localLeadData?.lead_score !== null && localLeadData?.lead_score !== undefined 
+                          ? localLeadData.lead_score 
+                          : "0"))}
                   </span>
-                  <Tag 
-                    color="blue" 
-                    style={{ 
-                      margin: 0, 
-                      fontSize: '10px', 
-                      borderRadius: '4px', 
-                      border: 'none', 
-                      background: 'rgba(24, 144, 255, 0.1)',
-                      color: '#096dd9',
-                      fontWeight: 'bold',
-                      padding: '0 4px'
-                    }}
-                  >
-                    AI
-                  </Tag>
-                </div>
-              </Tooltip>
-            )}
+                </span>
+                <Tag 
+                  color="blue" 
+                  style={{ 
+                    margin: 0, 
+                    fontSize: '10px', 
+                    borderRadius: '4px', 
+                    border: 'none', 
+                    background: 'rgba(24, 144, 255, 0.1)',
+                    color: '#096dd9',
+                    fontWeight: 'bold',
+                    padding: '0 4px'
+                  }}
+                >
+                  AI
+                </Tag>
+              </div>
+            </Tooltip>
           </Space>
         }
         subtitle="Manage lead details and activities"
@@ -1439,7 +1450,7 @@ const LeadOverview = () => {
             ),
           },
           {
-            title: localLeadData?.leadTitle || "Lead Details",
+            title: <span style={{ color: '#1f2937', fontWeight: 600 }}>{localLeadData?.leadTitle || "Lead Details"}</span>,
           },
         ]}
         extraActions={

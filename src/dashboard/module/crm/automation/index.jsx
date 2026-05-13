@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Space, message, Card, Switch, Tooltip } from 'antd';
-import { PlusOutlined, DeleteOutlined, ClockCircleOutlined, RocketOutlined, ThunderboltOutlined, FilterOutlined, RightOutlined, EyeOutlined } from '@ant-design/icons';
-import { useGetAutomationsQuery, useCreateAutomationMutation, useSeedDefaultsMutation, useToggleAutomationMutation } from './services/automationApi';
-import { useGetStatusesQuery, useGetCategoriesQuery } from '../crmsystem/souce/services/SourceApi';
+import { Table, Button, Tag, Space, message, Card, Switch, Tooltip, Popconfirm, Typography } from 'antd';
+const { Text } = Typography;
+import { PlusOutlined, DeleteOutlined, ClockCircleOutlined, RocketOutlined, ThunderboltOutlined, FilterOutlined, RightOutlined, EyeOutlined, PlayCircleOutlined, PauseCircleOutlined, EditOutlined } from '@ant-design/icons';
+import { useGetAutomationsQuery, useCreateAutomationMutation, useSeedDefaultsMutation, useToggleAutomationMutation, useDeleteAutomationMutation, useUpdateAutomationMutation } from './services/automationApi';
+import { useGetStatusesQuery, useGetCategoriesQuery, useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
+import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { Form } from 'antd';
@@ -20,8 +22,11 @@ const AutomationPage = () => {
     const [createAutomation] = useCreateAutomationMutation();
     const [seedDefaults, { isLoading: isSeeding }] = useSeedDefaultsMutation();
     const [toggleAutomation] = useToggleAutomationMutation();
+    const [deleteAutomation] = useDeleteAutomationMutation();
+    const [updateAutomation] = useUpdateAutomationMutation();
     
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [editingAutomation, setEditingAutomation] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [selectedAutomation, setSelectedAutomation] = useState(null);
     const [form] = Form.useForm();
@@ -31,21 +36,34 @@ const AutomationPage = () => {
     const { data: statusesResponse } = useGetStatusesQuery(currentUser?.client_id, { skip: !currentUser?.client_id });
     const { data: categoriesResponse } = useGetCategoriesQuery(currentUser?.client_id, { skip: !currentUser?.client_id });
     const { data: leadStagesResponse } = useGetLeadStagesQuery(currentUser?.client_id, { skip: !currentUser?.client_id });
+    const { data: sourcesResponse } = useGetSourcesQuery(currentUser?.client_id, { skip: !currentUser?.client_id });
+    const { data: usersResponse } = useGetUsersQuery();
 
-    const handleCreate = async (values) => {
+    const onFinish = async (values) => {
         try {
-            const formattedValues = {
-                ...values,
-                conditions: JSON.stringify(values.conditions || []),
-                actions: JSON.stringify(values.actions || []),
-            };
-            await createAutomation(formattedValues).unwrap();
-            message.success('Automation created successfully!');
+            if (editingAutomation) {
+                await updateAutomation({ id: editingAutomation.id, ...values }).unwrap();
+                message.success('Automation updated successfully');
+            } else {
+                await createAutomation(values).unwrap();
+                message.success('Automation created successfully');
+            }
             setIsModalVisible(false);
+            setEditingAutomation(null);
             form.resetFields();
         } catch (error) {
-            message.error(error?.data?.message || 'Failed to create automation');
+            message.error(editingAutomation ? 'Failed to update automation' : 'Failed to create automation');
         }
+    };
+
+    const handleEdit = (record) => {
+        setEditingAutomation(record);
+        form.setFieldsValue({
+            ...record,
+            conditions: JSON.parse(record.conditions || '[]'),
+            actions: JSON.parse(record.actions || '[]')
+        });
+        setIsModalVisible(true);
     };
 
     const handleSeedDefaults = async () => {
@@ -62,16 +80,25 @@ const AutomationPage = () => {
             title: 'Workflow Name',
             dataIndex: 'name',
             key: 'name',
-            render: (text) => <b style={{ color: '#1890ff' }}>{text}</b>
+            width: 250,
+            render: (text) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <ThunderboltOutlined style={{ color: '#722ed1' }} />
+                    <span style={{ color: '#1e293b', fontWeight: 600 }}>{text}</span>
+                </div>
+            )
         },
         {
             title: 'Trigger',
             dataIndex: 'triggerType',
             key: 'triggerType',
             render: (type) => (
-                <Tag color="purple" style={{ borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600' }}>
-                    {type.replace(/_/g, ' ')}
-                </Tag>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FilterOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
+                    <Tag color="purple" style={{ borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600', margin: 0, fontSize: '10px' }}>
+                        {type.replace(/_/g, ' ')}
+                    </Tag>
+                </div>
             )
         },
         {
@@ -83,7 +110,7 @@ const AutomationPage = () => {
                 return conditions.length > 0 ? (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {conditions.map((c, i) => (
-                            <Tag key={i} color="cyan" style={{ fontSize: '10px' }}>{c.field} {c.operator} {c.value}</Tag>
+                            <Tag key={i} color="cyan" style={{ fontSize: '10px', fontWeight: 600 }}>{c.field} {c.operator} {c.value}</Tag>
                         ))}
                     </div>
                 ) : <span style={{ color: '#bfbfbf', fontSize: '12px' }}>No Conditions</span>;
@@ -115,7 +142,7 @@ const AutomationPage = () => {
                                             action.type.includes('whatsapp') ? 'green' : 
                                             action.type.includes('task') ? 'blue' : 
                                             action.type.includes('reassign') ? 'volcano' : 'gold'
-                                        } style={{ margin: 0, fontSize: '9px', borderRadius: '3px', fontWeight: 'bold' }}>
+                                        } style={{ margin: 0, fontSize: '9px', borderRadius: '3px', fontWeight: 600 }}>
                                             {action.type === 'update_lead_category' ? 'CATEGORY' : 
                                              action.type === 'update_lead_score' ? 'SCORE' : 
                                              action.type === 'update_lead_status' ? 'STATUS' :
@@ -129,7 +156,10 @@ const AutomationPage = () => {
                                     </div>
                                 </Tooltip>
                                 {index < actions.length - 1 && (
-                                    <RightOutlined style={{ fontSize: '10px', color: '#d9d9d9' }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', margin: '0 -4px' }}>
+                                        <div style={{ width: '12px', height: '1px', background: '#d9d9d9' }}></div>
+                                        <RightOutlined style={{ fontSize: '8px', color: '#bfbfbf' }} />
+                                    </div>
                                 )}
                             </React.Fragment>
                         )) : <Tag>No actions</Tag>}
@@ -138,9 +168,47 @@ const AutomationPage = () => {
             }
         },
         {
+            title: 'Performance & Usage',
+            key: 'performance',
+            width: 180,
+            render: (_, record) => {
+                const totalRuns = parseInt(record.totalRuns || 0);
+                const successRate = totalRuns > 0 ? (parseInt(record.successCount || 0) / totalRuns) * 100 : 0;
+                const isHighPerforming = totalRuns > 10 && successRate > 90;
+                
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Text strong style={{ fontSize: '13px' }}>{totalRuns} Runs</Text>
+                            {isHighPerforming && (
+                                <Tag color="gold" style={{ fontSize: '9px', margin: 0, borderRadius: '4px' }}>
+                                    HIGH PERFORMING
+                                </Tag>
+                            )}
+                            {totalRuns === 0 && (
+                                <Tag color="blue" style={{ fontSize: '9px', margin: 0, borderRadius: '4px' }}>
+                                    FRESH
+                                </Tag>
+                            )}
+                        </div>
+                        {record.lastRun ? (
+                            <Text type="secondary" style={{ fontSize: '11px' }}>
+                                <ClockCircleOutlined style={{ fontSize: '10px' }} /> Last: {new Date(record.lastRun).toLocaleString('en-IN', { 
+                                    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
+                                })}
+                            </Text>
+                        ) : (
+                            <Text type="secondary" style={{ fontSize: '11px', fontStyle: 'italic' }}>Never executed</Text>
+                        )}
+                    </div>
+                );
+            }
+        },
+        {
             title: 'Status',
             dataIndex: 'isActive',
             key: 'isActive',
+            width: 120,
             render: (isActive, record) => (
                 <Switch 
                     checked={isActive} 
@@ -168,7 +236,47 @@ const AutomationPage = () => {
                             }}
                         />
                     </Tooltip>
-                    <Button type="text" shape="circle" icon={<DeleteOutlined />} danger />
+                    <Tooltip title="Edit Workflow">
+                        <Button 
+                            type="text"
+                            shape="circle"
+                            icon={<EditOutlined style={{ color: '#8c8c8c' }} />} 
+                            onClick={() => handleEdit(record)}
+                        />
+                    </Tooltip>
+                    <Tooltip title={record.isActive ? "Pause Automation" : "Start Automation"}>
+                        <Button 
+                            type="text"
+                            shape="circle"
+                            icon={record.isActive ? <PauseCircleOutlined style={{ color: '#faad14' }} /> : <PlayCircleOutlined style={{ color: '#52c41a' }} />} 
+                            onClick={() => toggleAutomation(record.id)}
+                        />
+                    </Tooltip>
+                    {!record.isDefault && (
+                        <Popconfirm
+                            title="Delete this automation?"
+                            description="This action cannot be undone."
+                            onConfirm={async () => {
+                                try {
+                                    await deleteAutomation(record.id).unwrap();
+                                    message.success('Automation deleted');
+                                } catch (err) {
+                                    message.error('Failed to delete');
+                                }
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            okButtonProps={{ danger: true }}
+                        >
+                            <Button 
+                                type="text" 
+                                shape="circle" 
+                                icon={<DeleteOutlined />} 
+                                danger 
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            />
+                        </Popconfirm>
+                    )}
                 </Space>
             ),
         }
@@ -195,35 +303,152 @@ const AutomationPage = () => {
                 ]}
             />
 
-            <div style={{ padding: '0 24px 24px 24px' }}>
-                <Card style={{ marginBottom: '24px', marginTop: '20px', background: 'linear-gradient(135deg, #f0f5ff 0%, #ffffff 100%)', border: '1px solid #adc6ff', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-                    <div style={{ padding: '12px', background: '#1890ff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(24,144,255,0.3)' }}>
-                        <RocketOutlined style={{ fontSize: '32px', color: '#fff' }} />
-                    </div>
-                    <div>
-                        <h2 style={{ margin: 0, color: '#002766', letterSpacing: '-0.5px' }}>Advanced CRM Automation Builder</h2>
-                        <span style={{ color: '#595959', fontSize: '14px' }}>Phase 2: High-Precision Triggers & Intelligent Follow-up Sequence Engine</span>
-                    </div>
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-                    {[
-                        { icon: <ThunderboltOutlined />, title: '1. SMART TRIGGER', color: '#faad14', desc: 'Events like New Leads or WhatsApp messages ignite the flow.' },
-                        { icon: <FilterOutlined />, title: '2. CUSTOM CONDITIONS', color: '#52c41a', desc: 'Filter by Budget, Source, or Keywords for surgical precision.' },
-                        { icon: <PlusOutlined />, title: '3. DYNAMIC ACTIONS', color: '#1890ff', desc: 'Auto-execute WhatsApps, Tasks, or Reassignments in sequence.' },
-                        { icon: <ClockCircleOutlined />, title: '4. SMART RESPONSE', color: '#722ed1', desc: 'Stops automatically if the lead replies. No more spam!' },
-                    ].map((step, i) => (
-                        <div key={i} style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid #f0f0f0', transition: 'all 0.3s' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                                <span style={{ color: step.color, fontSize: '18px' }}>{step.icon}</span>
-                                <b style={{ color: step.color, fontSize: '11px', letterSpacing: '0.5px' }}>{step.title}</b>
+            <div>
+                <Card style={{ 
+                    marginBottom: '24px', 
+                    background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)', 
+                    border: '1px solid #dbeafe', 
+                    borderRadius: '16px', 
+                    boxShadow: '0 4px 25px rgba(0,0,0,0.05)' 
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{ padding: '12px', background: '#1890ff', borderRadius: '14px', boxShadow: '0 8px 16px rgba(24,144,255,0.25)' }}>
+                                <RocketOutlined style={{ fontSize: '32px', color: '#fff' }} />
                             </div>
-                            <p style={{ margin: 0, fontSize: '12px', color: '#8c8c8c', lineHeight: '1.6' }}>{step.desc}</p>
+                            <div>
+                                <h2 style={{ margin: 0, color: '#1e3a8a', letterSpacing: '-0.5px', fontWeight: '800' }}>CRM Automation Hub</h2>
+                                <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Design intelligent workflows that handle your leads 24/7</p>
+                            </div>
                         </div>
-                    ))}
-                </div>
-            </Card>
+                        <Button 
+                            type="default" 
+                            icon={<RocketOutlined style={{ color: '#1890ff' }} />}
+                            style={{ 
+                                borderRadius: '8px', 
+                                fontWeight: '600', 
+                                border: '1px solid #1890ff', 
+                                color: '#1890ff',
+                                background: '#f0f7ff' 
+                            }}
+                            className="how-to-setup-btn"
+                            onClick={() => {
+                                Modal.info({
+                                    title: '🚀 Automation Setup Guide',
+                                    width: 600,
+                                    content: (
+                                        <div style={{ marginTop: '20px' }}>
+                                            <div style={{ marginBottom: '15px' }}>
+                                                <h4 style={{ color: '#1890ff' }}>1. Choose a Trigger</h4>
+                                                <p>This is the "Starting Line". For example, select <b>"New Lead Created"</b> if you want the automation to start whenever a new person enters your CRM.</p>
+                                            </div>
+                                            <div style={{ marginBottom: '15px' }}>
+                                                <h4 style={{ color: '#1890ff' }}>2. Set Conditions (Optional)</h4>
+                                                <p>Filter which leads should pass through. For example, only run for leads where <b>"Source equals Website"</b>.</p>
+                                            </div>
+                                            <div style={{ marginBottom: '15px' }}>
+                                                <h4 style={{ color: '#1890ff' }}>3. Define Actions</h4>
+                                                <p>Add what should happen. You can chain actions like: <b>Send WhatsApp immediately</b> → <b>Create Task after 2 hours</b>.</p>
+                                            </div>
+                                            <Divider />
+                                            <p style={{ color: '#64748b', fontStyle: 'italic' }}><b>Tip:</b> Click "Generate Defaults" to instantly get 20+ ready-to-use workflows for your business!</p>
+                                        </div>
+                                    ),
+                                    okText: 'Got it!',
+                                });
+                            }}
+                        >
+                            How to Setup?
+                        </Button>
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                        {[
+                            { icon: <ThunderboltOutlined />, title: '1. TRIGGER', color: '#f59e0b', desc: 'Events like New Leads or Form Submissions start the flow.' },
+                            { icon: <FilterOutlined />, title: '2. FILTER', color: '#10b981', desc: 'Filter by Stage, Source, or Priority for total control.' },
+                            { icon: <PlusOutlined />, title: '3. ACTIONS', color: '#3b82f6', desc: 'Auto-execute WhatsApp messages or Tasks in sequence.' },
+                            { icon: <ClockCircleOutlined />, title: '4. INTELLIGENCE', color: '#8b5cf6', desc: 'Set smart delays and stop automatically when leads reply.' },
+                        ].map((step, i) => (
+                            <div key={i} style={{ background: '#fff', padding: '16px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                                    <span style={{ color: step.color, fontSize: '18px' }}>{step.icon}</span>
+                                    <b style={{ color: step.color, fontSize: '12px', letterSpacing: '0.5px' }}>{step.title}</b>
+                                </div>
+                                <p style={{ margin: 0, fontSize: '12px', color: '#64748b', lineHeight: '1.6' }}>{step.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+
+
+            {/* Summary Stat Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+                <Card style={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', background: 'linear-gradient(135deg, #e6f7ff 0%, #ffffff 100%)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#1890ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <RocketOutlined style={{ color: '#fff', fontSize: '20px' }} />
+                        </div>
+                        <div>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Active Workflows</Text>
+                            <Text strong style={{ fontSize: '20px' }}>{automationsResponse?.data?.filter(a => a.isActive).length || 0}</Text>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card style={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', background: 'linear-gradient(135deg, #fff1f0 0%, #ffffff 100%)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#ff4d4f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <PauseCircleOutlined style={{ color: '#fff', fontSize: '20px' }} />
+                        </div>
+                        <div>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Paused Workflows</Text>
+                            <Text strong style={{ fontSize: '20px' }}>{automationsResponse?.data?.filter(a => !a.isActive).length || 0}</Text>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card style={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', background: 'linear-gradient(135deg, #f9f0ff 0%, #ffffff 100%)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#722ed1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ThunderboltOutlined style={{ color: '#fff', fontSize: '20px' }} />
+                        </div>
+                        <div>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Custom Workflows</Text>
+                            <Text strong style={{ fontSize: '20px' }}>{automationsResponse?.data?.filter(a => !a.isDefault).length || 0}</Text>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card style={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', background: 'linear-gradient(135deg, #f6ffed 0%, #ffffff 100%)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#52c41a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <PlayCircleOutlined style={{ color: '#fff', fontSize: '20px' }} />
+                        </div>
+                        <div>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Total Executions</Text>
+                            <Text strong style={{ fontSize: '20px' }}>{automationsResponse?.data?.reduce((acc, curr) => acc + parseInt(curr.totalRuns || 0), 0) || 0}</Text>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card style={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', background: 'linear-gradient(135deg, #fff7e6 0%, #ffffff 100%)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#faad14', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ThunderboltOutlined style={{ color: '#fff', fontSize: '20px' }} />
+                        </div>
+                        <div>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>System Success Rate</Text>
+                            <Text strong style={{ fontSize: '20px' }}>
+                                {(() => {
+                                    const total = automationsResponse?.data?.reduce((acc, curr) => acc + parseInt(curr.totalRuns || 0), 0) || 0;
+                                    const success = automationsResponse?.data?.reduce((acc, curr) => acc + parseInt(curr.successCount || 0), 0) || 0;
+                                    return total > 0 ? `${Math.round((success / total) * 100)}%` : '100%';
+                                })()}
+                            </Text>
+                        </div>
+                    </div>
+                </Card>
+            </div>
 
             <Card 
                 title={<div style={{ fontWeight: '700' }}>Active Automation Workflows</div>} 
@@ -249,6 +474,7 @@ const AutomationPage = () => {
                 }
                 style={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}
             >
+
                 <Table 
                     columns={columns} 
                     dataSource={automationsResponse?.data || []} 
@@ -263,12 +489,20 @@ const AutomationPage = () => {
         {/* Create/Edit Modal (Separated) */}
             <AutomationForm 
                 visible={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
-                onFinish={handleCreate}
+                isEditing={!!editingAutomation}
+                onCancel={() => {
+                    setIsModalVisible(false);
+                    setEditingAutomation(null);
+                    form.resetFields();
+                }}
                 form={form}
+                onFinish={onFinish}
                 statuses={statusesResponse?.data}
                 categories={categoriesResponse?.data}
-                leadStages={leadStagesResponse?.data}
+                leadStages={leadStagesResponse}
+                sources={sourcesResponse?.data}
+                users={usersResponse?.data || []}
+                currentUser={currentUser}
             />
 
             {/* Detailed View Modal (Separated) */}

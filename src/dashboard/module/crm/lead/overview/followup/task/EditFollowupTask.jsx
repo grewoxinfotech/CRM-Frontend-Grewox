@@ -43,16 +43,15 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
-  const idd = useParams();
-  const leadId = idd.leadId;
-
   const [form] = Form.useForm();
   const [updateFollowupTask] = useUpdateFollowupTaskMutation();
-  const { data: taskDataFromApi, isLoading } =
-    useGetFollowupTaskByIdQuery(taskId);
+  
+  // Use taskData from props if available, otherwise fetch from API
+  const { data: taskDataFromApi, isLoading } = useGetFollowupTaskByIdQuery(taskId, {
+    skip: !!taskData || !taskId
+  });
 
-  // Use taskData from props if available, otherwise use data from API
-  const task = taskData || taskDataFromApi?.data?.find((t) => t.id === taskId);
+  const task = taskData || taskDataFromApi?.data;
 
   const [repeatType, setRepeatType] = useState("none");
   const [repeatEndType, setRepeatEndType] = useState("never");
@@ -97,10 +96,13 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
 
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
-  const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
+  const { data: rolesData } = useGetRolesQuery();
+
+  // Get roles list from standard or message path
+  const rolesList = rolesData?.message?.data || rolesData?.data || [];
 
   // Get subclient role ID to filter it out
-  const subclientRoleId = rolesData?.data?.find(
+  const subclientRoleId = rolesList.find(
     (role) => role?.role_name === "sub-client"
   )?.id;
 
@@ -109,11 +111,12 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
     usersResponse?.data?.filter(
       (user) =>
         user?.created_by === currentUser?.username &&
-        user?.role_id !== subclientRoleId
+        String(user?.role_id) !== String(subclientRoleId)
     ) || [];
 
   // Get role colors and icons
-  const getRoleColor = (role) => {
+  const getRoleColor = (roleName) => {
+    const name = roleName?.toLowerCase() || "";
     const roleColors = {
       employee: {
         color: "#D46B08",
@@ -136,7 +139,12 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
         border: "#D3ADF7",
       },
     };
-    return roleColors[role?.toLowerCase()] || roleColors.default;
+    
+    if (name.includes("admin")) return roleColors.admin;
+    if (name.includes("manager")) return roleColors.manager;
+    if (name.includes("employee") || name.includes("staff")) return roleColors.employee;
+    
+    return roleColors.default;
   };
 
   const handleCreateUser = () => {
@@ -168,12 +176,14 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
 
   // Initialize form with task data
   useEffect(() => {
+    if (!open) return;
+
     if (task) {
       // Parse assigned_to
       let assignedTo = { assigned_to: [] };
       if (task.assigned_to) {
         try {
-          assignedTo = JSON.parse(task.assigned_to);
+          assignedTo = typeof task.assigned_to === 'string' ? JSON.parse(task.assigned_to) : task.assigned_to;
         } catch (e) {
           console.error("Error parsing assigned_to:", e);
         }
@@ -188,7 +198,7 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
       let reminderData = null;
       if (task.reminder) {
         try {
-          reminderData = JSON.parse(task.reminder);
+          reminderData = typeof task.reminder === 'string' ? JSON.parse(task.reminder) : task.reminder;
           setShowReminder(true);
         } catch (e) {
           console.error("Error parsing reminder:", e);
@@ -201,7 +211,7 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
       let repeatData = null;
       if (task.repeat) {
         try {
-          repeatData = JSON.parse(task.repeat);
+          repeatData = typeof task.repeat === 'string' ? JSON.parse(task.repeat) : task.repeat;
           setShowRepeat(true);
           setRepeatType(repeatData.repeat_type || "none");
           setRepeatEndType(repeatData.repeat_end_type || "never");
@@ -247,11 +257,10 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
         formValues.repeat = repeatData.repeat_type;
       }
       form.setFieldsValue(formValues);
-    } else {
-      console.error("No task data available");
+    } else if (!isLoading && open) {
       message.error("Failed to load task data");
     }
-  }, [task, form, currentUser, usersResponse?.data]);
+  }, [task, form, currentUser, usersResponse?.data, open, isLoading]);
 
   const handleSubmit = async (values) => {
     try {
@@ -299,11 +308,8 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
         description: values.description,
         reminder: reminderData,
         repeat: repeatData,
-        client_id: taskData?.data?.client_id,
         updated_by: currentUser?.username,
       };
-
-      const data = updateData;
 
       // Make the update API call
       const result = await updateFollowupTask({
@@ -679,195 +685,56 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                 </>
               )}
             >
-                <Option key={currentUser?.id} value={currentUser?.username}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "4px 0",
-                }}
-              >
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "50%",
-                    background: "#e6f4ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#1890ff",
-                    fontSize: "16px",
-                    fontWeight: "500",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {currentUser?.profilePic ? (
-                    <img
-                      src={currentUser?.profilePic}
-                      alt={currentUser?.username}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    currentUser?.username?.charAt(0) || <FiUser />
-                  )}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "4px",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontWeight: 500,
-                      color: "rgba(0, 0, 0, 0.85)",
-                      fontSize: "14px",
-                    }}
-                  >
-                    {currentUser?.username}
+              <Option key={currentUser?.id} value={currentUser?.username}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 0" }}>
+                  <div style={{
+                    width: "40px", height: "40px", borderRadius: "50%", background: "#e6f4ff",
+                    display: "flex", alignItems: "center", justifyContent: "center", color: "#1890ff",
+                    fontSize: "16px", fontWeight: "500", textTransform: "uppercase"
+                  }}>
+                    {currentUser?.profilePic ? (
+                      <img src={currentUser?.profilePic} alt={currentUser?.username} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                    ) : (
+                      currentUser?.username?.charAt(0) || <FiUser />
+                    )}
+                  </div>
+                  <span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)", fontSize: "14px" }}>
+                    {currentUser?.username} (Me)
                   </span>
+                  <div style={{ marginLeft: "auto" }}>
+                    <Tag color={getRoleColor(currentUser?.roleName).bg} style={{ color: getRoleColor(currentUser?.roleName).color, border: `1px solid ${getRoleColor(currentUser?.roleName).border}`, margin: 0 }}>
+                      {currentUser?.roleName}
+                    </Tag>
+                  </div>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginLeft: "auto",
-                  }}
-                >
-                  <div
-                    className="role-indicator"
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      background: getRoleColor(currentUser?.roleName).color,
-                      boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
-                      animation: "pulse 2s infinite",
-                    }}
-                  />
-                  <span
-                    style={{
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      background: getRoleColor(currentUser?.roleName).bg,
-                      color: getRoleColor(currentUser?.roleName).color,
-                      border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
-                      fontWeight: 500,
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {currentUser?.roleName || "User"}
-                  </span>
-                </div>
-              </div>
-            </Option>
+              </Option>
               {Array.isArray(users) &&
-                users.map((user) => {
-                  const userRole = rolesData?.data?.find(
-                    (role) => role.id === user.role_id
-                  );
-                  const roleStyle = getRoleColor(userRole?.role_name);
-
+                users.filter(u => u.username !== currentUser?.username).map((user) => {
+                  const rolesList = rolesData?.message?.data || rolesData?.data || [];
+                  const userRole = rolesList.find(role => String(role.id) === String(user.role_id));
+                  const roleName = userRole?.role_name || user.role_name || user.role?.role_name || "Member";
+                  const roleStyle = getRoleColor(roleName);
                   return (
                     <Option key={user.username} value={user.username}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
-                          padding: "4px 0",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: "40px",
-                            height: "40px",
-                            borderRadius: "50%",
-                            background: "#e6f4ff",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#1890ff",
-                            fontSize: "16px",
-                            fontWeight: "500",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {user.profilePic ? (
-                            <img
-                              src={user.profilePic}
-                              alt={user.username}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                              }}
-                            />
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 0" }}>
+                        <div style={{
+                          width: "40px", height: "40px", borderRadius: "50%", background: "#f5f5f5",
+                          display: "flex", alignItems: "center", justifyContent: "center", color: "#8c8c8c",
+                          fontSize: "16px", fontWeight: "500", textTransform: "uppercase"
+                        }}>
+                          {user?.profilePic ? (
+                            <img src={user?.profilePic} alt={user?.username} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
                           ) : (
-                            user.username?.charAt(0) || <FiUser />
+                            user?.username?.charAt(0) || <FiUser />
                           )}
                         </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            gap: "4px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontWeight: 500,
-                              color: "rgba(0, 0, 0, 0.85)",
-                              fontSize: "14px",
-                            }}
-                          >
-                            {user.username}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            marginLeft: "auto",
-                          }}
-                        >
-                          <div
-                            className="role-indicator"
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              background: roleStyle.color,
-                              boxShadow: `0 0 8px ${roleStyle.color}`,
-                              animation: "pulse 2s infinite",
-                            }}
-                          />
-                          <span
-                            style={{
-                              padding: "2px 8px",
-                              borderRadius: "4px",
-                              fontSize: "12px",
-                              background: roleStyle.bg,
-                              color: roleStyle.color,
-                              border: `1px solid ${roleStyle.border}`,
-                              fontWeight: 500,
-                              textTransform: "capitalize",
-                            }}
-                          >
-                            {userRole?.role_name || "User"}
-                          </span>
+                        <span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)", fontSize: "14px" }}>
+                          {user.username}
+                        </span>
+                        <div style={{ marginLeft: "auto" }}>
+                          <Tag color={roleStyle.bg} style={{ color: roleStyle.color, border: `1px solid ${roleStyle.border}`, margin: 0 }}>
+                            {roleName}
+                          </Tag>
                         </div>
                       </div>
                     </Option>

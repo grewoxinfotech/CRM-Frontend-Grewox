@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Tag, Tooltip, Typography, Empty, message, Button, Modal, Dropdown } from "antd";
+import { Card, Tag, Tooltip, Typography, Empty, message, Button, Modal, Dropdown, Avatar } from "antd";
 import {
   FiMenu,
   FiTarget,
@@ -75,7 +75,20 @@ const getInterestLevel = (level) => {
   return levels[level] || levels.medium;
 };
 
-const DraggableCard = ({ lead, stage, currencies = [], onLeadClick, onEdit, onDelete, onView }) => {
+const getRandomColor = (name) => {
+  const colors = [
+    "#1890ff", "#2f54eb", "#722ed1", "#eb2f96", 
+    "#fa8c16", "#faad14", "#a0d911", "#52c41a", 
+    "#13c2c2", "#fa541c"
+  ];
+  let hash = 0;
+  for (let i = 0; i < name?.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+const DraggableCard = ({ lead, stage, currencies = [], users = [], onLeadClick, onEdit, onDelete, onView }) => {
   // Dropdown menu items
   const getDropdownItems = (lead) => ({
     items: [
@@ -301,6 +314,49 @@ const DraggableCard = ({ lead, stage, currencies = [], onLeadClick, onEdit, onDe
                 </Text>
               </div>
             )}
+            
+            {/* Assignee Avatars */}
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {(() => {
+                let assignedIds = [];
+                try {
+                  let parsed = lead.lead_members;
+                  if (typeof parsed === 'string') {
+                    try {
+                      parsed = JSON.parse(parsed);
+                      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+                    } catch (e) { parsed = []; }
+                  }
+                  assignedIds = parsed?.lead_members || parsed?.assignedusers || (Array.isArray(parsed) ? parsed : []);
+                } catch(e) { assignedIds = []; }
+                
+                const assignedUsers = Array.isArray(assignedIds) 
+                  ? assignedIds.map(id => users?.find(u => u.id === id)).filter(Boolean)
+                  : [];
+
+                if (assignedUsers.length === 0) return null;
+
+                return (
+                  <Avatar.Group maxCount={2} size="small">
+                    {assignedUsers.map(user => (
+                      <Tooltip key={user.id} title={user.username || `${user.firstName} ${user.lastName}`}>
+                        <Avatar 
+                          src={user.profilePic} 
+                          style={{ 
+                            backgroundColor: getRandomColor(user.username || user.id),
+                            width: '20px',
+                            height: '20px',
+                            fontSize: '10px'
+                          }}
+                        >
+                          {user.username?.charAt(0).toUpperCase() || user.firstName?.charAt(0).toUpperCase()}
+                        </Avatar>
+                      </Tooltip>
+                    ))}
+                  </Avatar.Group>
+                );
+              })()}
+            </div>
           </div>
         </div>
       </div>
@@ -480,7 +536,7 @@ const SortableColumn = ({ stage, leads, children, index }) => {
   );
 };
 
-const DroppableColumn = ({ stage, leads, isColumnDragging, onEdit, onDelete, onView, onLeadClick }) => {
+const DroppableColumn = ({ stage, leads, users = [], isColumnDragging, onEdit, onDelete, onView, onLeadClick }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
     data: {
@@ -520,6 +576,7 @@ const DroppableColumn = ({ stage, leads, isColumnDragging, onEdit, onDelete, onV
               lead={lead}
               stage={stage}
               currencies={currencies}
+              users={users}
               onEdit={onEdit}
               onDelete={onDelete}
               onView={onView}
@@ -545,7 +602,7 @@ const DroppableColumn = ({ stage, leads, isColumnDragging, onEdit, onDelete, onV
   );
 };
 
-const LeadCard = ({ leads, currencies, countries, sourcesData, statusesData, categoriesData, onLeadClick, onEdit, onDelete, onView }) => {
+const LeadCard = ({ leads, users = [], currencies, countries, sourcesData, statusesData, categoriesData, onLeadClick, onEdit, onDelete, onView }) => {
   const { data: stageQueryData, isLoading: isLoadingStages, error: errorStages, refetch: refetchStages } = useGetLeadStagesQuery();
   const { data: pipelinesData, isLoading: isLoadingPipelines } = useGetPipelinesQuery();
   const [updateLead] = useUpdateLeadMutation();

@@ -16,6 +16,7 @@
         .search-input {
             display: none !important;
         }
+
         .search-icon-button {
             display: flex !important;
             padding: 0 12px;
@@ -24,16 +25,19 @@
             align-items: center;
             justify-content: center;
         }
+
         .export-button,
         .add-button {
             padding: 0 12px;
             width: 38px;
             height: 38px;
+
             .button-text {
                 display: none;
             }
         }
     }
+
     @media (max-width: 576px) {
         .page-title {
             .ant-typography-secondary {
@@ -41,6 +45,7 @@
             }
         }
     }
+
     @media (max-width: 400px) {
         .page-title {
             .ant-typography-secondary {
@@ -359,14 +364,17 @@
                     }
                 }
             }
+
             @media (max-width: 1300px) {
                 .form-footer {
                     flex-direction: row !important;
                     align-items: center !important;
                     justify-content: space-between !important;
+
                     .action-buttons {
                         width: auto !important;
                         justify-content: flex-end !important;
+
                         .mobile-actions {
                             display: flex !important;
                             align-items: center !important;
@@ -468,7 +476,9 @@
             flex: 0 0 50% !important;
         }
     }
+
     @media (max-width: 768px) {
+
         .ant-col-lg-8,
         .ant-col-sm-12 {
             max-width: 100% !important;
@@ -748,7 +758,7 @@
         &:hover {
             border-color: #1890ff;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            
+
             .remove-field-btn {
                 opacity: 1;
             }
@@ -758,7 +768,7 @@
             display: flex;
             gap: 10px;
             align-items: flex-start;
-            
+
             .label-input {
                 flex: 1;
             }
@@ -781,7 +791,7 @@
 
                 .req-toggle-item {
                     margin-bottom: 0;
-                    
+
                     .ant-form-item-control-input {
                         min-height: auto;
                     }
@@ -799,7 +809,7 @@
                     transition: all 0.2s ease;
                     border: none;
                     background: transparent;
-                    
+
                     &:hover {
                         background: #fff1f0;
                         color: #ff4d4f;
@@ -812,7 +822,7 @@
                     min-width: 65px;
                     height: 26px;
                     border: none;
-                    
+
                     &.ant-switch-checked {
                         background: #1890ff;
                         box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);

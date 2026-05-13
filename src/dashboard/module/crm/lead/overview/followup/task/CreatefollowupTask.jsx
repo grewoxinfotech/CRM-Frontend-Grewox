@@ -415,7 +415,7 @@ const CreatefollowupTask = ({
           >
             <Form.Item
               name="subject"
-              label={<span style={formItemStyle}>Subject <span style={{ color: "#ff4d4f" }}>*</span></span>}
+              label={<span style={formItemStyle}>Subject</span>}
               rules={[{ required: true, message: "Please enter subject" }]}
             >
               <Input placeholder="Enter subject" style={inputStyle} />
@@ -423,7 +423,7 @@ const CreatefollowupTask = ({
 
             <Form.Item
               name="due_date"
-              label={<span style={formItemStyle}>Due Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
+              label={<span style={formItemStyle}>Due Date</span>}
               rules={[{ required: true, message: "Please select due date" }]}
             >
               <DatePicker

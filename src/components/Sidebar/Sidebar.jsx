@@ -104,6 +104,21 @@ const Sidebar = ({
                             {!isCollapsed && (
                                 <>
                                     <span className="title">{item.title}</span>
+                                    {item.badge && (
+                                        <span className="nav-badge" style={{
+                                            fontSize: '10px',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            background: 'linear-gradient(135deg, #ff4d4f 0%, #f5222d 100%)',
+                                            color: 'white',
+                                            marginLeft: 'auto',
+                                            marginRight: '8px',
+                                            fontWeight: 'bold',
+                                            boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)'
+                                        }}>
+                                            {item.badge}
+                                        </span>
+                                    )}
                                     <FiChevronRight className="arrow" />
                                 </>
                             )}
@@ -219,10 +234,10 @@ const Sidebar = ({
                             {!isCollapsed && <span className="title">Profile</span>}
                         </div>
                     </NavLink>
-                    <div className="nav-item profile-btn logout-btn" onClick={() => { handleLogout(); handleNavigation(); }} style={{ cursor: 'pointer' }}>
+                    <div className="nav-item profile-btn logout-btn" onClick={() => { handleLogout(); handleNavigation(); }} style={{ cursor: 'pointer', color: '#ff4d4f' }}>
                         <div className="nav-item-content">
-                            <span className="icon"><FiLogOut /></span>
-                            {!isCollapsed && <span className="title">Logout</span>}
+                            <span className="icon" style={{ color: '#ff4d4f' }}><FiLogOut /></span>
+                            {!isCollapsed && <span className="title" style={{ color: '#ff4d4f', fontWeight: '500' }}>Logout</span>}
                         </div>
                     </div>
                 </div>

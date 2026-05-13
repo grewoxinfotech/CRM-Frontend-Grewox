@@ -69,7 +69,11 @@ export const leadApi = createApi({
         method: "POST",
         body: { message, history },
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "AiChat", id }],
+      invalidatesTags: (result, error, { id }) => [
+        { type: "AiChat", id },
+        { type: "Lead", id },
+        "Lead"
+      ],
     }),
     createLead: builder.mutation({
       query: (data) => ({
@@ -117,6 +121,13 @@ export const leadApi = createApi({
         "Lead",
       ],
     }),
+    getGlobalFollowups: builder.query({
+      query: () => ({
+        url: "/followups",
+        method: "GET",
+      }),
+      providesTags: ["Followup"],
+    }),
     getFollowups: builder.query({
       query: (id) => ({
         url: `/followups/${id}`,
@@ -147,6 +158,27 @@ export const leadApi = createApi({
       }),
       invalidatesTags: ["Followup"],
     }),
+    deleteFollowupCall: builder.mutation({
+      query: (id) => ({
+        url: `/followup-calls/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Followup"],
+    }),
+    deleteFollowupMeeting: builder.mutation({
+      query: (id) => ({
+        url: `/followup-meetings/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Followup"],
+    }),
+    deleteFollowupTask: builder.mutation({
+      query: (id) => ({
+        url: `/followup-tasks/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Followup"],
+    }),
     deleteLeadFile: builder.mutation({
       query: ({ id, filename }) => ({
         url: `/leads/files/${id}`,
@@ -170,6 +202,7 @@ export const leadApi = createApi({
 export const {
   useGetLeadsQuery,
   useGetLeadQuery,
+  useGetGlobalFollowupsQuery,
   useGetLeadAiSuggestionsQuery,
   useGetLeadAiChatHistoryQuery,
   useChatWithLeadAiMutation,
@@ -182,6 +215,9 @@ export const {
   useCreateFollowupMutation,
   useUpdateFollowupMutation,
   useDeleteFollowupMutation,
+  useDeleteFollowupCallMutation,
+  useDeleteFollowupMeetingMutation,
+  useDeleteFollowupTaskMutation,
   useDeleteLeadFileMutation,
   useBulkImportLeadsMutation,
 } = leadApi;

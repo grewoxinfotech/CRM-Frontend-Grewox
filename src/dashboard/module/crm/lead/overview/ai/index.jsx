@@ -44,69 +44,66 @@ const LeadAI = ({ leadId, leadData }) => {
 
   useEffect(() => {
     if (historyResponse?.success && historyResponse.data && historyResponse.data.length > 0) {
+      // Sort: Oldest First (Standard Chat)
+      // Sort: Oldest First (Standard Chat) with stable fallback for same-millisecond messages
       const sortedHistory = [...historyResponse.data].sort((a, b) => {
-        const aTime = new Date(a?.createdAt || a?.updatedAt || 0).getTime();
-        const bTime = new Date(b?.createdAt || b?.updatedAt || 0).getTime();
-        return aTime - bTime;
+        const aTime = new Date(a?.createdAt || 0).getTime();
+        const bTime = new Date(b?.createdAt || 0).getTime();
+        
+        if (aTime !== bTime) return aTime - bTime;
+        
+        // If timestamps are identical, Assistant should come AFTER User
+        if (a.role === 'user' && b.role === 'assistant') return -1;
+        if (a.role === 'assistant' && b.role === 'user') return 1;
+        
+        // Last fallback: use ID order
+        return String(a.id).localeCompare(String(b.id));
       });
 
       const formattedHistory = sortedHistory.map(chat => {
-        let content = chat.message;
-
         // Handle potential JSON string in ai_response_data
         let aiResponseData = chat.ai_response_data;
-        if (typeof aiResponseData === 'string') {
+        if (aiResponseData && typeof aiResponseData === 'string') {
           try {
             aiResponseData = JSON.parse(aiResponseData);
           } catch (e) {
             console.error("Error parsing ai_response_data:", e);
+            aiResponseData = null; // Fallback to null if invalid
           }
         }
 
         return {
-          role: chat.role,
-          content: chat.role === 'assistant' && aiResponseData ? aiResponseData : chat.message
+          id: chat.id,
+          role: chat.role === 'assistant' ? 'assistant' : 'user',
+          content: (chat.role === 'assistant' && aiResponseData) ? aiResponseData : (chat.message || "No message content"),
+          timestamp: chat.createdAt
         };
       });
 
       const mergedHistory = [
-        { role: 'assistant', content: 'Hello! I am your Grewox CRM AI assistant. How can I help you close this lead today?' },
+        { id: 'intro', role: 'assistant', content: 'Hello! I am your Grewox CRM AI assistant. How can I help you close this lead today?' },
         ...formattedHistory
       ];
 
-      // Deduplicate repeated role+content messages (observed in some refresh/refetch flows)
+      // Deduplicate by ID
       const deduped = [];
-      const seen = new Set();
+      const seenIds = new Set();
       for (const msg of mergedHistory) {
-        const normalizedContent = typeof msg.content === "object"
-          ? JSON.stringify(msg.content)
-          : String(msg.content || "");
-        const key = `${msg.role}::${normalizedContent}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          deduped.push(msg);
-        }
+        if (msg.id && seenIds.has(msg.id)) continue;
+        if (msg.id) seenIds.add(msg.id);
+        deduped.push(msg);
       }
 
-      // Collapse accidental consecutive assistant duplicates; keep latest one
-      const collapsed = [];
-      for (const msg of deduped) {
-        const prev = collapsed[collapsed.length - 1];
-        if (prev && prev.role === "assistant" && msg.role === "assistant") {
-          collapsed[collapsed.length - 1] = msg;
-        } else {
-          collapsed.push(msg);
-        }
-      }
-
-      setChatHistory(collapsed);
+      setChatHistory(deduped);
+    } else {
+      setChatHistory([{ id: 'intro', role: 'assistant', content: 'Hello! I am your Grewox CRM AI assistant. How can I help you close this lead today?' }]);
     }
   }, [historyResponse]);
 
   const aiData = suggestionsResponse?.data || {};
   const suggestions = aiData.suggestions || [];
-  const leadScore = aiData.score || 0;
-  const leadSummary = aiData.summary || "";
+  const leadScore = aiData.score ?? 0;
+  const leadSummary = aiData.summary ?? "";
   const suggestionsErrorMessage =
     error?.data?.message ||
     error?.data?.error ||
@@ -114,19 +111,55 @@ const LeadAI = ({ leadId, leadData }) => {
     (typeof error?.data === "string" ? error.data : "");
 
   // Helper: Convert plain text to structured React component if needed
-  const renderAiContent = (content) => {
+  const renderAiContent = (content, isChat = false) => {
     if (!content) return null;
 
-    // If it's a structured AI response object, render it
-    if (typeof content === 'object') {
-      const { strategy, actions, script, source } = content;
-      const actionsList = (actions || []).map(a => {
+    let parsedContent = content;
+    if (typeof content === 'string' && content.trim().startsWith('{')) {
+      try {
+        parsedContent = JSON.parse(content);
+      } catch (e) {
+        parsedContent = content;
+      }
+    }
+
+    // If it's a structured AI response object
+    if (typeof parsedContent === 'object' && parsedContent !== null) {
+      const strategy = parsedContent.strategy || parsedContent.Strategy || parsedContent.summary || parsedContent.Summary || parsedContent.analysis || "";
+      const script = parsedContent.script || parsedContent.Script || "";
+      const source = parsedContent.source || parsedContent.Source || "ai";
+
+      // FOR CHAT: return only the primary message as plain text
+      if (isChat) {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <Text style={{ fontSize: "14px", color: "inherit" }}>{script || strategy}</Text>
+          </div>
+        );
+      }
+
+      const actions = parsedContent.actions || parsedContent.Actions || [];
+
+      const actionsList = (Array.isArray(actions) ? actions : []).map(a => {
         if (typeof a === 'object' && a !== null) {
           return `${a.action || a.title || ''} ${a.date ? `- ${a.date}` : ''}`.trim();
         }
         return typeof a === 'string' ? a.replace(/^-/, "").trim() : String(a || "");
       });
-      const normalizedSource = (source || "ai").toLowerCase();
+
+      const normalizedSource = String(source || "ai").toLowerCase();
+
+      // If it's a very simple object with just summary/score, render it as plain text instead of boxes
+      if (!parsedContent.strategy && !parsedContent.Strategy && !parsedContent.script && !parsedContent.Script && actionsList.length === 0) {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ color: "#475569" }}>{strategy}</div>
+            <Tag color={normalizedSource === "fallback" ? "red" : "green"} style={{ width: 'fit-content', fontSize: '10px' }}>
+              {normalizedSource.toUpperCase()}
+            </Tag>
+          </div>
+        );
+      }
       const sourceLabel = normalizedSource === "mixed" ? "Mixed" : normalizedSource === "fallback" ? "Fallback" : "AI";
       const sourceColor = normalizedSource === "mixed" ? "orange" : normalizedSource === "fallback" ? "red" : "green";
       const sourceHint =
@@ -226,6 +259,8 @@ const LeadAI = ({ leadId, leadData }) => {
         setIsPlanning(false);
         // Refresh canonical history from server (single source of truth)
         await refetchHistory();
+        // Also refresh suggestions to update score/summary based on new chat context
+        await refetch();
       } else {
         setIsThinking(false);
         setIsPlanning(false);
@@ -343,13 +378,12 @@ const LeadAI = ({ leadId, leadData }) => {
                 </Paragraph>
               </div>
             </div>
-
             <Divider orientation="left">Actionable Suggestions</Divider>
 
             {suggestions.length > 0 ? (
               <List
-                grid={{ gutter: 16, column: 1 }}
-                dataSource={suggestions}
+                grid={{ gutter: 20, column: 1 }}
+                dataSource={suggestions.filter(s => s.strategy || s.Strategy || s.script || s.Script || (s.actions && s.actions.length > 0))}
                 renderItem={(item) => (
                   <List.Item>
                     <Card
@@ -371,22 +405,28 @@ const LeadAI = ({ leadId, leadData }) => {
                         <div>
                           <Text strong>💡 Strategy</Text>
                           <Paragraph style={{ margin: "4px 0 0 0" }}>
-                            {typeof item.strategy === 'string' ? item.strategy.replace(/^💡\s*/, "") : String(item.strategy || "")}
+                            {(() => {
+                              const strategy = item.strategy || item.Strategy || "";
+                              return typeof strategy === 'string' ? strategy.replace(/^💡\s*/, "") : String(strategy || "");
+                            })()}
                           </Paragraph>
                         </div>
 
                         <div>
                           <Text strong>✅ Actions</Text>
                           <ul style={{ paddingLeft: "20px", margin: "4px 0 0 0" }}>
-                            {Array.isArray(item.actions) && item.actions.map((action, i) => {
-                              let actionText = "";
-                              if (typeof action === 'object' && action !== null) {
-                                actionText = `${action.action || action.title || ''} ${action.date ? `- ${action.date}` : ''}`.trim();
-                              } else {
-                                actionText = typeof action === 'string' ? action.replace(/^✅\s*/, "") : String(action || "");
-                              }
-                              return <li key={i}>{actionText}</li>;
-                            })}
+                            {(() => {
+                              const actions = item.actions || item.Actions || [];
+                              return (Array.isArray(actions) ? actions : []).map((action, i) => {
+                                let actionText = "";
+                                if (typeof action === 'object' && action !== null) {
+                                  actionText = `${action.action || action.title || ''} ${action.date ? `- ${action.date}` : ''}`.trim();
+                                } else {
+                                  actionText = typeof action === 'string' ? action.replace(/^✅\s*/, "") : String(action || "");
+                                }
+                                return <li key={i}>{actionText}</li>;
+                              });
+                            })()}
                           </ul>
                         </div>
 
@@ -394,10 +434,11 @@ const LeadAI = ({ leadId, leadData }) => {
                           <Text strong>💬 Suggested Script</Text>
                           <Paragraph style={{ margin: "4px 0 8px 0", fontStyle: "italic" }}>
                             {(() => {
-                              if (typeof item.script === 'object' && item.script !== null) {
-                                return `${item.script.intro || ''} ${item.script.body || ''} ${item.script.callToAction || ''}`.trim();
+                              const script = item.script || item.Script || "";
+                              if (typeof script === 'object' && script !== null) {
+                                return `${script.intro || ''} ${script.body || ''} ${script.callToAction || ''}`.trim();
                               }
-                              return typeof item.script === 'string' ? item.script.replace(/^💬\s*/, "") : String(item.script || "");
+                              return typeof script === 'string' ? script.replace(/^💬\s*/, "") : String(script || "");
                             })()}
                           </Paragraph>
                           <Button
@@ -405,10 +446,11 @@ const LeadAI = ({ leadId, leadData }) => {
                             icon={<FiMessageSquare />}
                             onClick={() => {
                               let scriptText = "";
-                              if (typeof item.script === 'object' && item.script !== null) {
-                                scriptText = `${item.script.intro || ''} ${item.script.body || ''} ${item.script.callToAction || ''}`.trim();
+                              const script = item.script || item.Script || "";
+                              if (typeof script === 'object' && script !== null) {
+                                scriptText = `${script.intro || ''} ${script.body || ''} ${script.callToAction || ''}`.trim();
                               } else {
-                                scriptText = typeof item.script === 'string' ? item.script.replace(/^💬\s*/, "") : String(item.script || "");
+                                scriptText = typeof script === 'string' ? script.replace(/^💬\s*/, "") : String(script || "");
                               }
                               navigator.clipboard.writeText(scriptText);
                               message.success("Script copied!");
@@ -493,7 +535,7 @@ const LeadAI = ({ leadId, leadData }) => {
                         width: "100%"
                       }}
                     >
-                      {renderAiContent(msg.content)}
+                      {renderAiContent(msg.content, true)}
                     </div>
                   )}
                 </div>
@@ -590,7 +632,7 @@ const LeadAI = ({ leadId, leadData }) => {
               />
               <Button
                 type="primary"
-                icon={<FiSend />}
+                icon={<FiSend style={{ color: 'white' }} />}
                 onClick={() => handleSendMessage()}
                 loading={isChatLoading || isThinking || isPlanning}
                 disabled={!chatMessage.trim()}

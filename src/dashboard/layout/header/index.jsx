@@ -81,6 +81,7 @@ const Header = () => {
 
         // Communication
         { title: "Chat", path: "/dashboard/communication/chat", parent: "Communication" },
+        { title: "WhatsApp Chat", path: "/dashboard/whatsapp-chat", parent: "Communication" },
         { title: "Mail", path: "/dashboard/communication/mail", parent: "Communication" },
 
         // Support
@@ -176,13 +177,13 @@ const Header = () => {
                 <h1>Dashboard</h1>
             </div>
 
-            <div className="header-right">
-                <div className="search-container" style={{ display: showSearch ? 'block' : 'none' }}>
+            <div className="header-center">
+                <div className="global-search-container">
                     <Input
                         ref={searchInputRef}
-                        prefix={<FiSearch />}
-                        placeholder="Search modules..."
-                        className="search-input"
+                        prefix={<FiSearch className="search-icon" />}
+                        placeholder="Search modules (Leads, Projects, WhatsApp...)"
+                        className="global-search-input"
                         value={searchQuery}
                         onChange={handleSearchChange}
                         onClick={() => setShowResults(true)}
@@ -193,7 +194,7 @@ const Header = () => {
                             }
                         }}
                     />
-                    {showResults && (
+                    {showResults && searchQuery.length > 0 && (
                         <div className="search-results" ref={searchResultsRef}>
                             <List
                                 size="small"
@@ -207,7 +208,7 @@ const Header = () => {
                                             <div className="search-result-title">
                                                 <Text strong>{item.title}</Text>
                                                 {item.parent && (
-                                                    <Text type="secondary">
+                                                    <Text type="secondary" style={{ marginLeft: 8, fontSize: '12px' }}>
                                                         in {item.parent}
                                                     </Text>
                                                 )}
@@ -220,25 +221,10 @@ const Header = () => {
                         </div>
                     )}
                 </div>
+            </div>
 
+            <div className="header-right">
                 <div className="header-actions">
-                    <Tooltip title="Search" mouseEnterDelay={0.5}>
-                        <button
-                            className={`action-btn ${showSearch ? 'active' : ''}`}
-                            onClick={() => {
-                                const newShowSearch = !showSearch;
-                                setShowSearch(newShowSearch);
-                                if (!newShowSearch) {
-                                    setSearchQuery('');
-                                    setSearchResults([]);
-                                    setShowResults(false);
-                                }
-                            }}
-                        >
-                            <FiSearch />
-                        </button>
-                    </Tooltip>
-
                     <Notifications />
                     <div className="header-divider" />
                     <Dropdown
@@ -266,7 +252,7 @@ const Header = () => {
                         trigger={['click']}
                     >
                         <div className="user-avatar">
-                            <Avatar size={32}>
+                            <Avatar size={32} style={{ cursor: 'pointer' }}>
                                 {getInitials(user?.username)}
                             </Avatar>
                         </div>

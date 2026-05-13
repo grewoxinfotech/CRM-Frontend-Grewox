@@ -57,6 +57,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import moment from "moment";
 import { Switch } from "antd";
+import { useGetUsersQuery } from "../../user-management/users/services/userApi";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -93,6 +94,7 @@ const Lead = () => {
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: stagesData } = useGetLeadStagesQuery();
+  const { data: usersResponse } = useGetUsersQuery();
   const [initialFormData, setInitialFormData] = useState(null);
   const [isQuickMode, setIsQuickMode] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -434,6 +436,7 @@ const Lead = () => {
             loading={isLoading}
             pagination={pagination}
             onTableChange={handleTableChange}
+            users={usersResponse?.data || []}
           />
         ) : (
           <>
@@ -452,6 +455,7 @@ const Lead = () => {
               loading={isLoading}
               pagination={pagination}
               onTableChange={handleTableChange}
+              users={usersResponse?.data || []}
             />
             {leads?.pagination?.total > 0 && (
               <div style={{

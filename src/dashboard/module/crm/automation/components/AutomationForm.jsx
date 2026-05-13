@@ -1,12 +1,12 @@
 import React from 'react';
-import { Modal, Form, Input, Select, InputNumber, Button, Space, Divider, Typography } from 'antd';
+import { Modal, Form, Input, Select, InputNumber, Button, Space, Divider, Typography, Card, Tag } from 'antd';
 import { PlusOutlined, DeleteOutlined, ThunderboltOutlined, RocketOutlined } from '@ant-design/icons';
 import { FiX } from "react-icons/fi";
 
 const { Option } = Select;
 const { Text } = Typography;
 
-const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categories, leadStages }) => {
+const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categories, leadStages, sources, users = [], currentUser, isEditing }) => {
     return (
         <Modal
             title={null}
@@ -65,11 +65,11 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                         <RocketOutlined style={{ fontSize: "24px", color: "#ffffff" }} />
                     </div>
                     <div>
-                        <h2 style={{ margin: "0", fontSize: "24px", fontWeight: "600", color: "#ffffff" }}>
-                            Create Automation
+                        <h2 style={{ margin: "0", fontSize: "22px", fontWeight: "600", color: "#ffffff" }}>
+                            {isEditing ? 'Update Automation' : 'New Automation'}
                         </h2>
                         <Text style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.85)" }}>
-                            Build high-precision automated workflows for your leads
+                            {isEditing ? 'Modify your workflow configuration' : 'Build a high-precision automation flow'}
                         </Text>
                     </div>
                 </div>
@@ -105,8 +105,13 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                         >
                             <Option value="lead_created">New Lead Created</Option>
                             <Option value="stage_changed">Lead Stage Changed</Option>
+                            <Option value="status_changed">Lead Status Changed</Option>
+                            <Option value="inquiry_submitted">Inquiry Form Submitted</Option>
                             <Option value="whatsapp_received">Incoming WhatsApp Message</Option>
                             <Option value="task_created">Task Created</Option>
+                            <Option value="task_completed">Task Completed</Option>
+                            <Option value="lead_converted">Lead Converted to Deal</Option>
+                            <Option value="lead_reassigned">Lead Reassigned</Option>
                         </Select>
                     </Form.Item>
                 </div>
@@ -124,6 +129,9 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                                         <Select style={{ width: 160 }} placeholder="Field">
                                             <Option value="leadStage">Lead Stage</Option>
                                             <Option value="leadSource">Lead Source</Option>
+                                            <Option value="status">Lead Status</Option>
+                                            <Option value="category">Lead Category</Option>
+                                            <Option value="priority">Task Priority</Option>
                                             <Option value="budget">Budget</Option>
                                             <Option value="messageText">Message Text</Option>
                                         </Select>
@@ -135,8 +143,77 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                                             <Option value="greater_than">Greater Than</Option>
                                         </Select>
                                     </Form.Item>
-                                    <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
-                                        <Input placeholder="Value" style={{ borderRadius: "8px" }} />
+                                    <Form.Item
+                                        noStyle
+                                        shouldUpdate={(prevValues, currentValues) => 
+                                            prevValues.conditions?.[name]?.field !== currentValues.conditions?.[name]?.field
+                                        }
+                                    >
+                                        {({ getFieldValue }) => {
+                                            const fieldType = getFieldValue(['conditions', name, 'field']);
+                                            
+                                            if (fieldType === 'leadStage') {
+                                                return (
+                                                    <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
+                                                        <Select placeholder="Select Stage" style={{ width: 180 }}>
+                                                            {leadStages?.map(s => <Option key={s.id} value={s.stageName}>{s.stageName}</Option>)}
+                                                        </Select>
+                                                    </Form.Item>
+                                                );
+                                            }
+                                            if (fieldType === 'leadSource') {
+                                                return (
+                                                    <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
+                                                        <Select placeholder="Select Source" style={{ width: 180 }}>
+                                                            {sources?.map(s => <Option key={s.id} value={s.name}>{s.name}</Option>)}
+                                                        </Select>
+                                                    </Form.Item>
+                                                );
+                                            }
+                                            if (fieldType === 'status') {
+                                                return (
+                                                    <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
+                                                        <Select placeholder="Select Status" style={{ width: 180 }}>
+                                                            {statuses?.map(s => <Option key={s.id} value={s.name}>{s.name}</Option>)}
+                                                        </Select>
+                                                    </Form.Item>
+                                                );
+                                            }
+                                            if (fieldType === 'category') {
+                                                return (
+                                                    <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
+                                                        <Select placeholder="Select Category" style={{ width: 180 }}>
+                                                            {categories?.map(s => <Option key={s.id} value={s.name}>{s.name}</Option>)}
+                                                        </Select>
+                                                    </Form.Item>
+                                                );
+                                            }
+                                            if (fieldType === 'priority') {
+                                                return (
+                                                    <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
+                                                        <Select placeholder="Select Priority" style={{ width: 180 }}>
+                                                            <Option value="low">Low</Option>
+                                                            <Option value="medium">Medium</Option>
+                                                            <Option value="high">High</Option>
+                                                            <Option value="highest">Highest</Option>
+                                                        </Select>
+                                                    </Form.Item>
+                                                );
+                                            }
+                                            if (fieldType === 'budget') {
+                                                return (
+                                                    <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
+                                                        <InputNumber placeholder="Amount" style={{ width: 180, borderRadius: '8px' }} />
+                                                    </Form.Item>
+                                                );
+                                            }
+                                            
+                                            return (
+                                                <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
+                                                    <Input placeholder="Value" style={{ width: 180, borderRadius: "8px" }} />
+                                                </Form.Item>
+                                            );
+                                        }}
                                     </Form.Item>
                                     <Button 
                                         type="text" 
@@ -180,11 +257,14 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                                             <Select>
                                                 <Option value="send_whatsapp">Send WhatsApp Message</Option>
                                                 <Option value="send_whatsapp_template">Send WhatsApp Template</Option>
+                                                <Option value="send_email">Send Email Message</Option>
                                                 <Option value="create_task">Create Follow-up Task</Option>
                                                 <Option value="update_lead_status">Update Lead Status</Option>
+                                                <Option value="update_lead_stage">Update Lead Stage</Option>
                                                 <Option value="update_lead_category">Update Lead Category</Option>
                                                 <Option value="update_lead_score">Update Lead Score</Option>
                                                 <Option value="assign_round_robin">Round Robin Assignment</Option>
+                                                <Option value="assign_sales">Assign to Specific User</Option>
                                                 <Option value="reassign_lead">Reassign Lead (Escalate)</Option>
                                             </Select>
                                         </Form.Item>
@@ -210,6 +290,18 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                                                     </Form.Item>
                                                 );
                                             }
+                                            if (type === 'send_email') {
+                                                return (
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                                                        <Form.Item {...restField} name={[name, 'subject']} label="Email Subject" rules={[{ required: true }]}>
+                                                            <Input placeholder="e.g. Welcome to Grewox" style={{ borderRadius: '8px' }} />
+                                                        </Form.Item>
+                                                        <Form.Item {...restField} name={[name, 'message']} label="Email Body" rules={[{ required: true }]}>
+                                                            <Input.TextArea rows={3} placeholder="Write your email content..." style={{ borderRadius: '8px' }} />
+                                                        </Form.Item>
+                                                    </div>
+                                                );
+                                            }
                                             if (type === 'create_task') {
                                                 return (
                                                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
@@ -233,6 +325,33 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                                                     </Form.Item>
                                                 );
                                             }
+                                            if (type === 'update_lead_stage') {
+                                                return (
+                                                    <Form.Item {...restField} name={[name, 'stageId']} label="Move to Stage" rules={[{ required: true }]}>
+                                                        <Select placeholder="Select Stage">
+                                                            {leadStages?.map(stage => (
+                                                                <Option key={stage.id} value={stage.id}>{stage.name}</Option>
+                                                            ))}
+                                                        </Select>
+                                                    </Form.Item>
+                                                );
+                                            }
+                                            if (type === 'assign_sales') {
+                                                return (
+                                                    <Form.Item {...restField} name={[name, 'userId']} label="Select Team Member" rules={[{ required: true }]}>
+                                                        <Select placeholder="Choose employee" style={{ borderRadius: '8px' }}>
+                                                            {users?.map(u => (
+                                                                <Option key={u.id} value={u.id}>
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                        <span>{u.username} <Text type="secondary" style={{ fontSize: '12px' }}>({u.Role?.role_name || u.role || 'Staff'})</Text></span>
+                                                                        {u.id === currentUser?.id && <Tag color="blue" style={{ marginRight: 0, borderRadius: '4px', fontSize: '10px' }}>ME</Tag>}
+                                                                    </div>
+                                                                </Option>
+                                                            ))}
+                                                        </Select>
+                                                    </Form.Item>
+                                                );
+                                            }
                                             return null;
                                         }}
                                     </Form.Item>
@@ -243,10 +362,11 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                                 onClick={() => add()} 
                                 block 
                                 icon={<PlusOutlined />}
-                                style={{ borderRadius: '10px', height: '40px', color: '#1890ff' }}
+                                style={{ borderRadius: '10px', height: '40px', color: '#1890ff', marginBottom: '16px' }}
                             >
                                 Add Next Action to Sequence
                             </Button>
+
                         </>
                     )}
                 </Form.List>
@@ -284,7 +404,7 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                             boxShadow: "0 4px 12px rgba(24, 144, 255, 0.2)",
                         }}
                     >
-                        Create Workflow
+                        {isEditing ? 'Update Workflow' : 'Create Workflow'}
                     </Button>
                 </div>
             </Form>

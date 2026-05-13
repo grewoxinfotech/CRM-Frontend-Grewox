@@ -60,13 +60,16 @@ const EditFollowupCall = ({
   const [updateFollowupCall, { isLoading: followupCallResponseLoading }] =
     useUpdateFollowupCallMutation();
   const { data: callDataFromApi, isLoading: isCallLoading } =
-    useGetFollowupCallsQuery(callId);
+    useGetFollowupCallsQuery(callId, { skip: !!callData || !callId });
 
   // Use callData from props if available, otherwise use data from API
-  const call = callData || callDataFromApi?.data?.find((c) => c.id === callId);
+  const call = callData || (Array.isArray(callDataFromApi?.data) ? callDataFromApi?.data?.find((c) => c.id === callId) : callDataFromApi?.data);
+
+  // Get roles list from standard or message path
+  const rolesList = rolesData?.message?.data || rolesData?.data || [];
 
   // Get subclient role ID to filter it out
-  const subclientRoleId = rolesData?.data?.find(
+  const subclientRoleId = rolesList.find(
     (role) => role?.role_name === "sub-client"
   )?.id;
 
@@ -75,11 +78,12 @@ const EditFollowupCall = ({
     usersResponse?.data?.filter(
       (user) =>
         user?.created_by === currentUser?.username &&
-        user?.role_id !== subclientRoleId
+        String(user?.role_id) !== String(subclientRoleId)
     ) || [];
 
   // Get role colors and icons
-  const getRoleColor = (role) => {
+  const getRoleColor = (roleName) => {
+    const name = roleName?.toLowerCase() || "";
     const roleColors = {
       employee: {
         color: "#D46B08",
@@ -102,7 +106,12 @@ const EditFollowupCall = ({
         border: "#D3ADF7",
       },
     };
-    return roleColors[role?.toLowerCase()] || roleColors.default;
+    
+    if (name.includes("admin")) return roleColors.admin;
+    if (name.includes("manager")) return roleColors.manager;
+    if (name.includes("employee") || name.includes("staff")) return roleColors.employee;
+    
+    return roleColors.default;
   };
 
   const handleCreateUser = () => {
@@ -111,6 +120,8 @@ const EditFollowupCall = ({
 
   // Set initial form values when call data is loaded
   useEffect(() => {
+    if (!open) return; // Only run when modal is open
+
     if (call) {
       // Parse assigned_to (participants)
       let assignedTo = { assigned_to: [] };
@@ -154,10 +165,11 @@ const EditFollowupCall = ({
       };
 
       form.setFieldsValue(formValues);
-    } else {
+    } else if (!isCallLoading && open) {
+      // Only show error if we are NOT loading and still don't have data
       message.error("Failed to load call data");
     }
-  }, [call, form, rtiId, usersResponse?.data, currentUser]);
+  }, [call, form, rtiId, usersResponse?.data, currentUser, open, isCallLoading]);
 
   const handleSubmit = async (values) => {
     const assignedToArray = Array.isArray(values.assigned_to)
@@ -469,7 +481,6 @@ const EditFollowupCall = ({
                 height: "auto",
                 minHeight: "48px",
               }}
-              defaultValue={currentUser?.username ? [currentUser.username] : []}
               listHeight={300}
               maxTagCount="responsive"
               maxTagTextLength={15}
@@ -495,6 +506,7 @@ const EditFollowupCall = ({
                       gap: "8px",
                       padding: "0 8px",
                       justifyContent: "flex-end",
+                      marginBottom: "8px"
                     }}
                   >
                     <Button
@@ -516,14 +528,6 @@ const EditFollowupCall = ({
                         color: "#ffffff",
                         border: "none",
                         borderRadius: "6px",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background =
-                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
                       }}
                     >
                       Add New User
@@ -551,14 +555,6 @@ const EditFollowupCall = ({
                         color: "#1890ff",
                         fontWeight: "500",
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#e6f4ff";
-                        e.currentTarget.style.borderColor = "#69b1ff";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#ffffff";
-                        e.currentTarget.style.borderColor = "#1890ff";
-                      }}
                     >
                       Done
                     </Button>
@@ -566,195 +562,56 @@ const EditFollowupCall = ({
                 </>
               )}
             >
-                <Option key={currentUser?.id} value={currentUser?.username}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "4px 0",
-                }}
-              >
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "50%",
-                    background: "#e6f4ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#1890ff",
-                    fontSize: "16px",
-                    fontWeight: "500",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {currentUser?.profilePic ? (
-                    <img
-                      src={currentUser?.profilePic}
-                      alt={currentUser?.username}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    currentUser?.username?.charAt(0) || <FiUser />
-                  )}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "4px",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontWeight: 500,
-                      color: "rgba(0, 0, 0, 0.85)",
-                      fontSize: "14px",
-                    }}
-                  >
-                    {currentUser?.username}
+              <Option key={currentUser?.id} value={currentUser?.username}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 0" }}>
+                  <div style={{
+                    width: "40px", height: "40px", borderRadius: "50%", background: "#e6f4ff",
+                    display: "flex", alignItems: "center", justifyContent: "center", color: "#1890ff",
+                    fontSize: "16px", fontWeight: "500", textTransform: "uppercase"
+                  }}>
+                    {currentUser?.profilePic ? (
+                      <img src={currentUser?.profilePic} alt={currentUser?.username} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                    ) : (
+                      currentUser?.username?.charAt(0) || <FiUser />
+                    )}
+                  </div>
+                  <span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)", fontSize: "14px" }}>
+                    {currentUser?.username} (Me)
                   </span>
+                  <div style={{ marginLeft: "auto" }}>
+                    <Tag color={getRoleColor(currentUser?.roleName).bg} style={{ color: getRoleColor(currentUser?.roleName).color, border: `1px solid ${getRoleColor(currentUser?.roleName).border}`, margin: 0 }}>
+                      {currentUser?.roleName}
+                    </Tag>
+                  </div>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginLeft: "auto",
-                  }}
-                >
-                  <div
-                    className="role-indicator"
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      background: getRoleColor(currentUser?.roleName).color,
-                      boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
-                      animation: "pulse 2s infinite",
-                    }}
-                  />
-                  <span
-                    style={{
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      background: getRoleColor(currentUser?.roleName).bg,
-                      color: getRoleColor(currentUser?.roleName).color,
-                      border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
-                      fontWeight: 500,
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {currentUser?.roleName || "User"}
-                  </span>
-                </div>
-              </div>
-            </Option>
+              </Option>
               {Array.isArray(users) &&
-                users.map((user) => {
-                  const userRole = rolesData?.data?.find(
-                    (role) => role.id === user.role_id
-                  );
-                  const roleStyle = getRoleColor(userRole?.role_name);
-
+                users.filter(u => u.username !== currentUser?.username).map((user) => {
+                  const rolesList = rolesData?.message?.data || rolesData?.data || [];
+                  const userRole = rolesList.find(role => String(role.id) === String(user.role_id));
+                  const roleName = userRole?.role_name || user.role_name || user.role?.role_name || "Member";
+                  const roleStyle = getRoleColor(roleName);
                   return (
                     <Option key={user.username} value={user.username}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
-                          padding: "4px 0",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: "40px",
-                            height: "40px",
-                            borderRadius: "50%",
-                            background: "#e6f4ff",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#1890ff",
-                            fontSize: "16px",
-                            fontWeight: "500",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {user.profilePic ? (
-                            <img
-                              src={user.profilePic}
-                              alt={user.username}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                              }}
-                            />
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 0" }}>
+                        <div style={{
+                          width: "40px", height: "40px", borderRadius: "50%", background: "#f5f5f5",
+                          display: "flex", alignItems: "center", justifyContent: "center", color: "#8c8c8c",
+                          fontSize: "16px", fontWeight: "500", textTransform: "uppercase"
+                        }}>
+                          {user?.profilePic ? (
+                            <img src={user?.profilePic} alt={user?.username} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
                           ) : (
-                            user.username?.charAt(0) || <FiUser />
+                            user?.username?.charAt(0) || <FiUser />
                           )}
                         </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            gap: "4px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontWeight: 500,
-                              color: "rgba(0, 0, 0, 0.85)",
-                              fontSize: "14px",
-                            }}
-                          >
-                            {user.username}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            marginLeft: "auto",
-                          }}
-                        >
-                          <div
-                            className="role-indicator"
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              background: roleStyle.color,
-                              boxShadow: `0 0 8px ${roleStyle.color}`,
-                              animation: "pulse 2s infinite",
-                            }}
-                          />
-                          <span
-                            style={{
-                              padding: "2px 8px",
-                              borderRadius: "4px",
-                              fontSize: "12px",
-                              background: roleStyle.bg,
-                              color: roleStyle.color,
-                              border: `1px solid ${roleStyle.border}`,
-                              fontWeight: 500,
-                              textTransform: "capitalize",
-                            }}
-                          >
-                            {userRole?.role_name || "User"}
-                          </span>
+                        <span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)", fontSize: "14px" }}>
+                          {user.username}
+                        </span>
+                        <div style={{ marginLeft: "auto" }}>
+                          <Tag color={roleStyle.bg} style={{ color: roleStyle.color, border: `1px solid ${roleStyle.border}`, margin: 0 }}>
+                            {roleName}
+                          </Tag>
                         </div>
                       </div>
                     </Option>

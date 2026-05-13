@@ -32,6 +32,21 @@ export const automationApi = createApi({
             }),
             invalidatesTags: ['Automation'],
         }),
+        deleteAutomation: builder.mutation({
+            query: (id) => ({
+                url: `/automations/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Automation'],
+        }),
+        updateAutomation: builder.mutation({
+            query: ({ id, ...body }) => ({
+                url: `/automations/${id}`,
+                method: 'PUT',
+                body
+            }),
+            invalidatesTags: ['Automation'],
+        }),
     })
 });
 
@@ -39,5 +54,7 @@ export const {
     useGetAutomationsQuery, 
     useCreateAutomationMutation, 
     useSeedDefaultsMutation, 
-    useToggleAutomationMutation 
+    useToggleAutomationMutation,
+    useDeleteAutomationMutation,
+    useUpdateAutomationMutation
 } = automationApi;

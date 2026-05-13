@@ -38,7 +38,9 @@ import {
   FiUser,
   FiDollarSign,
   FiGrid,
-  FiHelpCircle
+  FiHelpCircle,
+  FiLink,
+  FiZap,
 } from "react-icons/fi";
 import BrandConfig from "../../../utils/brandName";
 import CommonSidebar from "../../../components/Sidebar/Sidebar";
@@ -79,7 +81,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
 
   const shouldShowMenuItem = (item) => {
     if (isSubscriptionExpired) return ['Dashboard', 'Setting'].includes(item.title);
-    if (['Setting', 'Communication', 'Support'].includes(item.title)) return true;
+    if (['Setting', 'Communication', 'Support', 'Integrations'].includes(item.title)) return true;
     if (userRole?.toLowerCase() === 'client') return true;
     if (!item.permission) return true;
     if (item.subItems?.length > 0) return item.subItems.some(sub => !sub.permission || checkPermission(sub.permission));
@@ -153,8 +155,22 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       permission: "dashboards-communication",
       subItems: [
         { title: "Inbox", icon: <FiMessageSquare />, path: "/dashboard/whatsapp/inbox", permission: "dashboards-communication" },
-        { title: "Business setup", icon: <FiSettings />, path: "/dashboard/settings/whatsapp", permission: "dashboards-communication" },
         { title: "Message log", icon: <FiList />, path: "/dashboard/whatsapp/messages", permission: "dashboards-communication" }
+      ]
+    },
+    {
+      title: "Integrations",
+      icon: <FiZap />,
+      isDropdown: true,
+      badge: "NEW",
+      subItems: [
+        { title: "Justdial", icon: <FiGlobe />, path: "/dashboard/integrations/justdial" },
+        { title: "Indiamart", icon: <FiShoppingCart />, path: "/dashboard/integrations/indiamart" },
+        { title: "Google Meet", icon: <FiVideo />, path: "/dashboard/integrations/google-meet" },
+        { title: "Zoom Meet", icon: <FiVideo />, path: "/dashboard/integrations/zoom-meet" },
+        { title: "Meta Ads", icon: <FiTarget />, path: "/dashboard/integrations/meta-ads" },
+        { title: "WhatsApp API", icon: <FiPhone />, path: "/dashboard/settings/whatsapp" },
+        { title: "Website Webhooks", icon: <FiLink />, path: "/dashboard/integrations/webhooks" }
       ]
     },
     {

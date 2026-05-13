@@ -91,7 +91,7 @@ const CreateMeeting = ({
   const users =
     usersResponse?.data?.filter(
       (user) =>
-        user?.created_by === currentUser?.username &&
+        (user?.created_by === currentUser?.username || String(user?.id) === String(currentUser?.id)) &&
         user?.role_id !== subclientRoleId
     ) || [];
 
@@ -446,6 +446,7 @@ const CreateMeeting = ({
           from_time: initialTime,
           to_date: initialDate,
           to_time: initialTime,
+          assigned_to: currentUser?.username ? [currentUser.username] : []
         }}
         style={{ padding: "24px" }}
       >
@@ -458,7 +459,7 @@ const CreateMeeting = ({
         >
           <Form.Item
             name="title"
-            label={<span style={formItemStyle}>Title <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Title</span>}
             rules={[{ required: true, message: "Please enter meeting title" }]}
           >
             <Input
@@ -473,7 +474,7 @@ const CreateMeeting = ({
 
           <Form.Item
             name="meeting_type"
-            label={<span style={formItemStyle}>Meeting Type <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Meeting Type</span>}
             rules={[{ required: true, message: "Please select meeting type" }]}
           >
             <Select
@@ -512,7 +513,7 @@ const CreateMeeting = ({
               <>
                 <Form.Item
                   name="venue"
-                  label={<span style={formItemStyle}>Meeting Venue <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                  label={<span style={formItemStyle}>Meeting Venue</span>}
                   rules={[
                     { required: true, message: "Please select meeting venue" },
                   ]}
@@ -535,7 +536,7 @@ const CreateMeeting = ({
                 {venueType && (
                   <Form.Item
                     name="location"
-                    label={<span style={formItemStyle}>Location <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                    label={<span style={formItemStyle}>Location</span>}
                     rules={[
                       {
                         required: true,
@@ -560,7 +561,7 @@ const CreateMeeting = ({
             {meetingType === "online" && (
               <Form.Item
                 name="meeting_link"
-                label={<span style={formItemStyle}>Meeting Link <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                label={<span style={formItemStyle}>Meeting Link</span>}
                 rules={[
                   { required: true, message: "Please enter meeting link" },
                 ]}
@@ -590,7 +591,7 @@ const CreateMeeting = ({
         >
           <Form.Item
             name="from_date"
-            label={<span style={formItemStyle}>Meeting Start Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Meeting Start Date</span>}
             rules={[
               { required: true, message: "Please select meeting start date" },
             ]}
@@ -610,7 +611,7 @@ const CreateMeeting = ({
 
           <Form.Item
             name="from_time"
-            label={<span style={formItemStyle}>Meeting Start Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Meeting Start Time</span>}
             rules={[
               { required: true, message: "Please select meeting start time" },
             ]}
@@ -639,7 +640,7 @@ const CreateMeeting = ({
         >
           <Form.Item
             name="to_date"
-            label={<span style={formItemStyle}>Meeting End Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Meeting End Date</span>}
             rules={[
               { required: true, message: "Please select meeting end date" },
             ]}
@@ -667,7 +668,7 @@ const CreateMeeting = ({
 
           <Form.Item
             name="to_time"
-            label={<span style={formItemStyle}>Meeting End Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Meeting End Time</span>}
             rules={[
               { required: true, message: "Please select meeting end date" },
             ]}
@@ -776,7 +777,7 @@ const CreateMeeting = ({
             name="assigned_to"
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Participants <span style={{ color: "#ff4d4f" }}>*</span>
+                Participants
               </span>
             }
             rules={[
@@ -789,7 +790,6 @@ const CreateMeeting = ({
             <Select
               mode="multiple"
               placeholder="Select team members"
-              defaultValue={currentUser?.username ? [currentUser.username] : []}
               style={{
                 width: "100%",
                 height: "auto",

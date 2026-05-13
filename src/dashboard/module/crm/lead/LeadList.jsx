@@ -60,6 +60,19 @@ const adjustColor = (color, amount) => {
   );
 };
 
+const getRandomColor = (name) => {
+  const colors = [
+    "#1890ff", "#2f54eb", "#722ed1", "#eb2f96", 
+    "#fa8c16", "#faad14", "#a0d911", "#52c41a", 
+    "#13c2c2", "#fa541c"
+  ];
+  let hash = 0;
+  for (let i = 0; i < name?.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
 const LeadList = ({
   leads,
   onEdit,
@@ -69,6 +82,7 @@ const LeadList = ({
   loading,
   pagination,
   onTableChange,
+  users = [],
 }) => {
   const [deleteLead] = useDeleteLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
@@ -509,6 +523,10 @@ const LeadList = ({
       width: 90,
       sorter: (a, b) => (a.lead_score || 0) - (b.lead_score || 0),
       render: (score) => {
+        if (score === null || score === undefined) {
+          return <Text type="secondary" style={{ fontSize: '12px', fontStyle: 'italic' }}>Analyzing...</Text>;
+        }
+
         let color = "#ff4d4f"; // Low
         if (score >= 80) color = "#52c41a"; // High
         else if (score >= 50) color = "#1890ff"; // Medium
@@ -523,7 +541,7 @@ const LeadList = ({
               boxShadow: `0 0 4px ${color}`
             }} />
             <Text strong style={{ fontSize: "14px", color: color }}>
-              {score || 0}
+              {score}%
             </Text>
           </div>
         );
@@ -539,6 +557,50 @@ const LeadList = ({
           <Text>{creator ? `${creator.firstName || ""} ${creator.lastName || ""}` : "Unknown"}</Text>
         </div>
       )
+    },
+    {
+      title: 'Assignee',
+      dataIndex: 'lead_members',
+      key: 'assignee',
+      width: 150,
+      render: (lead_members) => {
+        let assignedIds = [];
+        try {
+          let parsed = lead_members;
+          // Robust parsing to handle potential double-encoding
+          if (typeof parsed === 'string') {
+            try {
+              parsed = JSON.parse(parsed);
+              if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+            } catch (e) { parsed = []; }
+          }
+          assignedIds = parsed?.lead_members || parsed?.assignedusers || (Array.isArray(parsed) ? parsed : []);
+        } catch(e) { assignedIds = []; }
+        
+        const assignedUsers = Array.isArray(assignedIds) 
+          ? assignedIds.map(id => users?.find(u => u.id === id)).filter(Boolean)
+          : [];
+
+        if (assignedIds.length > 0 && assignedUsers.length === 0) {
+            console.warn("Assignee Mapping Failed:", { assignedIds, availableUserIds: users?.map(u => u.id) });
+        }
+
+        return (
+          <Avatar.Group maxCount={3} size="small">
+            {assignedUsers.map(user => (
+              <Tooltip key={user.id} title={user.username || `${user.firstName} ${user.lastName}`}>
+                <Avatar 
+                  src={user.profilePic} 
+                  style={{ backgroundColor: getRandomColor(user.username || user.id) }}
+                >
+                  {user.username?.charAt(0).toUpperCase() || user.firstName?.charAt(0).toUpperCase()}
+                </Avatar>
+              </Tooltip>
+            ))}
+            {assignedUsers.length === 0 && <Text type="secondary" style={{ fontSize: '12px' }}>Unassigned</Text>}
+          </Avatar.Group>
+        );
+      }
     },
     {
       title: "Actions",

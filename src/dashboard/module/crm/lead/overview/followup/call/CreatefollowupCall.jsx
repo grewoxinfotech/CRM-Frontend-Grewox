@@ -256,7 +256,7 @@ const CreateFollowupCall = ({
         <div style={{ display: "flex", gap: "16px", marginTop: "20px" }}>
           <Form.Item
             name="call_start_date"
-            label={<span style={formItemStyle}>Call Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Call Date</span>}
             rules={[{ required: true, message: "Please select date" }]}
             style={{ flex: 1 }}
           >
@@ -269,7 +269,7 @@ const CreateFollowupCall = ({
 
           <Form.Item
             name="call_start_time"
-            label={<span style={formItemStyle}>Call Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Call Time</span>}
             rules={[{ required: true, message: "Please select time" }]}
             style={{ flex: 1 }}
           >
@@ -372,7 +372,7 @@ const CreateFollowupCall = ({
             name="call_reminder"
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Reminder <span style={{ color: "#ff4d4f" }}>*</span>
+                Reminder
               </span>
             }
             rules={[{ required: true, message: "Please select reminder" }]}
@@ -725,7 +725,7 @@ const CreateFollowupCall = ({
         >
           <Form.Item
             name="subject"
-            label={<span style={formItemStyle}>Subject <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Subject</span>}
             rules={[{ required: true, message: "Please enter subject" }]}
           >
             <Input
@@ -737,7 +737,7 @@ const CreateFollowupCall = ({
 
           <Form.Item
             name="call_purpose"
-            label={<span style={formItemStyle}>Purpose <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Purpose</span>}
             rules={[{ required: true, message: "Please enter purpose" }]}
           >
             <Input

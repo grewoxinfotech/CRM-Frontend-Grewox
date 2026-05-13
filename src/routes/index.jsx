@@ -88,6 +88,17 @@ import Project from "../dashboard/module/crm/project/index.jsx";
 import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail.jsx";
 import EmployeeOverview from "../dashboard/module/hrm/Employee/overview/index.jsx";
 import Automation from "../dashboard/module/crm/automation/index.jsx";
+import Followups from "../dashboard/module/crm/followups/index.jsx";
+import {
+  Justdial,
+  Indiamart,
+  GoogleMeet,
+  ZoomMeet,
+  MetaAds,
+  WhatsAppAPI,
+  Webhooks
+} from "../dashboard/module/crm/integrations";
+
 
 
 
@@ -366,6 +377,10 @@ const routes = createBrowserRouter([
             element: <Task />,
           },
           {
+            path: "followups",
+            element: <Followups />,
+          },
+          {
             path: "task-calendar",
             element: <TaskCalendar />,
           },
@@ -483,7 +498,7 @@ const routes = createBrowserRouter([
         element: <WhatsAppMessages />,
       },
       {
-        path: "whatsapp/inbox",
+        path: "whatsapp-chat",
         element: <WhatsAppInbox />,
       },
       {
@@ -497,6 +512,18 @@ const routes = createBrowserRouter([
       {
         path: "crm-setup",
         element: <Crmsystem />,
+      },
+      {
+        path: "integrations",
+        children: [
+          { path: "justdial", element: <Justdial /> },
+          { path: "indiamart", element: <Indiamart /> },
+          { path: "google-meet", element: <GoogleMeet /> },
+          { path: "zoom-meet", element: <ZoomMeet /> },
+          { path: "meta-ads", element: <MetaAds /> },
+          { path: "whatsapp-api", element: <WhatsAppAPI /> },
+          { path: "webhooks", element: <Webhooks /> },
+        ]
       },
     ],
   },

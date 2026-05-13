@@ -87,7 +87,7 @@ const WorkflowInspector = ({ visible, onClose, automation }) => {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
                         <div>
                             <span style={{ color: '#64748b', fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px' }}>EVENT TYPE</span>
-                            <div style={{ fontWeight: '600', color: '#0f172a', marginTop: '2px' }}>{automation.triggerType.replace(/_/g, ' ').toUpperCase()}</div>
+                            <div style={{ fontWeight: '600', color: '#0f172a', marginTop: '2px' }}>{(automation.triggerType || '').replace(/_/g, ' ').toUpperCase() || 'UNKNOWN'}</div>
                         </div>
                         {conditions.length > 0 && (
                             <Divider type="vertical" style={{ height: '35px', margin: 'auto 0' }} />
@@ -135,7 +135,7 @@ const WorkflowInspector = ({ visible, onClose, automation }) => {
                             <Card size="small" style={{ borderRadius: '10px', border: '1px solid #f1f5f9', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontWeight: '700', fontSize: '14px', color: '#334155' }}>
-                                        {action.type.replace(/_/g, ' ').toUpperCase()}
+                                        {(action.type || '').replace(/_/g, ' ').toUpperCase() || 'UNKNOWN ACTION'}
                                     </span>
                                     <Tag color={action.delayInHours > 0 ? 'orange' : 'green'} style={{ borderRadius: '4px', border: 'none', fontWeight: '600', margin: 0 }}>
                                         {action.delayInHours > 0 ? `${action.delayInHours}h Delay` : 'INSTANT'}
@@ -146,13 +146,13 @@ const WorkflowInspector = ({ visible, onClose, automation }) => {
                                     {action.type === 'send_whatsapp' && (
                                         <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                                             <small style={{ color: '#1890ff', fontWeight: '700', fontSize: '10px' }}>MESSAGE CONTENT</small>
-                                            <div style={{ marginTop: '5px', lineHeight: '1.5' }}>"{action.message}"</div>
+                                            <div style={{ marginTop: '5px', lineHeight: '1.5' }}>"{action.message || 'No message content'}"</div>
                                         </div>
                                     )}
                                     {action.type === 'create_task' && (
                                         <div style={{ display: 'flex', gap: '15px' }}>
-                                            <div><small style={{ color: '#94a3b8', fontWeight: '600' }}>TASK:</small> <b style={{ color: '#1e293b' }}>{action.taskName}</b></div>
-                                            <div><small style={{ color: '#94a3b8', fontWeight: '600' }}>PRIORITY:</small> <Tag color="red" style={{ border: 'none', borderRadius: '4px' }}>{action.priority.toUpperCase()}</Tag></div>
+                                            <div><small style={{ color: '#94a3b8', fontWeight: '600' }}>TASK:</small> <b style={{ color: '#1e293b' }}>{action.taskName || 'Unnamed Task'}</b></div>
+                                            <div><small style={{ color: '#94a3b8', fontWeight: '600' }}>PRIORITY:</small> <Tag color="red" style={{ border: 'none', borderRadius: '4px' }}>{(action.priority || 'medium').toUpperCase()}</Tag></div>
                                         </div>
                                     )}
                                     {action.type === 'update_lead_score' && (
