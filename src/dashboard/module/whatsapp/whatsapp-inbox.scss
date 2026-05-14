@@ -4,16 +4,31 @@
 */
 
 .chat-container {
-    // Height adjusted to touch the bottom of the screen correctly
-    height: calc(100vh - 64px); 
-    margin: 0;
+    // Height adjusted to fit perfectly and prevent bottom overflow
+    height: calc(100vh - 105px); 
+    margin-top: 5px;
+    padding: 0 15px;
     border-radius: 0;
+    overflow: hidden; // Prevent outer page scrolling
     
     @media (max-width: 768px) {
-        height: calc(100vh - 64px);
+        height: calc(100vh - 70px);
+        margin-top: 0;
+        padding: 0;
     }
 
     .chat-layout {
         height: 100%;
+    }
+
+    // Ensure internal lists fill the space correctly without causing outer scroll
+    .chat-list {
+        height: calc(100% - 180px) !important;
+        overflow-y: auto;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
     }
 }

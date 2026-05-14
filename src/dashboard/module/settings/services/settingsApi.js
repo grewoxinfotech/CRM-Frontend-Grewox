@@ -11,7 +11,8 @@ export {
     useSetDefaultCurrencyMutation,
     useWhatsappEmbeddedSignupMutation,
     useSyncWhatsappTemplatesMutation,
-    useGetWhatsappTemplatesQuery
+    useGetWhatsappTemplatesQuery,
+    useSendWhatsAppMessageMutation
 } from '../../../../superadmin/module/settings/services/settingsApi';
 import { settingsApi } from '../../../../superadmin/module/settings/services/settingsApi';
 export default settingsApi;

@@ -6,7 +6,9 @@ import DealStages from "./dealstage/index";
 import "./crmsystem.scss";
 import Source from "./souce/index";
 import Lable from "./lable/index";
+import Category from "./category/index";
 import ContractType from "./contractType";
+
 import PageHeader from "../../../../components/PageHeader";
 import { Link } from "react-router-dom";
 import { Card, Typography } from "antd";
@@ -22,9 +24,11 @@ export default function Crmsystem() {
     { title: "Lead Stages", icon: <FiLayers /> },
     { title: "Deal Stages", icon: <FiLayers /> },
     { title: "Sources", icon: <FiDatabase /> },
-    { title: "Labels", icon: <FiTag /> },
+    { title: "Tags", icon: <FiTag /> },
+    { title: "Categories", icon: <FiLayers /> },
     { title: "Contract Type", icon: <FiFileText /> },
   ];
+
 
   const renderContent = () => {
     switch (activeSection) {
@@ -32,8 +36,11 @@ export default function Crmsystem() {
       case "Lead Stages": return <LeadStages isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
       case "Deal Stages": return <DealStages isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
       case "Sources": return <Source isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
-      case "Labels": return <Lable isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
+      case "Tags": return <Lable isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
+      case "Categories": return <Category isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
       case "Contract Type": return <ContractType isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
+
+
       default: return <div>Content for {activeSection} will be implemented soon.</div>;
     }
   };

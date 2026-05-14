@@ -15,9 +15,11 @@ import {
   FiPlus,
   FiMoreVertical,
   FiSearch,
+  FiLayers,
 } from "react-icons/fi";
+
 import { useSelector } from "react-redux";
-import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
+import { selectCurrentUser } from "../../../../../auth/services/authSlice";
 import {
   useGetCategoriesQuery,
   useDeleteCategoryMutation,
@@ -28,14 +30,14 @@ import "./category.scss";
 
 const { Text } = Typography;
 
-const Categories = () => {
+const Categories = ({ isModalOpen, setIsModalOpen }) => {
   const [searchText, setSearchText] = useState("");
-  const [addModalVisible, setAddModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
+
   const [selectedCategory, setSelectedCategory] = useState(null);
   const currentUser = useSelector(selectCurrentUser);
 
-  const { data: categoriesData, isLoading,  refetch } = useGetCategoriesQuery(currentUser?.id);
+  const { data: categoriesData, isLoading, refetch } = useGetCategoriesQuery(currentUser?.id);
   const [deleteCategory] = useDeleteCategoryMutation();
 
   const handleDelete = async (record) => {
@@ -96,12 +98,24 @@ const Categories = () => {
       render: (text, record) => (
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div
-            className="color-dot"
-            style={{ backgroundColor: record.color || "#1890ff" }}
-          />
-          <Text strong>{text}</Text>
+            style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '6px',
+              background: record.color || '#1890ff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '12px'
+            }}
+          >
+            <FiLayers />
+          </div>
+          <Text strong style={{ color: '#1e293b' }}>{text}</Text>
         </div>
       ),
+
     },
     {
       title: "Description",
@@ -109,16 +123,7 @@ const Categories = () => {
       key: "description",
       render: (text) => text || "-",
     },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Tag color={status === "active" ? "success" : "error"}>
-          {status?.toUpperCase() || "INACTIVE"}
-        </Tag>
-      ),
-    },
+
     {
       title: "Action",
       key: "action",
@@ -142,23 +147,9 @@ const Categories = () => {
 
   return (
     <div className="category-container">
-      <div className="category-header">
-        <div className="search-box">
-          <Input
-            placeholder="Search categories..."
-            prefix={<FiSearch className="search-icon" />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-        </div>
-        <Button
-          type="primary"
-          icon={<FiPlus />}
-          onClick={() => setAddModalVisible(true)}
-        >
-          Create Category
-        </Button>
-      </div>
+
+
+
 
       <Table
         columns={columns}
@@ -173,9 +164,10 @@ const Categories = () => {
       />
 
       <AddCategoryModal
-        visible={addModalVisible}
-        onCancel={() => setAddModalVisible(false)}
+        visible={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
       />
+
 
       {selectedCategory && (
         <EditCategoryModal

@@ -715,7 +715,13 @@ const CreateLead = ({
             marginBottom: '24px'
           }}>
             {Array.isArray(formFields) && formFields
-              .filter(field => isQuick ? field.show_in_quick : (field.show_in_full !== false))
+              .filter(field => {
+                if (isQuick) {
+                  // Show if explicitly enabled for quick mode OR if it's an essential system field
+                  return field.show_in_quick || (field.is_system && ['leadTitle', 'firstName', 'telephone', 'email'].includes(field.key));
+                }
+                return field.show_in_full !== false;
+              })
               .map((field) => {
                 // System Field Mapping
                 if (field.is_system) {
@@ -742,7 +748,7 @@ const CreateLead = ({
                       >
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <Form.Item name="currency" noStyle initialValue={defaultCurrency}>
-                            <CommonSelect style={{ width: '120px' }} options={currencies?.map(c => ({ id: c.id, name: c.currencyCode }))} allowClear={false} />
+                            <CommonSelect style={{ width: '120px' }} options={currencies?.map(c => ({ id: c.id, name: c.currencyIcon === c.currencyCode ? c.currencyCode : `${c.currencyIcon} ${c.currencyCode}` }))} allowClear={false} />
                           </Form.Item>
                           <Form.Item name="leadValue" noStyle initialValue={0}>
                             <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder={field.placeholder || "Enter amount"} min={0} />

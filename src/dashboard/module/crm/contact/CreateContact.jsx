@@ -847,7 +847,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
         }}
       />
 
-      <style jsx="true" global="true">{`
+      <style>{`
         .contact-form {
           padding: 24px;
           

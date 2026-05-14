@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, Button, Typography, ColorPicker, message, Popover } from "antd";
 import { FiX, FiTag } from "react-icons/fi";
-import { useUpdateLabelMutation } from "../souce/services/SourceApi";
+import { useUpdateTagMutation } from "../souce/services/SourceApi";
+
 import { selectCurrentUser } from "../../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 
@@ -9,7 +10,8 @@ const { Text } = Typography;
 
 const EditLableModal = ({ isOpen, onClose, lable }) => {
   const [form] = Form.useForm();
-  const [updateLabel, { isLoading }] = useUpdateLabelMutation();
+  const [updateTag, { isLoading }] = useUpdateTagMutation();
+
   const userdata = useSelector(selectCurrentUser);
   const [selectedColor, setSelectedColor] = useState(lable?.color || '#1890ff');
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
@@ -31,7 +33,8 @@ const EditLableModal = ({ isOpen, onClose, lable }) => {
     }
 
     try {
-      await updateLabel({
+      await updateTag({
+
         id: lable.id,
         data: {
           name: values.name,

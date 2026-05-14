@@ -10,15 +10,16 @@ import {
   ColorPicker,
 } from "antd";
 import {
-  FiTag,
+  FiLayers,
   FiX,
+
   FiType,
   FiInfo,
   FiToggleRight,
 } from "react-icons/fi";
 import { useUpdateCategoryMutation } from "../souce/services/SourceApi";
 import { useSelector } from "react-redux";
-import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
+import { selectCurrentUser } from "../../../../../auth/services/authSlice";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -34,8 +35,8 @@ const EditCategoryModal = ({ visible, onCancel, category }) => {
         name: category.name,
         description: category.description,
         color: category.color,
-        status: category.status,
       });
+
     }
   }, [category, form]);
 
@@ -72,7 +73,8 @@ const EditCategoryModal = ({ visible, onCancel, category }) => {
         </Button>
         <div className="header-content">
           <div className="header-icon">
-            <FiTag style={{ fontSize: "24px", color: "#ffffff" }} />
+            <FiLayers style={{ fontSize: "24px", color: "#ffffff" }} />
+
           </div>
           <div>
             <h2>Edit Category</h2>
@@ -122,7 +124,7 @@ const EditCategoryModal = ({ visible, onCancel, category }) => {
           name="color"
           label={
             <span>
-              <FiTag style={{ marginRight: "8px" }} />
+              <FiLayers style={{ marginRight: "8px" }} />
               Category Color
             </span>
           }
@@ -130,6 +132,7 @@ const EditCategoryModal = ({ visible, onCancel, category }) => {
         >
           <ColorPicker />
         </Form.Item>
+
 
         <Form.Item
           name="status"

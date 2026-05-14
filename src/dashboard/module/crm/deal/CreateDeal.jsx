@@ -1290,7 +1290,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
           }}
         />
 
-        <style jsx="true" global="true">{`
+        <style>{`
           .deal-form-modal {
             .currency-select,
             .phone-code-select {

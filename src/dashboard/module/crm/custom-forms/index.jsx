@@ -101,7 +101,7 @@ const CustomForms = () => {
       render: (type, record) => (
         <Space>
           {type === 'default' ? <Tag color="blue">DEFAULT</Tag> : <Tag color="green">CUSTOM</Tag>}
-          {record.is_template && <Tag color="orange">TEMPLATE</Tag>}
+          {type !== 'default' && record.is_template && <Tag color="orange">TEMPLATE</Tag>}
         </Space>
       )
     },
@@ -145,6 +145,7 @@ const CustomForms = () => {
             size="small" 
             checked={status === 'active'} 
             disabled={record.form_type === 'default'}
+
             onChange={async (checked) => {
               try {
                 await updateForm({ id: record.id, status: checked ? 'active' : 'inactive' }).unwrap();

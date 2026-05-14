@@ -320,9 +320,11 @@ console.log("leaddata", initialLeadData)
   const { data: categoriesData = [] } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: statusesData = [] } = useGetStatusesQuery(loggedInUser?.id);
   const { data: companyData = [] } = useGetCompanyAccountsQuery();
+  
   const { data: associatedContact } = useGetContactByIdQuery(localLeadData?.contact_id, { 
     skip: !localLeadData?.contact_id 
   });
+
   const { data: countries = [] } = useGetAllCountriesQuery();
 
   const sources = sourcesData?.data || [];
@@ -541,29 +543,44 @@ console.log("leaddata", initialLeadData)
               </div>
               <div className="stat-content">
                 <div className="stat-label">Phone Number</div>
-                {localLeadData?.contact_id && associatedContact ? (
-                  <a
-                    href={`tel:${associatedContact?.phone}`}
-                    className="stat-value"
-                  >
-                    {getPhoneWithCode(
-                      associatedContact?.phone_code,
-                      associatedContact?.phone
-                    )}
-                  </a>
-                ) : localLeadData?.company_id && companyData?.data?.[0] ? (
-                  <a
-                    href={`tel:${companyData.data[0].phone_number}`}
-                    className="stat-value"
-                  >
-                    {getPhoneWithCode(
-                      companyData.data[0].phone_code,
-                      companyData.data[0].phone_number
-                    )}
-                  </a>
-                ) : (
-                  <span className="stat-value">-</span>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {localLeadData?.contact_id && associatedContact ? (
+                    <a
+                      href={`tel:${associatedContact?.phone}`}
+                      className="stat-value"
+                    >
+                      {getPhoneWithCode(
+                        associatedContact?.phone_code,
+                        associatedContact?.phone
+                      )}
+                    </a>
+                  ) : localLeadData?.company_id && companyData?.data?.[0] ? (
+                    <a
+                      href={`tel:${companyData.data[0].phone_number}`}
+                      className="stat-value"
+                    >
+                      {getPhoneWithCode(
+                        companyData.data[0].phone_code,
+                        companyData.data[0].phone_number
+                      )}
+                    </a>
+                  ) : (
+                    <span className="stat-value">-</span>
+                  )}
+                  {(associatedContact?.phone || companyData?.data?.[0]?.phone_number) && (
+                    <Tooltip title="Start WhatsApp Chat">
+                      <Button 
+                        type="text" 
+                        icon={<FaWhatsapp style={{ color: '#25D366', fontSize: '16px' }} />} 
+                        onClick={() => {
+                          const phone = (associatedContact?.phone || companyData?.data?.[0]?.phone_number)?.replace(/\D/g, '');
+                          window.location.href = `/dashboard/whatsapp-chat?phone=${phone}`;
+                        }}
+                        style={{ padding: 0, height: 'auto', display: 'flex', alignItems: 'center', minWidth: 'auto' }}
+                      />
+                    </Tooltip>
+                  )}
+                </div>
               </div>
             </div>
             <div className="stat-item">
@@ -1235,6 +1252,10 @@ const LeadOverview = () => {
     skip: !leadId,
   });
 
+  const { data: associatedContact } = useGetContactByIdQuery(localLeadData?.contact_id, { 
+    skip: !localLeadData?.contact_id 
+  });
+
   console.log("asdsads",localLeadData)
 
   // Update local state when lead data changes
@@ -1468,9 +1489,12 @@ const LeadOverview = () => {
           <FaWhatsapp style={{ color: '#25D366', marginRight: '6px' }} /> WhatsApp
         </span>
       ),
-      children: <LeadWhatsapp leadId={leadId} />,
+      children: <LeadWhatsapp 
+        leadId={leadId} 
+        phone={associatedContact?.phone || localLeadData?.telephone} 
+      />,
     }
-  ], [localLeadData, pipelineStages, handleStageUpdate, isUpdatingLead, setIsEditModalOpen]);
+  ], [localLeadData, pipelineStages, handleStageUpdate, isUpdatingLead, setIsEditModalOpen, associatedContact, pipelines]);
 
   const isLoading = isLoadingLead || isLoadingStages;
 

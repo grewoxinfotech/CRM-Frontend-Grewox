@@ -1090,7 +1090,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                         <CommonSelect 
                           style={{ width: '120px' }} 
                           options={currencies?.map(c => ({ 
-                            id: c.currencyCode, 
+                            id: c.id, 
                             name: c.currencyIcon === c.currencyCode ? c.currencyCode : `${c.currencyIcon} ${c.currencyCode}` 
                           }))} 
                           allowClear={false} 
@@ -1187,7 +1187,13 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                   >
                     <CommonSelect
                       placeholder={field.placeholder}
-                      options={contactsData?.data?.map(c => ({ id: c.id, name: `${c.first_name} ${c.last_name}` }))}
+                      options={(() => {
+                        const baseOptions = contactsData?.data?.map(c => ({ id: c.id, name: `${c.first_name} ${c.last_name}` })) || [];
+                        if (watchedContact && !baseOptions.find(o => o.id === watchedContact.id)) {
+                          baseOptions.push({ id: watchedContact.id, name: `${watchedContact.first_name} ${watchedContact.last_name}` });
+                        }
+                        return baseOptions;
+                      })()}
                       onChange={handleContactChange}
                     />
                   </Form.Item>
@@ -1204,7 +1210,13 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                   >
                     <CommonSelect
                       placeholder={field.placeholder}
-                      options={companyAccountsData?.data?.map(c => ({ id: c.id, name: c.company_name }))}
+                      options={(() => {
+                        const baseOptions = companyAccountsData?.data?.map(c => ({ id: c.id, name: c.company_name })) || [];
+                        if (watchedCompany && !baseOptions.find(o => o.id === watchedCompany.id)) {
+                          baseOptions.push({ id: watchedCompany.id, name: watchedCompany.company_name });
+                        }
+                        return baseOptions;
+                      })()}
                       onChange={handleCompanyChange}
                     />
                   </Form.Item>
@@ -1604,7 +1616,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         </div>
       </Modal>
 
-      <style jsx="true" global="true">{`
+      <style>{`
         .lead-form-modal {
           .currency-select, .phone-code-select {
             cursor: pointer;

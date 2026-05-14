@@ -74,6 +74,24 @@ const SYSTEM_FIELDS = {
     { type: 'select', label: 'Associated Contact', key: 'contact_id', icon: <FiUser /> },
     { type: 'select', label: 'Associated Company', key: 'company_id', icon: <FiBriefcase /> },
     { type: 'textarea', label: 'Description', key: 'description', icon: <FiFileText /> },
+  ],
+
+  contact: [
+    { type: 'text', label: 'First Name', key: 'first_name', icon: <FiUser /> },
+    { type: 'text', label: 'Last Name', key: 'last_name', icon: <FiUser /> },
+    { type: 'email', label: 'Email', key: 'email', icon: <FiMail /> },
+    { type: 'phone', label: 'Phone', key: 'phone', icon: <FiPhone /> },
+    { type: 'text', label: 'Company Name', key: 'company_name', icon: <FiBriefcase /> },
+    { type: 'text', label: 'Website', key: 'website', icon: <FiLink /> },
+    { type: 'textarea', label: 'Description', key: 'description', icon: <FiFileText /> },
+    { type: 'text', label: 'Address', key: 'address', icon: <FiMapPin /> },
+  ],
+
+  task: [
+    { type: 'text', label: 'Task Name', key: 'task_name', icon: <FiFileText /> },
+    { type: 'textarea', label: 'Description', key: 'description', icon: <FiFileText /> },
+    { type: 'select', label: 'Status', key: 'status', icon: <FiCheckSquare /> },
+    { type: 'priority', label: 'Priority', key: 'priority', icon: <FiFlag /> },
   ]
 };
 
@@ -86,7 +104,12 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
   const [fields, setFields] = useState(() => {
     if (!initialData?.fields) return [];
     try {
-      return typeof initialData.fields === 'string' ? JSON.parse(initialData.fields) : initialData.fields;
+      const parsedFields = typeof initialData.fields === 'string' ? JSON.parse(initialData.fields) : initialData.fields;
+      // Sanitize fields to ensure options array exists for relevant types
+      return parsedFields.map(f => ({
+        ...f,
+        options: f.options || (['select', 'multiselect', 'radio', 'checkbox'].includes(f.type) ? ['Option 1'] : [])
+      }));
     } catch (e) {
       console.error("Failed to parse fields:", e);
       return [];
@@ -210,7 +233,7 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
                 Standard {moduleType} fields
               </Text>
               <div className="field-type-grid">
-                {SYSTEM_FIELDS[moduleType].map(sf => (
+                {(SYSTEM_FIELDS[moduleType] || []).map(sf => (
                   <div key={sf.key} className="field-type-item system-field" onClick={() => addField(sf, true)}>
                     <div className="field-icon">{sf.icon}</div>
                     <span className="field-label">{sf.label}</span>
@@ -323,10 +346,10 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
             <Divider />
 
             <div className="canvas-fields">
-              {(!Array.isArray(fields) || fields.length === 0) ? (
+              {(fields || []).length === 0 ? (
                 <Empty description="Drag fields here or click from library" />
               ) : (
-                fields.map((field, index) => (
+                (fields || []).map((field, index) => (
 
                   <div 
                     key={field.id} 
@@ -468,7 +491,7 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
                   <div className="mb-3">
                     <Text strong>Options</Text>
                     <List
-                      dataSource={editingField.options}
+                      dataSource={editingField.options || []}
                       renderItem={(opt, i) => (
                         <List.Item actions={[
                           <Button size="small" type="link" danger icon={<FiTrash2 />} onClick={() => {
@@ -480,7 +503,7 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
                           <Input 
                             value={opt} 
                             onChange={e => {
-                              const newOpts = [...editingField.options];
+                              const newOpts = [...(editingField.options || [])];
                               newOpts[i] = e.target.value;
                               updateField(editingField.id, { options: newOpts });
                             }} 
@@ -492,7 +515,7 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
                           type="dashed" 
                           block 
                           icon={<FiPlus />} 
-                          onClick={() => updateField(editingField.id, { options: [...editingField.options, `Option ${editingField.options.length + 1}`] })}
+                          onClick={() => updateField(editingField.id, { options: [...(editingField.options || []), `Option ${(editingField.options?.length || 0) + 1}`] })}
                         >
                           Add Option
                         </Button>
@@ -585,7 +608,7 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '16px',
             }}>
-              {fields.map(field => {
+              {(fields || []).map(field => {
                 const isFullWidth = field.type === 'textarea' || field.type === 'heading' || field.type === 'divider' || field.grid_column === 'span 2';
                 
                 if (field.type === 'heading') {
@@ -637,7 +660,7 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
                       </Radio.Group>
                     )}
                     {field.type === 'checkbox' && (
-                      <Checkbox.Group options={field.options} />
+                      <Checkbox.Group options={field.options || []} />
                     )}
                     {field.type === 'file' && (
                       <div style={{ border: '1px dashed #cbd5e1', padding: '12px', borderRadius: '8px', background: '#f8fafc', textAlign: 'center' }}>

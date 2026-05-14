@@ -10,8 +10,9 @@ import {
   ColorPicker,
 } from "antd";
 import {
-  FiTag,
+  FiLayers,
   FiX,
+
   FiType,
   FiInfo,
   FiToggleRight,
@@ -34,8 +35,10 @@ const AddCategoryModal = ({ visible, onCancel }) => {
         id: user?.id,
         data: {
           name: values.name,
+          color: typeof values.color === 'string' ? values.color : values.color?.toHexString(),
           lableType: "category",
         },
+
       }).unwrap();
       
       message.success("Category created successfully");
@@ -108,7 +111,8 @@ const AddCategoryModal = ({ visible, onCancel }) => {
               justifyContent: "center",
             }}
           >
-            <FiTag style={{ fontSize: "24px", color: "#ffffff" }} />
+            <FiLayers style={{ fontSize: "24px", color: "#ffffff" }} />
+
           </div>
           <div>
             <h2
@@ -157,6 +161,15 @@ const AddCategoryModal = ({ visible, onCancel }) => {
             }}
           />
         </Form.Item>
+        <Form.Item
+
+          name="color"
+          label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Category Color</span>}
+          initialValue="#1890ff"
+        >
+          <ColorPicker showText />
+        </Form.Item>
+
 
         <div
           style={{

@@ -146,6 +146,14 @@ export const settingsApi = createApi({
             transformResponse: (response) => response.data,
             providesTags: ['AiUsage'],
         }),
+        sendWhatsAppMessage: builder.mutation({
+            query: (data) => ({
+                url: '/whatsapp/send-message',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['WhatsappInbox'],
+        }),
     }),
 });
 
@@ -165,4 +173,5 @@ export const {
     useGetAiSettingsQuery,
     useUpdateAiSettingsMutation,
     useGetAiUsageStatsQuery,
+    useSendWhatsAppMessageMutation,
 } = settingsApi;

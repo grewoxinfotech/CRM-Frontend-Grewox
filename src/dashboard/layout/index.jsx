@@ -105,18 +105,37 @@ const DashboardLayout = () => {
         if (!loggedInUser?.id) return;
 
         const baseUrl = BASE_URL.replace(/\/?api\/v1\/?$/, '');
-        inboxSocketRef.current = io(baseUrl, {
+        const socket = io(baseUrl, {
             withCredentials: true,
             path: '/socket.io',
-        });
-        inboxSocketRef.current.emit('user_connected', loggedInUser.id);
-        inboxSocketRef.current.on('whatsapp_inbox_update', () => {
-            dispatch(leadApi.util.invalidateTags(['Lead']));
-            dispatch(settingsApi.util.invalidateTags(['WhatsappInbox']));
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
         });
 
+        inboxSocketRef.current = socket;
+
+        const handleConnect = () => {
+            console.log('🔌 Global socket connected');
+            socket.emit('user_connected', loggedInUser.id);
+        };
+
+        const handleUpdate = (payload) => {
+            console.log('📱 WhatsApp update received:', payload);
+            dispatch(leadApi.util.invalidateTags(['Lead']));
+            dispatch(settingsApi.util.invalidateTags(['WhatsappInbox']));
+        };
+
+        socket.on('connect', handleConnect);
+        socket.on('whatsapp_inbox_update', handleUpdate);
+
+        // Initial connect call in case it's already connected
+        if (socket.connected) handleConnect();
+
         return () => {
-            inboxSocketRef.current?.disconnect();
+            socket.off('connect', handleConnect);
+            socket.off('whatsapp_inbox_update', handleUpdate);
+            socket.disconnect();
             inboxSocketRef.current = null;
         };
     }, [loggedInUser?.id, dispatch]);

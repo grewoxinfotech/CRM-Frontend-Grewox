@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Modal, Form, Input, Button, Typography, ColorPicker, message, Popover } from "antd";
 import { FiX, FiTag } from "react-icons/fi";
-import { useCreateLabelMutation } from "../souce/services/SourceApi";
+import { useCreateTagMutation } from "../souce/services/SourceApi";
+
 import { selectCurrentUser } from "../../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 
@@ -9,14 +10,16 @@ const { Text } = Typography;
 
 const AddLableModal = ({ isOpen, onClose }) => {
   const [form] = Form.useForm();
-  const [createLabel, { isLoading }] = useCreateLabelMutation();
+  const [createTag, { isLoading }] = useCreateTagMutation();
+
   const user = useSelector(selectCurrentUser);
   const [selectedColor, setSelectedColor] = useState('#1890ff');
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
 
   const handleSubmit = async (values) => {
     try {
-      await createLabel({
+      await createTag({
+
         id: user?.id,
         data: {
           name: values.name,

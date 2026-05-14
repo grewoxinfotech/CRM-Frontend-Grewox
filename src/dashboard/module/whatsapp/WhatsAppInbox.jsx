@@ -8,12 +8,23 @@ import {
     ArrowLeftOutlined,
     MessageOutlined,
     CheckOutlined,
-    TeamOutlined
+    TeamOutlined,
+    PlusOutlined,
+    FileTextOutlined
 } from '@ant-design/icons';
-import { useGetWhatsappConversationsQuery, useGetWhatsappMessagesQuery } from '../settings/services/settingsApi';
+import { 
+    useGetWhatsappConversationsQuery, 
+    useGetWhatsappMessagesQuery, 
+    useSendWhatsAppMessageMutation,
+    useGetWhatsappTemplatesQuery
+} from '../settings/services/settingsApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../auth/services/authSlice';
 import { FiMoreVertical } from 'react-icons/fi';
+import { Modal, Form, Input as AntInput, Select } from 'antd';
+import { io } from 'socket.io-client';
+import { BASE_URL } from '../../../config/config';
+import "./whatsapp-inbox.scss";
 
 // Directly importing Chat's SCSS to ensure 100% identical look
 import "../communication/chat/chat.scss";
@@ -36,12 +47,26 @@ export default function WhatsAppInbox() {
     const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
     const messagesEndRef = useRef(null);
     const currentUser = useSelector(selectCurrentUser);
+    const socketRef = useRef(null);
 
     useEffect(() => {
         const handleResize = () => setIsMobileView(window.innerWidth <= 768);
         window.addEventListener('resize', handleResize);
+
+        // Handle deep linking via phone query param
+        const params = new URLSearchParams(window.location.search);
+        const phoneParam = params.get('phone');
+        
+        if (phoneParam) {
+            setSelected(phoneParam);
+            if (window.innerWidth <= 768) {
+                setShowChatContent(true);
+            }
+        }
+
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
 
     const convArgs = useMemo(() => ({ limit: 80, q: q.trim() }), [q]);
     const { data: convData, isLoading: convLoading, isFetching: convFetching, refetch: refetchConvs } =
@@ -49,8 +74,26 @@ export default function WhatsAppInbox() {
 
     const conversations = convData?.data || [];
 
+    // Memoize the display list to avoid flickering during renders
+    const displayConvs = useMemo(() => {
+        let list = [...conversations];
+        if (selected && !list.find(c => c.wa_from === selected)) {
+            list.unshift({
+                wa_from: selected,
+                lastPreview: 'New chat',
+                unreadCount: 0,
+                isNew: true
+            });
+        }
+        return list;
+    }, [conversations, selected]);
+
+    // Auto-select first chat only if NO deep link and NOT mobile
     useEffect(() => {
-        if (!selected && conversations.length > 0 && !isMobileView) {
+        const params = new URLSearchParams(window.location.search);
+        const phoneParam = params.get('phone');
+        
+        if (!phoneParam && !selected && conversations.length > 0 && !isMobileView) {
             setSelected(conversations[0].wa_from);
         }
     }, [conversations, selected, isMobileView]);
@@ -67,8 +110,50 @@ export default function WhatsAppInbox() {
         refetch: refetchMsgs,
     } = useGetWhatsappMessagesQuery(msgArgs, { skip: !msgArgs });
 
+    const [sendMessage, { isLoading: isSending }] = useSendWhatsAppMessageMutation();
+
+    // Force real-time updates via direct socket listener
+    useEffect(() => {
+        if (!currentUser?.id) return;
+        const baseUrl = BASE_URL.replace(/\/?api\/v1\/?$/, '');
+        const socket = io(baseUrl, { withCredentials: true, path: '/socket.io', reconnection: true });
+        socketRef.current = socket;
+        socket.on('connect', () => {
+            console.log('⚡ WhatsApp Inbox Socket Connected');
+            socket.emit('user_connected', currentUser.id);
+        });
+        socket.on('whatsapp_inbox_update', (payload) => {
+            console.log('📱 WhatsApp Live Update:', payload);
+            refetchConvs();
+            refetchMsgs();
+        });
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current = null;
+            }
+        };
+    }, [currentUser?.id, refetchConvs, refetchMsgs]);
+
     const messages = msgData?.data || [];
-    const canSend = Boolean(selected) && draft.trim().length > 0;
+    const canSend = Boolean(selected) && draft.trim().length > 0 && !isSending;
+
+    const handleSendMessage = async () => {
+        if (!canSend) return;
+        try {
+            await sendMessage({
+                phoneNumber: selected,
+                message: draft.trim()
+            }).unwrap();
+            setDraft('');
+            message.success('Message sent');
+            refetchMsgs();
+            refetchConvs();
+        } catch (err) {
+            console.error('Failed to send message:', err);
+            message.error(err?.data?.message || 'Failed to send message');
+        }
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -83,6 +168,129 @@ export default function WhatsAppInbox() {
         if (isMobileView) {
             setShowChatContent(true);
         }
+    };
+
+    const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+    const [newChatForm] = Form.useForm();
+
+    const handleNewChat = (values) => {
+        const phone = values.phone.replace(/\D/g, '');
+        if (phone) {
+            setSelected(phone);
+            setIsNewChatModalOpen(false);
+            newChatForm.resetFields();
+            if (isMobileView) {
+                setShowChatContent(true);
+            }
+        }
+    };
+
+    const { data: templates = [] } = useGetWhatsappTemplatesQuery();
+    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState(null);
+    const [templateForm] = Form.useForm();
+
+    const handleSendTemplate = async (values) => {
+        if (!selectedTemplate) return;
+
+        const components = [];
+        
+        // Handle Body Variables
+        const bodyVars = [];
+        Object.keys(values).forEach(key => {
+            if (key.startsWith('var_body_')) {
+                bodyVars.push({ type: 'text', text: values[key] });
+            }
+        });
+        if (bodyVars.length > 0) {
+            components.push({ type: 'body', parameters: bodyVars });
+        }
+
+        // Handle Button Variables (Meta expects one component per button that has variables)
+        const buttonComponents = selectedTemplate?.components?.find(c => c.type === 'BUTTONS');
+        if (buttonComponents) {
+            buttonComponents.buttons.forEach((btn, index) => {
+                if (btn.type === 'URL' && btn.url.includes('{{1}}')) {
+                    const btnVarValue = values[`var_btn_${index}`];
+                    if (btnVarValue) {
+                        components.push({
+                            type: 'button',
+                            sub_type: 'url',
+                            index: index,
+                            parameters: [{ type: 'text', text: btnVarValue }]
+                        });
+                    }
+                }
+            });
+        }
+
+        try {
+            await sendMessage({
+                phoneNumber: selected,
+                templateName: selectedTemplate.name,
+                languageCode: selectedTemplate.language || 'en',
+                isTemplate: true,
+                components: components
+            }).unwrap();
+            
+            setIsTemplateModalOpen(false);
+            templateForm.resetFields();
+            setSelectedTemplate(null);
+            message.success('Message sent successfully');
+            setDraft('');
+            refetchMsgs();
+            refetchConvs();
+        } catch (err) {
+            console.error('Failed to send template:', err);
+            message.error(err?.data?.message || 'Failed to send template');
+        }
+    };
+
+    // Extract variables count from template body and buttons
+    const getTemplateVariables = (template) => {
+        const bodyComponent = template?.components?.find(c => c.type === 'BODY');
+        const bodyMatches = bodyComponent?.text?.match(/\{\{\d+\}\}/g);
+        const bodyVars = bodyMatches ? bodyMatches.map(m => ({ num: m.replace(/[\{\}]/g, ''), type: 'body' })) : [];
+
+        const buttonComponent = template?.components?.find(c => c.type === 'BUTTONS');
+        const btnVars = [];
+        if (buttonComponent) {
+            buttonComponent.buttons.forEach((btn, idx) => {
+                if (btn.type === 'URL' && btn.url.includes('{{1}}')) {
+                    btnVars.push({ num: 1, type: 'button', index: idx, label: btn.text });
+                }
+            });
+        }
+
+        return { bodyVars, btnVars };
+    };
+
+    // Live preview logic
+    const formValues = Form.useWatch([], templateForm);
+    const renderPreviewText = () => {
+        const bodyText = selectedTemplate?.components?.find(c => c.type === 'BODY')?.text || '';
+        if (!formValues) return bodyText;
+
+        let preview = bodyText;
+        Object.keys(formValues).forEach(key => {
+            if (key.startsWith('var_body_')) {
+                const varNum = key.replace('var_body_', '');
+                const value = formValues[key] || `{{${varNum}}}`;
+                preview = preview.replace(`{{${varNum}}}`, value);
+            }
+        });
+        return preview;
+    };
+
+    const renderMessageBody = (m) => {
+        if (m.wa_message_type === 'template' || m.body?.startsWith('[Template: ')) {
+            const templateName = m.body.replace('[Template: ', '').replace(']', '');
+            const template = templates.find(t => t.name === templateName);
+            if (template) {
+                return template.components?.find(c => c.type === 'BODY')?.text || m.body;
+            }
+        }
+        return m.body;
     };
 
     return (
@@ -118,9 +326,16 @@ export default function WhatsAppInbox() {
                                     value={q}
                                     onChange={(e) => setQ(e.target.value)}
                                 />
+                                <PlusOutlined
+                                    className="plus-icon"
+                                    title="Start New Chat"
+                                    style={{ cursor: 'pointer', marginLeft: '10px', color: '#1890ff', fontSize: '18px' }}
+                                    onClick={() => setIsNewChatModalOpen(true)}
+                                />
                                 <TeamOutlined
                                     className="team-icon"
                                     title="Create New Group"
+                                    style={{ marginLeft: '10px' }}
                                 />
                             </div>
                         </div>
@@ -153,10 +368,10 @@ export default function WhatsAppInbox() {
                     <div className="chat-list">
                         {convLoading ? (
                             <div className="center-spin"><Spin /></div>
-                        ) : conversations.length === 0 ? (
+                        ) : displayConvs.length === 0 ? (
                             <Empty description="No chats found" />
                         ) : (
-                            conversations.map((item) => {
+                            displayConvs.map((item) => {
                                 const active = item.wa_from === selected;
                                 return (
                                     <div 
@@ -165,7 +380,7 @@ export default function WhatsAppInbox() {
                                         onClick={() => handleSelectConversation(item.wa_from)}
                                     >
                                         <div className="ant-list-item-meta">
-                                            <Badge dot offset={[-2, 36]} status="processing">
+                                            <Badge dot offset={[-2, 36]} status={item.isNew ? "default" : "processing"}>
                                                 <Avatar 
                                                     size={44} 
                                                     src={`https://ui-avatars.com/api/?name=${encodeURIComponent(item.wa_from)}&background=random&color=fff`}
@@ -175,11 +390,11 @@ export default function WhatsAppInbox() {
                                                 <div className="chat-item-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <Title level={5} style={{ margin: 0, fontSize: '14px' }}>{item.wa_from}</Title>
                                                     <Text type="secondary" style={{ fontSize: '11px' }}>
-                                                        {item.lastTime ? new Date(item.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                        {item.lastTime ? new Date(item.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (item.isNew ? 'New' : '')}
                                                     </Text>
                                                 </div>
                                                 <div className="chat-item-description" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
-                                                    <Text type="secondary" ellipsis className="last-message" style={{ fontSize: '13px', maxWidth: '85%' }}>
+                                                    <Text type="secondary" ellipsis className="last-message" style={{ fontSize: '13px', maxWidth: '85%', color: item.isNew ? '#1890ff' : 'inherit' }}>
                                                         {item.lastPreview || 'No messages yet'}
                                                     </Text>
                                                     {item.unreadCount > 0 && (
@@ -242,7 +457,7 @@ export default function WhatsAppInbox() {
                                         <div key={m.id} className={`message ${m.direction === 'outbound' ? 'sent' : 'received'}`}>
                                             <div className="message-content">
                                                 {m.direction === 'received' && <div className="message-sender">{selected}</div>}
-                                                <Text>{m.body || '—'}</Text>
+                                                <Text>{renderMessageBody(m)}</Text>
                                                 <div className="message-footer">
                                                     <span className="message-time">
                                                         {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
@@ -263,8 +478,14 @@ export default function WhatsAppInbox() {
                             <div className="chat-footer">
                                 <div className="chat-input-wrapper">
                                     <div className="input-actions">
-                                        <Button type="text" icon={<MessageOutlined />} className="action-icon" />
-                                        <Button type="text" icon={<ReloadOutlined />} className="action-icon" />
+                                        <Button 
+                                            type="text" 
+                                            icon={<FileTextOutlined />} 
+                                            className="action-icon" 
+                                            title="Send Template"
+                                            onClick={() => setIsTemplateModalOpen(true)}
+                                        />
+                                        <Button type="text" icon={<ReloadOutlined />} className="action-icon" onClick={() => refetchMsgs()} />
                                     </div>
                                     <Input.TextArea
                                         autoSize={{ minRows: 1, maxRows: 4 }}
@@ -275,6 +496,7 @@ export default function WhatsAppInbox() {
                                         onPressEnter={(e) => {
                                             if (!e.shiftKey) {
                                                 e.preventDefault();
+                                                handleSendMessage();
                                             }
                                         }}
                                     />
@@ -283,6 +505,8 @@ export default function WhatsAppInbox() {
                                         shape="circle" 
                                         icon={<SendOutlined />} 
                                         disabled={!canSend}
+                                        loading={isSending}
+                                        onClick={handleSendMessage}
                                         className="send-button"
                                     />
                                 </div>
@@ -291,6 +515,112 @@ export default function WhatsAppInbox() {
                     )}
                 </Content>
             </Layout>
+
+            <Modal
+                title="Start New WhatsApp Chat"
+                open={isNewChatModalOpen}
+                onCancel={() => setIsNewChatModalOpen(false)}
+                onOk={() => newChatForm.submit()}
+                okText="Start Chat"
+                destroyOnClose
+            >
+                <Form
+                    form={newChatForm}
+                    layout="vertical"
+                    onFinish={handleNewChat}
+                >
+                    <Form.Item
+                        name="phone"
+                        label="Phone Number"
+                        rules={[
+                            { required: true, message: 'Please enter a phone number' },
+                            { pattern: /^\+?[0-9]{10,15}$/, message: 'Please enter a valid phone number (e.g., 919328996135)' }
+                        ]}
+                    >
+                        <AntInput placeholder="Enter phone number with country code (e.g., 919328996135)" />
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            <Modal
+                title="Select WhatsApp Template"
+                open={isTemplateModalOpen}
+                onCancel={() => {
+                    setIsTemplateModalOpen(false);
+                    setSelectedTemplate(null);
+                    templateForm.resetFields();
+                }}
+                onOk={() => templateForm.submit()}
+                okText="Send Template"
+                destroyOnClose
+            >
+                <Form
+                    form={templateForm}
+                    layout="vertical"
+                    onFinish={handleSendTemplate}
+                >
+                    <Form.Item
+                        name="templateName"
+                        label="Approved Template"
+                        rules={[{ required: true, message: 'Please select a template' }]}
+                    >
+                        <Select 
+                            placeholder="Select a template"
+                            onChange={(val) => {
+                                const t = templates.find(temp => temp.name === val);
+                                setSelectedTemplate(t);
+                                templateForm.resetFields(['var_']); // Reset vars on change
+                            }}
+                        >
+                            {templates.map(t => (
+                                <Select.Option key={t.id} value={t.name}>
+                                    {t.name} ({t.language})
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+
+                    {selectedTemplate && (
+                        <>
+                            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #e2e8f0', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+                                <Text strong style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    Message Preview:
+                                </Text>
+                                <div style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #f1f5f9', whiteSpace: 'pre-wrap', fontSize: '14px', color: '#1e293b', lineHeight: '1.6' }}>
+                                    {renderPreviewText()}
+                                </div>
+                            </div>
+
+                            {getTemplateVariables(selectedTemplate).bodyVars.map((v) => (
+                                <Form.Item
+                                    key={`body_${v.num}`}
+                                    name={`var_body_${v.num}`}
+                                    label={`Message Variable {{${v.num}}}`}
+                                    rules={[{ required: true, message: `Please enter value for {{${v.num}}}` }]}
+                                >
+                                    <AntInput placeholder={`Value for {{${v.num}}}`} />
+                                </Form.Item>
+                            ))}
+
+                            {getTemplateVariables(selectedTemplate).btnVars.map((v) => (
+                                <Form.Item
+                                    key={`btn_${v.index}`}
+                                    name={`var_btn_${v.index}`}
+                                    label={`Button URL Variable (Button: ${v.label})`}
+                                    rules={[{ required: true, message: `Please enter URL parameter for button` }]}
+                                >
+                                    <AntInput placeholder="Enter URL parameter (e.g., project-id-123)" />
+                                </Form.Item>
+                            ))}
+                        </>
+                    )}
+
+                    <div style={{ background: '#f0f7ff', padding: '12px', borderRadius: '8px', fontSize: '12px', color: '#005a9e' }}>
+                        <FiMoreVertical style={{ marginRight: '8px' }} />
+                        Templates with dynamic buttons require URL parameters to be filled.
+                    </div>
+                </Form>
+            </Modal>
         </div>
     );
 }

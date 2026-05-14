@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { Table, Tag, Typography, Empty, Spin, Button, Card, Space } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
+import { FaWhatsapp } from 'react-icons/fa';
 import { useGetWhatsappMessagesQuery, useGetWhatsappSettingsQuery } from '../../../../module/settings/services/settingsApi';
 
 const { Text } = Typography;
@@ -18,7 +19,7 @@ const directionLabels = {
   outbound: 'Out',
 };
 
-export default function LeadWhatsapp({ leadId }) {
+export default function LeadWhatsapp({ leadId, phone }) {
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
@@ -104,7 +105,27 @@ export default function LeadWhatsapp({ leadId }) {
       </div>
 
       {rows.length === 0 ? (
-        <Empty description="No WhatsApp messages found for this lead." />
+        <Card style={{ textAlign: 'center', padding: '40px', background: '#f8fafc', border: '1px dashed #d9d9d9' }}>
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              <Space direction="vertical" size="middle">
+                <Text type="secondary">No WhatsApp messages found for this lead.</Text>
+                <Button 
+                  type="primary" 
+                  icon={<FaWhatsapp />} 
+                  style={{ background: '#25D366', borderColor: '#25D366' }}
+                  onClick={() => {
+                    const cleanPhone = phone?.replace(/\D/g, '') || leadId;
+                    window.location.href = `/dashboard/whatsapp-chat?phone=${cleanPhone}`;
+                  }}
+                >
+                  Start WhatsApp Chat
+                </Button>
+              </Space>
+            }
+          />
+        </Card>
       ) : (
         <Table
           rowKey="id"

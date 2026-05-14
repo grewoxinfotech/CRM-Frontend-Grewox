@@ -3,7 +3,7 @@ import { FiEdit2, FiTrash2, FiTag, FiMoreVertical } from "react-icons/fi";
 import { Button, Table, message, Modal, Dropdown, Typography } from "antd";
 import AddLableModal from "./AddLableModal";
 import EditLableModal from "./EditLableModal";
-import { useGetLabelsQuery, useDeleteLabelMutation } from "../souce/services/SourceApi";
+import { useGetTagsQuery, useDeleteTagMutation } from "../souce/services/SourceApi";
 import "./lable.scss";
 import { selectCurrentUser } from "../../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
@@ -12,29 +12,29 @@ const { Text } = Typography;
 
 const Lable = ({ isModalOpen, setIsModalOpen }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedLable, setSelectedLable] = useState(null);
+  const [selectedTag, setSelectedTag] = useState(null);
   const userdata = useSelector(selectCurrentUser);
 
-  const { data, isLoading } = useGetLabelsQuery(userdata?.id);
-  const [deleteLabel] = useDeleteLabelMutation();
+  const { data, isLoading } = useGetTagsQuery(userdata?.client_id || userdata?.id);
+  const [deleteTag] = useDeleteTagMutation();
 
-  const labels = data?.data || [];
+  const tags = data?.data || [];
 
-  const handleEdit = (label) => {
-    setSelectedLable(label);
+  const handleEdit = (tag) => {
+    setSelectedTag(tag);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id) => {
     Modal.confirm({
-      title: 'Delete Label',
+      title: 'Delete Tag',
       content: 'Are you sure?',
       onOk: async () => {
         try {
-          await deleteLabel(id).unwrap();
-          message.success('Deleted successfully');
+          await deleteTag(id).unwrap();
+          message.success('Tag deleted successfully');
         } catch (error) {
-          message.error('Failed to delete');
+          message.error('Failed to delete tag');
         }
       },
     });
@@ -42,7 +42,7 @@ const Lable = ({ isModalOpen, setIsModalOpen }) => {
 
   const columns = [
     {
-      title: 'Label Name',
+      title: 'Tag Name',
       dataIndex: 'name',
       key: 'name',
       render: (text, record) => (
@@ -99,7 +99,7 @@ const Lable = ({ isModalOpen, setIsModalOpen }) => {
     <div className="label-wrapper">
       <Table
         columns={columns}
-        dataSource={labels}
+        dataSource={tags}
         rowKey="id"
         size="small"
         loading={isLoading}
@@ -107,7 +107,7 @@ const Lable = ({ isModalOpen, setIsModalOpen }) => {
         pagination={{
             pageSize: 10,
             showSizeChanger: true,
-            showTotal: (total) => `Total ${total} labels`
+            showTotal: (total) => `Total ${total} tags`
         }}
       />
 
@@ -120,9 +120,9 @@ const Lable = ({ isModalOpen, setIsModalOpen }) => {
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
-          setSelectedLable(null);
+          setSelectedTag(null);
         }}
-        lable={selectedLable}
+        lable={selectedTag}
       />
     </div>
   );
