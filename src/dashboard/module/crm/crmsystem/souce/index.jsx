@@ -18,7 +18,7 @@ const Source = ({ isModalOpen, setIsModalOpen }) => {
   const [selectedSource, setSelectedSource] = useState(null);
   const userdata = useSelector(selectCurrentUser);
 
-  const { data: sourcesData = [], isLoading } = useGetSourcesQuery(userdata?.id);
+  const { data: sourcesData = [], isLoading } = useGetSourcesQuery(userdata?.client_id || userdata?.id);
   const [deleteSource] = useDeleteSourceMutation();
 
   const sources = sourcesData?.data?.filter(item => item.lableType === "source") || [];

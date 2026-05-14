@@ -72,10 +72,9 @@ export const dealApi = createApi({
         url: `/deals/${id}`,
         method: "PUT",
         body: deal,
-        formData: true,
       }),
       transformResponse: (response) => response?.data || response,
-      invalidatesTags: (result, error, { id }) => [{ type: "Deal", id }],
+      invalidatesTags: (result, error, { id }) => [{ type: "Deal", id }, "Deal"],
     }),
 
 

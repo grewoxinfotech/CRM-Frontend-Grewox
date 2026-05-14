@@ -105,7 +105,20 @@ const ProjectCard = ({ projects = [], loading, onEdit, onDelete, onView, searchT
             {filteredProjects.map((project) => {
                 const statusStyle = getStatusColor(project.status);
                 const tagStyle = getTagColor(project.tag);
-                const projectMembers = JSON.parse(project.project_members || '{"project_members":[]}').project_members;
+                const projectMembers = (() => {
+                    try {
+                        const members = project.project_members;
+                        if (!members) return [];
+                        if (typeof members === 'string') {
+                            const parsed = JSON.parse(members);
+                            return parsed.project_members || (Array.isArray(parsed) ? parsed : []);
+                        }
+                        return members.project_members || (Array.isArray(members) ? members : []);
+                    } catch (e) {
+                        console.error("Error parsing project members:", e);
+                        return [];
+                    }
+                })();
 
                 return (
                     <Card

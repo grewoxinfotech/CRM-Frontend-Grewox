@@ -122,7 +122,10 @@ const CustomFormList = ({ data = [], onEdit, onDelete, loading }) => {
                         type="primary" 
                         size="small"
                         icon={<EyeOutlined />} 
-                        onClick={() => navigate(`/dashboard/crm/custom-form/${record.id}/submissions`)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/dashboard/crm/custom-form/${record.id}/submissions`);
+                        }}
                         style={{ 
                             background: '#1890ff', 
                             borderColor: '#1890ff',
@@ -136,19 +139,21 @@ const CustomFormList = ({ data = [], onEdit, onDelete, loading }) => {
                     >
                         View Inquiries
                     </Button>
-                    <Dropdown
-                        menu={{
-                            items: [
-                                { key: 'edit', icon: <FiEdit2 />, label: 'Edit Form', onClick: () => onEdit(record) },
-                                { key: 'copy', icon: <FiLink />, label: 'Copy Link', onClick: () => copyLink(record.id) },
-                                { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
-                            ]
-                        }}
-                        trigger={['click']}
-                        placement="bottomRight"
-                    >
-                        <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-                    </Dropdown>
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <Dropdown
+                            menu={{
+                                items: [
+                                    { key: 'edit', icon: <FiEdit2 />, label: 'Edit Form', onClick: () => onEdit(record) },
+                                    { key: 'copy', icon: <FiLink />, label: 'Copy Link', onClick: () => copyLink(record.id) },
+                                    { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
+                                ]
+                            }}
+                            trigger={['click']}
+                            placement="bottomRight"
+                        >
+                            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+                        </Dropdown>
+                    </div>
                 </div>
             ),
         },
@@ -168,6 +173,10 @@ const CustomFormList = ({ data = [], onEdit, onDelete, loading }) => {
                     pageSize: 10
                 }}
                 scroll={{ x: 'max-content' }}
+                onRow={(record) => ({
+                    onClick: () => onEdit(record),
+                    style: { cursor: 'pointer' }
+                })}
             />
         </div>
     );

@@ -5,11 +5,25 @@ import { FiX } from "react-icons/fi";
 
 const { Text } = Typography;
 
+function parseAutomationArray(value) {
+  if (value == null || value === "") return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 const WorkflowInspector = ({ visible, onClose, automation }) => {
     if (!automation) return null;
 
-    const conditions = JSON.parse(automation.conditions || '[]');
-    const actions = JSON.parse(automation.actions || '[]');
+    const conditions = parseAutomationArray(automation.conditions);
+    const actions = parseAutomationArray(automation.actions);
 
     return (
         <Modal

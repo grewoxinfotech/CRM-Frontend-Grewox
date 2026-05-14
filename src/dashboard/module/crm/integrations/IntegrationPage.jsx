@@ -17,10 +17,13 @@ const IntegrationPage = ({
   description, 
   webhookUrl, 
   status = "disconnected",
-  onSave 
+  onSave,
+  form: externalForm
 }) => {
-  const [form] = Form.useForm();
+  const [internalForm] = Form.useForm();
+  const form = externalForm || internalForm;
   const currentUser = useSelector(selectCurrentUser);
+
   const userId = currentUser?.id || currentUser?._id || "your-token";
   
   // Make webhookUrl dynamic by using environment variable base and replacing token with userId

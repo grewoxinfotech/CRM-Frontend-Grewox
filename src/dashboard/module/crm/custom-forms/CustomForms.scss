@@ -1,0 +1,33 @@
+.custom-forms-page {
+  background: #f8fafc;
+  min-height: calc(100vh - 64px);
+
+  .page-header {
+    margin-bottom: 16px;
+  }
+
+  .list-card {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+
+    .ant-table-thead>tr>th {
+      background: #f1f5f9;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .ant-table-row {
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: #f8fafc;
+      }
+    }
+  }
+}
+
+.mb-4 {
+  margin-bottom: 24px;
+}

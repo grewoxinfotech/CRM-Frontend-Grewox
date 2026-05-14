@@ -157,11 +157,13 @@ const PublicFormView = () => {
 
                 // Initialize checkbox states
                 const initialCheckboxStates = {};
-                Object.entries(parsedFields).forEach(([fieldName, field]) => {
+                const iterateFields = Array.isArray(parsedFields) ? parsedFields : Object.values(parsedFields);
+                iterateFields.forEach((field) => {
+                    const fieldKey = field.key || field.id;
                     if (field.type === 'checkbox' && field.options) {
-                        initialCheckboxStates[fieldName] = {};
+                        initialCheckboxStates[fieldKey] = {};
                         field.options.forEach(option => {
-                            initialCheckboxStates[fieldName][option] = false;
+                            initialCheckboxStates[fieldKey][option] = false;
                         });
                     }
                 });
@@ -174,19 +176,19 @@ const PublicFormView = () => {
         }
     }, [formData, form]);
 
-    const handleCheckboxChange = (fieldName, option, checked) => {
+    const handleCheckboxChange = (fieldKey, option, checked) => {
         setCheckboxStates(prev => {
             const newState = {
                 ...prev,
-                [fieldName]: {
-                    ...prev[fieldName],
+                [fieldKey]: {
+                    ...prev[fieldKey],
                     [option]: checked
                 }
             };
 
             // Update form values
             form.setFieldsValue({
-                [fieldName]: newState[fieldName]
+                [fieldKey]: newState[fieldKey]
             });
 
             return newState;
@@ -288,12 +290,13 @@ const PublicFormView = () => {
         }
     };
 
-    const renderField = (fieldName, field) => {
-        const label = fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/([A-Z])/g, ' $1');
+    const renderField = (field) => {
+        const fieldKey = field.key || field.id;
+        const label = field.label || (typeof fieldKey === 'string' ? fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1).replace(/([A-Z])/g, ' $1') : 'Field');
 
         const commonProps = {
-            key: fieldName,
-            name: fieldName,
+            key: fieldKey,
+            name: fieldKey,
             label: label,
             rules: [{ required: field.required, message: `Please enter ${label}` }],
             className: 'custom-form-item'
@@ -347,7 +350,7 @@ const PublicFormView = () => {
                 );
             case 'phone':
                 return (
-                    <Form.Item {...commonProps}>
+                    <Form.Item {...commonProps} rules={[...commonProps.rules, { pattern: /^\+?[\d\s\-\(\)\.]+$/, message: 'Please enter a valid phone number' }]}>
                         <Input
                             className="custom-input"
                             placeholder="Enter phone number"
@@ -393,8 +396,8 @@ const PublicFormView = () => {
                                 {field.options?.map((option) => (
                                     <Checkbox
                                         key={option}
-                                        checked={checkboxStates[fieldName]?.[option] || false}
-                                        onChange={(e) => handleCheckboxChange(fieldName, option, e.target.checked)}
+                                        checked={checkboxStates[fieldKey]?.[option] || false}
+                                        onChange={(e) => handleCheckboxChange(fieldKey, option, e.target.checked)}
                                     >
                                         {option}
                                     </Checkbox>
@@ -438,26 +441,7 @@ const PublicFormView = () => {
                         </div>
                     </div>
 
-                    <div className="event-info">
-                        <div className="event-card">
-                            <div className="event-card-item">
-                                <FiCalendar className="icon" />
-                                <div className="info">
-                                    <Text className="label">Event Date</Text>
-                                    <Text className="value">
-                                        {dayjs(formData?.data?.start_date).format('MMM DD, YYYY')}
-                                    </Text>
-                                </div>
-                            </div>
-                            <div className="event-card-item">
-                                <FiMapPin className="icon" />
-                                <div className="info">
-                                    <Text className="label">Location</Text>
-                                    <Text className="value">{formData?.data?.event_location}</Text>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
 
@@ -476,8 +460,8 @@ const PublicFormView = () => {
                         className="custom-form"
                         validateTrigger={['onBlur', 'onChange']}
                     >
-                        {Object.entries(fields).map(([fieldName, field]) =>
-                            renderField(fieldName, field)
+                        {(Array.isArray(fields) ? fields : Object.values(fields)).map((field) =>
+                            renderField(field)
                         )}
 
                         <Form.Item className="form-submit">

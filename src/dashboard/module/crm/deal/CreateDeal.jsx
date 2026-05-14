@@ -16,12 +16,17 @@ import {
   Row,
   Col,
   Popconfirm,
+  Segmented,
+  AutoComplete,
+  Tag,
 } from "antd";
 import {
   FiUser,
   FiMail,
+  FiPhone,
   FiX,
   FiBriefcase,
+  FiShoppingBag,
   FiDollarSign,
   FiMapPin,
   FiChevronDown,
@@ -32,7 +37,9 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 import { useCreateDealMutation, useGetDealsQuery } from "./services/DealApi";
+import { useGetCustomFormsQuery } from "../generate-link/services/customFormApi";
 import { PlusOutlined } from "@ant-design/icons";
+
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import "./Deal.scss";
@@ -75,6 +82,7 @@ const findIndianDefaults = (currencies, countries) => {
 };
 
 const CreateDeal = ({ open, onCancel, leadData }) => {
+  console.log("CreateDeal Component Loaded");
   // console.log("leadData", leadData);
   const loggedInUser = useSelector(selectCurrentUser);
 
@@ -96,6 +104,25 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const [createDeal, { isLoading: isCreatingDeal }] = useCreateDealMutation();
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
   const [createContact] = useCreateContactMutation();
+
+  // Fetch Active Custom Form for Deal
+  // Fetch Active Custom Form for Deal
+  const { data: customFormsData } = useGetCustomFormsQuery({ module_type: 'deal', status: 'active' });
+  const activeCustomForm = customFormsData?.data?.[0];
+  
+  const formFields = React.useMemo(() => {
+    if (!activeCustomForm?.fields) return [];
+    try {
+      return typeof activeCustomForm.fields === 'string' 
+        ? JSON.parse(activeCustomForm.fields) 
+        : activeCustomForm.fields;
+    } catch (e) {
+      console.error("Failed to parse form fields:", e);
+      return [];
+    }
+  }, [activeCustomForm]);
+
+
 
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
@@ -140,14 +167,93 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
   // Add state to track selected pipeline
   const [selectedPipeline, setSelectedPipeline] = useState(null);
+  const [phoneSearchText, setPhoneSearchText] = useState("");
+
+  const { data: contactSuggestions } = useGetContactsQuery(
+    {
+      search: phoneSearchText,
+    },
+    { skip: !phoneSearchText || phoneSearchText.length < 2 }
+  );
+
+  const combinedSuggestions = React.useMemo(() => {
+    const suggestions = [];
+    
+    // Add contacts
+    contactSuggestions?.data?.forEach(c => {
+      suggestions.push({
+        value: c.phone || c.mobile || '',
+        label: (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px' }}><Tag color="blue" style={{ fontSize: '10px' }}>CONTACT</Tag> {c.first_name} {c.last_name}</span>
+            <span style={{ color: '#999', fontSize: '11px' }}>{c.phone || c.mobile}</span>
+          </div>
+        ),
+        type: 'contact',
+        contact: c
+      });
+    });
+
+    // Add companies
+    if (phoneSearchText && phoneSearchText.length >= 2) {
+      companyAccountsResponse?.data?.filter(company => 
+        (company.phone_number && company.phone_number.includes(phoneSearchText)) ||
+        (company.company_name && company.company_name.toLowerCase().includes(phoneSearchText.toLowerCase()))
+      ).slice(0, 5).forEach(comp => {
+        suggestions.push({
+          value: comp.phone_number || '',
+          label: (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px' }}><Tag color="green" style={{ fontSize: '10px' }}>COMPANY</Tag> {comp.company_name}</span>
+              <span style={{ color: '#999', fontSize: '11px' }}>{comp.phone_number}</span>
+            </div>
+          ),
+          type: 'company',
+          company: comp
+        });
+      });
+    }
+
+    return suggestions;
+  }, [contactSuggestions, companyAccountsResponse, phoneSearchText]);
+
+  const handleSuggestionSelect = (value, option) => {
+    if (option.type === 'contact') {
+      const contact = option.contact;
+      if (contact) {
+        form.setFieldsValue({
+          firstName: contact.first_name || '',
+          lastName: contact.last_name || '',
+          email: contact.email || '',
+          telephone: contact.phone || '',
+          address: contact.address || '',
+          company_id: contact.company_name || undefined,
+          contact_id: contact.id
+        });
+      }
+    } else if (option.type === 'company') {
+      const company = option.company;
+      form.setFieldsValue({
+        company_id: company.id,
+        telephone: company.phone_number || '',
+        address: company.billing_address || '',
+        email: company.email || '',
+        contact_id: undefined,
+        firstName: undefined,
+        lastName: undefined,
+      });
+    }
+  };
+
 
   // Filter stages based on selected pipeline
   const filteredStages = React.useMemo(() => {
     if (!selectedPipeline || !dealStages) return [];
     
     const currentPipelineId = String(selectedPipeline?.id || selectedPipeline);
+    const stagesList = Array.isArray(dealStages) ? dealStages : (dealStages?.data || []);
     
-    return dealStages.filter((stage) => {
+    return stagesList.filter((stage) => {
       const stagePipelineId = String(stage.pipeline?.id || stage.pipeline);
       return stage.stageType === "deal" && stagePipelineId === currentPipelineId;
     });
@@ -325,6 +431,35 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     }
   }, [open, form]);
 
+  // Set default values for blank deal form
+  useEffect(() => {
+    if (open && !leadData) {
+      const updates = {
+        currency: defaultCurrency,
+        value: 0,
+      };
+
+      if (pipelines?.length > 0 && !form.getFieldValue('pipeline')) {
+        const firstPipelineId = pipelines[0].id;
+        updates.pipeline = firstPipelineId;
+        setSelectedPipeline(firstPipelineId);
+        
+        // Find first stage for this pipeline
+        const firstStage = dealStages?.find(s => 
+          String(s.pipeline?.id || s.pipeline) === String(firstPipelineId) && 
+          s.stageType === 'deal'
+        );
+        if (firstStage) updates.stage = firstStage.id;
+      }
+      
+      if (sources?.length > 0 && !form.getFieldValue('source')) {
+        updates.source = sources[0].id;
+      }
+
+      form.setFieldsValue(updates);
+    }
+  }, [open, leadData, pipelines, dealStages, sources, form, defaultCurrency]);
+
   const { data: dealsData } = useGetDealsQuery();
 
   const handleSubmit = async (values) => {
@@ -417,24 +552,30 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         return;
       }
 
+      // Extract custom fields if any
+      const custom_fields = values.custom_fields || {};
+
       const dealData = {
-        dealTitle: values.dealTitle,
+        dealTitle: values.dealTitle || "New Deal",
         email: values.email,
         phone: formattedPhone,
-        pipeline: values.pipeline,
+        pipeline: values.pipeline || pipelines?.[0]?.id,
         stage: stageId,
         value: parseFloat(values.value) || 0,
         currency: values.currency,
         closedDate: values.closedDate
           ? new Date(values.closedDate).toISOString()
           : null,
-        source: values.source,
+        source: values.source || sources?.[0]?.id || null,
         company_id: values.company_id || null,
         contact_id: contactId || null,
         category: values.category,
         address: values.address,
         leadId: leadData?.id,
+        custom_fields: custom_fields,
+        form_id: activeCustomForm?.id || null,
       };
+
 
       // Create the deal
       const dealResponse = await createDeal(dealData).unwrap();
@@ -775,980 +916,305 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
           </div>
         </div>
 
+
         <Spin spinning={isCreatingDeal || isUpdatingLead}>
           <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            requiredMark={false}
-            className="deal-form custom-form"
-            style={{ padding: "24px" }}
-          >
-            {/* Deal Details Section */}
-            <div className="section-title" style={{ marginBottom: "16px" }}>
-              <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
-                Deal Details
-              </Text>
-            </div>
-
-            <div
-              className="form-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "16px",
-              }}
-            >
-              <Form.Item
-                name="dealTitle"
-                label={
-                  <span style={formItemStyle}>
-                    Deal Title <span style={{ color: "#ff4d4f" }}>*</span>
-                  </span>
-                }
-                rules={[
-                  { required: true, message: "Deal title is required" },
-                  {
-                    min: 3,
-                    message: "Deal title must be at least 3 characters",
-                  },
-                  {
-                    max: 100,
-                    message: "Deal title cannot exceed 100 characters",
-                  },
-                  {
-                    validator: (_, value) => {
-                        if (!value) return Promise.resolve();
-                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                            return Promise.reject(
-                                new Error('Deal title must contain both uppercase or lowercase English letters')
-                            );
-                        }
-                        return Promise.resolve();
-                    }
-                }
-                ]}
-              >
-                <Input
-                  prefix={<FiUser style={prefixIconStyle} />}
-                  placeholder="Enter deal title"
-                  style={inputStyle}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="pipeline"
-                label={
-                  <span style={formItemStyle}>
-                    Pipeline <span style={{ color: "#ff4d4f" }}>*</span>
-                  </span>
-                }
-                rules={[{ required: true, message: "Pipeline is required" }]}
-              >
-                <Select
-                  ref={selectRef}
-                  open={dropdownOpen}
-                  onDropdownVisibleChange={setDropdownOpen}
-                  placeholder="Select pipeline"
-                  onChange={handlePipelineChange}
-                  style={selectStyle}
-                  suffixIcon={<FiChevronDown size={14} />}
-                  dropdownRender={(menu) => (
-                    <div onClick={(e) => e.stopPropagation()}>
-                      {menu}
-                      <Divider style={{ margin: "8px 0" }} />
-                      <div
-                        style={{
-                          padding: "8px 12px",
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={handleAddPipelineClick}
-                          style={{
-                            width: "100%",
-                            background:
-                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                            border: "none",
-                            height: "40px",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Create Pipeline
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                >
-                  {pipelines.map((pipeline) => (
-                    <Option key={pipeline.id} value={pipeline.id}>
-                      {pipeline.pipeline_name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="stage"
-                label={
-                  <span style={formItemStyle}>
-                    Stage <span style={{ color: "#ff4d4f" }}>*</span>
-                  </span>
-                }
-                rules={[{ required: true, message: "Stage is required" }]}
-              >
-                <Select
-                  placeholder={selectedPipeline ? "Select stage" : "Select pipeline first"}
-                  disabled={!selectedPipeline}
-                  style={selectStyle}
-                  suffixIcon={<FiChevronDown size={14} />}
-                  optionLabelProp="label"
-                  showSearch
-                  optionFilterProp="label"
-                  dropdownRender={(menu) => (
-                    <div onClick={(e) => e.stopPropagation()}>
-                      {menu}
-                      <Divider style={{ margin: "8px 0" }} />
-                      <div
-                        style={{
-                          padding: "8px 12px",
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={handleAddStageClick}
-                          disabled={!selectedPipeline}
-                          style={{
-                            width: "100%",
-                            background: selectedPipeline
-                              ? "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)"
-                              : "#f5f5f5",
-                            border: "none",
-                            height: "40px",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                            boxShadow: selectedPipeline
-                              ? "0 2px 8px rgba(24, 144, 255, 0.15)"
-                              : "none",
-                            fontWeight: "500",
-                            color: selectedPipeline ? "#ffffff" : "rgba(0, 0, 0, 0.25)",
-                          }}
-                        >
-                          Add Stage
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                >
-                  {filteredStages.map((stage) => (
-                    <Option key={stage.id} value={stage.id} label={stage.stageName}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div
-                          style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: stage.color || "#1890ff",
-                          }}
-                        />
-                        {stage.stageName}
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="dealValue"
-                label={
-                  <span style={formItemStyle}>
-                    Deal Value <span style={{ color: "#ff4d4f" }}>*</span>
-                  </span>
-                }
-                className="combined-input-item"
-              >
-                <Input.Group compact className="value-input-group">
-                  <Form.Item
-                    name="currency"
-                    noStyle
-                    initialValue={leadData?.currency || defaultCurrency}
-                    rules={[
-                      { required: true, message: "Please select currency" },
-                    ]}
-                  >
-                    <Select
-                      style={{ width: "120px" }}
-                      className="currency-select"
-                      dropdownMatchSelectWidth={120}
-                      suffixIcon={<FiChevronDown size={14} />}
-                      popupClassName="custom-select-dropdown"
-                      showSearch
-                      optionFilterProp="value"
-                      filterOption={(input, option) =>
-                        (option?.value ?? "")
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                    >
-                      {currencies?.map((currency) => (
-                        <Option key={currency.id} value={currency.id}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                            }}
-                          >
-                            <span style={{ fontSize: "14px" }}> 
-                              {currency.currencyIcon}
-                            </span>
-                            <span style={{ fontSize: "14px" }}>
-                              {currency.currencyCode}
-                            </span>
-                          </div>
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    name="value"
-                    noStyle
-                    initialValue={leadData?.value || leadData?.leadValue || 0}
-                    rules={[
-                      { required: true, message: "Please enter deal value" },
-                      {
-                        type: "number",
-                        min: 0,
-                        message: "Value must be greater than or equal to 0",
-                      },
-                    ]}
-                  >
-                    <InputNumber
-                      style={{ width: "calc(100% - 100px)", padding: "0 16px",height:"48px" }}
-                      placeholder="Enter amount"
-                      min={0}
-                      value={manualValue}
-                      onChange={handleValueChange}
-                    />
-                  </Form.Item>
-                </Input.Group>
-              </Form.Item>
-
-              <Form.Item
-                name="source"
-                label={
-                  <span style={formItemStyle}>
-                    Source <span style={{ color: "#ff4d4f" }}>*</span>
-                  </span>
-                }
-                rules={[{ required: true, message: "Source is required" }]}
-              >
-                <Select
-                  ref={sourceSelectRef}
-                  open={sourceDropdownOpen}
-                  onDropdownVisibleChange={setSourceDropdownOpen}
-                  placeholder="Select source"
-                  style={selectStyle}
-                  popupClassName="custom-select-dropdown"
-                  dropdownRender={(menu) => (
-                    <div onClick={(e) => e.stopPropagation()}>
-                      {menu}
-                      <Divider style={{ margin: "8px 0" }} />
-                      <div
-                        style={{
-                          padding: "8px 12px",
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={handleAddSourceClick}
-                          style={{
-                            width: "100%",
-                            background:
-                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                            border: "none",
-                            height: "40px",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Create Source
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                >
-                  {sources.map((source) => (
-                    <Option key={source.id} value={source.id}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              backgroundColor: source.color || "#1890ff",
-                            }}
-                          />
-                          {source.name}
-                        </div>
-                        {form.getFieldValue("source") !== source.id && (
-                          <Popconfirm
-                            title="Delete Source"
-                            description="Are you sure you want to delete this source?"
-                            onConfirm={(e) => {
-                              e?.stopPropagation?.();
-                              handleDeleteSource(source.id);
-                            }}
-                            okText="Yes"
-                            cancelText="No"
-                            placement="left"
-                          >
-                            <Button
-                              type="text"
-                              icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                              size="small"
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                opacity: 0.8,
-                                transition: "opacity 0.2s",
-                                "&:hover": {
-                                  opacity: 1,
-                                  backgroundColor: "transparent",
-                                },
-                              }}
-                            />
-                          </Popconfirm>
-                        )}
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="category"
-                label={
-                  <span style={formItemStyle}>
-                    Category
-                  </span>
-                }
-              >
-                <Select
-                  ref={categorySelectRef}
-                  open={categoryDropdownOpen}
-                  onDropdownVisibleChange={setCategoryDropdownOpen}
-                  placeholder="Select or type to filter categories"
-                  style={selectStyle}
-                  popupClassName="custom-select-dropdown"
-                  showSearch
-                  allowClear
-                  filterOption={(input, option) =>
-                    option.children.props.children[0].props.children[1]
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  dropdownRender={(menu) => (
-                    <div onClick={(e) => e.stopPropagation()}>
-                      {menu}
-                      <Divider style={{ margin: "8px 0" }} />
-                      <div
-                        style={{
-                          padding: "8px 12px",
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={handleAddCategoryClick}
-                          style={{
-                            width: "100%",
-                            background:
-                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                            border: "none",
-                            height: "40px",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Create Category
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                >
-                  {categories?.map((category) => (
-                    <Option key={category.id} value={category.id}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              backgroundColor: category.color || "#1890ff",
-                            }}
-                          />
-                          {category.name}
-                        </div>
-                        {form.getFieldValue("category") !== category.id && (
-                          <Popconfirm
-                            title="Delete Category"
-                            description="Are you sure you want to delete this category?"
-                            onConfirm={(e) => {
-                              e?.stopPropagation?.();
-                              handleDeleteCategory(category.id);
-                            }}
-                            okText="Yes"
-                            cancelText="No"
-                            placement="left"
-                          >
-                            <Button
-                              type="text"
-                              icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                              size="small"
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                opacity: 0.8,
-                                transition: "opacity 0.2s",
-                                "&:hover": {
-                                  opacity: 1,
-                                  backgroundColor: "transparent",
-                                },
-                              }}
-                            />
-                          </Popconfirm>
-                        )}
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="closedDate"
-                label={
-                  <span style={formItemStyle}>
-                    Expected Close Date (optional)
-                  </span>
-                }
-              >
-                <DatePicker
-                  size="large"
-                  format="DD-MM-YYYY"
-                  style={{
-                    width: "100%",
-                    borderRadius: "10px",
-                    height: "48px",
-                    backgroundColor: "#f8fafc",
-                    border: "1px solid #e6e8eb",
-                  }}
-                  disabledDate={(current) => {
-                    return current && current < dayjs().startOf("day");
-                  }}
-                  placeholder="Select date"
-                  suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-                  superNextIcon={null}
-                  superPrevIcon={null}
-                />
-              </Form.Item>
-            </div>
-
-            {/* Basic Information Section */}
-            <div style={{ margin: "24px 0" }}>
-              <Text
-                strong
-                style={{
-                  fontSize: "16px",
-                  color: "#1f2937",
-                  marginBottom: "16px",
-                  display: "block",
-                }}
-              >
-                Basic Information
-              </Text>
-
-              <Tabs
-                activeKey={contactMode}
-                onChange={(value) => {
-                  setContactMode(value);
-                  form.setFieldsValue({
-                    company_name: undefined,
-                    firstName: undefined,
-                    lastName: undefined,
-                    email: undefined,
-                    phone: undefined,
-                    address: undefined,
-                  });
-                }}
-                items={[
-                  {
-                    key: "existing",
-                    label: (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          padding: "4px",
-                        }}
-                      >
-                        <FiUserPlus style={{ fontSize: "16px" }} />
-                        <span>Select Existing</span>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: "new",
-                    label: (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          padding: "4px",
-                        }}
-                      >
-                        <FiUser style={{ fontSize: "16px" }} />
-                        <span>Add New</span>
-                      </div>
-                    ),
-                  },
-                ]}
-                style={{
-                  marginBottom: "24px",
-                }}
-              />
-            </div>
-
-            <div
-              className="form-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "16px",
-                marginBottom: "32px",
-              }}
-            >
-              {contactMode === "existing" ? (
-                // Show existing contact/company selection fields
-                <>
-              <Form.Item
-                name="company_id"
-                label={<span style={formItemStyle}>Select Company</span>}
-              >
-                <Select
-                  placeholder="Select company"
-                  onChange={handleCompanyChange}
-                  style={selectStyle}
-                  allowClear
-                  showSearch
-                  optionFilterProp="children"
-                  suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
-                  filterOption={(input, option) => {
-                    const company = companyAccountsResponse?.data?.find(c => c.id === option.value);
-                    return company?.company_name?.toLowerCase().includes(input.toLowerCase());
-                  }}
-                  dropdownRender={(menu) => (
-                    <div onClick={(e) => e.stopPropagation()}>
-                      {menu}
-                      <Divider style={{ margin: "8px 0" }} />
-                      <div
-                        style={{
-                          padding: "8px 12px",
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={handleAddCompanyClick}
-                          style={{
-                            width: "100%",
-                            background:
-                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                            border: "none",
-                            height: "40px",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Create Company
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                >
-                  {companyAccountsResponse?.data?.map((company) => (
-                    <Option key={company.id} value={company.id}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          padding: "4px 0",
-                        }}
-                      >
-                        <FiBriefcase
-                          style={{ color: "#1890FF", fontSize: "16px" }}
-                        />
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontWeight: "500",
-                              color: "#111827",
-                            }}
-                          >
-                            {company.company_name}
-                          </span>
-                          {company.company_site && (
-                            <span
-                              style={{
-                                fontSize: "12px",
-                                color: "#6B7280",
-                              }}
-                            >
-                              {company.company_site}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="firstName"
-                label={<span style={formItemStyle}>Select Contact Name</span>}
-              >
-                <Select
-                  placeholder="Select contact name"
-                  style={selectStyle}
-                  suffixIcon={<FiChevronDown size={14} style={{ color: '#8c8c8c' }} />}
-                  showSearch
-                  allowClear
-                  onChange={handleFirstNameChange}
-                  filterOption={(input, option) => {
-                    const contact = contactsResponse?.data?.find(
-                      (c) => c.id === option.value
-                    );
-                    if (!contact) return false;
-                    const fullName = `${contact.first_name || ""} ${
-                      contact.last_name || ""
-                    }`.toLowerCase();
-                    const companyName =
-                      companyAccountsResponse?.data
-                        ?.find((c) => c.id === contact.company_name)
-                        ?.company_name?.toLowerCase() || "";
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        className="deal-form custom-form"
+        style={{ padding: "24px" }}
+      >
+        {activeCustomForm ? (
+          <div className="dynamic-form-fields" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '16px',
+            marginBottom: '24px'
+          }}>
+            {Array.isArray(formFields) && formFields
+              .filter(field => field.show_in_full !== false)
+              .map((field) => {
+                // System Field Mapping
+                if (field.is_system) {
+                  if (field.key === 'dealTitle') {
                     return (
-                      fullName.includes(input.toLowerCase()) ||
-                      companyName.includes(input.toLowerCase())
-                    );
-                  }}
-                  dropdownRender={(menu) => (
-                    <div onClick={(e) => e.stopPropagation()}>
-                      {menu}
-                      <Divider style={{ margin: "8px 0" }} />
-                      <div
-                        style={{
-                          padding: "8px 12px",
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={handleAddContactClick}
-                          style={{
-                            width: "100%",
-                            background:
-                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                            border: "none",
-                            height: "40px",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Create Contact
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                >
-                  {(form.getFieldValue('company_id') ? filteredContacts : contactsResponse?.data)?.map((contact) => {
-                    const companyName =
-                      companyAccountsResponse?.data?.find(
-                        (c) => c.id === contact.company_name
-                      )?.company_name || "No Company";
-
-                    return (
-                      <Option key={contact.id} value={contact.id}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            padding: "4px 0",
-                          }}
-                        >
-                          <FiUser
-                            style={{ color: "#1890FF", fontSize: "16px" }}
-                          />
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              flex: 1,
-                              minWidth: 0,
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontWeight: "500",
-                                color: "#111827",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >{`${contact.first_name || ""} ${
-                              contact.last_name || ""
-                            }`}</span>
-                            <span
-                              style={{
-                                color: "#6B7280",
-                                fontSize: "12px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              <FiBriefcase style={{ fontSize: "12px" }} />
-                              {companyName}
-                            </span>
-                          </div>
-                        </div>
-                      </Option>
-                    );
-                  })}
-                </Select>
-              </Form.Item>
-                </>
-              ) : (
-                // Show manual entry fields
-                <>
-                  <Form.Item
-                    name="firstName"
-                    label={<span style={formItemStyle}>First Name</span>}
-                  >
-                    <Input
-                      prefix={<FiUser style={prefixIconStyle} />}
-                      placeholder="Enter first name"
-                      style={inputStyle}
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    name="lastName"
-                    label={<span style={formItemStyle}>Last Name</span>}
-                  >
-                    <Input
-                      prefix={<FiUser style={prefixIconStyle} />}
-                      placeholder="Enter last name"
-                      style={inputStyle}
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    name="email"
-                    label={<span style={formItemStyle}>Email</span>}
-                    rules={[
-                      {
-                        type: "email",
-                        message: "Please enter a valid email",
-                      },
-                    ]}
-                  >
-                    <Input
-                      prefix={<FiMail style={prefixIconStyle} />}
-                      placeholder="Enter email address"
-                      style={inputStyle}
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    name="phoneGroup"
-                    label={<span style={formItemStyle}>Phone Number</span>}
-                    className="combined-input-item"
-                  >
-                    <Input.Group compact className="phone-input-group">
                       <Form.Item
-                        name="phoneCode"
-                        noStyle
-                        initialValue={defaultPhoneCode}
+                        key={field.id}
+                        name="dealTitle"
+                        label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                        rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
                       >
-                        <Select
-                          style={{ width: "120px" }}
-                          className="phone-code-select"
-                          dropdownMatchSelectWidth={false}
-                          suffixIcon={<FiChevronDown size={14} />}
-                          popupClassName="custom-select-dropdown"
-                          showSearch
-                          optionFilterProp="children"
-                          filterOption={(input, option) => {
-                            const country = countries?.find(
-                              (c) => c.id === option.value
-                            );
-                            return (
-                              country?.countryName
-                                ?.toLowerCase()
-                                .includes(input.toLowerCase()) ||
-                              country?.countryCode
-                                ?.toLowerCase()
-                                .includes(input.toLowerCase()) ||
-                              country?.phoneCode?.includes(input)
-                            );
-                          }}
+                        <Input prefix={<FiShoppingBag style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'firstName') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="firstName"
+                        label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                        rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                      >
+                        <Input prefix={<FiUser style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'lastName') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="lastName"
+                                                  label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                      >
+                        <Input prefix={<FiUser style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'telephone') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="telephone"
+                                                  label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                      >
+                        <AutoComplete
+                          options={combinedSuggestions}
+                          onSearch={(val) => setPhoneSearchText(val)}
+                          onSelect={handleSuggestionSelect}
                         >
-                          {countries?.map((country) => (
-                            <Option key={country.id} value={country.id}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "8px",
-                                }}
-                              >
-                                <span style={{ fontSize: "14px" }}>
-                                  {country.countryCode}
-                                </span>
-                                <span style={{ fontSize: "14px" }}>
-                                  +{country.phoneCode.replace("+", "")}
-                                </span>
-                              </div>
-                            </Option>
-                          ))}
+                          <Input 
+                            prefix={<FiPhone style={prefixIconStyle} />} 
+                            placeholder={field.placeholder} 
+                            style={inputStyle} 
+                          />
+                        </AutoComplete>
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'email') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="email"
+                                                  label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                      >
+                        <Input prefix={<FiMail style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'value') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                                                  label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                      >
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <Form.Item name="currency" noStyle initialValue={defaultCurrency}>
+                            <Select style={{ width: '120px' }}>
+                              {currencies?.map(c => <Option key={c.id} value={c.id}>{c.currencyCode}</Option>)}
+                            </Select>
+                          </Form.Item>
+                          <Form.Item name="value" noStyle initialValue={0}>
+                            <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder={field.placeholder || "Enter amount"} min={0} />
+                          </Form.Item>
+                        </div>
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'pipeline') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="pipeline"
+                        label={<span style={formItemStyle}>{field.label} <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                        rules={[{ required: true, message: "Please select pipeline" }]}
+                      >
+                        <Select 
+                          placeholder={field.placeholder || "Select pipeline"}
+                          style={selectStyle}
+                          onChange={handlePipelineChange}
+                        >
+                          {pipelines.map(p => <Option key={p.id} value={p.id}>{p.pipeline_name}</Option>)}
                         </Select>
                       </Form.Item>
-                      <Form.Item name="telephone" noStyle>
-                        <Input
-                          style={{
-                            width: "calc(100% - 120px)",
-                            height: "48px",
-                            padding: "0 16px",
-                          }}
-                          placeholder="Enter phone number"
-                        />
+                    );
+                  }
+
+                  if (field.key === 'stage') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="stage"
+                        label={<span style={formItemStyle}>{field.label} <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                        rules={[{ required: true, message: "Please select stage" }]}
+                      >
+                        <Select 
+                          placeholder={field.placeholder || "Select stage"}
+                          style={selectStyle}
+                          disabled={!selectedPipeline}
+                        >
+                          {filteredStages.map(s => <Option key={s.id} value={s.id}>{s.stageName}</Option>)}
+                        </Select>
                       </Form.Item>
-                    </Input.Group>
+                    );
+                  }
+
+                  if (field.key === 'source') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="source"
+                                                  label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                      >
+                        <Select placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} style={selectStyle}>
+                           {sources?.map(s => <Option key={s.id} value={s.id}>{s.name}</Option>)}
+                        </Select>
+                      </Form.Item>
+                    );
+                  }
+
+                    if (field.key === 'category') {
+                      return (
+                        <Form.Item
+                          key={field.id}
+                          name="category"
+                          label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                          style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                        >
+                          <Select placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} style={selectStyle}>
+                            {categories?.map(c => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+                          </Select>
+                        </Form.Item>
+                      );
+                    }
+                    return null;
+                  }
+
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name={['custom_fields', field.id]}
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: field.type === 'textarea' || field.type === 'heading' ? 'span 2' : 'span 1', marginBottom: '0px' }}
+                      rules={[{ required: field.required, message: `Please enter ${field.label}` }]}
+                    >
+                      {field.type === 'text' && <Input placeholder={field.placeholder} style={inputStyle} />}
+                      {field.type === 'number' && <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder={field.placeholder} />}
+                      {field.type === 'email' && <Input type="email" placeholder={field.placeholder} style={inputStyle} />}
+                      {field.type === 'phone' && <Input prefix={<FiPhone style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />}
+                      {field.type === 'textarea' && <Input.TextArea placeholder={field.placeholder} rows={2} style={{ borderRadius: '10px' }} />}
+                      {field.type === 'select' && (
+                        <Select placeholder={field.placeholder} style={selectStyle}>
+                          {field.options?.map(o => <Option key={o} value={o}>{o}</Option>)}
+                        </Select>
+                      )}
+                      {field.type === 'rating' && <Rate />}
+                    </Form.Item>
+                  );
+                })}
+              </div>
+            ) : (
+              <div 
+                className="form-grid" 
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '16px',
+                  marginBottom: '24px'
+                }}
+              >
+                <Form.Item
+                  name="dealTitle"
+                  label={<span style={formItemStyle}>Deal Title <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                  style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                  rules={[{ required: true, message: "Please enter deal title" }]}
+                >
+                  <Input prefix={<FiShoppingBag style={prefixIconStyle} />} placeholder="Enter deal title" style={inputStyle} />
+                </Form.Item>
+
+                <Form.Item
+                  name="pipeline"
+                  label={<span style={formItemStyle}>Pipeline <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                  rules={[{ required: true, message: "Please select pipeline" }]}
+                >
+                  <Select placeholder="Select pipeline" style={selectStyle} onChange={handlePipelineChange}>
+                    {pipelines.map(p => <Option key={p.id} value={p.id}>{p.pipeline_name}</Option>)}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  name="stage"
+                  label={<span style={formItemStyle}>Stage <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                  rules={[{ required: true, message: "Please select stage" }]}
+                >
+                  <Select placeholder="Select stage" style={selectStyle} disabled={!selectedPipeline}>
+                    {filteredStages.map(s => <Option key={s.id} value={s.id}>{s.stageName}</Option>)}
+                  </Select>
+                </Form.Item>
+
+                <>
+                  <Form.Item label={<span style={formItemStyle}>Deal Value (Optional)</span>} style={{ gridColumn: 'span 2' }}>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Form.Item name="currency" noStyle initialValue={defaultCurrency}>
+                        <Select style={{ width: '120px' }}>
+                          {currencies?.map(c => <Option key={c.id} value={c.id}>{c.currencyCode}</Option>)}
+                        </Select>
+                      </Form.Item>
+                      <Form.Item name="value" noStyle initialValue={0}>
+                        <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder="Enter amount" min={0} />
+                      </Form.Item>
+                    </div>
                   </Form.Item>
 
-                  <Form.Item
-                    name="address"
-                    label={<span style={formItemStyle}>Address</span>}
-                  >
-                    <Input
-                      prefix={<FiMapPin style={prefixIconStyle} />}
-                      placeholder="Enter address"
-                      style={inputStyle}
-                    />
+                  <Form.Item name="source" label={<span style={formItemStyle}>Source (Optional)</span>}>
+                    <Select placeholder="Select source" style={selectStyle}>
+                      {sources?.map(s => <Option key={s.id} value={s.id}>{s.name}</Option>)}
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item name="category" label={<span style={formItemStyle}>Category (Optional)</span>}>
+                    <Select placeholder="Select category" style={selectStyle}>
+                      {categories?.map(c => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+                    </Select>
+                  </Form.Item>
+
+                  <Divider style={{ gridColumn: 'span 2' }}>Associations (Optional)</Divider>
+
+                  <Form.Item name="contact_id" label={<span style={formItemStyle}>Select Contact (Optional)</span>}>
+                    <Select placeholder="Select contact" style={selectStyle}>
+                      {contactsResponse?.data?.map(c => <Option key={c.id} value={c.id}>{c.first_name} {c.last_name}</Option>)}
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item name="company_id" label={<span style={formItemStyle}>Select Company (Optional)</span>}>
+                    <Select placeholder="Select company" style={selectStyle}>
+                      {companyAccountsResponse?.data?.map(c => <Option key={c.id} value={c.id}>{c.company_name}</Option>)}
+                    </Select>
                   </Form.Item>
                 </>
-              )}
-            </div>
+              </div>
+            )}
 
             <Divider style={{ margin: "24px 0" }} />
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "12px",
-              }}
-            >
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
               <Button
                 onClick={handleCancel}
                 size="large"
@@ -1757,10 +1223,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   height: "44px",
                   borderRadius: "10px",
                   border: "1px solid #e6e8eb",
-                  fontWeight: "500",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  fontWeight: "500"
                 }}
               >
                 Cancel
@@ -1768,19 +1231,15 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               <Button
                 type="primary"
                 htmlType="submit"
-                loading={isCreatingDeal || isUpdatingLead}
+                loading={isCreatingDeal}
                 size="large"
                 style={{
                   padding: "8px 24px",
                   height: "44px",
                   borderRadius: "10px",
-                  background:
-                    "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
                   border: "none",
-                  fontWeight: "500",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  fontWeight: "500"
                 }}
               >
                 Create Deal
@@ -1788,459 +1247,83 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
             </div>
           </Form>
         </Spin>
-      </Modal>
 
-      <AddPipelineModal
-        isOpen={isAddPipelineVisible}
-        onClose={() => setIsAddPipelineVisible(false)}
-      />
+        <AddPipelineModal
+          isOpen={isAddPipelineVisible}
+          onClose={() => setIsAddPipelineVisible(false)}
+        />
 
-      <AddCompanyModal
-        open={isAddCompanyVisible}
-        onCancel={() => setIsAddCompanyVisible(false)}
-        loggedInUser={loggedInUser}
-        companyAccountsResponse={companyAccountsResponse}
-        onSuccess={handleCompanyCreationSuccess}
-        initialCompanyName={newCompanyName}
-      />
+        <AddCompanyModal
+          open={isAddCompanyVisible}
+          onCancel={() => setIsAddCompanyVisible(false)}
+          loggedInUser={loggedInUser}
+          companyAccountsResponse={companyAccountsResponse}
+          onSuccess={handleCompanyCreationSuccess}
+          initialCompanyName={newCompanyName}
+        />
 
-      <AddContactModal
-        open={isAddContactVisible}
-        onCancel={() => setIsAddContactVisible(false)}
-        loggedInUser={loggedInUser}
-        companyAccountsResponse={companyAccountsResponse}
-        onsubmit={handleAddContactClick}
-      />
+        <AddContactModal
+          open={isAddContactVisible}
+          onCancel={() => setIsAddContactVisible(false)}
+          loggedInUser={loggedInUser}
+          companyAccountsResponse={companyAccountsResponse}
+          onsubmit={handleAddContactClick}
+        />
 
-      <AddSourceModal
-        isOpen={isAddSourceVisible}
-        onClose={(success) => {
-          setIsAddSourceVisible(false);
-          if (success) {
-            setSourceDropdownOpen(true);
-          }
-        }}
-      />
-
-      <AddCategoryModal
-        isOpen={isAddCategoryVisible}
-        onClose={(success) => {
-          setIsAddCategoryVisible(false);
-          if (success) {
-            setCategoryDropdownOpen(true);
-          }
-        }}
-      />
-
-      <style jsx="true" global="true">{`
-        .deal-form-modal {
-          .currency-select,
-          .phone-code-select {
-            cursor: pointer;
-            .ant-select-selector {
-              padding: 8px 8px !important;
-              height: 48px !important;
+        <AddSourceModal
+          isOpen={isAddSourceVisible}
+          onClose={(success) => {
+            setIsAddSourceVisible(false);
+            if (success) {
+              setSourceDropdownOpen(true);
             }
+          }}
+        />
 
-            .ant-select-selection-search {
-              input {
-                height: 100% !important;
-              }
+        <AddCategoryModal
+          isOpen={isAddCategoryVisible}
+          onClose={(success) => {
+            setIsAddCategoryVisible(false);
+            if (success) {
+              setCategoryDropdownOpen(true);
             }
+          }}
+        />
 
-            .ant-select-selection-item {
-              padding-right: 20px !important;
-              font-weight: 500 !important;
-            }
-
-            .ant-select-selection-placeholder {
-              color: #9ca3af !important;
-            }
-          }
-
-          .currency-select {
-            .ant-select-selector {
-              background: linear-gradient(
-                135deg,
-                #1890ff 0%,
-                #096dd9 100%
-              ) !important;
-              border: none !important;
-              padding: 0 8px !important;
-
-              .ant-select-selection-item {
-                color: white !important;
-                display: flex !important;
-                align-items: center !important;
-                gap: 8px !important;
-
-                span {
-                  color: white !important;
-                }
-              }
-            }
-          }
-
-          .ant-select-dropdown {
-            padding: 8px !important;
-            border-radius: 10px !important;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
-
-            .ant-select-item {
-              padding: 8px 12px !important;
-              border-radius: 6px !important;
-              min-height: 32px !important;
-              display: flex !important;
-              align-items: center !important;
-              color: #1f2937 !important;
-
-              &-option-selected {
-                background-color: #e6f4ff !important;
-                font-weight: 500 !important;
-                color: #1890ff !important;
-              }
-
-              &-option-active {
-                background-color: #f3f4f6 !important;
-              }
-            }
-
-            .ant-select-item-option-content {
-              font-size: 14px !important;
-            }
-
-            .ant-select-item-empty {
-              color: #9ca3af !important;
-            }
-          }
-
-          .value-input-group,
-          .phone-input-group {
-            display: flex !important;
-            align-items: stretch !important;
-
-            .ant-select {
+        <style jsx="true" global="true">{`
+          .deal-form-modal {
+            .currency-select,
+            .phone-code-select {
+              cursor: pointer;
               .ant-select-selector {
-                height: 100% !important;
-                border-top-right-radius: 0 !important;
-                border-bottom-right-radius: 0 !important;
+                padding: 8px 8px !important;
+                height: 48px !important;
               }
-            }
-
-            .ant-input {
-              border-top-left-radius: 0 !important;
-              border-bottom-left-radius: 0 !important;
-            }
-          }
-
-          .ant-select:not(.ant-select-customize-input) .ant-select-selector {
-            background-color: #f8fafc !important;
-            border: 1px solid #e6e8eb !important;
-            border-radius: 10px !important;
-            min-height: 48px !important;
-            padding: 8px !important;
-            display: flex !important;
-            align-items: center !important;
-          }
-
-          .ant-select-focused:not(.ant-select-disabled).ant-select:not(
-              .ant-select-customize-input
-            )
-            .ant-select-selector {
-            border-color: #1890ff !important;
-            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
-          }
-
-          .ant-select-single .ant-select-selector .ant-select-selection-item,
-          .ant-select-single
-            .ant-select-selector
-            .ant-select-selection-placeholder {
-            line-height: 32px !important;
-            height: 32px !important;
-            transition: all 0.3s !important;
-            display: flex !important;
-            align-items: center !important;
-          }
-
-          /* Add styles for multiple select (team members) */
-          .ant-select-multiple {
-            .ant-select-selector {
-              min-height: 48px !important;
-              height: auto !important;
-              padding: 4px 8px !important;
-              background-color: #f8fafc !important;
-              border: 1px solid #e6e8eb !important;
-              border-radius: 10px !important;
-              display: flex !important;
-              align-items: flex-start !important;
-              // flex-wrap: wrap !important;
-            }
-
-            .ant-select-selection-item {
-              height: 32px !important;
-              line-height: 30px !important;
-              background: #f0f7ff !important;
-              border: 1px solid #91caff !important;
-              border-radius: 6px !important;
-              color: #0958d9 !important;
-              font-size: 13px !important;
-              margin: 4px !important;
-              padding: 0 8px !important;
-              display: flex !important;
-              align-items: center !important;
-            }
-
-            .ant-select-selection-search {
-              margin: 4px !important;
-            }
-
-            .ant-select-selection-placeholder {
-              padding: 8px !important;
-            }
-          }
-
-          /* Team member option styling */
-          .team-member-option {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-
-            .member-name {
-              font-weight: 500;
-              color: #1f2937;
-            }
-
-            .member-role {
-              font-size: 12px;
-              padding: 2px 6px;
-              border-radius: 4px;
-              text-transform: capitalize;
-            }
-          }
-
-          @keyframes pulse {
-            0% {
-              transform: scale(1);
-              opacity: 1;
-            }
-            50% {
-              transform: scale(1.2);
-              opacity: 0.8;
-            }
-            100% {
-              transform: scale(1);
-              opacity: 1;
-            }
-          }
-
-          .role-indicator {
-            animation: pulse 2s infinite;
-          }
-
-          /* Add these new styles for product selection */
-          .ant-select-multiple {
-            .ant-select-selection-item {
-              height: auto !important;
-              background: #f0f7ff !important;
-              border: 1px solid #91caff !important;
-              border-radius: 8px !important;
-              margin: 4px !important;
-              display: flex !important;
-              align-items: center !important;
-              gap: 12px !important;
-
-              /* Product image container */
-              .ant-select-selection-item-content > div {
-                display: flex !important;
-                align-items: center !important;
-                gap: 12px !important;
+              .ant-select-selection-search {
+                input {
+                  height: 100% !important;
+                }
               }
-
-              /* Product details container */
-              .ant-select-selection-item-content > div > div:last-child {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 2px !important;
-              }
-
-              /* Product name */
-              .ant-select-selection-item-content span:first-child {
-                color: #1f2937 !important;
+              .ant-select-selection-item {
+                padding-right: 20px !important;
                 font-weight: 500 !important;
-                font-size: 14px !important;
-                line-height: 1.4 !important;
               }
-
-              /* Product price */
-              .ant-select-selection-item-content span:last-child {
-                color: #6b7280 !important;
-                font-size: 12px !important;
-                line-height: 1.2 !important;
-              }
-
-              /* Product image */
-              img {
-                width: 32px !important;
-                height: 32px !important;
-                border-radius: 4px !important;
-                object-fit: cover !important;
-              }
-
-              /* Remove button */
-              .ant-select-selection-item-remove {
-                color: #6b7280 !important;
-                font-size: 14px !important;
-                margin-left: auto !important;
-                padding: 4px !important;
-                border-radius: 4px !important;
-
-                &:hover {
-                  background-color: #eef2ff !important;
-                  color: #4b5563 !important;
-                }
+              .ant-select-selection-placeholder {
+                color: #9ca3af !important;
               }
             }
-
-            /* Adjust the selector height when items are selected */
-            .ant-select-selector {
-              height: auto !important;
-              min-height: 48px !important;
-              padding: 4px 8px !important;
-            }
-
-            /* Style for the search input */
-            .ant-select-selection-search {
-              margin: 4px !important;
-              padding: 4px !important;
-            }
-          }
-
-          /* Dropdown styles for product options */
-          .ant-select-dropdown {
-            .ant-select-item-option-content {
-              > div {
-                padding: 8px 0 !important;
-              }
-
-              /* Product option container */
-              div[style*="display: flex"] {
-                gap: 12px !important;
-              }
-
-              /* Product image in dropdown */
-              div[style*="width: 32px"] {
-                flex-shrink: 0 !important;
-              }
-
-              /* Product details in dropdown */
-              div[style*="flex-direction: column"] {
-                flex-grow: 1 !important;
-
-                span:first-child {
-                  color: #1f2937 !important;
-                  font-weight: 500 !important;
-                  margin-bottom: 2px !important;
-                }
-
-                span:last-child {
-                  color: #6b7280 !important;
-                  font-size: 12px !important;
-                }
-              }
-            }
-
-            .ant-select-item-option-selected {
-              .ant-select-item-option-content {
-                > div {
-                  background-color: #f0f7ff !important;
-                }
-              }
-            }
-          }
-
-          .product-select {
-            .ant-select-selector {
-              height: auto !important;
-              min-height: 48px !important;
-              padding: 4px 8px !important;
-              display: flex !important;
-              align-items: flex-start !important;
-              flex-wrap: wrap !important;
-              gap: 4px !important;
+            .ant-select:not(.ant-select-customize-input) .ant-select-selector {
               background-color: #f8fafc !important;
               border: 1px solid #e6e8eb !important;
               border-radius: 10px !important;
-              transition: all 0.3s ease !important;
-
-              &:hover {
-                border-color: #40a9ff !important;
-              }
-
-              &.ant-select-focused {
-                border-color: #1890ff !important;
-                box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
-              }
-            }
-
-            .ant-select-selection-item {
-              height: auto !important;
-              margin: 4px !important;
-              padding: 4px 8px !important;
-              background: #f0f7ff !important;
-              border: 1px solid #91caff !important;
-              border-radius: 6px !important;
+              min-height: 48px !important;
+              padding: 8px !important;
               display: flex !important;
               align-items: center !important;
-              gap: 8px !important;
-
-              .ant-select-selection-item-content {
-                display: flex !important;
-                align-items: center !important;
-                gap: 8px !important;
-              }
-
-              img {
-                width: 32px !important;
-                height: 32px !important;
-                border-radius: 4px !important;
-                object-fit: cover !important;
-              }
-
-              .ant-select-selection-item-remove {
-                color: #6b7280 !important;
-                margin-left: auto !important;
-                padding: 4px !important;
-                border-radius: 4px !important;
-
-                &:hover {
-                  background-color: #eef2ff !important;
-                  color: #4b5563 !important;
-                }
-              }
-            }
-
-            .ant-select-selection-placeholder {
-              line-height: 38px !important;
-              color: #9ca3af !important;
-            }
-
-            .ant-select-selection-search {
-              margin: 0 !important;
-              padding: 0 !important;
-
-              input {
-                height: 38px !important;
-              }
-            }
-
-            &.ant-select-focused .ant-select-selector {
-              border-color: #1890ff !important;
-              box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
             }
           }
-        }
-      `}</style>
+        `}</style>
+      </Modal>
     </>
   );
 };

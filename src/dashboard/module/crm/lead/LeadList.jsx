@@ -91,7 +91,7 @@ const LeadList = ({
 
   // Fetch all required data
   const { data: stagesData } = useGetLeadStagesQuery();
-  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.client_id || loggedInUser?.id);
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: companyAccountsResponse } = useGetCompanyAccountsQuery();
@@ -393,7 +393,7 @@ const LeadList = ({
       dataIndex: ["Contact", "phone"],
       key: "phone",
       width: 150,
-      render: (phone) => phone || "N/A"
+      render: (phone) => (phone && !phone.startsWith("META_")) ? phone : "N/A"
     },
     {
       title: "Lead Source",

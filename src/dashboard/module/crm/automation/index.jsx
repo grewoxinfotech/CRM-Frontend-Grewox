@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Space, message, Card, Switch, Tooltip, Popconfirm, Typography } from 'antd';
+import { Table, Button, Tag, Space, message, Card, Switch, Tooltip, Popconfirm, Typography, Divider } from 'antd';
 const { Text } = Typography;
 import { PlusOutlined, DeleteOutlined, ClockCircleOutlined, RocketOutlined, ThunderboltOutlined, FilterOutlined, RightOutlined, EyeOutlined, PlayCircleOutlined, PauseCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { useGetAutomationsQuery, useCreateAutomationMutation, useSeedDefaultsMutation, useToggleAutomationMutation, useDeleteAutomationMutation, useUpdateAutomationMutation } from './services/automationApi';
@@ -17,6 +17,20 @@ import PageHeader from '../../../../components/PageHeader';
 import WorkflowInspector from './components/WorkflowInspector';
 import AutomationForm from './components/AutomationForm';
 
+/** API may return JSON columns as strings or already-parsed arrays. */
+function parseAutomationArray(value) {
+  if (value == null || value === "") return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
 
 const AutomationPage = () => {
     const [createAutomation] = useCreateAutomationMutation();
@@ -60,8 +74,8 @@ const AutomationPage = () => {
         setEditingAutomation(record);
         form.setFieldsValue({
             ...record,
-            conditions: JSON.parse(record.conditions || '[]'),
-            actions: JSON.parse(record.actions || '[]')
+            conditions: parseAutomationArray(record.conditions),
+            actions: parseAutomationArray(record.actions),
         });
         setIsModalVisible(true);
     };
@@ -106,7 +120,7 @@ const AutomationPage = () => {
             dataIndex: 'conditions',
             key: 'conditions',
             render: (conditionsJson) => {
-                const conditions = JSON.parse(conditionsJson || '[]');
+                const conditions = parseAutomationArray(conditionsJson);
                 return conditions.length > 0 ? (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {conditions.map((c, i) => (
@@ -121,7 +135,7 @@ const AutomationPage = () => {
             dataIndex: 'actions',
             key: 'actions',
             render: (actionsJson) => {
-                const actions = typeof actionsJson === 'string' ? JSON.parse(actionsJson || '[]') : actionsJson;
+                const actions = parseAutomationArray(actionsJson);
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                         {actions && actions.length > 0 ? actions.map((action, index) => (

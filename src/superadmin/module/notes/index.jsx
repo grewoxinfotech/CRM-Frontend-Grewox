@@ -74,7 +74,16 @@ const Notes = () => {
         title: note.note_title || "N/A",
         type: note.notetype || "N/A",
         description: note.description || "N/A",
-        employees: note.employees ? JSON.parse(note.employees).employee : "N/A",
+        employees: (() => {
+          try {
+            if (!note.employees) return "N/A";
+            const parsed = typeof note.employees === 'string' ? JSON.parse(note.employees) : note.employees;
+            return parsed.employee || "N/A";
+          } catch (e) {
+            console.error("Error parsing note employees:", e);
+            return "N/A";
+          }
+        })(),
         created_by: note.created_by || "N/A",
         created_at: note.createdAt || "-",
         client_id: note.client_id || "N/A",

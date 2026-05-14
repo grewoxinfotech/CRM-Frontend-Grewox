@@ -49,6 +49,7 @@ import AddStageModal from "../crmsystem/leadstage/AddLeadStageModal";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
 import AddStatusModal from "../crmsystem/souce/AddStatusModal";
+import { useGetCustomFormsQuery } from '../generate-link/services/customFormApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -67,7 +68,24 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
 
   const selectedCompanyId = Form.useWatch('company_id', form);
   const selectedContactId = Form.useWatch('contact_id', form);
+  const selectedPipelineId = Form.useWatch('pipeline', form);
   const pendingLeadStageIdRef = useRef(null);
+
+  // Fetch Active Custom Form for Lead
+  const { data: customFormsData } = useGetCustomFormsQuery({ module_type: 'lead', status: 'active' });
+  const activeCustomForm = customFormsData?.data?.[0];
+
+  const formFields = React.useMemo(() => {
+    if (!activeCustomForm?.fields) return [];
+    try {
+      return typeof activeCustomForm.fields === 'string'
+        ? JSON.parse(activeCustomForm.fields)
+        : activeCustomForm.fields;
+    } catch (e) {
+      console.error("Failed to parse form fields:", e);
+      return [];
+    }
+  }, [activeCustomForm]);
 
   const normalizeCompanyId = (value) => {
     if (!value) return undefined;
@@ -1038,413 +1056,301 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         onFinish={handleSubmit}
         style={{ padding: "24px" }}
       >
-        <div className="form-grid" style={{
+        <div className="dynamic-form-fields" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '16px',
-          marginBottom: '32px'
+          marginBottom: '24px'
         }}>
-          <Form.Item
-            name="leadTitle"
-            label={<span style={formItemStyle}>Lead Title</span>}
-            rules={[
-              { required: true, message: "Please enter lead title" },
-              { min: 3, message: "Lead title must be at least 3 characters" },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                    return Promise.reject(
-                      new Error('Lead title must contain both uppercase or lowercase English letters')
-                    );
-                  }
-                  return Promise.resolve();
-                }
+          {Array.isArray(formFields) && formFields.map((field) => {
+            if (field.is_system) {
+              if (field.key === 'leadTitle') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="leadTitle"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                    rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                  >
+                    <Input prefix={<FiUser style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                  </Form.Item>
+                );
               }
-            ]}
-          >
-            <Input
-              prefix={<FiUser style={prefixIconStyle} />}
-              placeholder="Enter lead title"
-              style={inputStyle}
-            />
-          </Form.Item>
 
-          <Form.Item
-            name="pipeline"
-            label={<span style={formItemStyle}>Pipeline</span>}
-            rules={[{ required: true, message: "Please select a pipeline" }]}
-          >
-            <CommonSelect
-              placeholder="Select pipeline"
-              options={pipelines.map(p => ({ id: p.id, name: p.pipeline_name }))}
-              onChange={handlePipelineChange}
-              onAddClick={handleAddPipelineClick}
-              addButtonText="Create Pipeline"
-            />
-          </Form.Item>
+              if (field.key === 'leadValue') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                  >
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Form.Item name="currency" noStyle>
+                        <CommonSelect 
+                          style={{ width: '120px' }} 
+                          options={currencies?.map(c => ({ 
+                            id: c.currencyCode, 
+                            name: c.currencyIcon === c.currencyCode ? c.currencyCode : `${c.currencyIcon} ${c.currencyCode}` 
+                          }))} 
+                          allowClear={false} 
+                        />
+                      </Form.Item>
+                      <Form.Item name="leadValue" noStyle>
+                        <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder={field.placeholder || "Enter amount"} min={0} />
+                      </Form.Item>
+                    </div>
+                  </Form.Item>
+                );
+              }
 
-          <Form.Item
-            name="leadStage"
-            label={<span style={formItemStyle}>Stage</span>}
-            rules={[{ required: true, message: "Please select a stage" }]}
-          >
-            <CommonSelect
-              placeholder={selectedPipeline ? "Select stage" : "Select pipeline first"}
-              disabled={!selectedPipeline}
-              options={filteredStages.map(s => ({
-                id: s.id,
-                name: s.stageName,
-                color: s.color
-              }))}
-              onAddClick={handleAddStageClick}
-              addButtonText="Add Stage"
-              onDelete={handleDeleteStage}
-              deleteTitle="Delete Stage"
-            />
-          </Form.Item>
+              if (field.key === 'firstName') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="firstName"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                  >
+                    <Input prefix={<FiUser style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                  </Form.Item>
+                );
+              }
 
-          {/* Interest Level */}
-          <Form.Item
-            name="interest_level"
-            label={<span style={formItemStyle}>Interest Level</span>}
-          >
-            <CommonSelect
-              placeholder="Select interest level"
-              options={interestLevels.map(level => ({
-                id: level.value,
-                name: level.label,
-                color: level.color
-              }))}
-            />
-          </Form.Item>
+              if (field.key === 'lastName') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="lastName"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                  >
+                    <Input prefix={<FiUser style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                  </Form.Item>
+                );
+              }
 
-          <Form.Item
-            name="leadValueGroup"
-            label={<span style={formItemStyle}>Lead Value</span>}
-            className="combined-input-item"
-          >
-            <div style={{ display: 'flex', gap: '8px' }}>
+              if (field.key === 'telephone') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="telephone"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                  >
+                    <AutoComplete
+                      options={contactSuggestions?.data?.map(c => ({
+                        value: c.phone,
+                        label: (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                            <span>{c.first_name} {c.last_name || ''}</span>
+                            <span style={{ color: '#999', fontSize: '12px' }}>{c.phone}</span>
+                          </div>
+                        ),
+                        contact: c
+                      }))}
+                      onSearch={(val) => setPhoneSearchText(val)}
+                      onSelect={handleContactSelect}
+                    >
+                      <Input
+                        prefix={<FiPhone style={prefixIconStyle} />}
+                        placeholder={field.placeholder}
+                        style={inputStyle}
+                      />
+                    </AutoComplete>
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'email') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="email"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    rules={[{ type: 'email', message: "Please enter a valid email" }]}
+                  >
+                    <Input prefix={<FiMail style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'contact_id') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="contact_id"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                  >
+                    <CommonSelect
+                      placeholder={field.placeholder}
+                      options={contactsData?.data?.map(c => ({ id: c.id, name: `${c.first_name} ${c.last_name}` }))}
+                      onChange={handleContactChange}
+                    />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'company_id') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="company_id"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                  >
+                    <CommonSelect
+                      placeholder={field.placeholder}
+                      options={companyAccountsData?.data?.map(c => ({ id: c.id, name: c.company_name }))}
+                      onChange={handleCompanyChange}
+                    />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'address') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="address"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                  >
+                    <Input.TextArea placeholder={field.placeholder} rows={2} style={{ borderRadius: '10px' }} />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'pipeline') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="pipeline"
+                    label={<span style={formItemStyle}>{field.label} <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    rules={[{ required: true, message: "Please select pipeline" }]}
+                  >
+                    <CommonSelect
+                      placeholder={field.placeholder || "Select pipeline"}
+                      options={pipelines?.map(p => ({ name: p.pipeline_name, id: p.id }))}
+                      onChange={handlePipelineChange}
+                    />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'stage') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="leadStage"
+                    label={<span style={formItemStyle}>{field.label} <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    rules={[{ required: true, message: "Please select stage" }]}
+                  >
+                    <CommonSelect
+                      placeholder={field.placeholder || "Select stage"}
+                      options={filteredStages.map(s => ({ name: s.stageName, id: s.id, color: s.color }))}
+                      disabled={!selectedPipelineId}
+                    />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'source') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="source"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                  >
+                    <CommonSelect
+                      placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`}
+                      options={sourcesData?.data}
+                      onAddClick={handleAddSourceClick}
+                      onDelete={handleDeleteSource}
+                    />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'category') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="category"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                  >
+                    <CommonSelect
+                      placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`}
+                      options={categoriesData?.data}
+                      onAddClick={handleAddCategoryClick}
+                      onDelete={handleDeleteCategory}
+                    />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'description') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="description"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                  >
+                    <Input.TextArea placeholder={field.placeholder} rows={2} style={{ borderRadius: '10px' }} />
+                  </Form.Item>
+                );
+              }
+
+              return null;
+            }
+
+            // Custom Fields
+            return (
               <Form.Item
-                name="currency"
-                noStyle
-                initialValue={defaultCurrency}
-                rules={[{ required: true, message: 'Please select currency' }]}
+                key={field.id}
+                name={['custom_fields', field.id]}
+                label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                style={{ gridColumn: field.type === 'textarea' || field.type === 'heading' ? 'span 2' : 'span 1', marginBottom: '0px' }}
+                rules={[{ required: field.required, message: `Please enter ${field.label}` }]}
               >
-                <CommonSelect
-                  style={{ width: '120px' }}
-                  options={currencies?.map(currency => ({
-                    id: currency.id,
-                    name: currency.currencyIcon === currency.currencyCode
-                      ? currency.currencyCode
-                      : `${currency.currencyIcon} ${currency.currencyCode}`
-                  }))}
-                  allowClear={false}
-                />
+                {field.type === 'text' && <Input placeholder={field.placeholder} style={inputStyle} />}
+                {field.type === 'number' && <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder={field.placeholder} />}
+                {field.type === 'email' && <Input type="email" placeholder={field.placeholder} style={inputStyle} />}
+                {field.type === 'phone' && <Input placeholder={field.placeholder} style={inputStyle} />}
+                {field.type === 'textarea' && <Input.TextArea placeholder={field.placeholder} rows={2} style={{ borderRadius: '10px' }} />}
+                {field.type === 'select' && (
+                  <Select placeholder={field.placeholder} style={selectStyle}>
+                    {field.options?.map(o => <Option key={o} value={o}>{o}</Option>)}
+                  </Select>
+                )}
               </Form.Item>
-              <Form.Item
-                name="leadValue"
-                noStyle
-                initialValue={0}
-                rules={[
-                  { type: 'number', min: 0, message: 'Value must be greater than or equal to 0' }
-                ]}
-              >
-                <InputNumber
-                  style={{ ...inputStyle, width: '100%' }}
-                  placeholder="Enter amount"
-                  min={0}
-                  onKeyDown={(e) => {
-                    if (['e', 'E', '+', '-'].includes(e.key)) {
-                      e.preventDefault();
-                    }
-                  }}
-                />
-              </Form.Item>
-            </div>
-          </Form.Item>
-
-          {/* Source Select */}
-          <Form.Item
-            name="source"
-            label={<span style={formItemStyle}>Source</span>}
-            rules={[{ required: true, message: "Please select source" }]}
-          >
-            <CommonSelect
-              placeholder="Select source"
-              options={sourcesData?.data}
-              onAddClick={handleAddSourceClick}
-              addButtonText="Create Source"
-              onDelete={handleDeleteSource}
-              deleteTitle="Delete Source"
-            />
-          </Form.Item>
-
-          {/* Status Select */}
-          <Form.Item
-            name="status"
-            label={<span style={formItemStyle}>Status</span>}
-          >
-            <CommonSelect
-              placeholder="Select status"
-              options={statusesData?.data}
-              onAddClick={handleAddStatusClick}
-              addButtonText="Add Status"
-              onDelete={handleDeleteStatus}
-              deleteTitle="Delete Status"
-            />
-          </Form.Item>
-
-          {/* Category Select */}
-          <Form.Item
-            name="category"
-            label={<span style={formItemStyle}>Category</span>}
-          >
-            <CommonSelect
-              placeholder="Select category"
-              options={categoriesData?.data}
-              onAddClick={handleAddCategoryClick}
-              addButtonText="Create Category"
-              onDelete={handleDeleteCategory}
-              deleteTitle="Delete Category"
-            />
-          </Form.Item>
-        </div>
-
-        {/* Team Members Section */}
-        <div style={{ marginBottom: '32px' }}>
+            );
+          })}
+          
           <Form.Item
             name="lead_members"
             label={<span style={formItemStyle}>Team Members</span>}
-            style={{ marginBottom: '16px' }}
+            style={{ gridColumn: 'span 2', marginBottom: '0px' }}
           >
             <CommonSelect
               mode="multiple"
               placeholder="Select team members"
-              options={users.map(user => {
-                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-                return {
-                  id: user.id,
-                  name: user.username,
-                  subLabel: userRole?.role_name || 'User',
-                  image: user.profilePic
-                };
-              })}
+              options={users.map(user => ({
+                id: user.id,
+                name: user.username,
+                subLabel: rolesData?.data?.find(role => role.id === user.role_id)?.role_name || 'User',
+                image: user.profilePic
+              }))}
               onAddClick={handleCreateUser}
               addButtonText="Add New User"
-            />
-          </Form.Item>
-        </div>
-
-        {/* Basic Information */}
-        <div className="section-title" style={{ marginBottom: '16px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Basic Information</Text>
-        </div>
-
-        <div className="form-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '16px',
-          marginBottom: '32px'
-        }}>
-          <Form.Item
-            name="company_id"
-            label={<span style={formItemStyle}>Select Company</span>}
-          >
-            <CommonSelect
-              placeholder="Select company"
-              options={companyAccountsData?.data?.map(c => ({
-                id: c.id,
-                name: c.company_name,
-                icon: FiBriefcase
-              }))}
-              onChange={handleCompanyChange}
-              onAddClick={handleAddCompanyClick}
-              addButtonText="Create Company"
-              icon={FiBriefcase}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="contact_id"
-            label={<span style={formItemStyle}>Select Contact Name</span>}
-          >
-            <CommonSelect
-              placeholder="Select contact name"
-              options={contactsData?.data?.filter(contact => {
-                const selectedCompany = normalizeCompanyId(form.getFieldValue('company_id'));
-                if (!selectedCompany) return true;
-                const companyId = normalizeCompanyId(contact.company_name);
-                return companyId === selectedCompany;
-              }).map(contact => {
-                const companyId = normalizeCompanyId(contact.company_name);
-                const companyName = typeof contact.company_name === 'object'
-                  ? (contact.company_name?.company_name || contact.company_name?.name)
-                  : companyAccountsData?.data?.find(c => c.id === companyId)?.company_name;
-
-                return {
-                  id: contact.id,
-                  name: `${contact.first_name || ''} ${contact.last_name || ''}`,
-                  icon: FiUser,
-                  subLabel: companyName || "No Company",
-                  subIcon: FiBriefcase
-                };
-              })}
-              onChange={handleContactChange}
-              onAddClick={handleAddContactClick}
-              addButtonText="Create Contact"
-              icon={FiUser}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="firstName"
-            label={<span style={formItemStyle}>First Name</span>}
-          >
-            <Input
-              prefix={<FiUser style={prefixIconStyle} />}
-              placeholder="First name"
-              style={inputStyle}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="lastName"
-            label={<span style={formItemStyle}>Last Name</span>}
-          >
-            <Input
-              prefix={<FiUser style={prefixIconStyle} />}
-              placeholder="Last name"
-              style={inputStyle}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="email"
-            label={<span style={formItemStyle}>Email</span>}
-            rules={[
-              {
-                type: "email",
-                message: "Please enter a valid email",
-                validateTrigger: ['onChange', 'onBlur'],
-                transform: (value) => value?.trim() || null
-              }
-            ]}
-          >
-            <Input
-              prefix={<FiMail style={prefixIconStyle} />}
-              placeholder="Enter email address"
-              style={inputStyle}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="phoneGroup"
-            label={<span style={formItemStyle}>Phone Number</span>}
-            dependencies={['telephone']}
-            rules={[
-              {
-                validator: (_, value) => {
-                  const telephone = form.getFieldValue('telephone');
-                  if (telephone) {
-                    if (!/^\d+$/.test(telephone)) {
-                      return Promise.reject(new Error('Phone number must contain only digits'));
-                    }
-                    if (telephone.length < 7 || telephone.length > 15) {
-                      return Promise.reject(new Error('Phone number must be between 7 and 15 digits'));
-                    }
-                  }
-                  return Promise.resolve();
-                }
-              }
-            ]}
-          >
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
-                <CommonSelect
-                  style={{ width: '120px' }}
-                  options={countries?.map(country => ({
-                    id: country.id,
-                    name: `${country.countryCode} +${country.phoneCode.replace('+', '')}`
-                  }))}
-                  allowClear={false}
-                />
-              </Form.Item>
-              <Form.Item
-                name="telephone"
-                noStyle
-              >
-                <AutoComplete
-                  style={{
-                    ...inputStyle,
-                    flex: 1,
-                    padding: 0
-                  }}
-                  placeholder="Enter phone number"
-                  onSearch={(val) => setPhoneSearchText(val)}
-                  onSelect={handleContactSelect}
-                  popupClassName="custom-select-dropdown"
-                  options={contactSuggestions?.data?.map(c => ({
-                    value: c.phone,
-                    label: (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', width: '100%' }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
-                          <div style={{
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '50%',
-                            backgroundColor: '#e6f7ff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#1890ff',
-                            flexShrink: 0
-                          }}>
-                            <FiUser size={14} />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <span style={{ fontWeight: '500', fontSize: '13px', color: '#1f1f1f', lineHeight: '1.4', display: 'block' }}>
-                              {c.first_name} {c.last_name || ''}
-                            </span>
-                            <span style={{ fontSize: '11px', color: '#8c8c8c', display: 'flex', alignItems: 'center', gap: '4px', lineHeight: '1.4' }}>
-                              <FiPhone size={9} /> {c.phone}
-                            </span>
-                          </div>
-                        </div>
-                        {c.company_name && (
-                          <Tag
-                            icon={<FiBriefcase size={10} />}
-                            color="blue"
-                            style={{
-                              margin: 0,
-                              borderRadius: '4px',
-                              fontSize: '11px',
-                              marginLeft: '8px'
-                            }}
-                          >
-                            {typeof c.company_name === 'object'
-                              ? (c.company_name.company_name || c.company_name.name)
-                              : (companyAccountsData?.data?.find(acc => acc.id === c.company_name)?.company_name || c.company_name)}
-                          </Tag>
-                        )}
-                      </div>
-                    ),
-                    contact: c
-                  }))}
-                />
-              </Form.Item>
-            </div>
-          </Form.Item>
-
-          <Form.Item
-            name="address"
-            label={<span style={formItemStyle}>Address</span>}
-            style={{ gridColumn: 'span 2' }}
-          >
-            <Input
-              prefix={<FiMapPin style={prefixIconStyle} />}
-              placeholder="Enter address"
-              style={inputStyle}
             />
           </Form.Item>
         </div>

@@ -1,0 +1,219 @@
+.form-builder-container {
+  background: #f8fafc;
+  min-height: calc(100vh - 100px);
+
+  .builder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .field-library-card {
+    border-radius: 12px;
+    height: auto;
+
+    .field-type-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+
+      .field-type-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 8px;
+        background: #f8fafc;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid #e2e8f0;
+
+        &.system-field {
+          background: #f0f7ff;
+          border-color: #bae6fd;
+
+          .field-icon {
+            color: #0ea5e9;
+          }
+
+          .field-label {
+            color: #0369a1;
+          }
+
+          &:hover {
+            background: #e0f2fe;
+            border-color: #0ea5e9;
+          }
+        }
+
+        &:hover {
+          background: #e0f2fe;
+          border-color: #0ea5e9;
+          transform: translateY(-2px);
+          color: #0369a1;
+
+          .field-icon {
+            transform: scale(1.1);
+          }
+        }
+
+        .field-icon {
+          font-size: 20px;
+          margin-bottom: 8px;
+          transition: transform 0.2s ease;
+        }
+
+        .field-label {
+          font-size: 12px;
+          font-weight: 500;
+          text-align: center;
+        }
+      }
+    }
+  }
+
+  .form-canvas-card {
+    border-radius: 12px;
+    min-height: 600px;
+
+    .form-title-input {
+      border: none;
+      border-bottom: 2px solid #e2e8f0;
+      font-size: 20px;
+      font-weight: 700;
+      padding: 0 0 8px 0;
+      border-radius: 0;
+
+      &:focus {
+        box-shadow: none;
+        border-color: #0ea5e9;
+      }
+    }
+
+    .canvas-fields {
+      .canvas-field-item {
+        position: relative;
+        padding: 20px;
+        border: 1px dashed #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        cursor: pointer;
+
+        &.active {
+          border-color: #0ea5e9;
+          border-style: solid;
+          background: #f0f9ff;
+          box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+
+          .field-actions {
+            opacity: 1;
+          }
+        }
+
+        &:hover {
+          border-color: #0ea5e9;
+          background: #f0f9ff;
+
+          .field-actions {
+            opacity: 1;
+          }
+        }
+
+        .field-actions {
+          position: absolute;
+          top: -12px;
+          right: 12px;
+          display: flex;
+          gap: 4px;
+          opacity: 0;
+          transition: all 0.2s ease;
+          z-index: 10;
+          background: white;
+          padding: 4px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e2e8f0;
+
+          .ant-btn {
+            border: none;
+            background: transparent;
+            color: #64748b;
+            display: flex;
+            alignItems: center;
+            justifyContent: center;
+
+            &:hover {
+              background: #f1f5f9;
+              color: #0ea5e9;
+            }
+
+            &.ant-btn-dangerous:hover {
+              background: #fef2f2;
+              color: #ef4444;
+            }
+          }
+        }
+
+        .field-content {
+          .field-preview {
+            .upload-placeholder {
+              border: 1px dashed #cbd5e1;
+              padding: 12px;
+              border-radius: 6px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+              color: #64748b;
+              background: #f8fafc;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .field-properties-card {
+    border-radius: 12px;
+    position: sticky;
+    top: 24px;
+
+    .properties-form {
+      .ant-input {
+        border-radius: 6px;
+      }
+    }
+  }
+
+  .form-preview-render {
+    padding: 24px;
+    background: white;
+    border-radius: 8px;
+  }
+}
+
+.mb-4 {
+  margin-bottom: 24px;
+}
+
+.mb-3 {
+  margin-bottom: 16px;
+}
+
+.mt-2 {
+  margin-top: 8px;
+}
+
+.mt-3 {
+  margin-top: 12px;
+}
+
+.mt-1 {
+  margin-top: 4px;
+}

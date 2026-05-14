@@ -7,10 +7,11 @@ export const customFormApi = createApi({
     tagTypes: ["CustomForms", "FormSubmissions"],
     endpoints: (builder) => ({
         getCustomForms: builder.query({
-            query: () => {
+            query: (params) => {
                 return {
                     url: `/custom-forms`,
-                    method: "GET"
+                    method: "GET",
+                    params
                 };
             },
             transformResponse: (response) => ({
@@ -31,7 +32,7 @@ export const customFormApi = createApi({
             invalidatesTags: ["CustomForms"],
         }),
         updateCustomForm: builder.mutation({
-            query: ({ id, data }) => {
+            query: ({ id, ...data }) => {
                 return {
                     url: `/custom-forms/${id}`,
                     method: "PUT",
@@ -63,6 +64,7 @@ export const customFormApi = createApi({
             }),
             providesTags: (result, error, id) => [{ type: 'CustomForms', id }],
         }),
+
         // Form Submissions endpoints
         getFormSubmissions: builder.query({
             query: (formId) => ({

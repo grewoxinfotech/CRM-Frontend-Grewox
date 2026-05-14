@@ -11,6 +11,8 @@ import {
   message,
   InputNumber,
   Popconfirm,
+  Tag,
+  AutoComplete,
 } from "antd";
 import {
   FiUser,
@@ -18,7 +20,7 @@ import {
   FiPhone,
   FiX,
   FiBriefcase,
-  FiHash,
+  FiShoppingBag,
   FiDollarSign,
   FiMapPin,
   FiChevronDown,
@@ -30,6 +32,7 @@ import {
   FiBox,
   FiTrash2,
   FiLayers,
+  FiHash,
 } from "react-icons/fi";
 import { useUpdateDealMutation, useGetDealsQuery } from "./services/DealApi";
 import {
@@ -69,6 +72,7 @@ import { useDeleteSourceMutation } from "../crmsystem/souce/services/SourceApi";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
 import AddDealStageModal from "../crmsystem/dealstage/AddDealStageModal";
+import { useGetCustomFormsQuery } from '../generate-link/services/customFormApi';
 
 // import { useGetAllUsersQuery } from "../../../module/user/services/userApi";
 dayjs.extend(customParseFormat);
@@ -109,6 +113,22 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const { data: companyAccountsData, isLoading: isCompanyLoading } = useGetCompanyAccountsQuery();
   const { data: contactsData, isLoading: isContactLoading } = useGetContactsQuery();
   const [createContact] = useCreateContactMutation();
+
+  // Fetch Active Custom Form for Deal
+  const { data: customFormsData } = useGetCustomFormsQuery({ module_type: 'deal', status: 'active' });
+  const activeCustomForm = customFormsData?.data?.[0];
+
+  const formFields = React.useMemo(() => {
+    if (!activeCustomForm?.fields) return [];
+    try {
+      return typeof activeCustomForm.fields === 'string'
+        ? JSON.parse(activeCustomForm.fields)
+        : activeCustomForm.fields;
+    } catch (e) {
+      console.error("Failed to parse form fields:", e);
+      return [];
+    }
+  }, [activeCustomForm]);
 
   // Find default country (India) for phone code
   const indiaCountry = countries?.find((c) => c.countryCode === "IN");
@@ -160,6 +180,83 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const getStageName = (stageId) => {
     const stage = dealStages.find((s) => s.id === stageId);
     return stage ? stage.stageName : "";
+  };
+
+  const [phoneSearchText, setPhoneSearchText] = useState("");
+  const { data: contactSuggestions } = useGetContactsQuery(
+    {
+      search: phoneSearchText,
+    },
+    { skip: !phoneSearchText || phoneSearchText.length < 2 }
+  );
+
+  const combinedSuggestions = React.useMemo(() => {
+    const suggestions = [];
+    
+    // Add contacts
+    contactSuggestions?.data?.forEach(c => {
+      suggestions.push({
+        value: c.phone || c.mobile || '',
+        label: (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px' }}><Tag color="blue" style={{ fontSize: '10px' }}>CONTACT</Tag> {c.first_name} {c.last_name}</span>
+            <span style={{ color: '#999', fontSize: '11px' }}>{c.phone || c.mobile}</span>
+          </div>
+        ),
+        type: 'contact',
+        contact: c
+      });
+    });
+
+    // Add companies
+    if (phoneSearchText && phoneSearchText.length >= 2) {
+      companyAccountsData?.data?.filter(company => 
+        (company.phone_number && company.phone_number.includes(phoneSearchText)) ||
+        (company.company_name && company.company_name.toLowerCase().includes(phoneSearchText.toLowerCase()))
+      ).slice(0, 5).forEach(comp => {
+        suggestions.push({
+          value: comp.phone_number || '',
+          label: (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px' }}><Tag color="green" style={{ fontSize: '10px' }}>COMPANY</Tag> {comp.company_name}</span>
+              <span style={{ color: '#999', fontSize: '11px' }}>{comp.phone_number}</span>
+            </div>
+          ),
+          type: 'company',
+          company: comp
+        });
+      });
+    }
+
+    return suggestions;
+  }, [contactSuggestions, companyAccountsData, phoneSearchText]);
+
+  const handleSuggestionSelect = (value, option) => {
+    if (option.type === 'contact') {
+      const contact = option.contact;
+      if (contact) {
+        form.setFieldsValue({
+          firstName: contact.first_name || '',
+          lastName: contact.last_name || '',
+          email: contact.email || '',
+          telephone: contact.phone || '',
+          address: contact.address || '',
+          company_id: contact.company_name || undefined,
+          contact_id: contact.id
+        });
+      }
+    } else if (option.type === 'company') {
+      const company = option.company;
+      form.setFieldsValue({
+        company_id: company.id,
+        telephone: company.phone_number || '',
+        address: company.billing_address || '',
+        email: company.email || '',
+        contact_id: undefined,
+        firstName: undefined,
+        lastName: undefined,
+      });
+    }
   };
 
   // Filter stages by pipeline and type
@@ -321,60 +418,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
   const handleSubmit = async (values) => {
     try {
-      let contactId;
-
-      if (contactMode === "existing") {
-        contactId = values.contact_id;
-      } else {
-        try {
-          // Format phone with country code
-          let formattedPhone = "";
-          if (values.telephone && values.phoneCode) {
-            const selectedCountry = countries.find(
-              (c) => c.id === values.phoneCode
-            );
-            if (selectedCountry) {
-              formattedPhone = `+${selectedCountry.phoneCode.replace(
-                "+",
-                ""
-              )} ${values.telephone}`;
-            }
-          }
-
-          const contactData = {
-            contact_owner: loggedInUser?.id || "",
-            first_name: values.firstName || "",
-            last_name: values.lastName || "",
-            company_name: values.company_id || "",
-            email: values.email || "",
-            phone_code: values.phoneCode || "",
-            phone: values.telephone ? values.telephone.toString() : "",
-            contact_source: "deal",
-            description: `Contact created from deal form by ${loggedInUser?.username || "user"
-              } on ${new Date().toLocaleDateString()}`,
-            address: values.address || "",
-            client_id: loggedInUser?.client_id,
-          };
-
-          const response = await createContact(contactData).unwrap();
-
-          if (response?.data?.id) {
-            contactId = response.data.id;
-            message.success("Contact created successfully");
-          } else {
-            throw new Error("Contact creation failed - no ID returned");
-          }
-        } catch (error) {
-          message.error(error.data?.message || "Failed to create contact");
-          return;
-        }
-      }
-
-      // Get the selected currency object
-      const selectedCurrencyObj = currencies?.find(
-        (c) => c.id === values.currency
-      );
-
       // Get all selected team members
       const selectedMembers = values.deal_members || [];
 
@@ -391,9 +434,11 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
           ? dayjs(values.closedDate).format("YYYY-MM-DD")
           : null,
         company_id: values.company_id || null,
-        contact_id: contactId || null,
+        contact_id: values.contact_id || null,
         category: values.category,
         source: values.source,
+        description: values.description,
+        custom_fields: values.custom_fields,
         deal_members: { deal_members: selectedMembers }, // Send all selected members
         is_won:
           values.status === "won"
@@ -837,1067 +882,338 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
           className="lead-form"
           style={{ padding: "24px" }}
         >
-          {/* Deal Details Section */}
-          <div className="section-title">
-            <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
-              Deal Details
-            </Text>
-          </div>
-          <div
-            className="form-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "16px",
-            }}
-          >
-            <Form.Item
-              name="dealTitle"
-              label={<span style={formItemStyle}>Deal Title</span>}
-              rules={[
-                { required: true, message: "Deal title is required" },
-                { min: 3, message: "Deal title must be at least 3 characters" },
-                { max: 100, message: "Deal title cannot exceed 100 characters" },
-                {
-                  validator: (_, value) => {
-                    if (!value) return Promise.resolve();
-                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                      return Promise.reject(
-                        new Error('Deal title must contain both uppercase or lowercase English letters')
-                      );
-                    }
-                    return Promise.resolve();
-                  }
-                }
-              ]}
-            >
-              <Input
-                prefix={<FiHash style={prefixIconStyle} />}
-                placeholder="Enter deal title"
-                style={inputStyle}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="value"
-              label={<span style={formItemStyle}>Deal Value</span>}
-              className="combined-input-item"
-            >
-              <Input.Group compact className="value-input-group">
-                <Form.Item
-                  name="currency"
-                  noStyle
-                  initialValue={initialValues?.currency || defaultCurrency}
-                  rules={[{ required: true, message: "Currency is required" }]}
-                >
-                  <Select
-                    style={{ width: "120px" }}
-                    className="currency-select"
-                    dropdownMatchSelectWidth={false}
-                    suffixIcon={<FiChevronDown size={14} />}
-                    showSearch
-                    optionFilterProp="children"
-                    filterOption={(input, option) => {
-                      const currencyData = currencies?.find((c) => c.id === option.value);
-                      return (
-                        currencyData?.currencyName?.toLowerCase().includes(input.toLowerCase()) ||
-                        currencyData?.currencyCode?.toLowerCase().includes(input.toLowerCase())
-                      );
-                    }}
-                    dropdownStyle={{ minWidth: "180px" }}
-                    popupClassName="custom-select-dropdown"
-                  >
-                    {currencies?.map((currency) => (
-                      <Option key={currency.id} value={currency.id}>
-                        <div className="currency-option">
-                          <span className="currency-icon">{currency.currencyIcon}</span>
-                          <div className="currency-details">
-                            <span className="currency-code">{currency.currencyCode}</span>
-                            <span className="currency-name">{currency.currencyName}</span>
-                          </div>
-                        </div>
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-                <Form.Item
-                  name="value"
-                  noStyle
-                  rules={[
-                    { required: true, message: "Deal value is required" },
-                    {
-                      type: "number",
-                      min: 0,
-                      message: "Deal value must be greater than or equal to 0",
-                    },
-                  ]}
-                >
-                  <Input
-                    style={{ width: "calc(100% - 120px)",height:"48px"  }}
-                    placeholder="Enter amount"
-                    type="number"
-                  />
-                </Form.Item>
-              </Input.Group>
-            </Form.Item>
-
-            <Form.Item
-              name="pipeline"
-              label={
-                <span style={formItemStyle}>
-                  Pipeline <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Pipeline is required" }]}
-              initialValue={initialValues?.pipeline}
-            >
-              <Select
-                ref={selectRef}
-                open={dropdownOpen}
-                onDropdownVisibleChange={setDropdownOpen}
-                placeholder="Select pipeline"
-                onChange={handlePipelineChange}
-                style={selectStyle}
-                suffixIcon={<FiChevronDown size={14} />}
-                dropdownRender={(menu) => (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {menu}
-                    <Divider style={{ margin: "8px 0" }} />
-                    <div
-                      style={{
-                        padding: "8px 12px",
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddPipelineClick}
-                        style={{
-                          width: "100%",
-                          background:
-                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                          border: "none",
-                          height: "40px",
-                          borderRadius: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "8px",
-                          boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Create Pipeline
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              >
-                {pipelines.map((pipeline) => (
-                  <Option key={pipeline.id} value={pipeline.id}>
-                    {pipeline.pipeline_name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="stage"
-              label={<span style={formItemStyle}>Stage</span>}
-              rules={[{ required: true, message: "Stage is required" }]}
-            >
-              <Select
-                placeholder="Select stage"
-                style={selectStyle}
-                suffixIcon={<FiChevronDown size={14} />}
-                dropdownRender={(menu) => (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {menu}
-                    <Divider style={{ margin: "8px 0" }} />
-                    <div
-                      style={{
-                        padding: "8px 12px",
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setIsAddStageVisible(true);
-                        }}
-                        style={{
-                          width: "100%",
-                          background:
-                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                          border: "none",
-                          height: "40px",
-                          borderRadius: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "8px",
-                          boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Add Stage
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              >
-                {dealStages
-                  ?.filter(
-                    (stage) =>
-                      stage.pipeline === initialValues?.pipeline &&
-                      stage.stageType === "deal"
-                  )
-                  .map((stage) => (
-                    <Option key={stage.id} value={stage.id}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              backgroundColor: stage.color || "#1890ff",
-                            }}
-                          />
-                          {stage.stageName}
-                        </div>
-                        {form.getFieldValue("stage") !== stage.id && (
-                          <Popconfirm
-                            title="Delete Stage"
-                            description="Are you sure you want to delete this stage?"
-                            onConfirm={(e) => {
-                              e?.stopPropagation?.();
-                              handleDeleteStage(e, stage.id);
-                            }}
-                            okText="Yes"
-                            cancelText="No"
-                            placement="left"
-                          >
-                            <Button
-                              type="text"
-                              icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                              size="small"
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                opacity: 0.8,
-                                transition: "opacity 0.2s",
-                                "&:hover": {
-                                  opacity: 1,
-                                  backgroundColor: "transparent",
-                                },
-                              }}
-                            />
-                          </Popconfirm>
-                        )}
-                      </div>
-                    </Option>
-                  ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="source"
-              label={<span style={formItemStyle}>Source</span>}
-              rules={[{ required: true, message: "Source is required" }]}
-            >
-              <Select
-                ref={sourceSelectRef}
-                open={sourceDropdownOpen}
-                onDropdownVisibleChange={setSourceDropdownOpen}
-                placeholder="Select source"
-                style={selectStyle}
-                popupClassName="custom-select-dropdown"
-                dropdownRender={(menu) => (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {menu}
-                    <Divider style={{ margin: "8px 0" }} />
-                    <div
-                      style={{
-                        padding: "8px 12px",
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddSourceClick}
-                        style={{
-                          width: "100%",
-                          background:
-                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                          border: "none",
-                          height: "40px",
-                          borderRadius: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "8px",
-                          boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Create Source
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              >
-                {sources.map((source) => (
-                  <Option key={source.id} value={source.id}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        width: "100%",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: source.color || "#1890ff",
-                          }}
-                        />
-                        {source.name}
-                      </div>
-                      {form.getFieldValue("source") !== source.id && (
-                        <Popconfirm
-                          title="Delete Source"
-                          description="Are you sure you want to delete this source?"
-                          onConfirm={(e) => {
-                            e?.stopPropagation?.();
-                            handleDeleteSource(source.id);
-                          }}
-                          okText="Yes"
-                          cancelText="No"
-                          placement="left"
-                        >
-                          <Button
-                            type="text"
-                            icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                            size="small"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              opacity: 0.8,
-                              transition: "opacity 0.2s",
-                              "&:hover": {
-                                opacity: 1,
-                                backgroundColor: "transparent",
-                              },
-                            }}
-                          />
-                        </Popconfirm>
-                      )}
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="category"
-              label={<span style={formItemStyle}>Category</span>}
-            >
-              <Select
-                ref={categorySelectRef}
-                open={categoryDropdownOpen}
-                onDropdownVisibleChange={setCategoryDropdownOpen}
-                placeholder="Select or type to filter categories"
-                style={selectStyle}
-                popupClassName="custom-select-dropdown"
-                showSearch
-                allowClear
-                filterOption={(input, option) =>
-                  option.children.props.children[0].props.children[1]
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
-                }
-                dropdownRender={(menu) => (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {menu}
-                    <Divider style={{ margin: "8px 0" }} />
-                    <div
-                      style={{
-                        padding: "8px 12px",
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddCategoryClick}
-                        style={{
-                          width: "100%",
-                          background:
-                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                          border: "none",
-                          height: "40px",
-                          borderRadius: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "8px",
-                          boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Create Category
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              >
-                {categories?.map((category) => (
-                  <Option key={category.id} value={category.id}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        width: "100%",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: category.color || "#1890ff",
-                          }}
-                        />
-                        {category.name}
-                      </div>
-                      {form.getFieldValue("category") !== category.id && (
-                        <Popconfirm
-                          title="Delete Category"
-                          description="Are you sure you want to delete this category?"
-                          onConfirm={(e) => {
-                            e?.stopPropagation?.();
-                            handleDeleteCategory(category.id);
-                          }}
-                          okText="Yes"
-                          cancelText="No"
-                          placement="left"
-                        >
-                          <Button
-                            type="text"
-                            icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                            size="small"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              opacity: 0.8,
-                              transition: "opacity 0.2s",
-                              "&:hover": {
-                                opacity: 1,
-                                backgroundColor: "transparent",
-                              },
-                            }}
-                          />
-                        </Popconfirm>
-                      )}
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="closedDate"
-              label={<span style={formItemStyle}>Expected Close Date (optional)</span>}
-            >
-              <DatePicker
-                size="large"
-                format="DD-MM-YYYY"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e6e8eb",
-                }}
-                disabledDate={(current) => {
-                  return current && current < dayjs().startOf("day");
-                }}
-                placeholder="Select date"
-                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-                superNextIcon={null}
-                superPrevIcon={null}
-              />
-            </Form.Item>
-          </div>
-          {/* Team Members Section */}
-          <div className="section-title" style={{ marginBottom: "16px" }}>
-            <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
-              Team Members
-            </Text>
-          </div>
-          <div style={{ marginBottom: "32px" }}>
-            <Form.Item name="deal_members" style={{ marginBottom: "16px" }}>
-              <Select
-                mode="multiple"
-                placeholder="Select team members"
-                style={{
-                  width: "100%",
-                  minHeight: "48px",
-                }}
-                // maxTagCount={2}
-                // maxTagTextLength={15}
-                open={teamMembersOpen}
-                onDropdownVisibleChange={setTeamMembersOpen}
-                tagRender={(props) => {
-                  const { value, closable, onClose } = props;
-                  let displayName = users.find(u => u.id === value)?.name || users.find(u => u.id === value)?.username || value;
-                  if (value === loggedInUser?.id) {
-                    displayName = loggedInUser?.name || loggedInUser?.username || value;
-                  }
+          <div className="dynamic-form-fields" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '16px',
+            marginBottom: '24px'
+          }}>
+            {Array.isArray(formFields) && formFields.map((field) => {
+              if (field.is_system) {
+                if (field.key === 'dealTitle') {
                   return (
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        background: '#e6f4ff',
-                        color: '#1890ff',
-                        borderRadius: '6px',
-                        padding: '2px 8px',
-                        marginRight: 4,
-                        fontWeight: 500,
-                        fontSize: 13,
-                        gap: 4,
-                      }}
-                    >
-                      {displayName}
-                      {closable && (
-                        <span
-                          style={{ marginLeft: 4, cursor: 'pointer' }}
-                          onClick={onClose}
-                        >
-                          ×
-                        </span>
-                      )}
-                    </div>
-                  );
-                }}
-                dropdownRender={(menu) => (
-                  <>
-                    {menu}
-                    <Divider style={{ margin: "8px 0" }} />
-                    <div style={{
-                      display: 'flex',
-                      gap: '8px',
-                      padding: '0 8px',
-                      justifyContent: 'flex-end'
-                    }}>
-                      <Button
-                        type="text"
-                        icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
-                        onClick={handleCreateUser}
-                        style={{
-                          height: '36px',
-                          padding: '8px 12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '6px'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
-                        }}
-                      >
-                        Add New User
-                      </Button>
-                      <Button
-                        type="text"
-                        icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
-                        onClick={() => {
-                          setTeamMembersOpen(false);
-                        }}
-                        style={{
-                          height: '36px',
-                          borderRadius: '6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          background: '#ffffff',
-                          border: '1px solid #1890ff',
-                          color: '#1890ff',
-                          fontWeight: '500'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#e6f4ff';
-                          e.currentTarget.style.borderColor = '#69b1ff';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#ffffff';
-                          e.currentTarget.style.borderColor = '#1890ff';
-                        }}
-                      >
-                        Done
-                      </Button>
-                    </div>
-                  </>
-                )}
-              >
-                {users?.map((user) => {
-                  const role =
-                    rolesData?.data?.find((r) => r.id === user.role_id)
-                      ?.role_name || "User";
-                  const roleColor = getRoleColor(role);
-
-                  return (
-                    <Option key={user.id} value={user.id}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <span>{user.name || user.username}</span>
-                        <span
-                          style={{
-                            fontSize: "12px",
-                            padding: "2px 8px",
-                            borderRadius: "4px",
-                            background: roleColor.bg,
-                            color: roleColor.color,
-                            gap: "8px",
-                            textTransform: "capitalize",
-                          }}
-                        >
-                          {role}
-                        </span>
-                      </div>
-                    </Option>
-                  );
-                })}
-              </Select>
-            </Form.Item>
-          </div>
-          {/* Basic Information Section */}
-          <div className="section-title" style={{ marginBottom: "16px" }}>
-            <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
-              Basic Information
-            </Text>
-          </div>
-
-          {/* Contact mode toggle */}
-          <div
-            className="contact-mode-toggle"
-            style={{
-              display: "flex",
-              borderBottom: "1px solid #e5e7eb",
-              marginBottom: "24px",
-            }}
-          >
-            <div
-              className={`mode-option ${contactMode === "existing" ? "active" : ""
-                }`}
-              onClick={() => handleContactModeChange("existing")}
-              style={{
-                padding: "12px 24px",
-                cursor: "pointer",
-                position: "relative",
-                color: contactMode === "existing" ? "#1890ff" : "#6b7280",
-                fontWeight: "500",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              <FiUsers style={{ fontSize: "16px" }} />
-              Select Existing
-              {contactMode === "existing" && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "-1px",
-                    left: 0,
-                    right: 0,
-                    height: "2px",
-                    background: "#1890ff",
-                  }}
-                />
-              )}
-            </div>
-            <div
-              className={`mode-option ${contactMode === "new" ? "active" : ""}`}
-              onClick={() => handleContactModeChange("new")}
-              style={{
-                padding: "12px 24px",
-                cursor: "pointer",
-                position: "relative",
-                color: contactMode === "new" ? "#1890ff" : "#6b7280",
-                fontWeight: "500",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              <FiUserPlus style={{ fontSize: "16px" }} />
-              Add New
-              {contactMode === "new" && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "-1px",
-                    left: 0,
-                    right: 0,
-                    height: "2px",
-                    background: "#1890ff",
-                  }}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Form fields based on mode */}
-          <div
-            className="form-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "16px",
-              marginBottom: "32px",
-            }}
-          >
-            {contactMode === "existing" ? (
-              <>
-                <Form.Item
-                  name="company_id"
-                  label={<span style={formItemStyle}>Company Name</span>}
-                >
-                  <Select
-                    placeholder={isCompanyLoading ? "Loading companies..." : "Select company"}
-                    onChange={handleCompanyChange}
-                    style={{
-                      ...selectStyle,
-                      dropdownStyle: {
-                        maxHeight: "400px",
-                        overflow: "hidden",
-                      },
-                    }}
-                    allowClear
-                    suffixIcon={null}
-                    value={form.getFieldValue("company_id")}
-                    loading={isCompanyLoading}
-                  >
-                    {companyAccountsData?.data?.map((company) => (
-                      <Option key={company.id} value={company.id}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            padding: "4px 0",
-                          }}
-                        >
-                          <FiBriefcase
-                            style={{ color: "#1890FF", fontSize: "16px" }}
-                          />
-                          <div
-                            style={{ display: "flex", flexDirection: "column" }}
-                          >
-                            <span
-                              style={{
-                                fontWeight: "500",
-                                color: "#111827",
-                              }}
-                            >
-                              {company.company_name}
-                            </span>
-                            {company.company_site && (
-                              <span
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#6B7280",
-                                }}
-                              >
-                                {company.company_site}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="contact_id"
-                  label={<span style={formItemStyle}>Contact Name</span>}
-                >
-                  <Select
-                    placeholder="Select contact name"
-                    style={{
-                      ...selectStyle,
-                      dropdownStyle: {
-                        maxHeight: "400px",
-                        overflow: "hidden",
-                      },
-                    }}
-                    suffixIcon={null}
-                    showSearch
-                    allowClear
-                    onChange={handleContactChange}
-                    value={form.getFieldValue("contact_id")}
-                    filterOption={(input, option) => {
-                      const contact = contactsData?.data?.find(
-                        (c) => c.id === option.value
-                      );
-                      if (!contact) return false;
-                      const fullName = `${contact.first_name || ""} ${contact.last_name || ""
-                        }`.toLowerCase();
-                      const companyName =
-                        companyAccountsData?.data
-                          ?.find((c) => c.id === contact.company_name)
-                          ?.company_name?.toLowerCase() || "";
-                      return (
-                        fullName.includes(input.toLowerCase()) ||
-                        companyName.includes(input.toLowerCase())
-                      );
-                    }}
-                  >
-                    {contactsData?.data?.map((contact) => {
-                      const companyName =
-                        companyAccountsData?.data?.find(
-                          (c) => c.id === contact.company_name
-                        )?.company_name || "No Company";
-
-                      return (
-                        <Option key={contact.id} value={contact.id}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              padding: "4px 0",
-                            }}
-                          >
-                            <FiUser
-                              style={{ color: "#1890FF", fontSize: "16px" }}
-                            />
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                                flex: 1,
-                                minWidth: 0,
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontWeight: "500",
-                                  color: "#111827",
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
-                              >{`${contact.first_name || ""} ${contact.last_name || ""
-                                }`}</span>
-                              <span
-                                style={{
-                                  color: "#6B7280",
-                                  fontSize: "12px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
-                              >
-                                <FiBriefcase style={{ fontSize: "12px" }} />
-                                {companyName}
-                              </span>
-                            </div>
-                          </div>
-                        </Option>
-                      );
-                    })}
-                  </Select>
-                </Form.Item>
-              </>
-            ) : (
-              <>
-                <Form.Item
-                  name="firstName"
-                  label={<span style={formItemStyle}>First Name</span>}
-                >
-                  <Input
-                    prefix={<FiUser style={prefixIconStyle} />}
-                    placeholder="Enter first name"
-                    style={inputStyle}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="lastName"
-                  label={<span style={formItemStyle}>Last Name</span>}
-                >
-                  <Input
-                    prefix={<FiUser style={prefixIconStyle} />}
-                    placeholder="Enter last name"
-                    style={inputStyle}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="email"
-                  label={<span style={formItemStyle}>Email</span>}
-                  rules={[
-                    {
-                      type: "email",
-                      message: "Please enter a valid email",
-                      validateTrigger: ["onChange", "onBlur"],
-                      transform: (value) => value?.trim() || null,
-                    },
-                  ]}
-                >
-                  <Input
-                    prefix={<FiMail style={prefixIconStyle} />}
-                    placeholder="Enter email address"
-                    style={inputStyle}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="phoneGroup"
-                  label={<span style={formItemStyle}>Phone Number</span>}
-                  className="combined-input-item"
-                >
-                  <Input.Group compact className="phone-input-group">
                     <Form.Item
-                      name="phoneCode"
-                      noStyle
-                      initialValue={defaultPhoneCode}
+                      key={field.id}
+                      name="dealTitle"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                      rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                    >
+                      <Input prefix={<FiHash style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'firstName') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="firstName"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                      rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                    >
+                      <Input prefix={<FiUser style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'lastName') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="lastName"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    >
+                      <Input prefix={<FiUser style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'telephone') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="telephone"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    >
+                      <AutoComplete
+                        options={combinedSuggestions}
+                        onSearch={(val) => setPhoneSearchText(val)}
+                        onSelect={handleSuggestionSelect}
+                      >
+                        <Input 
+                          prefix={<FiPhone style={prefixIconStyle} />} 
+                          placeholder={field.placeholder} 
+                          style={inputStyle} 
+                        />
+                      </AutoComplete>
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'email') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="email"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    >
+                      <Input prefix={<FiMail style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'value') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                    >
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <Form.Item name="currency" noStyle>
+                          <Select 
+                            style={{ width: '120px', height: '48px' }} 
+                            options={currencies?.map(c => ({ 
+                              value: c.id, 
+                              label: c.currencyCode 
+                            }))}
+                          />
+                        </Form.Item>
+                        <Form.Item name="value" noStyle initialValue={0}>
+                          <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder={field.placeholder || "Enter amount"} min={0} />
+                        </Form.Item>
+                      </div>
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'pipeline') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="pipeline"
+                      label={<span style={formItemStyle}>{field.label} <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                      rules={[{ required: true, message: "Please select pipeline" }]}
                     >
                       <Select
-                        style={{ width: "120px" }}
-                        className="phone-code-select"
-                        dropdownMatchSelectWidth={false}
-                        suffixIcon={<FiChevronDown size={14} />}
-                        popupClassName="custom-select-dropdown"
+                        placeholder={field.placeholder || "Select pipeline"}
+                        style={selectStyle}
+                        onChange={handlePipelineChange}
+                      >
+                        {pipelines?.map(p => <Option key={p.id} value={p.id}>{p.pipeline_name}</Option>)}
+                      </Select>
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'stage') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="stage"
+                      label={<span style={formItemStyle}>{field.label} <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                      rules={[{ required: true, message: "Please select stage" }]}
+                    >
+                      <Select
+                        placeholder={field.placeholder || "Select stage"}
+                        style={selectStyle}
+                        disabled={!selectedPipeline}
+                      >
+                        {filteredStages?.map(s => <Option key={s.id} value={s.id}>{s.stageName}</Option>)}
+                      </Select>
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'source') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="source"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    >
+                      <Select placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} style={selectStyle}>
+                        {sources?.map(s => <Option key={s.id} value={s.id}>{s.name}</Option>)}
+                      </Select>
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'category') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="category"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    >
+                      <Select placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} style={selectStyle}>
+                        {categories?.map(c => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+                      </Select>
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'closedDate') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="closedDate"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    >
+                      <DatePicker
+                        format="DD-MM-YYYY"
+                        style={{ ...inputStyle, width: '100%' }}
+                        placeholder={field.placeholder}
+                        disabledDate={(current) => current && current < dayjs().startOf("day")}
+                      />
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'status') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="status"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    >
+                      <Select style={selectStyle} placeholder={field.placeholder}>
+                        <Option value="pending">Pending</Option>
+                        <Option value="won">Won</Option>
+                        <Option value="lost">Lost</Option>
+                      </Select>
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'contact_id') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="contact_id"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    >
+                      <Select
                         showSearch
-                        optionFilterProp="children"
+                        placeholder={field.placeholder}
+                        style={selectStyle}
+                        onChange={handleContactChange}
                         filterOption={(input, option) => {
-                          const country = countries?.find(
-                            (c) => c.id === option.value
-                          );
-                          return (
-                            country?.countryName
-                              ?.toLowerCase()
-                              .includes(input.toLowerCase()) ||
-                            country?.countryCode
-                              ?.toLowerCase()
-                              .includes(input.toLowerCase()) ||
-                            country?.phoneCode?.includes(input)
-                          );
+                          const contact = contactsData?.data?.find(c => c.id === option.value);
+                          return `${contact?.first_name} ${contact?.last_name}`.toLowerCase().includes(input.toLowerCase());
                         }}
                       >
-                        {countries?.map((country) => (
-                          <Option key={country.id} value={country.id}>
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                              }}
-                            >
-                              <span style={{ fontSize: "14px" }}>
-                                {country.countryCode}
-                              </span>
-                              <span style={{ fontSize: "14px" }}>
-                                +{country.phoneCode.replace("+", "")}
-                              </span>
-                            </div>
-                          </Option>
+                        {contactsData?.data?.map(c => (
+                          <Option key={c.id} value={c.id}>{c.first_name} {c.last_name}</Option>
                         ))}
                       </Select>
                     </Form.Item>
-                    <Form.Item name="telephone" noStyle>
-                      <Input
-                        style={{
-                          width: "calc(100% - 120px)",
-                          height: "48px",
-                          padding: "0 16px",
-                        }}
-                        placeholder="Enter phone number"
-                      />
-                    </Form.Item>
-                  </Input.Group>
-                </Form.Item>
+                  );
+                }
 
+                if (field.key === 'company_id') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="company_id"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    >
+                      <Select
+                        showSearch
+                        placeholder={field.placeholder}
+                        style={selectStyle}
+                        onChange={handleCompanyChange}
+                        filterOption={(input, option) => {
+                          const company = companyAccountsData?.data?.find(c => c.id === option.value);
+                          return company?.company_name.toLowerCase().includes(input.toLowerCase());
+                        }}
+                      >
+                        {companyAccountsData?.data?.map(c => (
+                          <Option key={c.id} value={c.id}>{c.company_name}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  );
+                }
+
+                if (field.key === 'description') {
+                  return (
+                    <Form.Item
+                      key={field.id}
+                      name="description"
+                      label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                      style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+                    >
+                      <Input.TextArea placeholder={field.placeholder} rows={2} style={{ borderRadius: '10px' }} />
+                    </Form.Item>
+                  );
+                }
+
+                return null;
+              }
+
+              // Custom Fields
+              return (
                 <Form.Item
-                  name="address"
-                  label={<span style={formItemStyle}>Address</span>}
+                  key={field.id}
+                  name={['custom_fields', field.id]}
+                  label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                  style={{ gridColumn: field.type === 'textarea' || field.type === 'heading' ? 'span 2' : 'span 1', marginBottom: '0px' }}
+                  rules={[{ required: field.required, message: `Please enter ${field.label}` }]}
                 >
-                  <Input
-                    prefix={<FiMapPin style={prefixIconStyle} />}
-                    placeholder="Enter address"
-                    style={inputStyle}
-                  />
+                  {field.type === 'text' && <Input placeholder={field.placeholder} style={inputStyle} />}
+                  {field.type === 'number' && <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder={field.placeholder} />}
+                  {field.type === 'email' && <Input type="email" placeholder={field.placeholder} style={inputStyle} />}
+                  {field.type === 'phone' && <Input prefix={<FiPhone style={prefixIconStyle} />} placeholder={field.placeholder} style={inputStyle} />}
+                  {field.type === 'textarea' && <Input.TextArea placeholder={field.placeholder} rows={2} style={{ borderRadius: '10px' }} />}
+                  {field.type === 'select' && (
+                    <Select placeholder={field.placeholder} style={selectStyle}>
+                      {field.options?.map(o => <Option key={o} value={o}>{o}</Option>)}
+                    </Select>
+                  )}
                 </Form.Item>
-              </>
-            )}
+              );
+            })}
+            <Form.Item
+              name="deal_members"
+              label={<span style={formItemStyle}>Team Members</span>}
+              style={{ gridColumn: 'span 2', marginBottom: '0px' }}
+            >
+              <Select
+                mode="multiple"
+                placeholder="Select team members"
+                style={{ width: "100%", minHeight: "48px" }}
+                open={teamMembersOpen}
+                onDropdownVisibleChange={setTeamMembersOpen}
+                tagRender={(props) => {
+                  const { label, closable, onClose } = props;
+                  return (
+                    <Tag closable={closable} onClose={onClose} color="blue" style={{ marginRight: 3 }}>
+                      {label}
+                    </Tag>
+                  );
+                }}
+              >
+                {users?.map(user => (
+                  <Option key={user.id} value={user.id}>
+                    {user.name || user.username}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
           </div>
 
           {/* Form Actions */}

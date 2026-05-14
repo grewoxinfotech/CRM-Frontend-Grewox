@@ -102,6 +102,8 @@ import {
 
 
 
+import CustomForms from "../dashboard/module/crm/custom-forms/index.jsx";
+
 const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
@@ -360,7 +362,7 @@ const routes = createBrowserRouter([
             children: [
               {
                 path: "",
-                element: <CompanyLinkGenerator />,
+                element: <CustomForms />,
               },
               {
                 path: ":formId/submissions",

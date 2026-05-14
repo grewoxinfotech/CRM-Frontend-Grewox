@@ -42,7 +42,7 @@ import {
   FiEdit2,
   FiCpu,
 } from "react-icons/fi";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp, FaFacebook } from "react-icons/fa";
 import { useGetLeadQuery, useGetLeadsQuery, useUpdateLeadMutation, useGetLeadAiSuggestionsQuery } from "../services/LeadApi";
 import {
   useGetAllCurrenciesQuery,
@@ -366,7 +366,7 @@ console.log("leaddata", initialLeadData)
   };
 
   const getPhoneWithCode = (phoneCode, phoneNumber) => {
-    if (!phoneNumber) return "-";
+    if (!phoneNumber || phoneNumber.startsWith("META_")) return "-";
     const country = countries.find((c) => c.id === phoneCode);
     return country ? `${country.phoneCode} ${phoneNumber}` : phoneNumber;
   };
@@ -961,9 +961,109 @@ console.log("leaddata", initialLeadData)
           </Card>
         </Col>
       </Row>
+      
+      {localLeadData?.description && (
+        <div className="lead-details-section meta-ads-section" style={{ marginTop: '24px' }}>
+          {/* Customer Responses Section */}
+          {localLeadData.description.includes('FORM SUBMISSION DETAILS:') && (
+            <div style={{ marginBottom: '32px' }}>
+              <Title level={5} style={{ fontSize: '13px', color: '#1877F2', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FaFacebook style={{ color: '#1877F2', fontSize: '18px' }} /> Meta Form Submission
+              </Title>
+              <Row gutter={[24, 24]}>
+                {localLeadData.description
+                  .split('--------------------------')[0]
+                  .split('\n')
+                  .filter(line => line.startsWith('•'))
+                  .map((line, idx) => {
+                    const [key, ...valParts] = line.replace('• ', '').split(':');
+                    const value = valParts.join(':').trim();
+                    return (
+                      <Col xs={24} sm={12} md={12} lg={8} xl={6} key={`form-${idx}`}>
+                        <div className="detail-card info-card">
+                          <div className="detail-content" style={{ borderLeft: '4px solid #1877F2', background: 'linear-gradient(to right, #f0f7ff, #ffffff)' }}>
+                            <div className="detail-icon" style={{ background: '#e7f3ff', color: '#1877F2' }}>
+                              <FiFileText />
+                            </div>
+                            <div className="detail-info">
+                              <div className="detail-label" style={{ color: '#1877F2', fontWeight: '700' }}>{key.trim().replace(/_/g, ' ')}</div>
+                              <div className="detail-value" style={{ color: '#1c1e21' }}>{value}</div>
+                            </div>
+                            <div className="detail-indicator" style={{ background: '#1877F2' }} />
+                          </div>
+                        </div>
+                      </Col>
+                    );
+                  })}
+              </Row>
+            </div>
+          )}
 
-      <div className="lead-details-section">
+
+          {/* Ad Tracking Section */}
+          {localLeadData.description.includes('META ADS TRACKING:') && (
+            <div>
+              <Title level={5} style={{ fontSize: '13px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FiTarget /> Meta Campaign Tracking
+              </Title>
+              <Row gutter={[24, 24]}>
+                {localLeadData.description
+                  .split('--------------------------')[1]
+                  .split('\n')
+                  .filter(line => line.startsWith('•'))
+                  .map((line, idx) => {
+                    const [key, ...valParts] = line.replace('• ', '').split(':');
+                    const value = valParts.join(':').trim();
+                    return (
+                      <Col xs={24} sm={12} md={12} lg={8} xl={6} key={`meta-${idx}`}>
+                        <div className="detail-card tracking-card">
+                          <div className="detail-content">
+                            <div className="detail-icon">
+                              {key.includes('Campaign') ? <FiTrendingUp /> : key.includes('Form') ? <FiBox /> : <FiActivity />}
+                            </div>
+                            <div className="detail-info">
+                              <div className="detail-label">{key.trim()}</div>
+                              <div className="detail-value">{value}</div>
+                            </div>
+                            <div className="detail-indicator" />
+                          </div>
+                        </div>
+                      </Col>
+
+
+
+                    );
+                  })}
+              </Row>
+            </div>
+          )}
+
+          {!localLeadData.description.includes('FORM SUBMISSION DETAILS:') && (
+            <Row gutter={[24, 24]}>
+              <Col span={24}>
+                <div className="detail-card">
+                  <div className="detail-content">
+                    <div className="detail-icon"><FiFileText /></div>
+                    <div className="detail-info">
+                      <div className="detail-label">Description</div>
+                      <div className="detail-value" style={{ whiteSpace: 'pre-wrap' }}>{localLeadData.description}</div>
+                    </div>
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          )}
+        </div>
+      )}
+
+
+      <div className="lead-details-section" style={{ marginTop: '32px', borderTop: '1px solid #f1f5f9', paddingTop: '24px' }}>
+        <Title level={5} style={{ fontSize: '14px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <FiBox style={{ color: '#64748b' }} /> Basic Information
+        </Title>
         <Row gutter={[24, 24]}>
+
+
           <Col xs={24} sm={12} md={12} lg={12} xl={6}>
             <div className="detail-card source-card">
               <div className="detail-content">

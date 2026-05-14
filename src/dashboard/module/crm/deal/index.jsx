@@ -63,7 +63,6 @@ const Deal = () => {
     current: 1,
     pageSize: 10,
   });
-  const [isQuickMode, setIsQuickMode] = useState(true);
   const loggedInUser = useSelector(selectCurrentUser);
   const navigate = useNavigate();
   const { data: pipelines = [] } = useGetPipelinesQuery();
@@ -268,9 +267,6 @@ const Deal = () => {
         onViewChange={setViewMode}
         onAdd={handleCreate}
         addText="Create Deal"
-        isQuickMode={isQuickMode}
-        onQuickModeToggle={setIsQuickMode}
-        showQuickMode={true}
         mobileSearchContent={searchContent}
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
