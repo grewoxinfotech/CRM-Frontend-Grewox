@@ -17,6 +17,7 @@ import {
   Tabs,
   AutoComplete,
   Tag,
+  Space,
 } from "antd";
 import {
   FiUser,
@@ -63,7 +64,7 @@ const { Option } = Select;
 // Find the Indian currency and phone code IDs
 const findIndianDefaults = (currencies, countries) => {
   const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
-  const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+  const indiaCountry = countries?.find(c => c.phoneCode === '91' || c.phoneCode === '+91' || c.countryCode === 'IN');
   return {
     defaultCurrency: inrCurrency?.id || 'JJXdfl6534FX7PNEIC3qJTK',
     defaultPhoneCode: indiaCountry?.id || 'K9GxyQ8rrXQycdLQNkGhczL'
@@ -287,8 +288,13 @@ const CreateLead = ({
 
       // Only set defaults if initialValues are NOT providing them
       if (!initialValues?.source && sourcesData?.data?.length > 0 && !form.getFieldValue('source')) {
-        const manualSource = sourcesData.data.find(s => s.name.toLowerCase() === 'manual');
-        updates.source = manualSource ? manualSource.id : sourcesData.data[0].id;
+        const manualSource = sourcesData.data.find(s => s.name.trim().toLowerCase() === 'manual');
+        if (manualSource) {
+          updates.source = manualSource.id;
+        } else {
+          // If no "Manual" source found, don't set a default in the UI to avoid confusion
+          // Backend or handleSubmit will handle the ultimate fallback
+        }
       }
 
       form.setFieldsValue(updates);
@@ -305,6 +311,18 @@ const CreateLead = ({
     }
   }, [initialValues, form, defaultCurrency, defaultPhoneCode]);
 
+  const stripCode = (phone, codeId) => {
+    if (!phone) return '';
+    const country = countries?.find(c => c.id === codeId);
+    if (!country) return phone;
+    const cleanCode = country.phoneCode.toString().replace(/\D/g, '');
+    const cleanPhone = phone.toString().replace(/\D/g, '');
+    if (cleanPhone.startsWith(cleanCode)) {
+      return cleanPhone.slice(cleanCode.length);
+    }
+    return phone;
+  };
+
   useEffect(() => {
     if (!selectedContactId) return;
 
@@ -315,7 +333,7 @@ const CreateLead = ({
       firstName: selectedContact.first_name || '',
       lastName: selectedContact.last_name || '',
       email: selectedContact.email || '',
-      telephone: selectedContact.phone || '',
+      telephone: stripCode(selectedContact.phone, selectedContact.phone_code || defaultPhoneCode),
       address: selectedContact.address || '',
       company_id: selectedContact.company_name || undefined
     });
@@ -370,9 +388,9 @@ const CreateLead = ({
         pipeline: normalizedPipelineId,
         currency: values.currency,
         leadValue: values.leadValue || 0,
-        source: values.source || sourcesData?.data?.[0]?.id || "Manual",
+        source: values.source || sourcesData?.data?.find(s => s.name.trim().toLowerCase() === 'manual')?.id || sourcesData?.data?.[0]?.id || "Manual",
         category: values.category || null,
-        status: isQuickMode ? undefined : pendingStatus?.id,
+        status: values.status || (isQuickMode ? undefined : pendingStatus?.id),
         interest_level: values.interest_level || "medium",
         inquiry_id: values.inquiry_id || initialValues?.inquiry_id || null,
         company_id: values.company_id || null,
@@ -382,7 +400,7 @@ const CreateLead = ({
         custom_fields: custom_fields,
         form_id: activeCustomForm?.id || null,
         // Auto-contact fields
-        phone: values.telephone ? values.telephone.toString() : null,
+        phone: values.telephone ? stripCode(values.telephone, values.phoneCode || defaultPhoneCode) : null,
         first_name: values.firstName || null,
         last_name: values.lastName || null,
         email: values.email || null,
@@ -420,6 +438,16 @@ const CreateLead = ({
     form.setFieldValue('leadStage', filteredStages[0].id);
   }, [selectedPipelineId, filteredStages, form]);
 
+  // Auto-select "Interested" status by default
+  useEffect(() => {
+    if (open && statusesData?.data?.length > 0 && !form.getFieldValue('status')) {
+      const interestedStatus = statusesData.data.find(s => s.name.toLowerCase() === 'interested');
+      if (interestedStatus) {
+        form.setFieldValue('status', interestedStatus.id);
+      }
+    }
+  }, [open, statusesData, form]);
+
   // Handle add pipeline click
   const handleAddPipelineClick = (e) => {
     e.stopPropagation();
@@ -444,14 +472,12 @@ const CreateLead = ({
   };
 
   const inputStyle = {
-    height: "40px",
+    height: "48px",
     borderRadius: "10px",
-    padding: "4px 12px",
+    padding: "8px 16px",
     backgroundColor: "#f8fafc",
     border: "1px solid #e6e8eb",
     transition: "all 0.3s ease",
-    display: "flex",
-    alignItems: "center",
   };
 
   const prefixIconStyle = {
@@ -789,21 +815,44 @@ const CreateLead = ({
                     return (
                       <Form.Item
                         key={field.id}
-                        name="telephone"
                         label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
                         style={{ gridColumn: 'span 1', marginBottom: '0px' }}
                       >
-                        <AutoComplete
-                          options={combinedSuggestions}
-                          onSearch={(val) => setPhoneSearchText(val)}
-                          onSelect={handleSuggestionSelect}
-                        >
-                          <Input
-                            prefix={<FiPhone style={prefixIconStyle} />}
-                            placeholder={field.placeholder}
-                            style={inputStyle}
-                          />
-                        </AutoComplete>
+                        <Space.Compact style={{ width: '100%' }}>
+                          <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
+                            <Select 
+                              showSearch
+                              optionFilterProp="children"
+                              style={{ width: '100px', height: '48px' }}
+                              dropdownStyle={{ minWidth: '150px' }}
+                              className="phone-code-select-modern"
+                            >
+                              {countries?.map(c => (
+                                <Option key={c.id} value={c.id}>
+                                  {c.phoneCode.startsWith('+') ? c.phoneCode : `+${c.phoneCode}`}
+                                </Option>
+                              ))}
+                            </Select>
+                          </Form.Item>
+                          <Form.Item 
+                            name="telephone" 
+                            noStyle 
+                            rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                          >
+                            <AutoComplete
+                              options={combinedSuggestions}
+                              onSearch={(val) => setPhoneSearchText(val)}
+                              onSelect={handleSuggestionSelect}
+                              style={{ flex: 1 }}
+                            >
+                              <Input
+                                placeholder={field.placeholder}
+                                prefix={<FiPhone style={prefixIconStyle} />}
+                                style={{ ...inputStyle, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                              />
+                            </AutoComplete>
+                          </Form.Item>
+                        </Space.Compact>
                       </Form.Item>
                     );
                   }
@@ -931,6 +980,43 @@ const CreateLead = ({
                         <CommonSelect
                           placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`}
                           options={categoriesData?.data?.map(c => ({ label: c.name, value: c.id }))}
+                        />
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'status') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="status"
+                        label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                      >
+                        <CommonSelect
+                          placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`}
+                          options={statusesData?.data?.map(s => ({ label: s.name, value: s.id }))}
+                        />
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'interest_level') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="interest_level"
+                        label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                      >
+                        <Select
+                          placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`}
+                          options={[
+                            { label: 'High Interest', value: 'high' },
+                            { label: 'Medium Interest', value: 'medium' },
+                            { label: 'Low Interest', value: 'low' },
+                          ]}
+                          style={{ height: '48px', borderRadius: '10px' }}
                         />
                       </Form.Item>
                     );
@@ -1188,7 +1274,7 @@ const CreateLead = ({
         companyAccountsResponse={companyAccountsResponse}
       />
 
-      <style jsx global>{`
+      <style>{`
         .lead-form-modal {
           .currency-select, .phone-code-select {
             cursor: pointer;

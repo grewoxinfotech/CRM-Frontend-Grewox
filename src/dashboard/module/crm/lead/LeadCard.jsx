@@ -873,7 +873,7 @@ const LeadCard = ({ leads, users = [], currencies, countries, sourcesData, statu
             perspective: 1000,
             alignItems: 'flex-start'
           }}>
-            <style jsx global>{`
+            <style>{`
               .kanban-board-wrapper {
                 scrollbar-width: thin;
                 scrollbar-color: #d1d5db transparent;

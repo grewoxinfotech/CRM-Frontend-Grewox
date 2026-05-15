@@ -4,6 +4,8 @@ import {
   message,
   Modal,
   DatePicker,
+  Tabs,
+  Badge,
 } from "antd";
 import {
   FiPlus,
@@ -33,15 +35,44 @@ const Task = () => {
   const [filters, setFilters] = useState({ dateRange: [], status: undefined, priority: undefined });
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10 });
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
   const user = useSelector(selectCurrentUser);
   const id = user?.id;
   const [deleteTask] = useDeleteTaskMutation();
 
   const { data: tasksResponse = { data: [], pagination: {} }, isLoading: tasksLoading, refetch } = useGetAllTasksQuery({
-    id, page: pagination.page, pageSize: pagination.pageSize, search: searchText,
+    id, 
+    page: 1, // Fetch first page for now, or use a larger pageSize if needed
+    pageSize: 1000, // Fetch more for frontend filtering to make tabs work globally
+    search: searchText,
     ...(filters.status && { status: filters.status }),
     ...(filters.priority && { priority: filters.priority }),
+  });
+
+  const allTasks = tasksResponse.data || [];
+
+  const filteredTasks = allTasks.filter(task => {
+    const dueDate = moment(task.dueDate).startOf('day');
+    const today = moment().startOf('day');
+
+    let matchesTab = true;
+    if (activeTab === 'today') {
+      matchesTab = dueDate.isSame(today, 'day');
+    } else if (activeTab === 'upcoming') {
+      matchesTab = dueDate.isAfter(today, 'day');
+    } else if (activeTab === 'overdue') {
+      matchesTab = dueDate.isBefore(today, 'day') && task.status !== 'completed';
+    }
+
+    let matchesDateRange = true;
+    if (filters.dateRange && filters.dateRange[0] && filters.dateRange[1]) {
+      const start = moment(filters.dateRange[0].valueOf ? filters.dateRange[0].valueOf() : filters.dateRange[0]).startOf('day');
+      const end = moment(filters.dateRange[1].valueOf ? filters.dateRange[1].valueOf() : filters.dateRange[1]).endOf('day');
+      matchesDateRange = dueDate.isBetween(start, end, 'day', '[]');
+    }
+
+    return matchesTab && matchesDateRange;
   });
 
   const { data: usersData = [] } = useGetUsersQuery();
@@ -79,14 +110,58 @@ const Task = () => {
           <DatePicker.RangePicker 
             onChange={(dates) => setFilters(prev => ({ ...prev, dateRange: dates || [] }))}
             style={{ borderRadius: '8px', height: '30px' }}
+            format="DD MMM YYYY"
           />
         }
       />
 
       <Card className="standard-content-card">
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          style={{ marginBottom: '16px' }}
+          items={[
+            {
+              key: 'all',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>All</span>
+                  <Badge count={allTasks.length} style={{ backgroundColor: '#d9d9d9' }} />
+                </div>
+              ),
+            },
+            {
+              key: 'today',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Today</span>
+                  <Badge count={allTasks.filter(t => moment(t.dueDate).isSame(moment(), 'day')).length} style={{ backgroundColor: '#1890ff' }} />
+                </div>
+              ),
+            },
+            {
+              key: 'upcoming',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Upcoming</span>
+                  <Badge count={allTasks.filter(t => moment(t.dueDate).isAfter(moment(), 'day')).length} style={{ backgroundColor: '#52c41a' }} />
+                </div>
+              ),
+            },
+            {
+              key: 'overdue',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Overdue</span>
+                  <Badge count={allTasks.filter(t => moment(t.dueDate).isBefore(moment(), 'day') && t.status !== 'completed').length} style={{ backgroundColor: '#ff4d4f' }} />
+                </div>
+              ),
+            },
+          ]}
+        />
         <TaskList
           loading={tasksLoading}
-          tasks={tasksResponse.data || []}
+          tasks={filteredTasks}
           onEdit={(record) => { setSelectedTask(record); setIsEditModalOpen(true); }}
           onDelete={(id) => {
             Modal.confirm({
@@ -102,7 +177,7 @@ const Task = () => {
           searchText={searchText}
           filters={filters}
           users={users}
-          pagination={tasksResponse.pagination}
+          pagination={{ ...tasksResponse.pagination, total: filteredTasks.length }}
           onPaginationChange={(page, pageSize) => setPagination({ page, pageSize })}
         />
       </Card>

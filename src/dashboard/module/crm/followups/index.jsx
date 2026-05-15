@@ -12,6 +12,8 @@ import {
   Avatar,
   Tooltip,
   DatePicker,
+  Tabs,
+  Badge,
 } from "antd";
 import {
   FiDownload,
@@ -102,6 +104,7 @@ const Followups = () => {
   const [searchText, setSearchText] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
   const [isEditCallOpen, setIsEditCallOpen] = useState(false);
   const [isEditMeetingOpen, setIsEditMeetingOpen] = useState(false);
   const [isEditTaskOpen, setIsEditTaskOpen] = useState(false);
@@ -146,6 +149,23 @@ const Followups = () => {
   };
 
   const followups = followupsResponse?.data || [];
+
+
+  const getRelativeDate = (date, status) => {
+    const mDate = moment(date);
+    const today = moment().startOf('day');
+    
+    if (mDate.isSame(today, 'day')) {
+      return <Tag color="blue" style={{ borderRadius: '12px' }}>TODAY</Tag>;
+    }
+    if (mDate.isSame(today.clone().add(1, 'day'), 'day')) {
+      return <Tag color="cyan" style={{ borderRadius: '12px' }}>TOMORROW</Tag>;
+    }
+    if (mDate.isBefore(today, 'day') && status !== 'completed') {
+      return <Tag color="error" style={{ borderRadius: '12px' }}>OVERDUE</Tag>;
+    }
+    return null;
+  };
 
   const columns = [
     {
@@ -203,10 +223,14 @@ const Followups = () => {
       dataIndex: "date",
       key: "date",
       render: (date, record) => (
-        <div>
-          <Text strong>{moment(date).format('DD MMM YYYY')}</Text>
-          <br />
-          <Text type="secondary" style={{ fontSize: '12px' }}>{record.time || "N/A"}</Text>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Text strong>{moment(date).format('DD MMM YYYY')}</Text>
+            {getRelativeDate(date, record.status)}
+          </div>
+          <Text type="secondary" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <FiClock size={12} /> {record.time || "N/A"}
+          </Text>
         </div>
       )
     },
@@ -314,17 +338,38 @@ const Followups = () => {
   };
 
   const filteredData = followups.filter(f => {
+    const itemDate = moment(f.date).startOf('day');
+    const today = moment().startOf('day');
+    
+    // 1. Search Filter
     const matchesSearch = 
+      !searchText || 
       f.name?.toLowerCase().includes(searchText.toLowerCase()) ||
       f.relatedName?.toLowerCase().includes(searchText.toLowerCase());
     
-    let matchesDate = true;
+    // 2. Date Range Filter
+    let matchesDateRange = true;
     if (dateRange && dateRange[0] && dateRange[1]) {
-      const itemDate = moment(f.date);
-      matchesDate = itemDate.isBetween(dateRange[0], dateRange[1], 'day', '[]');
+      // Ensure we handle both Moment and Dayjs objects correctly
+      const start = moment(dateRange[0].valueOf ? dateRange[0].valueOf() : dateRange[0]).startOf('day');
+      const end = moment(dateRange[1].valueOf ? dateRange[1].valueOf() : dateRange[1]).endOf('day');
+      matchesDateRange = itemDate.isBetween(start, end, 'day', '[]');
+    }
+
+    // 3. Tab Filter
+    let matchesTab = true;
+    if (activeTab === 'today') {
+      matchesTab = itemDate.isSame(today, 'day');
+    } else if (activeTab === 'upcoming') {
+      matchesTab = itemDate.isAfter(today, 'day');
+    } else if (activeTab === 'overdue') {
+      matchesTab = itemDate.isBefore(today, 'day') && f.status !== 'completed';
     }
     
-    return matchesSearch && matchesDate;
+    return matchesSearch && matchesDateRange && matchesTab;
+  }).sort((a, b) => {
+    // Sort by date: upcoming first, then today, then past
+    return moment(a.date).valueOf() - moment(b.date).valueOf();
   });
 
   return (
@@ -530,12 +575,60 @@ const Followups = () => {
       />
 
       <Card className="standard-content-card">
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          className="followup-tabs"
+          style={{ marginBottom: '16px' }}
+          items={[
+            {
+              key: 'all',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>All</span>
+                  <Badge count={followups.length} style={{ backgroundColor: '#d9d9d9' }} />
+                </div>
+              ),
+            },
+            {
+              key: 'today',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Today</span>
+                  <Badge count={followups.filter(i => moment(i.date).isSame(moment(), 'day')).length} style={{ backgroundColor: '#1890ff' }} />
+                </div>
+              ),
+            },
+            {
+              key: 'upcoming',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Upcoming</span>
+                  <Badge count={followups.filter(i => moment(i.date).isAfter(moment(), 'day')).length} style={{ backgroundColor: '#52c41a' }} />
+                </div>
+              ),
+            },
+            {
+              key: 'overdue',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Overdue</span>
+                  <Badge count={followups.filter(i => moment(i.date).isBefore(moment(), 'day') && i.status !== 'completed').length} style={{ backgroundColor: '#ff4d4f' }} />
+                </div>
+              ),
+            },
+          ]}
+        />
         <Table
           loading={isLoading}
           columns={columns}
           dataSource={filteredData}
           rowKey="id"
           size="small"
+          pagination={{
+            pageSize: 10,
+            showTotal: (total) => `Total ${total} items`,
+          }}
         />
       </Card>
     </div>

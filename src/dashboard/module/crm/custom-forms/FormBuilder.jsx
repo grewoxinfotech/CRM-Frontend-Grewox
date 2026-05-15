@@ -56,6 +56,8 @@ const SYSTEM_FIELDS = {
     { type: 'select', label: 'Stage', key: 'stage', icon: <FiLayout /> },
     { type: 'select', label: 'Source', key: 'source', icon: <FiLink /> },
     { type: 'select', label: 'Category', key: 'category', icon: <FiTag /> },
+    { type: 'select', label: 'Status', key: 'status', icon: <FiCheckSquare />, show_in_quick: false, show_in_full: true },
+    { type: 'select', label: 'Interest Level', key: 'interest_level', icon: <FiTrendingUp />, options: ['High Interest', 'Medium Interest', 'Low Interest'] },
   ],
 
   deal: [
@@ -142,6 +144,11 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
       newField.label += ' (Optional)';
     }
 
+    // Auto-fill country code for phone fields removed as per request
+    if (type === 'phone') {
+      newField.default_value = '';
+    }
+
 
     
     // Prevent duplicate system fields
@@ -155,7 +162,7 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
   const removeField = (id) => {
     const field = fields.find(f => f.id === id);
     // Only restrict removing mandatory fields if this is a default form
-    if (initialData?.form_type === 'default' && field && field.is_system && ['leadTitle', 'firstName', 'dealTitle', 'pipeline', 'stage', 'leadValue', 'value'].includes(field.key)) {
+    if (initialData?.form_type === 'default' && field && field.is_system && ['leadTitle', 'firstName', 'dealTitle', 'pipeline', 'stage', 'leadValue', 'value', 'status'].includes(field.key)) {
       return message.error(`${field.label} is a mandatory field and cannot be removed from a default form`);
     }
     setFields(fields.filter(f => f.id !== id));
@@ -374,7 +381,7 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
                         icon={<FiSettings />} 
                         onClick={() => setEditingField(field)} 
                       />
-                      {!(field.is_system && ['leadTitle', 'firstName', 'dealTitle', 'pipeline', 'stage', 'leadValue', 'value'].includes(field.key)) && (
+                      {!(field.is_system && ['leadTitle', 'firstName', 'dealTitle', 'pipeline', 'stage', 'leadValue', 'value', 'status'].includes(field.key)) && (
                         <Button 
                           size="small" 
                           danger 
@@ -404,7 +411,7 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
                           </div>
                           <div className="mt-1">
 
-                            {['text', 'email', 'phone', 'url'].includes(field.type) && <Input disabled placeholder={field.placeholder} />}
+                            {['text', 'email', 'phone', 'url'].includes(field.type) && <Input disabled placeholder={field.placeholder} defaultValue={field.default_value} value={field.default_value} />}
                             {field.type === 'textarea' && <Input.TextArea disabled rows={2} />}
                             {field.type === 'number' && <InputNumber style={{ width: '100%' }} disabled />}
                             {field.type === 'rating' && <Rate disabled />}
@@ -448,6 +455,13 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
                       <Input 
                         value={editingField.placeholder} 
                         onChange={e => updateField(editingField.id, { placeholder: e.target.value })} 
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <Text strong>Default Value</Text>
+                      <Input 
+                        value={editingField.default_value} 
+                        onChange={e => updateField(editingField.id, { default_value: e.target.value })} 
                       />
                     </div>
                     <div className="mb-3">
@@ -634,7 +648,22 @@ const FormBuilder = ({ onSave, onBack, initialData = null }) => {
                     {field.type === 'text' && <Input placeholder={field.placeholder} style={{ height: '40px', borderRadius: '8px' }} />}
                     {field.type === 'number' && <InputNumber placeholder={field.placeholder} style={{ width: '100%', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center' }} />}
                     {field.type === 'email' && <Input type="email" placeholder={field.placeholder} style={{ height: '40px', borderRadius: '8px' }} />}
-                    {field.type === 'phone' && <Input placeholder={field.placeholder} style={{ height: '40px', borderRadius: '8px' }} />}
+                    {field.type === 'phone' && (
+                      <Input 
+                        placeholder={field.placeholder} 
+                        style={{ height: '40px', borderRadius: '8px' }} 
+                        addonBefore={
+                          <Select placeholder="Code" style={{ width: 80 }}>
+                            <Option value="+91">+91</Option>
+                            <Option value="+971">+971</Option>
+                            <Option value="+1">+1</Option>
+                            <Option value="+44">+44</Option>
+                            <Option value="+61">+61</Option>
+                          </Select>
+                        }
+                        defaultValue={field.default_value}
+                      />
+                    )}
                     {field.type === 'textarea' && <Input.TextArea placeholder={field.placeholder} rows={3} style={{ borderRadius: '8px' }} />}
                     {field.type === 'rating' && <Rate />}
                     {field.type === 'priority' && (

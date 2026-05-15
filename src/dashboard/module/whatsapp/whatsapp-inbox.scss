@@ -19,16 +19,89 @@
 
     .chat-layout {
         height: 100%;
+        background: #fff;
+        display: flex !important;
+        flex-direction: row !important;
+    }
+
+    .chat-sider {
+        background: #fff;
+        border-right: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        height: 100% !important;
+        min-width: 320px !important;
+        max-width: 320px !important;
+        flex: 0 0 320px !important;
+        width: 320px !important;
+    }
+
+    .chat-sider-header {
+        flex-shrink: 0;
     }
 
     // Ensure internal lists fill the space correctly without causing outer scroll
     .chat-list {
-        height: calc(100% - 180px) !important;
+        flex: 1;
         overflow-y: auto;
+        padding-bottom: 20px;
     }
 
     .chat-messages {
         flex: 1;
         overflow-y: auto;
     }
+
+    .typing-indicator-bubble {
+        padding: 10px 15px !important;
+        background: #f0f0f0 !important;
+        border-radius: 15px 15px 15px 0 !important;
+        display: inline-block;
+        
+        .typing-dots {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            
+            span {
+                width: 6px;
+                height: 6px;
+                background: #8e8e8e;
+                border-radius: 50%;
+                animation: typing 1s infinite ease-in-out;
+                
+                &:nth-child(2) { animation-delay: 0.2s; }
+                &:nth-child(3) { animation-delay: 0.4s; }
+            }
+        }
+    }
+    .chat-list-item {
+        cursor: pointer;
+        transition: background 0.2s;
+        
+        &:hover {
+            background: #f9f9f9;
+        }
+        
+        &.selected {
+            background: #e6f7ff;
+        }
+
+        .unread-badge {
+            .ant-badge-count {
+                background: #25D366; // WhatsApp Green
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                font-weight: 600;
+                min-width: 20px;
+                height: 20px;
+                line-height: 20px;
+                padding: 0 6px;
+            }
+        }
+    }
+}
+
+@keyframes typing {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
 }

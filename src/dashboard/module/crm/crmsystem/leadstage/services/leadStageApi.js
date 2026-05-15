@@ -11,23 +11,14 @@ export const leadStageApi = createApi({
         url: "stages",
         method: "GET",
         params: {
-          stageType: "lead",
           client_id: true
         }
       }),
       transformResponse: (response) => {
         try {
-          if (Array.isArray(response)) {
-            return response;
-          }
-          if (response?.stages && Array.isArray(response.stages)) {
-            return response.stages;
-          }
-          if (response?.data && Array.isArray(response.data)) {
-            return response.data;
-          }
-          console.warn('Unexpected lead stage response format:', response);
-          return [];
+          const stages = Array.isArray(response) ? response :
+            response?.stages || response?.data || [];
+          return stages;
         } catch (error) {
           console.error('Error transforming lead stage response:', error);
           return [];
@@ -41,7 +32,6 @@ export const leadStageApi = createApi({
         url: `stages/pipeline/${pipelineId}`,
         method: "GET",
         params: {
-          stageType: "lead",
           client_id: true
         }
       }),
@@ -49,7 +39,7 @@ export const leadStageApi = createApi({
         try {
           const stages = Array.isArray(response) ? response :
             response?.stages || response?.data || [];
-          return stages.filter(stage => stage.stageType === 'lead');
+          return stages;
         } catch (error) {
           console.error('Error transforming pipeline stages:', error);
           return [];
@@ -67,7 +57,6 @@ export const leadStageApi = createApi({
         method: "POST",
         body: {
           ...body,
-          stageType: "lead",
           client_id: true
         }
       }),
@@ -81,7 +70,7 @@ export const leadStageApi = createApi({
         body: {
           stageName: data.stageName,
           pipeline: data.pipeline,
-          stageType: "lead",
+          stageType: data.stageType,
           isDefault: data.isDefault,
           client_id: true
         }

@@ -110,6 +110,7 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
     permission: "dashboards-communication",
     subItems: [
       { title: "WhatsApp Chat", icon: <FiMessageSquare />, path: "/dashboard/whatsapp-chat", permission: "dashboards-communication" },
+      { title: "Broadcast", icon: <FiZap />, path: "/dashboard/whatsapp/broadcast", permission: "dashboards-communication" },
       { title: "Message log", icon: <FiList />, path: "/dashboard/whatsapp/messages", permission: "dashboards-communication" }
     ].filter(item => !item.permission || checkPermission(item.permission))
   },

@@ -23,6 +23,29 @@ import {
 import dayjs from 'dayjs';
 import './PublicForm.scss';
 
+const COUNTRY_CODES = [
+    { code: '+91', country: 'IN', name: 'India' },
+    { code: '+971', country: 'AE', name: 'UAE' },
+    { code: '+1', country: 'US', name: 'USA' },
+    { code: '+44', country: 'GB', name: 'UK' },
+    { code: '+61', country: 'AU', name: 'Australia' },
+    { code: '+1', country: 'CA', name: 'Canada' },
+    { code: '+49', country: 'DE', name: 'Germany' },
+    { code: '+33', country: 'FR', name: 'France' },
+    { code: '+65', country: 'SG', name: 'Singapore' },
+    { code: '+81', country: 'JP', name: 'Japan' },
+    { code: '+86', country: 'CN', name: 'China' },
+    { code: '+92', country: 'PK', name: 'Pakistan' },
+    { code: '+880', country: 'BD', name: 'Bangladesh' },
+    { code: '+94', country: 'LK', name: 'Sri Lanka' },
+    { code: '+977', country: 'NP', name: 'Nepal' },
+    { code: '+234', country: 'NG', name: 'Nigeria' },
+    { code: '+254', country: 'KE', name: 'Kenya' },
+    { code: '+27', country: 'ZA', name: 'South Africa' },
+    { code: '+55', country: 'BR', name: 'Brazil' },
+    { code: '+52', country: 'MX', name: 'Mexico' },
+];
+
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
@@ -145,6 +168,7 @@ const PublicFormView = () => {
     const [submitting, setSubmitting] = useState(false);
     const [checkboxStates, setCheckboxStates] = useState({});
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [phoneCodes, setPhoneCodes] = useState({});
 
     // Initialize checkbox states
     useEffect(() => {
@@ -155,11 +179,20 @@ const PublicFormView = () => {
                     : formData.data.fields;
                 setFields(parsedFields);
 
-                // Initialize checkbox states
+                // Initialize form values with defaults
+                const defaultValues = {};
+                const initialPhoneCodes = {};
+                
                 const initialCheckboxStates = {};
                 const iterateFields = Array.isArray(parsedFields) ? parsedFields : Object.values(parsedFields);
                 iterateFields.forEach((field) => {
                     const fieldKey = field.key || field.id;
+                    if (field.default_value) {
+                        defaultValues[fieldKey] = field.default_value;
+                    }
+                    if (field.type === 'phone') {
+                        initialPhoneCodes[fieldKey] = '';
+                    }
                     if (field.type === 'checkbox' && field.options) {
                         initialCheckboxStates[fieldKey] = {};
                         field.options.forEach(option => {
@@ -167,8 +200,10 @@ const PublicFormView = () => {
                         });
                     }
                 });
+
                 setCheckboxStates(initialCheckboxStates);
-                form.setFieldsValue(initialCheckboxStates);
+                setPhoneCodes(initialPhoneCodes);
+                form.setFieldsValue({ ...initialCheckboxStates, ...defaultValues, ...initialPhoneCodes });
             } catch (error) {
                 console.error('Error parsing fields:', error);
                 message.error('Error loading form fields');
@@ -203,6 +238,17 @@ const PublicFormView = () => {
             // Ensure checkbox values are included
             Object.entries(checkboxStates).forEach(([fieldName, fieldValue]) => {
                 submissionData[fieldName] = fieldValue;
+            });
+
+            // Handle phone numbers (combine code + number)
+            Object.entries(phoneCodes).forEach(([fieldKey, code]) => {
+                if (submissionData[fieldKey]) {
+                    // Prepend code if not already present
+                    const num = String(submissionData[fieldKey]).trim();
+                    if (!num.startsWith('+')) {
+                        submissionData[fieldKey] = `${code}${num}`;
+                    }
+                }
             });
 
             const response = await submitFormResponse({
@@ -349,12 +395,27 @@ const PublicFormView = () => {
                     </Form.Item>
                 );
             case 'phone':
+                const selectBefore = (
+                    <Select 
+                        placeholder="Code" 
+                        className="phone-code-select"
+                        style={{ width: 90 }}
+                        onChange={(val) => setPhoneCodes(prev => ({ ...prev, [fieldKey]: val }))}
+                    >
+                        {COUNTRY_CODES.map(c => (
+                            <Option key={`${c.country}-${c.code}`} value={c.code}>
+                                <span style={{ fontSize: '12px' }}>{c.code}</span>
+                            </Option>
+                        ))}
+                    </Select>
+                );
                 return (
                     <Form.Item {...commonProps} rules={[...commonProps.rules, { pattern: /^\+?[\d\s\-\(\)\.]+$/, message: 'Please enter a valid phone number' }]}>
                         <Input
                             className="custom-input"
                             placeholder="Enter phone number"
-                            prefix={getFieldPrefix('phone')}
+                            addonBefore={selectBefore}
+                            defaultValue={field.default_value}
                         />
                     </Form.Item>
                 );

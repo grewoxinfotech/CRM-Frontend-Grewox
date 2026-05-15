@@ -16,7 +16,7 @@ import {
   Row,
   Col,
   Popconfirm,
-  Segmented,
+  Space,
   AutoComplete,
   Tag,
 } from "antd";
@@ -65,6 +65,7 @@ import {
   useDeleteCategoryMutation,
   useGetSourcesQuery,
   useDeleteSourceMutation,
+  useGetStatusesQuery,
 } from "../crmsystem/souce/services/SourceApi";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
@@ -74,7 +75,7 @@ const { Option } = Select;
 
 const findIndianDefaults = (currencies, countries) => {
   const inrCurrency = currencies?.find((c) => c.currencyCode === "INR");
-  const indiaCountry = countries?.find((c) => c.countryCode === "IN");
+  const indiaCountry = countries?.find((c) => c.phoneCode === '91' || c.phoneCode === '+91' || c.countryCode === 'IN');
   return {
     defaultCurrency: inrCurrency?.currencyCode || "INR",
     defaultPhoneCode: indiaCountry?.id || undefined,
@@ -82,8 +83,6 @@ const findIndianDefaults = (currencies, countries) => {
 };
 
 const CreateDeal = ({ open, onCancel, leadData }) => {
-  console.log("CreateDeal Component Loaded");
-  // console.log("leadData", leadData);
   const loggedInUser = useSelector(selectCurrentUser);
 
 
@@ -126,6 +125,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
+  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: dealStages } = useGetLeadStagesQuery();
   const { data: pipelinesData } = useGetPipelinesQuery();
   const pipelines = pipelinesData || [];
@@ -261,13 +261,27 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
   // Get default stage for selected pipeline
   const getDefaultStage = (pipelineId) => {
-    const defaultStage = dealStages?.find(
+    if (!pipelineId || !dealStages) return undefined;
+    
+    const stagesList = Array.isArray(dealStages) ? dealStages : (dealStages?.data || []);
+    const pid = String(pipelineId?.id || pipelineId);
+
+    // 1. Try to find marked default stage
+    const defaultStage = stagesList.find(
       (stage) =>
         stage.stageType === "deal" &&
-        stage.pipeline === pipelineId &&
+        String(stage.pipeline?.id || stage.pipeline) === pid &&
         stage.isDefault
     );
-    return defaultStage?.id;
+    if (defaultStage) return defaultStage.id;
+
+    // 2. Fallback: find first stage for this pipeline
+    const firstStage = stagesList.find(
+      (stage) =>
+        stage.stageType === "deal" &&
+        String(stage.pipeline?.id || stage.pipeline) === pid
+    );
+    return firstStage?.id;
   };
 
 
@@ -334,8 +348,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   // Modify the useEffect to handle lead conversion properly
   useEffect(() => {
     if (leadData && open) {
-      console.log("Setting form values with leadData:", leadData);
-
       // Find the contact if contact_id exists
       const existingContact = contactsResponse?.data?.find(
         (c) => c.id === leadData.contact_id
@@ -346,8 +358,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         (c) => c.id === leadData.company_id
       );
 
+      // Get default pipeline if lead has none
+      const initialPipeline = leadData.pipeline || (pipelines.length > 0 ? pipelines[0].id : null);
+      
       // Get default stage for the pipeline
-      const defaultStage = getDefaultStage(leadData.pipeline);
+      const defaultStage = getDefaultStage(initialPipeline);
 
       // Set form values
       const formValues = {
@@ -355,7 +370,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         value: leadData.value || leadData.leadValue || 0, // Try both value and leadValue
         source: leadData.source || null,
         category: leadData.category || null,
-        pipeline: leadData.pipeline || null,
+        pipeline: initialPipeline,
         stage: defaultStage || null,
         currency: leadData.currency || defaultCurrency,
         company_id: leadData.company_id || null,
@@ -363,7 +378,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
       // If contact exists, set contact-related fields
       if (existingContact) {
-        formValues.firstName = existingContact.id;
+        formValues.firstName = existingContact.first_name || "";
+        formValues.lastName = existingContact.last_name || "";
         formValues.email = existingContact.email || "";
         formValues.telephone = existingContact.phone
           ? existingContact.phone.replace(/^\+\d+\s/, "")
@@ -404,8 +420,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       setManualValue(leadData.value || leadData.leadValue || 0);
 
       // Set selected pipeline if lead data has pipeline
-      if (leadData.pipeline) {
-        setSelectedPipeline(leadData.pipeline);
+      if (initialPipeline) {
+        setSelectedPipeline(initialPipeline);
       }
 
       setContactMode(existingContact ? "existing" : "new");
@@ -414,11 +430,10 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     leadData,
     form,
     open,
-    currencies,
-    countries,
-    companyAccountsResponse?.data,
-    contactsResponse?.data,
-    defaultCurrency,
+    dealStages,
+    contactsResponse,
+    companyAccountsResponse,
+    pipelines,
     defaultPhoneCode,
     getDefaultStage,
   ]);
@@ -460,6 +475,16 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     }
   }, [open, leadData, pipelines, dealStages, sources, form, defaultCurrency]);
 
+  // Auto-select "Interested" status by default for deals
+  useEffect(() => {
+    if (open && statusesData?.data?.length > 0 && !form.getFieldValue('status')) {
+      const interestedStatus = statusesData.data.find(s => s.name.toLowerCase() === 'interested');
+      if (interestedStatus) {
+        form.setFieldValue('status', interestedStatus.id);
+      }
+    }
+  }, [open, statusesData, form]);
+
   const { data: dealsData } = useGetDealsQuery();
 
   const handleSubmit = async (values) => {
@@ -494,10 +519,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               (c) => c.id === values.phoneCode
             );
             if (selectedCountry) {
-              formattedPhone = `+${selectedCountry.phoneCode.replace(
+              const cleanTelephone = stripCode(values.telephone, values.phoneCode);
+              formattedPhone = `+${selectedCountry.phoneCode.toString().replace(
                 "+",
                 ""
-              )} ${values.telephone}`;
+              )} ${cleanTelephone}`;
             }
           }
 
@@ -536,10 +562,24 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         contactId = values.firstName; // In existing mode, firstName field contains the contact ID
       }
 
-      // Format phone number for deal
-      const formattedPhone = values.telephone
-        ? `+${values.phoneCode} ${values.telephone}`
-        : null;
+      // Format phone number for deal - strip any leading code if it's already there
+      const stripCode = (phone, codeId) => {
+        if (!phone) return null;
+        const country = countries?.find(c => c.id === codeId);
+        if (!country) return phone;
+        const cleanCode = country.phoneCode.replace(/\D/g, '');
+        const cleanPhone = phone.toString().replace(/\D/g, '');
+        if (cleanPhone.startsWith(cleanCode)) {
+          return cleanPhone.slice(cleanCode.length);
+        }
+        return cleanPhone;
+      };
+
+      const cleanTelephone = stripCode(values.telephone, values.phoneCode);
+      const countryCode = countries?.find(c => c.id === values.phoneCode)?.phoneCode.replace(/\D/g, '');
+      const formattedPhone = cleanTelephone && countryCode
+        ? `+${countryCode} ${cleanTelephone}`
+        : cleanTelephone ? `+${cleanTelephone}` : null;
 
       // Get the stage from values or fallback to default
       let stageId = values.stage;
@@ -706,12 +746,24 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     // Find the selected contact from all contacts
     const contact = contactsResponse?.data?.find((c) => c.id === contactId);
     if (contact) {
+      const stripCode = (phone, codeId) => {
+        if (!phone) return '';
+        const country = countries?.find(c => c.id === codeId);
+        if (!country) return phone;
+        const cleanCode = country.phoneCode.replace(/\D/g, '');
+        const cleanPhone = phone.replace(/\D/g, '');
+        if (cleanPhone.startsWith(cleanCode)) {
+          return cleanPhone.slice(cleanCode.length);
+        }
+        return phone;
+      };
+
       // Sync company with contact
       form.setFieldsValue({
         firstName: contact.id, 
         lastName: contact.last_name, 
         email: contact.email,
-        phone: contact.phone?.replace(/^\+\+91\s/, ""),
+        telephone: stripCode(contact.phone, contact.phone_code || defaultPhoneCode),
         address: contact.address,
         company_id: contact.company_name || undefined,
       });
@@ -982,21 +1034,44 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     return (
                       <Form.Item
                         key={field.id}
-                        name="telephone"
-                                                  label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
                         style={{ gridColumn: 'span 1', marginBottom: '0px' }}
                       >
-                        <AutoComplete
-                          options={combinedSuggestions}
-                          onSearch={(val) => setPhoneSearchText(val)}
-                          onSelect={handleSuggestionSelect}
-                        >
-                          <Input 
-                            prefix={<FiPhone style={prefixIconStyle} />} 
-                            placeholder={field.placeholder} 
-                            style={inputStyle} 
-                          />
-                        </AutoComplete>
+                        <Space.Compact style={{ width: '100%' }}>
+                          <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
+                            <Select 
+                              showSearch
+                              optionFilterProp="children"
+                              style={{ width: '100px', height: '48px' }}
+                              dropdownStyle={{ minWidth: '150px' }}
+                              className="phone-code-select-modern"
+                            >
+                              {countries?.map(c => (
+                                <Option key={c.id} value={c.id}>
+                                  {c.phoneCode.startsWith('+') ? c.phoneCode : `+${c.phoneCode}`}
+                                </Option>
+                              ))}
+                            </Select>
+                          </Form.Item>
+                          <Form.Item 
+                            name="telephone" 
+                            noStyle 
+                            rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                          >
+                            <AutoComplete
+                              options={combinedSuggestions}
+                              onSearch={(val) => setPhoneSearchText(val)}
+                              onSelect={handleSuggestionSelect}
+                              style={{ flex: 1 }}
+                            >
+                              <Input
+                                placeholder={field.placeholder}
+                                prefix={<FiPhone style={prefixIconStyle} />}
+                                style={{ ...inputStyle, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                              />
+                            </AutoComplete>
+                          </Form.Item>
+                        </Space.Compact>
                       </Form.Item>
                     );
                   }
@@ -1104,6 +1179,21 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                         </Form.Item>
                       );
                     }
+
+                    if (field.key === 'status') {
+                      return (
+                        <Form.Item
+                          key={field.id}
+                          name="status"
+                          label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                          style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                        >
+                          <Select placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} style={selectStyle}>
+                            {statusesData?.data?.map(s => <Option key={s.id} value={s.id}>{s.name}</Option>)}
+                          </Select>
+                        </Form.Item>
+                      );
+                    }
                     return null;
                   }
 
@@ -1195,6 +1285,12 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     </Select>
                   </Form.Item>
 
+                  <Form.Item name="status" label={<span style={formItemStyle}>Status (Optional)</span>}>
+                    <Select placeholder="Select status" style={selectStyle}>
+                      {statusesData?.data?.map(s => <Option key={s.id} value={s.id}>{s.name}</Option>)}
+                    </Select>
+                  </Form.Item>
+
                   <Divider style={{ gridColumn: 'span 2' }}>Associations (Optional)</Divider>
 
                   <Form.Item name="contact_id" label={<span style={formItemStyle}>Select Contact (Optional)</span>}>
@@ -1268,6 +1364,18 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
           loggedInUser={loggedInUser}
           companyAccountsResponse={companyAccountsResponse}
           onsubmit={handleAddContactClick}
+        />
+
+        <AddStageModal
+          isOpen={isAddStageVisible}
+          onClose={(success) => {
+            setIsAddStageVisible(false);
+            if (success) {
+              setDropdownOpen(true);
+            }
+          }}
+          pipelineId={form.getFieldValue('pipeline')}
+          stageType="deal"
         />
 
         <AddSourceModal

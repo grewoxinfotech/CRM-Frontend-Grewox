@@ -33,9 +33,9 @@ import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
 import {
-  useCreateFollowupTaskMutation,
   useGetFollowupTaskByIdQuery,
 } from "./services/followupTaskApi";
+import { useCreateFollowupTaskMutation } from "../../../services/LeadApi";
 import { useParams } from "react-router-dom";
 const { Text } = Typography;
 const { Option } = Select;

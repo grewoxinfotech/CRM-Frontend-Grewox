@@ -116,12 +116,10 @@ const DashboardLayout = () => {
         inboxSocketRef.current = socket;
 
         const handleConnect = () => {
-            console.log('🔌 Global socket connected');
             socket.emit('user_connected', loggedInUser.id);
         };
 
         const handleUpdate = (payload) => {
-            console.log('📱 WhatsApp update received:', payload);
             dispatch(leadApi.util.invalidateTags(['Lead']));
             dispatch(settingsApi.util.invalidateTags(['WhatsappInbox']));
         };

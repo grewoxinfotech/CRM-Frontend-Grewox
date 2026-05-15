@@ -13,6 +13,7 @@ import {
   Popconfirm,
   Tabs,
   AutoComplete,
+  Space,
 } from "antd";
 import {
   FiUser,
@@ -182,7 +183,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   ) || [];
 
   const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
-  const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+  const indiaCountry = countries?.find(c => c.phoneCode === '91' || c.phoneCode === '+91' || c.countryCode === 'IN');
   const defaultCurrency = inrCurrency?.id || 'JJXdfl6534FX7PNEIC3qJTK';
   const defaultPhoneCode = indiaCountry?.id || 'K9GxyQ8rrXQycdLQNkGhczL';
 
@@ -360,8 +361,19 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     }
   }, [initialValues, form, defaultPhoneCode, defaultCurrency, countries, currencies, contactsData, usersResponse, loggedInUser, stagesData]);
 
-  // Set leadStage only after stage options are available (prevents showing raw id)
-  useEffect(() => {
+    const stripCode = (phone, codeId) => {
+      if (!phone) return '';
+      const country = countries?.find(c => c.id === codeId);
+      if (!country) return phone;
+      const cleanCode = country.phoneCode.toString().replace(/\D/g, '');
+      const cleanPhone = phone.toString().replace(/\D/g, '');
+      if (cleanPhone.startsWith(cleanCode)) {
+        return cleanPhone.slice(cleanCode.length);
+      }
+      return phone;
+    };
+
+    useEffect(() => {
     const pendingId = pendingLeadStageIdRef.current;
     if (!pendingId) return;
     if (!filteredStages?.length) return;
@@ -379,8 +391,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       const selectedCountry = countries.find(c => c.id === values.phoneCode);
 
       // Format phone number with country code
-      const formattedPhone = values.telephone ?
-        `+${selectedCountry?.phoneCode?.replace('+', '')} ${values.telephone}` :
+      const cleanTelephone = stripCode(values.telephone, values.phoneCode || defaultPhoneCode);
+      const formattedPhone = cleanTelephone ?
+        `+${selectedCountry?.phoneCode?.replace('+', '')} ${cleanTelephone}` :
         null;
 
       // Get the selected currency
@@ -1135,30 +1148,53 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                 return (
                   <Form.Item
                     key={field.id}
-                    name="telephone"
                     label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
                     style={{ gridColumn: 'span 1', marginBottom: '0px' }}
                   >
-                    <AutoComplete
-                      options={contactSuggestions?.data?.map(c => ({
-                        value: c.phone,
-                        label: (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                            <span>{c.first_name} {c.last_name || ''}</span>
-                            <span style={{ color: '#999', fontSize: '12px' }}>{c.phone}</span>
-                          </div>
-                        ),
-                        contact: c
-                      }))}
-                      onSearch={(val) => setPhoneSearchText(val)}
-                      onSelect={handleContactSelect}
-                    >
-                      <Input
-                        prefix={<FiPhone style={prefixIconStyle} />}
-                        placeholder={field.placeholder}
-                        style={inputStyle}
-                      />
-                    </AutoComplete>
+                    <Space.Compact style={{ width: '100%' }}>
+                      <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
+                        <Select 
+                          showSearch
+                          optionFilterProp="children"
+                          style={{ width: '100px', height: '48px' }}
+                          dropdownStyle={{ minWidth: '150px' }}
+                          className="phone-code-select-modern"
+                        >
+                          {countries?.map(c => (
+                            <Option key={c.id} value={c.id}>
+                              {c.phoneCode.startsWith('+') ? c.phoneCode : `+${c.phoneCode}`}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                      <Form.Item 
+                        name="telephone" 
+                        noStyle 
+                        rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                      >
+                        <AutoComplete
+                          options={contactSuggestions?.data?.map(c => ({
+                            value: c.phone,
+                            label: (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                <span>{c.first_name} {c.last_name || ''}</span>
+                                <span style={{ color: '#999', fontSize: '12px' }}>{c.phone}</span>
+                              </div>
+                            ),
+                            contact: c
+                          }))}
+                          onSearch={(val) => setPhoneSearchText(val)}
+                          onSelect={handleContactSelect}
+                          style={{ flex: 1 }}
+                        >
+                          <Input
+                            placeholder={field.placeholder}
+                            prefix={<FiPhone style={prefixIconStyle} />}
+                            style={{ ...inputStyle, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                          />
+                        </AutoComplete>
+                      </Form.Item>
+                    </Space.Compact>
                   </Form.Item>
                 );
               }
@@ -1303,6 +1339,45 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                       options={categoriesData?.data}
                       onAddClick={handleAddCategoryClick}
                       onDelete={handleDeleteCategory}
+                    />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'status') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="status"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                  >
+                    <CommonSelect
+                      placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`}
+                      options={statusesData?.data}
+                      onAddClick={handleAddStatusClick}
+                      onDelete={handleDeleteStatus}
+                    />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'interest_level') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="interest_level"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                  >
+                    <Select
+                      placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`}
+                      options={[
+                        { label: 'High Interest', value: 'high' },
+                        { label: 'Medium Interest', value: 'medium' },
+                        { label: 'Low Interest', value: 'low' },
+                      ]}
+                      style={{ height: '48px', borderRadius: '10px' }}
                     />
                   </Form.Item>
                 );

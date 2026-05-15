@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Tag, Space, Button } from 'antd';
+import { Card, Row, Col, Typography, Tag, Space, Button, Tooltip } from 'antd';
 import {
     FiUser,
     FiMail,
@@ -16,6 +16,7 @@ import {
     FiDollarSign,
     FiEdit2,
 } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
 import dayjs from 'dayjs';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useGetContactsQuery, useUpdateContactMutation, useGetContactByIdQuery } from '../services/contactApi';
@@ -137,9 +138,24 @@ const ContactDetails = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Phone Number</div>
-                            <a href={`tel:${contact?.phone}`} className="stat-value">
-                                {contact?.phone || '-'}
-                            </a>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <a href={`tel:${contact?.phone}`} className="stat-value">
+                                    {contact?.phone || '-'}
+                                </a>
+                                {contact?.phone && (
+                                    <Tooltip title="Start WhatsApp Chat">
+                                        <Button 
+                                            type="text" 
+                                            icon={<FaWhatsapp style={{ color: '#25D366', fontSize: '16px' }} />} 
+                                            onClick={() => {
+                                                const phone = contact.phone.replace(/\D/g, '');
+                                                window.location.href = `/dashboard/whatsapp-chat?phone=${phone}`;
+                                            }}
+                                            style={{ padding: 0, height: 'auto', display: 'flex', alignItems: 'center', minWidth: 'auto' }}
+                                        />
+                                    </Tooltip>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className="stat-item">

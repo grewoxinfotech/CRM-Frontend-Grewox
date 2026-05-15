@@ -18,6 +18,8 @@ import {
   Popover,
   Pagination,
   DatePicker,
+  Tabs,
+  Badge,
 } from "antd";
 import {
   FiPlus,
@@ -77,15 +79,35 @@ const Lead = () => {
   });
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteLead, { isLoading: isDeleteLoading }] = useDeleteLeadMutation();
   const [dateRange, setDateRange] = useState(null);
   const { data: leads, isLoading } = useGetLeadsQuery({
-    page: pagination.current,
-    pageSize: viewMode === "card" ? 100 : pagination.pageSize,
+    page: 1,
+    pageSize: 1000, // Fetch more for frontend filtering
     search: searchText || undefined,
     ...(dateRange?.[0] && { startDate: dateRange[0].format('YYYY-MM-DD') }),
     ...(dateRange?.[1] && { endDate: dateRange[1].format('YYYY-MM-DD') }),
+  });
+
+  const allLeads = leads?.data || [];
+
+  const filteredLeads = allLeads.filter(lead => {
+    const leadDate = moment(lead.createdAt).startOf('day');
+    const today = moment().startOf('day');
+    const yesterday = moment().subtract(1, 'days').startOf('day');
+
+    let matchesTab = true;
+    if (activeTab === 'today') {
+      matchesTab = leadDate.isSame(today, 'day');
+    } else if (activeTab === 'yesterday') {
+      matchesTab = leadDate.isSame(yesterday, 'day');
+    } else if (activeTab === 'converted') {
+      matchesTab = lead.is_converted === true;
+    }
+
+    return matchesTab;
   });
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
@@ -350,7 +372,7 @@ const Lead = () => {
     <div className="lead-page">
       <PageHeader
         title="All Leads"
-        count={leads?.pagination?.total || 0}
+        count={filteredLeads.length}
         subtitle={<span style={{ fontSize: '14px' }}>Manage all leads in the system</span>}
         breadcrumbItems={[
           {
@@ -426,9 +448,52 @@ const Lead = () => {
       />
 
       <Card className="lead-content">
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          style={{ marginBottom: '16px', padding: '0 16px' }}
+          items={[
+            {
+              key: 'all',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>All</span>
+                  <Badge count={allLeads.length} style={{ backgroundColor: '#d9d9d9' }} />
+                </div>
+              ),
+            },
+            {
+              key: 'today',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Today</span>
+                  <Badge count={allLeads.filter(l => moment(l.createdAt).isSame(moment(), 'day')).length} style={{ backgroundColor: '#1890ff' }} />
+                </div>
+              ),
+            },
+            {
+              key: 'yesterday',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Yesterday</span>
+                  <Badge count={allLeads.filter(l => moment(l.createdAt).isSame(moment().subtract(1, 'day'), 'day')).length} style={{ backgroundColor: '#faad14' }} />
+                </div>
+              ),
+            },
+            {
+              key: 'converted',
+              label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Converted</span>
+                  <Badge count={allLeads.filter(l => l.is_converted === true).length} style={{ backgroundColor: '#52c41a' }} />
+                </div>
+              ),
+            },
+          ]}
+        />
         {viewMode === "table" ? (
           <LeadList
-            leads={leads}
+            leads={{ ...leads, data: filteredLeads, pagination: { ...leads?.pagination, total: filteredLeads.length } }}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
@@ -441,7 +506,7 @@ const Lead = () => {
         ) : (
           <>
             <LeadCard
-              leads={leads}
+              leads={{ ...leads, data: filteredLeads }}
               onEdit={handleEdit}
               onDelete={handleDelete}
               categoriesData={categoriesData}

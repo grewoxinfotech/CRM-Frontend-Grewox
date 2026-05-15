@@ -1,27 +1,31 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { Layout, List, Input, Button, Avatar, Badge, Typography, Tabs, Tag, Empty, Spin, Divider, message } from 'antd';
-import { 
-    SearchOutlined, 
-    SendOutlined, 
-    ReloadOutlined, 
+import { Layout, List, Input, Button, Avatar, Badge, Typography, Tabs, Tag, Empty, Spin, Divider, message, Tooltip, Modal, Form, Select } from 'antd';
+import { Space } from 'antd';
+const AntInput = Input; // Alias for consistency with other parts of the code
+import {
+    SearchOutlined,
+    SendOutlined,
+    ReloadOutlined,
     UserOutlined,
     ArrowLeftOutlined,
     MessageOutlined,
     CheckOutlined,
     TeamOutlined,
     PlusOutlined,
-    FileTextOutlined
+    FileTextOutlined,
+    PaperClipOutlined,
+    RocketOutlined
 } from '@ant-design/icons';
-import { 
-    useGetWhatsappConversationsQuery, 
-    useGetWhatsappMessagesQuery, 
+import {
+    useGetWhatsappConversationsQuery,
+    useGetWhatsappMessagesQuery,
     useSendWhatsAppMessageMutation,
     useGetWhatsappTemplatesQuery
 } from '../settings/services/settingsApi';
 import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../auth/services/authSlice';
+import { selectCurrentUser, selectCurrentToken } from '../../../auth/services/authSlice';
 import { FiMoreVertical } from 'react-icons/fi';
-import { Modal, Form, Input as AntInput, Select } from 'antd';
+
 import { io } from 'socket.io-client';
 import { BASE_URL } from '../../../config/config';
 import "./whatsapp-inbox.scss";
@@ -43,11 +47,34 @@ export default function WhatsAppInbox() {
     const [q, setQ] = useState('');
     const [selected, setSelected] = useState(null);
     const [draft, setDraft] = useState('');
+    const [typingStatus, setTypingStatus] = useState({}); // { phoneNumber: boolean }
     const [showChatContent, setShowChatContent] = useState(false);
     const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
     const messagesEndRef = useRef(null);
     const currentUser = useSelector(selectCurrentUser);
     const socketRef = useRef(null);
+
+    const formatRelativeTime = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = now - date;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        if (date.toDateString() === now.toDateString()) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else {
+            const yesterday = new Date();
+            yesterday.setDate(now.getDate() - 1);
+            if (date.toDateString() === yesterday.toDateString()) {
+                return 'Yesterday';
+            } else if (diffDays < 7) {
+                return date.toLocaleDateString([], { weekday: 'short' });
+            } else {
+                return date.toLocaleDateString([], { day: '2-digit', month: 'short' });
+            }
+        }
+    };
 
     useEffect(() => {
         const handleResize = () => setIsMobileView(window.innerWidth <= 768);
@@ -56,7 +83,7 @@ export default function WhatsAppInbox() {
         // Handle deep linking via phone query param
         const params = new URLSearchParams(window.location.search);
         const phoneParam = params.get('phone');
-        
+
         if (phoneParam) {
             setSelected(phoneParam);
             if (window.innerWidth <= 768) {
@@ -92,7 +119,7 @@ export default function WhatsAppInbox() {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const phoneParam = params.get('phone');
-        
+
         if (!phoneParam && !selected && conversations.length > 0 && !isMobileView) {
             setSelected(conversations[0].wa_from);
         }
@@ -112,21 +139,48 @@ export default function WhatsAppInbox() {
 
     const [sendMessage, { isLoading: isSending }] = useSendWhatsAppMessageMutation();
 
+    // Refetch conversations when messages are loaded to clear the unread badge
+    useEffect(() => {
+        if (!msgLoading && msgData) {
+            refetchConvs();
+        }
+    }, [msgData, msgLoading, refetchConvs]);
+
     // Force real-time updates via direct socket listener
     useEffect(() => {
         if (!currentUser?.id) return;
         const baseUrl = BASE_URL.replace(/\/?api\/v1\/?$/, '');
-        const socket = io(baseUrl, { withCredentials: true, path: '/socket.io', reconnection: true });
+
+        const socket = io(baseUrl, {
+            withCredentials: true,
+            path: '/socket.io',
+            reconnection: true,
+            transports: ['polling', 'websocket'] // Try polling first if websocket fails
+        });
+
         socketRef.current = socket;
+
         socket.on('connect', () => {
-            console.log('⚡ WhatsApp Inbox Socket Connected');
             socket.emit('user_connected', currentUser.id);
         });
+
+        socket.on('connect_error', (err) => {
+            // Error handled silently
+        });
+
         socket.on('whatsapp_inbox_update', (payload) => {
-            console.log('📱 WhatsApp Live Update:', payload);
+            if (payload.isTyping !== undefined) {
+                setTypingStatus(prev => ({
+                    ...prev,
+                    [payload.phone]: payload.isTyping
+                }));
+            }
+
+            // Verify if the update is relevant to the selected chat or just the sidebar
             refetchConvs();
             refetchMsgs();
         });
+
         return () => {
             if (socketRef.current) {
                 socketRef.current.disconnect();
@@ -135,8 +189,58 @@ export default function WhatsAppInbox() {
         };
     }, [currentUser?.id, refetchConvs, refetchMsgs]);
 
+    const token = useSelector(selectCurrentToken);
     const messages = msgData?.data || [];
     const canSend = Boolean(selected) && draft.trim().length > 0 && !isSending;
+
+    const handleMediaUpload = async (file) => {
+        if (!selected) return;
+
+        // Meta/WhatsApp limits
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        const isDoc = !isImage && !isVideo;
+
+        if (isImage && file.size > 5 * 1024 * 1024) {
+            return message.error('Image size must be less than 5MB');
+        }
+        if (isVideo && file.size > 16 * 1024 * 1024) {
+            return message.error('Video size must be less than 16MB');
+        }
+        if (isDoc && file.size > 25 * 1024 * 1024) {
+            return message.error('Document size must be less than 25MB');
+        }
+        
+        const hide = message.loading('Uploading media...', 0);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('to', selected);
+            formData.append('mediaType', file.type.startsWith('image/') ? 'image' :
+                file.type.startsWith('video/') ? 'video' : 'document');
+
+            const res = await fetch(`${BASE_URL}/whatsapp/send-media`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                message.success('Media sent successfully');
+                refetchMsgs();
+            } else {
+                message.error(data.message || 'Failed to send media');
+            }
+        } catch (err) {
+            console.error('Media upload error:', err);
+            message.error('Error uploading media');
+        } finally {
+            hide();
+        }
+    };
 
     const handleSendMessage = async () => {
         if (!canSend) return;
@@ -194,7 +298,7 @@ export default function WhatsAppInbox() {
         if (!selectedTemplate) return;
 
         const components = [];
-        
+
         // Handle Body Variables
         const bodyVars = [];
         Object.keys(values).forEach(key => {
@@ -232,7 +336,7 @@ export default function WhatsAppInbox() {
                 isTemplate: true,
                 components: components
             }).unwrap();
-            
+
             setIsTemplateModalOpen(false);
             templateForm.resetFields();
             setSelectedTemplate(null);
@@ -283,6 +387,115 @@ export default function WhatsAppInbox() {
     };
 
     const renderMessageBody = (m) => {
+        // Handle Media first
+        if (m.media_url && (m.wa_message_type === 'image' || m.type === 'image')) {
+            return (
+                <div className="media-message">
+                    <img
+                        src={m.media_url}
+                        alt="Media"
+                        style={{ 
+                            maxWidth: '400px', 
+                            maxHeight: '300px', 
+                            borderRadius: '8px', 
+                            cursor: 'pointer', 
+                            display: 'block',
+                            objectFit: 'cover'
+                        }} 
+                        onClick={() => window.open(m.media_url, '_blank')}
+                    />
+                    {m.body && m.body !== 'Attachment received' && !m.body.startsWith('📎 Shared') && (
+                        <div style={{ marginTop: '8px' }}>{m.body}</div>
+                    )}
+                </div>
+            );
+        }
+
+        if (m.media_url && (m.wa_message_type === 'video' || m.type === 'video')) {
+            return (
+                <div className="media-message">
+                    <video
+                        src={m.media_url}
+                        controls
+                        style={{ 
+                            maxWidth: '400px', 
+                            maxHeight: '300px', 
+                            borderRadius: '8px', 
+                            display: 'block' 
+                        }} 
+                    />
+                    {m.body && m.body !== 'Attachment received' && !m.body.startsWith('📎 Shared') && (
+                        <div style={{ marginTop: '8px' }}>{m.body}</div>
+                    )}
+                </div>
+            );
+        }
+
+        if (m.media_url && (m.wa_message_type === 'document' || m.type === 'document')) {
+            return (
+                <div 
+                    className="media-message document-message" 
+                    onClick={() => window.open(m.media_url, '_blank')} 
+                    style={{ 
+                        cursor: 'pointer', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '12px', 
+                        background: m.direction === 'outbound' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.05)', 
+                        padding: '12px', 
+                        borderRadius: '12px',
+                        border: '1px solid rgba(0,0,0,0.05)',
+                        minWidth: '220px',
+                        maxWidth: '300px'
+                    }}
+                >
+                    <div style={{ 
+                        width: '42px', 
+                        height: '42px', 
+                        borderRadius: '10px', 
+                        background: '#fff', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                    }}>
+                        <FileTextOutlined style={{ fontSize: '22px', color: '#1890ff' }} />
+                    </div>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <Text strong style={{ 
+                            display: 'block', 
+                            whiteSpace: 'nowrap', 
+                            textOverflow: 'ellipsis', 
+                            overflow: 'hidden',
+                            fontSize: '13.5px',
+                            color: m.direction === 'outbound' ? '#fff' : 'inherit'
+                        }}>
+                            {(() => {
+                                if (m.body && !m.body.startsWith('📎 Shared')) return m.body;
+                                if (m.media_url) {
+                                    try {
+                                        const urlParts = m.media_url.split('/');
+                                        const fileName = urlParts[urlParts.length - 1].split('?')[0];
+                                        return fileName || 'Document Attachment';
+                                    } catch (e) {
+                                        return 'Document Attachment';
+                                    }
+                                }
+                                return 'Document Attachment';
+                            })()}
+                        </Text>
+                        <Text style={{ 
+                            fontSize: '11px', 
+                            opacity: 0.8,
+                            color: m.direction === 'outbound' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.45)'
+                        }}>
+                            Click to download/view
+                        </Text>
+                    </div>
+                </div>
+            );
+        }
+
         if (m.wa_message_type === 'template' || m.body?.startsWith('[Template: ')) {
             const templateName = m.body.replace('[Template: ', '').replace(']', '');
             const template = templates.find(t => t.name === templateName);
@@ -296,16 +509,16 @@ export default function WhatsAppInbox() {
     return (
         <div className="chat-container">
             <Layout className="chat-layout">
-                <Sider 
-                    width={380} 
+                <Sider
+                    width={380}
                     className={`chat-sider ${isMobileView && showChatContent ? 'mobile-hidden' : ''}`}
                 >
                     <div className="chat-sider-header">
                         <div className="user-profile">
                             <Badge dot offset={[-2, 32]} status="processing">
-                                <Avatar 
-                                    size={44} 
-                                    src={currentUser?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.username || 'Me')}&background=00A3FF&color=fff`} 
+                                <Avatar
+                                    size={44}
+                                    src={currentUser?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.username || 'Me')}&background=00A3FF&color=fff`}
                                 />
                             </Badge>
                             <div className="user-info">
@@ -320,7 +533,7 @@ export default function WhatsAppInbox() {
                         <div className="search-container">
                             <div className="theme-search-wrapper">
                                 <SearchOutlined className="search-icon" />
-                                <input 
+                                <input
                                     className="theme-search-input"
                                     placeholder="Search or start new chat"
                                     value={q}
@@ -343,6 +556,25 @@ export default function WhatsAppInbox() {
                         <Tabs
                             defaultActiveKey="all"
                             className="chat-tabs"
+                            tabBarExtraContent={
+                                <Space style={{ paddingRight: '12px' }}>
+                                    <Button 
+                                        size="small"
+                                        icon={<RocketOutlined />} 
+                                        onClick={() => window.location.href = '/dashboard/whatsapp/broadcast'}
+                                    >
+                                        Broadcast
+                                    </Button>
+                                    <Button 
+                                        size="small"
+                                        type="primary" 
+                                        icon={<PlusOutlined />} 
+                                        onClick={() => setIsNewChatModalVisible(true)}
+                                    >
+                                        New Chat
+                                    </Button>
+                                </Space>
+                            }
                         >
                             <Tabs.TabPane
                                 tab={
@@ -374,27 +606,29 @@ export default function WhatsAppInbox() {
                             displayConvs.map((item) => {
                                 const active = item.wa_from === selected;
                                 return (
-                                    <div 
+                                    <div
                                         key={item.wa_from}
                                         className={`chat-list-item ${active ? 'selected' : ''}`}
                                         onClick={() => handleSelectConversation(item.wa_from)}
                                     >
                                         <div className="ant-list-item-meta">
                                             <Badge dot offset={[-2, 36]} status={item.isNew ? "default" : "processing"}>
-                                                <Avatar 
-                                                    size={44} 
+                                                <Avatar
+                                                    size={44}
                                                     src={`https://ui-avatars.com/api/?name=${encodeURIComponent(item.wa_from)}&background=random&color=fff`}
                                                 />
                                             </Badge>
                                             <div className="chat-item-content" style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
-                                                <div className="chat-item-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <Title level={5} style={{ margin: 0, fontSize: '14px' }}>{item.wa_from}</Title>
-                                                    <Text type="secondary" style={{ fontSize: '11px' }}>
-                                                        {item.lastTime ? new Date(item.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (item.isNew ? 'New' : '')}
+                                                <div className="chat-item-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                                                    <Title level={5} style={{ margin: 0, fontSize: '15px', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '70%' }}>
+                                                        {item.wa_from}
+                                                    </Title>
+                                                    <Text type="secondary" style={{ fontSize: '11px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                                        {item.lastAt ? formatRelativeTime(item.lastAt) : (item.isNew ? 'New' : '')}
                                                     </Text>
                                                 </div>
-                                                <div className="chat-item-description" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
-                                                    <Text type="secondary" ellipsis className="last-message" style={{ fontSize: '13px', maxWidth: '85%', color: item.isNew ? '#1890ff' : 'inherit' }}>
+                                                <div className="chat-item-summary" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <Text type="secondary" ellipsis style={{ fontSize: '13px', color: item.unreadCount > 0 ? '#1890ff' : '#8c8c8c', maxWidth: '85%' }}>
                                                         {item.lastPreview || 'No messages yet'}
                                                     </Text>
                                                     {item.unreadCount > 0 && (
@@ -429,9 +663,9 @@ export default function WhatsAppInbox() {
                             <div className="chat-header">
                                 <div className="chat-user-info">
                                     {isMobileView && (
-                                        <Button 
-                                            type="text" 
-                                            icon={<ArrowLeftOutlined />} 
+                                        <Button
+                                            type="text"
+                                            icon={<ArrowLeftOutlined />}
                                             onClick={() => setShowChatContent(false)}
                                         />
                                     )}
@@ -453,11 +687,13 @@ export default function WhatsAppInbox() {
                                 {msgLoading ? (
                                     <div className="center-spin"><Spin /></div>
                                 ) : (
-                                    messages.map((m) => (
+                                    [...messages].reverse().map((m) => (
                                         <div key={m.id} className={`message ${m.direction === 'outbound' ? 'sent' : 'received'}`}>
                                             <div className="message-content">
                                                 {m.direction === 'received' && <div className="message-sender">{selected}</div>}
-                                                <Text>{renderMessageBody(m)}</Text>
+                                                <div className="message-body">
+                                                    {renderMessageBody(m)}
+                                                </div>
                                                 <div className="message-footer">
                                                     <span className="message-time">
                                                         {m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
@@ -472,19 +708,52 @@ export default function WhatsAppInbox() {
                                         </div>
                                     ))
                                 )}
+
+                                {typingStatus[selected] && (
+                                    <div className="message received">
+                                        <div className="message-content typing-indicator-bubble">
+                                            <div className="typing-dots">
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 <div ref={messagesEndRef} />
                             </div>
 
                             <div className="chat-footer">
                                 <div className="chat-input-wrapper">
                                     <div className="input-actions">
-                                        <Button 
-                                            type="text" 
-                                            icon={<FileTextOutlined />} 
-                                            className="action-icon" 
+                                        <Button
+                                            type="text"
+                                            icon={<FileTextOutlined />}
+                                            className="action-icon"
                                             title="Send Template"
                                             onClick={() => setIsTemplateModalOpen(true)}
                                         />
+                                        <div className="media-upload-wrapper" style={{ display: 'inline-block' }}>
+                                            <input
+                                                type="file"
+                                                id="whatsapp-media-upload"
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        handleMediaUpload(e.target.files[0]);
+                                                        e.target.value = ''; // Reset for same file selection
+                                                    }
+                                                }}
+                                            />
+                                            <Tooltip title="Upload Media (Images: 5MB, Video: 16MB, Docs: 25MB)">
+                                                <Button
+                                                    type="text"
+                                                    icon={<PaperClipOutlined />}
+                                                    className="action-icon"
+                                                    onClick={() => document.getElementById('whatsapp-media-upload').click()}
+                                                />
+                                            </Tooltip>
+                                        </div>
                                         <Button type="text" icon={<ReloadOutlined />} className="action-icon" onClick={() => refetchMsgs()} />
                                     </div>
                                     <Input.TextArea
@@ -500,10 +769,10 @@ export default function WhatsAppInbox() {
                                             }
                                         }}
                                     />
-                                    <Button 
-                                        type="primary" 
-                                        shape="circle" 
-                                        icon={<SendOutlined />} 
+                                    <Button
+                                        type="primary"
+                                        shape="circle"
+                                        icon={<SendOutlined />}
                                         disabled={!canSend}
                                         loading={isSending}
                                         onClick={handleSendMessage}
@@ -564,7 +833,7 @@ export default function WhatsAppInbox() {
                         label="Approved Template"
                         rules={[{ required: true, message: 'Please select a template' }]}
                     >
-                        <Select 
+                        <Select
                             placeholder="Select a template"
                             onChange={(val) => {
                                 const t = templates.find(temp => temp.name === val);

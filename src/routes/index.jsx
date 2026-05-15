@@ -83,6 +83,7 @@ import Payment from "../dashboard/module/settings/payment/index.jsx";
 import WhatsappSettings from "../dashboard/module/settings/whatsapp/index.jsx";
 import WhatsAppMessages from "../dashboard/module/whatsapp/WhatsAppMessages.jsx";
 import WhatsAppInbox from "../dashboard/module/whatsapp/WhatsAppInbox.jsx";
+import BroadcastList from "../dashboard/module/whatsapp/broadcast/BroadcastList.jsx";
 import Storage from "../superadmin/module/storage/index.jsx";
 import Project from "../dashboard/module/crm/project/index.jsx";
 import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail.jsx";
@@ -502,6 +503,10 @@ const routes = createBrowserRouter([
       {
         path: "whatsapp-chat",
         element: <WhatsAppInbox />,
+      },
+      {
+        path: "whatsapp/broadcast",
+        element: <BroadcastList />,
       },
       {
         path: "settings/tax",

@@ -517,37 +517,6 @@ const LeadList = ({
       },
     },
     {
-      title: "Score",
-      dataIndex: "lead_score",
-      key: "lead_score",
-      width: 90,
-      sorter: (a, b) => (a.lead_score || 0) - (b.lead_score || 0),
-      render: (score) => {
-        if (score === null || score === undefined) {
-          return <Text type="secondary" style={{ fontSize: '12px', fontStyle: 'italic' }}>Analyzing...</Text>;
-        }
-
-        let color = "#ff4d4f"; // Low
-        if (score >= 80) color = "#52c41a"; // High
-        else if (score >= 50) color = "#1890ff"; // Medium
-
-        return (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              backgroundColor: color,
-              boxShadow: `0 0 4px ${color}`
-            }} />
-            <Text strong style={{ fontSize: "14px", color: color }}>
-              {score}%
-            </Text>
-          </div>
-        );
-      }
-    },
-    {
       title: "Lead Owner",
       dataIndex: "Creator",
       key: "owner",

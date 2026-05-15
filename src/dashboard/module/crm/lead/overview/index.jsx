@@ -368,9 +368,18 @@ console.log("leaddata", initialLeadData)
   };
 
   const getPhoneWithCode = (phoneCode, phoneNumber) => {
-    if (!phoneNumber || phoneNumber.startsWith("META_")) return "-";
+    if (!phoneNumber || phoneNumber.toString().startsWith("META_")) return "-";
     const country = countries.find((c) => c.id === phoneCode);
-    return country ? `${country.phoneCode} ${phoneNumber}` : phoneNumber;
+    if (!country) return phoneNumber;
+    
+    const cleanCode = country.phoneCode.toString().replace(/\D/g, '');
+    const cleanPhone = phoneNumber.toString().replace(/\D/g, '');
+    
+    if (cleanPhone.startsWith(cleanCode)) {
+      return `${country.phoneCode} ${phoneNumber.toString().replace(/\D/g, '').slice(cleanCode.length)}`;
+    }
+    
+    return `${country.phoneCode} ${phoneNumber}`;
   };
 
   const getPipelineName = (pipelineId) => {
@@ -520,11 +529,8 @@ console.log("leaddata", initialLeadData)
         {(localLeadData?.contact_id || localLeadData?.company_id) && (
           <div className="profile-stats" >
             <div className="stat-item">
-              <div className="stat-icon">
-                <FiMail />
-              </div>
               <div className="stat-content">
-                <div className="stat-label">Email Address</div>
+                <div className="stat-label"><FiMail style={{ marginRight: '8px', color: '#1890ff' }} /> Email Address</div>
                 {localLeadData?.contact_id && associatedContact ? (
                   <a
                     href={`mailto:${associatedContact?.email}`}
@@ -538,11 +544,8 @@ console.log("leaddata", initialLeadData)
               </div>
             </div>
             <div className="stat-item">
-              <div className="stat-icon">
-                <FiPhone />
-              </div>
               <div className="stat-content">
-                <div className="stat-label">Phone Number</div>
+                <div className="stat-label"><FiPhone style={{ marginRight: '8px', color: '#1890ff' }} /> Phone Number</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {localLeadData?.contact_id && associatedContact ? (
                     <a
@@ -584,11 +587,8 @@ console.log("leaddata", initialLeadData)
               </div>
             </div>
             <div className="stat-item">
-              <div className="stat-icon">
-                <FiMapPin />
-              </div>
               <div className="stat-content">
-                <div className="stat-label">Location</div>
+                <div className="stat-label"><FiMapPin style={{ marginRight: '8px', color: '#1890ff' }} /> Location</div>
                 {localLeadData?.contact_id && associatedContact ? (
                   <Tooltip
                     title={`${associatedContact?.address || ""} ${associatedContact?.city ? `, ${associatedContact?.city}` : ""}${associatedContact?.state ? `, ${associatedContact?.state}` : ""}${associatedContact?.country ? `, ${associatedContact?.country}` : ""}`}
@@ -793,28 +793,12 @@ console.log("leaddata", initialLeadData)
 
           .stat-item {
             display: flex;
-            align-items: flex-start;
-            gap: 16px;
+            flex-direction: column;
+            gap: 4px;
             padding: 16px;
             background: #f8fafc;
             border-radius: 12px;
             transition: all 0.3s ease;
-          }
-
-          .stat-item:hover {
-            background: #f0f5ff;
-            transform: translateY(-2px);
-          }
-
-          .stat-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
           }
 
           .stat-content {

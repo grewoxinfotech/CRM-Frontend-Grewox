@@ -32,7 +32,7 @@ import { useGetUsersQuery } from "../../../../../user-management/users/services/
 import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
-import { useCreateFollowupCallMutation } from "./services/followupCallApi";
+import { useCreateFollowupCallMutation } from "../../../services/LeadApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -718,7 +718,7 @@ const CreateFollowupCall = ({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "1fr",
             gap: "16px",
             marginTop: "20px",
           }}
@@ -730,18 +730,6 @@ const CreateFollowupCall = ({
           >
             <Input
               placeholder="e.g., Product Demo Call"
-              size="large"
-              style={{ borderRadius: "10px", height: "48px" }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="call_purpose"
-            label={<span style={formItemStyle}>Purpose</span>}
-            rules={[{ required: true, message: "Please enter purpose" }]}
-          >
-            <Input
-              placeholder="Enter purpose"
               size="large"
               style={{ borderRadius: "10px", height: "48px" }}
             />

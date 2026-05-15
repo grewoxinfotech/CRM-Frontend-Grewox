@@ -101,12 +101,33 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
         {
             title: 'Timeline',
             key: 'timeline',
-            width: 200,
-            render: (_, record) => (
-                <div style={{ display: 'flex', flexDirection: 'column', fontSize: '12px' }}>
-                    <span><FiCalendar size={10} /> {dayjs(record.startDate).format('DD MMM')} - {dayjs(record.dueDate).format('DD MMM YYYY')}</span>
+            width: 220,
+            render: (_, record) => {
+              const dueDate = dayjs(record.dueDate).startOf('day');
+              const today = dayjs().startOf('day');
+              const tomorrow = today.add(1, 'day');
+              
+              let tag = null;
+              if (dueDate.isSame(today, 'day')) {
+                tag = <Tag color="blue" style={{ borderRadius: '12px', fontSize: '10px' }}>TODAY</Tag>;
+              } else if (dueDate.isSame(tomorrow, 'day')) {
+                tag = <Tag color="cyan" style={{ borderRadius: '12px', fontSize: '10px' }}>TOMORROW</Tag>;
+              } else if (dueDate.isBefore(today, 'day') && record.status !== 'completed') {
+                tag = <Tag color="error" style={{ borderRadius: '12px', fontSize: '10px' }}>OVERDUE</Tag>;
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Text strong style={{ fontSize: '13px' }}>{dayjs(record.dueDate).format('DD MMM YYYY')}</Text>
+                        {tag}
+                    </div>
+                    <Text type="secondary" style={{ fontSize: '11px' }}>
+                        <FiCalendar size={10} /> {dayjs(record.startDate).format('DD MMM')} - {dayjs(record.dueDate).format('DD MMM')}
+                    </Text>
                 </div>
-            )
+              );
+            }
         },
         {
             title: 'Assigned To',

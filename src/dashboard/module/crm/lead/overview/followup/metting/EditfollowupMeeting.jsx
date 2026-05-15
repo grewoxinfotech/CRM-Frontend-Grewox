@@ -34,9 +34,9 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
 import { message } from "antd";
 import {
-  useUpdateFollowupMeetingMutation,
   useGetFollowupMeetingByIdQuery,
 } from "./services/followupMettingApi";
+import { useUpdateFollowupMeetingMutation } from "../../../services/LeadApi";
 
 const { Text } = Typography;
 const { Option } = Select;

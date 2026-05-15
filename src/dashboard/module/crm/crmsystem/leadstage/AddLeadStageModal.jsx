@@ -9,7 +9,7 @@ import AddPipelineModal from "../pipeline/AddPipelineModal";
 const { Text } = Typography;
 const { confirm } = Modal;
 
-const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
+const AddLeadStageModal = ({ isOpen, onClose, pipelineId, stageType = "lead" }) => {
   const [form] = Form.useForm();
   const [addLeadStage, { isLoading: isAddingStage }] = useAddLeadStageMutation();
   const [updateLeadStage, { isLoading: isUpdatingStage }] = useUpdateLeadStageMutation();
@@ -26,7 +26,7 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
       const createData = {
         stageName: values.name,
         pipeline: selectedPipeline,
-        stageType: "lead",
+        stageType: stageType,
         isDefault: isDefault
       };
 
@@ -36,7 +36,7 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
         const existingDefaultStage = stages.find(
           stage => stage.pipeline === selectedPipeline &&
             stage.isDefault &&
-            stage.stageType === "lead"
+            stage.stageType === stageType
         );
 
         if (existingDefaultStage) {

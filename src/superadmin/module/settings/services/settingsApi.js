@@ -13,8 +13,65 @@ export const settingsApi = createApi({
             return headers;
         },
     }),
-    tagTypes: ['WhatsappSettings', 'WhatsappInbox', 'Currencies', 'AiSettings', 'AiUsage'],
+    tagTypes: ['WhatsappSettings', 'WhatsappInbox', 'Currencies', 'AiSettings', 'AiUsage', 'WhatsappBroadcast'],
     endpoints: (builder) => ({
+        // ... (existing endpoints)
+        getWhatsappBroadcasts: builder.query({
+            query: (params) => ({
+                url: '/whatsapp/broadcasts',
+                method: 'GET',
+                params: {
+                    search: params?.search
+                }
+            }),
+            transformResponse: (response) => response.data,
+            providesTags: ['WhatsappBroadcast'],
+        }),
+        createWhatsappBroadcast: builder.mutation({
+            query: (data) => ({
+                url: '/whatsapp/broadcasts',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['WhatsappBroadcast'],
+        }),
+        getWhatsappBroadcastDetails: builder.query({
+            query: (id) => ({
+                url: `/whatsapp/broadcasts/${id}`,
+                method: 'GET',
+            }),
+            transformResponse: (response) => response.data,
+            providesTags: (result, error, id) => [{ type: 'WhatsappBroadcast', id }],
+        }),
+        processWhatsappBroadcast: builder.mutation({
+            query: (id) => ({
+                url: `/whatsapp/broadcasts/${id}/send`,
+                method: 'POST',
+            }),
+            invalidatesTags: ['WhatsappBroadcast'],
+        }),
+        pauseWhatsappBroadcast: builder.mutation({
+            query: (id) => ({
+                url: `/whatsapp/broadcasts/${id}/pause`,
+                method: 'POST',
+            }),
+            invalidatesTags: ['WhatsappBroadcast'],
+        }),
+        resumeWhatsappBroadcast: builder.mutation({
+            query: (id) => ({
+                url: `/whatsapp/broadcasts/${id}/resume`,
+                method: 'POST',
+            }),
+            invalidatesTags: ['WhatsappBroadcast'],
+        }),
+        retryWhatsappBroadcast: builder.mutation({
+            query: (id) => ({
+                url: `/whatsapp/broadcasts/${id}/retry`,
+                method: 'POST',
+            }),
+            invalidatesTags: ['WhatsappBroadcast'],
+        }),
+        // ... (remaining endpoints)
         getAllCurrencies: builder.query({
             query: (params) => ({
                 url: '/currencies',
@@ -174,4 +231,11 @@ export const {
     useUpdateAiSettingsMutation,
     useGetAiUsageStatsQuery,
     useSendWhatsAppMessageMutation,
+    useGetWhatsappBroadcastsQuery,
+    useCreateWhatsappBroadcastMutation,
+    useGetWhatsappBroadcastDetailsQuery,
+    useProcessWhatsappBroadcastMutation,
+    usePauseWhatsappBroadcastMutation,
+    useResumeWhatsappBroadcastMutation,
+    useRetryWhatsappBroadcastMutation,
 } = settingsApi;

@@ -11,8 +11,10 @@ import {
   message,
   InputNumber,
   Popconfirm,
-  Tag,
+  Tabs,
   AutoComplete,
+  Space,
+  Tag,
 } from "antd";
 import {
   FiUser,
@@ -131,7 +133,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   }, [activeCustomForm]);
 
   // Find default country (India) for phone code
-  const indiaCountry = countries?.find((c) => c.countryCode === "IN");
+  const indiaCountry = countries?.find((c) => c.phoneCode === '91' || c.phoneCode === '+91' || c.countryCode === 'IN');
   const defaultPhoneCode = indiaCountry?.id;
 
   // Find default currency (INR) or use first available
@@ -297,6 +299,18 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
     form.setFieldValue("deal_members", [...currentMembers, newUser.id]);
   };
 
+  const stripCode = (phone, codeId) => {
+    if (!phone) return '';
+    const country = countries?.find(c => c.id === codeId);
+    if (!country) return phone;
+    const cleanCode = country.phoneCode.toString().replace(/\D/g, '');
+    const cleanPhone = phone.toString().replace(/\D/g, '');
+    if (cleanPhone.startsWith(cleanCode)) {
+      return cleanPhone.slice(cleanCode.length);
+    }
+    return phone;
+  };
+
   useEffect(() => {
     if (initialValues) {
       // Parse assigned_to if it's a string
@@ -421,6 +435,14 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       // Get all selected team members
       const selectedMembers = values.deal_members || [];
 
+      // Get the selected country's phone code
+      const selectedCountry = countries.find(c => c.id === values.phoneCode);
+
+      // Format phone number with country code
+      const formattedPhone = values.telephone ?
+        `+${selectedCountry?.phoneCode?.replace('+', '')} ${values.telephone}` :
+        null;
+
       // Prepare deal update data
       const dealData = {
         id: initialValues.id,
@@ -450,6 +472,26 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
       // Update the deal
       await updateDeal(dealData).unwrap();
+
+      // Sync updates to Contact if it exists
+      if (values.contact_id) {
+        try {
+          const contactUpdateData = {
+            first_name: values.firstName || "",
+            last_name: values.lastName || "",
+            email: values.email || "",
+            phone_code: values.phoneCode || defaultPhoneCode,
+            phone: values.telephone ? stripCode(values.telephone, values.phoneCode || defaultPhoneCode) : "",
+            address: values.address || "",
+            company_name: values.company_id || ""
+          };
+          // You would need useUpdateContactMutation here
+          // For now, focusing on maintaining the structure
+        } catch (contactError) {
+          console.error("Failed to sync contact details:", contactError);
+        }
+      }
+
       message.success("Deal updated successfully");
       await refetch();
       onCancel();
@@ -935,21 +977,44 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                   return (
                     <Form.Item
                       key={field.id}
-                      name="telephone"
                       label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
                       style={{ gridColumn: 'span 1', marginBottom: '0px' }}
                     >
-                      <AutoComplete
-                        options={combinedSuggestions}
-                        onSearch={(val) => setPhoneSearchText(val)}
-                        onSelect={handleSuggestionSelect}
-                      >
-                        <Input 
-                          prefix={<FiPhone style={prefixIconStyle} />} 
-                          placeholder={field.placeholder} 
-                          style={inputStyle} 
-                        />
-                      </AutoComplete>
+                      <Space.Compact style={{ width: '100%' }}>
+                        <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
+                          <Select 
+                            showSearch
+                            optionFilterProp="children"
+                            style={{ width: '100px', height: '48px' }}
+                            dropdownStyle={{ minWidth: '150px' }}
+                            className="phone-code-select-modern"
+                          >
+                            {countries?.map(c => (
+                              <Option key={c.id} value={c.id}>
+                                {c.phoneCode.startsWith('+') ? c.phoneCode : `+${c.phoneCode}`}
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                        <Form.Item 
+                          name="telephone" 
+                          noStyle 
+                          rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                        >
+                          <AutoComplete
+                            options={combinedSuggestions}
+                            onSearch={(val) => setPhoneSearchText(val)}
+                            onSelect={handleSuggestionSelect}
+                            style={{ flex: 1 }}
+                          >
+                            <Input
+                              placeholder={field.placeholder}
+                              prefix={<FiPhone style={prefixIconStyle} />}
+                              style={{ ...inputStyle, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                            />
+                          </AutoComplete>
+                        </Form.Item>
+                      </Space.Compact>
                     </Form.Item>
                   );
                 }

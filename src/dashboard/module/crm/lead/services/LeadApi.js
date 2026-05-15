@@ -179,6 +179,54 @@ export const leadApi = createApi({
       }),
       invalidatesTags: ["Followup"],
     }),
+    createFollowupCall: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/followup-calls/${id}`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Followup"],
+    }),
+    updateFollowupCall: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/followup-calls/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Followup"],
+    }),
+    createFollowupMeeting: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/followup-meetings/${id}`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Followup"],
+    }),
+    updateFollowupMeeting: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/followup-meetings/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Followup"],
+    }),
+    createFollowupTask: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/followup-tasks/${id}`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Followup"],
+    }),
+    updateFollowupTask: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/followup-tasks/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Followup"],
+    }),
     deleteLeadFile: builder.mutation({
       query: ({ id, filename }) => ({
         url: `/leads/files/${id}`,
@@ -220,4 +268,10 @@ export const {
   useDeleteFollowupTaskMutation,
   useDeleteLeadFileMutation,
   useBulkImportLeadsMutation,
+  useCreateFollowupCallMutation,
+  useUpdateFollowupCallMutation,
+  useCreateFollowupMeetingMutation,
+  useUpdateFollowupMeetingMutation,
+  useCreateFollowupTaskMutation,
+  useUpdateFollowupTaskMutation,
 } = leadApi;

@@ -38,7 +38,7 @@ import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
 import { message } from "antd";
-import { useCreateFollowupMeetingMutation } from "./services/followupMettingApi";
+import { useCreateFollowupMeetingMutation } from "../../../services/LeadApi";
 
 const { Text } = Typography;
 const { Option } = Select;
