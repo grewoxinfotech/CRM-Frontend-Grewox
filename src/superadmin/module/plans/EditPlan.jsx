@@ -51,7 +51,8 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 max_customers: initialValues.max_customers?.toString(),
                 status: initialValues.status === 'active',
                 is_default: initialValues.is_default || false,
-                duration: initialValues.duration
+                duration: initialValues.duration,
+                features: initialValues.features || {}
             };
 
             console.log('Setting form values:', formValues);
@@ -117,11 +118,11 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 trial_period: values.trial_period?.toString(),
                 storage_limit: form.getFieldValue('_storage_limit_mb') || values.storage_limit?.toString(),
                 max_users: values.max_users?.toString(),
-                max_clients: values.max_clients?.toString(),
                 max_vendors: values.max_vendors?.toString(),
                 max_customers: values.max_customers?.toString(),
                 status: values.status ? 'active' : 'inactive',
-                is_default: values.is_default || false
+                is_default: values.is_default || false,
+                features: values.features || {}
             };
 
             const response = await updatePlan({ idd, updateData }).unwrap();
@@ -642,32 +643,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                             onChange={(value) => form.setFieldsValue({ max_users: value?.toString() })}
                         />
                     </Form.Item>
-
-                    <Form.Item
-                        name="max_clients"
-                        label={
-                            <span style={{
-                                fontSize: '14px',
-                                fontWeight: '500',
-                            }}>
-                                Max Clients
-                            </span>
-                        }
-                        style={{ flex: 1, marginTop: "22px" }}
-                    >
-                        <InputNumber
-                            prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            size="large"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                            }}
-                            min={1}
-                            onChange={(value) => form.setFieldsValue({ max_clients: value?.toString() })}
-                        />
-                    </Form.Item>
                 </div>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
@@ -769,6 +744,65 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                         onChange={(value) => form.setFieldsValue({ is_default: value })}
                     />
                 </Form.Item>
+
+                <Divider orientation="left" style={{ margin: '24px 0' }}>
+                    <span style={{ fontSize: '16px', fontWeight: '600', color: '#1890ff' }}>Feature Access</span>
+                </Divider>
+
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                    gap: '24px',
+                    backgroundColor: '#f8fafc',
+                    padding: '20px',
+                    borderRadius: '12px',
+                    border: '1px solid #e6e8eb'
+                }}>
+                    <Form.Item
+                        name={['features', 'whatsapp']}
+                        label="WhatsApp Automation"
+                        valuePropName="checked"
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'ai_features']}
+                        label="AI Analysis & Chat"
+                        valuePropName="checked"
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'reports']}
+                        label="Advanced Reports"
+                        valuePropName="checked"
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'bulk_operations']}
+                        label="Bulk Import/Export"
+                        valuePropName="checked"
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'workflows']}
+                        label="Automated Workflows"
+                        valuePropName="checked"
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+                </div>
 
                 <Divider style={{ margin: '24px 0' }} />
 

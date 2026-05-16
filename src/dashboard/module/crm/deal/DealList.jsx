@@ -145,8 +145,8 @@ const DealList = ({
           <Text style={{ color: "#1890ff", fontWeight: "500" }}>Overview</Text>
         ),
         onClick: (e) => {
-          e.stopPropagation();
-          navigate(`/dashboard/crm/deals/${record.id}`);
+          e.domEvent.stopPropagation();
+          onDealClick(record);
         },
       },
       {
@@ -155,7 +155,10 @@ const DealList = ({
         label: (
           <Text style={{ color: "#52c41a", fontWeight: "500" }}>Edit Deal</Text>
         ),
-        onClick: (e) => onEdit(record),
+        onClick: (e) => {
+          e.domEvent.stopPropagation();
+          onEdit(record);
+        },
       },
       {
         key: "delete",
@@ -165,7 +168,10 @@ const DealList = ({
             Delete Deal
           </Text>
         ),
-        onClick: () => onDelete(record),
+        onClick: (e) => {
+          e.domEvent.stopPropagation();
+          onDelete(record);
+        },
       },
     ],
   });

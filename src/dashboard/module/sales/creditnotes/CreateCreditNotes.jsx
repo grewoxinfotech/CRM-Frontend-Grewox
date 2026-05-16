@@ -89,15 +89,20 @@ const CreateCreditNotes = ({ open, onCancel }) => {
       form.setFieldValue("customer", customerDetails?.name || "");
       form.setFieldValue("customer_id", selectedInvoice.customer);
 
-      // Update selected currency icon
+      // Update selected currency icon from currenciesData or fallback
+      const currencyId = selectedInvoice.currency;
       const currencyDetails = currenciesData?.find(
-        (curr) => curr.id === selectedInvoice.currency
+        (curr) => curr.id === currencyId
       );
+
       if (currencyDetails) {
         setSelectedCurrency(currencyDetails.currencyIcon || "₹");
+      } else if (selectedInvoice.currencyIcon) {
+        setSelectedCurrency(selectedInvoice.currencyIcon);
       }
 
       // Store selected invoice remaining amount for validation
+      form.setFieldValue("max_amount", remainingAmount);
       form.setFieldValue("max_amount", remainingAmount);
     }
   };

@@ -39,7 +39,19 @@ const CreateRevenue = ({ open, onCancel, onSubmit }) => {
   const { data: custdata } = useGetCustomersQuery();
   const { data: currencyData } = useGetAllCurrenciesQuery();
   const customers = custdata?.data || [];
-  const currencies = currencyData || [];
+  const currencies = currencyData?.data || currencyData || [];
+
+  React.useEffect(() => {
+    if (Array.isArray(currencies) && currencies.length > 0) {
+      const defaultCurrency =
+        currencies.find((c) => c.currencyCode === "INR" || c.currencyName === "INR") ||
+        currencies[0];
+      
+      if (defaultCurrency) {
+        form.setFieldValue("currency", defaultCurrency.id);
+      }
+    }
+  }, [currencies, form]);
 
   const handleSubmit = async (values) => {
     try {
@@ -134,7 +146,7 @@ const CreateRevenue = ({ open, onCancel, onSubmit }) => {
               justifyContent: "center",
             }}
           >
-            <FiDollarSign style={{ fontSize: "24px", color: "#ffffff" }} />
+            <span style={{ fontSize: "24px", color: "#ffffff", fontWeight: "bold" }}>₹</span>
           </div>
           <div>
             <h2
@@ -258,11 +270,7 @@ const CreateRevenue = ({ open, onCancel, onSubmit }) => {
             >
               <Input
                 type="number"
-                prefix={
-                  <FiDollarSign
-                    style={{ color: "#1890ff", fontSize: "16px" }}
-                  />
-                }
+                prefix={<span style={{ color: "#1890ff", fontSize: "16px", fontWeight: "bold" }}>₹</span>}
                 placeholder="Enter amount"
                 size="large"
                 style={{

@@ -44,22 +44,22 @@ import {
 } from "react-icons/fi";
 import BrandConfig from "../../../utils/brandName";
 import CommonSidebar from "../../../components/Sidebar/Sidebar";
+import useFeatureAccess from "../../../hooks/useFeatureAccess";
+import LimitReachedModal from "../../../components/LimitReachedModal";
+import { useState } from "react";
 
 const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUser, rolesData }) => {
+  const { hasFeature, isSubscriptionExpired } = useFeatureAccess();
+  const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
+  const [lockedFeatureName, setLockedFeatureName] = useState('');
+
   const userRole = useSelector(selectUserRole);
   const isSuperAdminCompanyLogin = localStorage.getItem('isSuperAdminCompanyLogin') === 'true';
-  const subscriptionId = loggedInUser?.client_plan_id;
-  const shouldFetchSubscription = subscriptionId && userRole !== 'super-admin' && !isSuperAdminCompanyLogin;
-  
-  const { data: subscriptionData, isLoading: isSubscriptionLoading } = useGetsubcriptionByIdQuery(subscriptionId, {
-    skip: !shouldFetchSubscription
-  });
 
-  const isSubscriptionExpired = useMemo(() => {
-    if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return false;
-    if (!subscriptionData?.data?.end_date) return false;
-    return moment(subscriptionData.data.end_date).isBefore(moment());
-  }, [subscriptionData, userRole, isSuperAdminCompanyLogin]);
+  const handleLockedClick = (item) => {
+    setLockedFeatureName(item.title);
+    setUpgradeModalVisible(true);
+  };
 
   const userRoleData = userRole?.toLowerCase() !== 'client' ?
     rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id) : null;
@@ -96,13 +96,13 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       isDropdown: true,
       permission: 'dashboards-crm',
       subItems: [
+        { title: "Calendar", icon: <FiCalendar />, path: "/dashboard/crm/task-calendar", permission: "dashboards-TaskCalendar" },
         { title: "Leads", icon: <FiTarget />, path: "/dashboard/crm/leads", permission: "dashboards-lead" },
         { title: "Deals", icon: <FiShoppingBag />, path: "/dashboard/crm/deals", permission: "dashboards-deal" },
         { title: "Company", icon: <FiBriefcase />, path: "/dashboard/crm/company-account", permission: "dashboards-crm-company-account" },
         { title: "Contact", icon: <FiFileText />, path: "/dashboard/crm/contact", permission: "dashboards-crm-contact" },
         { title: "Custom Form", icon: <FiFileText />, path: "/dashboard/crm/custom-form", permission: "dashboards-custom-form" },
         { title: "Task", icon: <FiCheckSquare />, path: "/dashboard/crm/tasks", permission: "dashboards-task" },
-        { title: "Task Calendar", icon: <FiCalendar />, path: "/dashboard/crm/task-calendar", permission: "dashboards-TaskCalendar" },
         { title: "CRM System Setup", icon: <FiSettings />, path: "/dashboard/crm-setup", permission: "dashboards-systemsetup" }
       ].filter(item => !item.permission || checkPermission(item.permission))
     },
@@ -116,7 +116,14 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
         { title: "Customer", icon: <FiUsers />, path: "/dashboard/sales/customer", permission: "dashboards-sales-customer" },
         { title: "Invoice", icon: <FiFileText />, path: "/dashboard/sales/invoice", permission: "dashboards-sales-invoice" },
         { title: "Credit Notes", icon: <FiFile />, path: "/dashboard/sales/credit-notes", permission: "dashboards-sales-credit-notes" },
-        { title: "Revenue", icon: <FiTrendingUp />, path: "/dashboard/sales/revenue", permission: "dashboards-sales-revenue" }
+        { 
+          title: "Revenue", 
+          icon: <FiTrendingUp />, 
+          path: "/dashboard/sales/revenue", 
+          permission: "dashboards-sales-revenue",
+          isLocked: !hasFeature('reports'),
+          onLockedClick: handleLockedClick
+        }
       ].filter(item => !item.permission || checkPermission(item.permission))
     },
     {
@@ -153,6 +160,8 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       icon: <FiPhone />,
       isDropdown: true,
       permission: "dashboards-communication",
+      isLocked: !hasFeature('whatsapp'),
+      onLockedClick: handleLockedClick,
       subItems: [
         { title: "Inbox", icon: <FiMessageSquare />, path: "/dashboard/whatsapp/inbox", permission: "dashboards-communication" },
         { title: "Message log", icon: <FiList />, path: "/dashboard/whatsapp/messages", permission: "dashboards-communication" }
@@ -172,6 +181,13 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
         { title: "WhatsApp API", icon: <FiPhone />, path: "/dashboard/settings/whatsapp" },
         { title: "Website Webhooks", icon: <FiLink />, path: "/dashboard/integrations/webhooks" }
       ]
+    },
+    {
+      title: "Workflows",
+      icon: <FiZap />,
+      path: "/dashboard/crm/automation",
+      isLocked: !hasFeature('workflows'),
+      onLockedClick: handleLockedClick,
     },
     {
       title: "HRM",
@@ -237,14 +253,23 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
   const filteredMenuItems = allMenuItems.filter(shouldShowMenuItem);
 
   return (
-    <CommonSidebar 
-      menuItems={filteredMenuItems}
-      brandName={`${BrandConfig.appCapitalName} CRM`}
-      profilePath="/dashboard/profile"
-      collapsed={collapsed}
-      onCollapsedChange={onCollapsedChange}
-      isSidebarReady={!shouldFetchSubscription || !isSubscriptionLoading}
-    />
+    <>
+      <CommonSidebar 
+        menuItems={filteredMenuItems}
+        brandName={`${BrandConfig.appCapitalName} CRM`}
+        profilePath="/dashboard/profile"
+        collapsed={collapsed}
+        onCollapsedChange={onCollapsedChange}
+        isSidebarReady={true}
+      />
+
+      <LimitReachedModal
+        visible={upgradeModalVisible}
+        onCancel={() => setUpgradeModalVisible(false)}
+        title={`${lockedFeatureName} Locked`}
+        message={`The ${lockedFeatureName} feature is not included in your current plan. Upgrade now to unlock automated messaging and advanced features!`}
+      />
+    </>
   );
 };
 

@@ -15,7 +15,11 @@ import {
   Popover,
   Switch,
   Select,
+  Drawer,
+  Form,
+  DatePicker,
 } from "antd";
+import { FiFilter } from "react-icons/fi";
 import {
   FiPlus,
   FiSearch,
@@ -44,6 +48,7 @@ import {
 import {
   useGetSourcesQuery,
 } from "../crmsystem/souce/services/SourceApi";
+import { useGetUsersQuery } from "../../user-management/users/services/userApi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -63,17 +68,46 @@ const Deal = () => {
     current: 1,
     pageSize: 10,
   });
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({});
+  const [dateRange, setDateRange] = useState(null);
+
   const loggedInUser = useSelector(selectCurrentUser);
   const navigate = useNavigate();
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: dealStages = [] } = useGetLeadStagesQuery();
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+  const { data: usersResponse } = useGetUsersQuery();
   const [deleteDeal] = useDeleteDealMutation();
   const { data: deals, isLoading } = useGetDealsQuery({
-    page: pagination.current,
-    pageSize: pagination.pageSize,
+    page: 1,
+    pageSize: 1000,
     search: searchText,
+  });
+
+  const allDeals = deals?.data || [];
+  const filteredDeals = allDeals.filter(deal => {
+    // Date Range
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const dealDate = moment(deal.createdAt).startOf('day');
+      const start = moment(dateRange[0].valueOf ? dateRange[0].valueOf() : dateRange[0]).startOf('day');
+      const end = moment(dateRange[1].valueOf ? dateRange[1].valueOf() : dateRange[1]).endOf('day');
+      if (!dealDate.isBetween(start, end, 'day', '[]')) return false;
+    }
+
+    // Advanced Filters
+    if (advancedFilters.source && deal.source !== advancedFilters.source) return false;
+    if (advancedFilters.stage && deal.stage !== advancedFilters.stage) return false;
+    if (advancedFilters.owner && deal.Creator?.id !== advancedFilters.owner && deal.created_by !== advancedFilters.owner) return false;
+    
+    if (advancedFilters.status) {
+        if (advancedFilters.status === 'won' && deal.is_won !== true) return false;
+        if (advancedFilters.status === 'lost' && deal.is_won !== false) return false;
+        if (advancedFilters.status === 'pending' && deal.is_won !== null) return false;
+    }
+
+    return true;
   });
 
   const handleSearch = (value) => {
@@ -127,7 +161,13 @@ const Deal = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = deals?.data?.map((deal) => ({
+      if (!filteredDeals || filteredDeals.length === 0) {
+        message.warning("No deals available to export with current filters.");
+        setLoading(false);
+        return;
+      }
+      
+      const data = filteredDeals.map((deal) => ({
         "Deal Name": deal.dealTitle,
         Company: deal.company_name,
         Source:
@@ -245,7 +285,7 @@ const Deal = () => {
     <div className="deal-page">
       <PageHeader
         title="All Deals"
-        count={deals?.pagination?.total || 0}
+        count={filteredDeals.length}
         subtitle={<span style={{ fontSize: '14px' }}>Manage all deals in the system</span>}
         breadcrumbItems={[
           {
@@ -257,7 +297,7 @@ const Deal = () => {
             ),
           },
           {
-            title: `All Deals (${deals?.pagination?.total || 0})`,
+            title: `All Deals (${filteredDeals.length})`,
           },
         ]}
         searchText={searchText}
@@ -292,29 +332,39 @@ const Deal = () => {
             },
           ]
         }}
+        extraActions={
+          <Button
+            icon={<FiFilter />}
+            onClick={() => setIsFilterDrawerOpen(true)}
+            style={{ borderRadius: '8px', height: '30px' }}
+            type={Object.keys(advancedFilters).some(k => advancedFilters[k]) ? "primary" : "default"}
+          >
+            Filter {Object.keys(advancedFilters).filter(k => advancedFilters[k]).length > 0 && `(${Object.keys(advancedFilters).filter(k => advancedFilters[k]).length})`}
+          </Button>
+        }
       />
 
       <Card className="deal-content">
         {viewMode === "table" ? (
           <DealList
-            deals={deals?.data || []}
+            deals={filteredDeals}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
             onDealClick={handleDealClick}
             loading={isLoading}
-            pagination={deals?.pagination}
+            pagination={{ ...deals?.pagination, total: filteredDeals.length, current: pagination.current, pageSize: pagination.pageSize }}
             onTableChange={handleTableChange}
           />
         ) : (
           <DealCard
-            deals={deals?.data || []}
+            deals={filteredDeals}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
             onDealClick={handleDealClick}
             loading={isLoading}
-            pagination={deals?.pagination}
+            pagination={{ ...deals?.pagination, total: filteredDeals.length, current: pagination.current, pageSize: pagination.pageSize }}
             onTableChange={handleTableChange}
           />
         )}
@@ -345,6 +395,69 @@ const Deal = () => {
                 onDealClick={handleDealClick}
                 deleteDeal={deleteDeal}
             /> */}
+
+      <Drawer
+        title="Advanced Filters"
+        placement="right"
+        onClose={() => setIsFilterDrawerOpen(false)}
+        open={isFilterDrawerOpen}
+        extra={
+          <Button onClick={() => { setDateRange(null); setAdvancedFilters({}); }}>Clear All</Button>
+        }
+      >
+        <Form layout="vertical">
+          <Form.Item label="Date Range">
+            <DatePicker.RangePicker
+              value={dateRange}
+              onChange={(dates) => setDateRange(dates)}
+              style={{ width: '100%' }}
+              format="DD MMM YYYY"
+            />
+          </Form.Item>
+          <Form.Item label="Source">
+            <Select
+              allowClear
+              placeholder="Select Source"
+              value={advancedFilters.source}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, source: val }))}
+            >
+              {sourcesData?.data?.map(s => <Select.Option key={s.id} value={s.id}>{s.name}</Select.Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item label="Stage">
+            <Select
+              allowClear
+              placeholder="Select Stage"
+              value={advancedFilters.stage}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, stage: val }))}
+            >
+              {dealStages?.map(s => <Select.Option key={s.id} value={s.id}>{s.stageName}</Select.Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item label="Status">
+            <Select
+              allowClear
+              placeholder="Select Status"
+              value={advancedFilters.status}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, status: val }))}
+            >
+              <Select.Option value="pending">Pending</Select.Option>
+              <Select.Option value="won">Won</Select.Option>
+              <Select.Option value="lost">Lost</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Deal Owner">
+            <Select
+              allowClear
+              placeholder="Select Owner"
+              value={advancedFilters.owner}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, owner: val }))}
+            >
+              {usersResponse?.data?.map(u => <Select.Option key={u.id} value={u.id}>{`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.username}</Select.Option>)}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Drawer>
     </div>
   );
 };

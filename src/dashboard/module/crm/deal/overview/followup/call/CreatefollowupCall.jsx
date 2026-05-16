@@ -132,7 +132,7 @@ const CreateFollowupCall = ({
           ? values.call_start_date.format("YYYY-MM-DD")
           : null,
         call_start_time: values.call_start_time
-          ? values.call_start_time.format("HH:mm:ss")
+          ? values.call_start_time.format("HH:mm:00")
           : null,
         call_status: "in_progress",
       };
@@ -441,10 +441,9 @@ const CreateFollowupCall = ({
             name="call_reminder"
             label={
               <span style={formItemStyle}>
-                Reminder <span style={{ color: "#ff4d4f" }}>*</span>
+                Reminder
               </span>
             }
-            rules={[{ required: true, message: "Please select reminder" }]}
           >
             <Select
               placeholder="Select reminder"

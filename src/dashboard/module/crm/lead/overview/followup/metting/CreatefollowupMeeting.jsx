@@ -38,7 +38,7 @@ import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
 import { message } from "antd";
-import { useCreateFollowupMeetingMutation } from "../../../services/LeadApi";
+import { useCreateFollowupMeetingMutation } from "./services/followupMettingApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -128,9 +128,9 @@ const CreateMeeting = ({
 
   // Watch from_date field to enable repeat option
   useEffect(() => {
-    const fromDate = form.getFieldValue("from_date");
+    const fromDate = form.getFieldValue("from_datetime");
     setShowRepeat(!!fromDate);
-  }, [form.getFieldValue("from_date")]);
+  }, [form.getFieldValue("from_datetime")]);
 
   // Update repeat availability when from date changes
   const handleFromDateChange = (date) => {
@@ -148,10 +148,10 @@ const CreateMeeting = ({
     if (repeatEndDate && date && repeatEndDate.isBefore(date)) {
       form.setFieldValue("repeat_end_date", null);
     }
-    // Reset to_date if it's before the new from_date
-    const toDate = form.getFieldValue("to_date");
+    // Reset to_datetime if it's before the new from_datetime
+    const toDate = form.getFieldValue("to_datetime");
     if (toDate && date && toDate.isBefore(date)) {
-      form.setFieldValue("to_date", date);
+      form.setFieldValue("to_datetime", date);
     }
   };
 
@@ -173,12 +173,12 @@ const CreateMeeting = ({
 
   // Update disableReminderDate function
   const disableReminderDate = (current) => {
-    const toDate = form.getFieldValue("to_date");
+    const toDate = form.getFieldValue("to_datetime");
     return current && current.isAfter(toDate);
   };
 
   const disableRepeatEndDate = (current) => {
-    const fromDate = form.getFieldValue("from_date");
+    const fromDate = form.getFieldValue("from_datetime");
     return current && current.isBefore(fromDate);
   };
 
@@ -187,9 +187,9 @@ const CreateMeeting = ({
     return current && current.isBefore(dayjs(), "day");
   };
 
-  // Add this new function to disable dates before from_date for to_date
+  // Add this new function to disable dates before from_datetime for to_datetime
   const disableToDate = (current) => {
-    const fromDate = form.getFieldValue("from_date");
+    const fromDate = form.getFieldValue("from_datetime");
     return current && current.isBefore(fromDate, "day");
   };
 
@@ -198,62 +198,64 @@ const CreateMeeting = ({
       // Organize reminder fields
       const reminderData = showReminder
         ? {
-            reminder_date: values.reminder_date
-              ? values.reminder_date.format("YYYY-MM-DD")
-              : null,
-            reminder_time: values.reminder_time
-              ? values.reminder_time.format("HH:mm:ss")
-              : null,
-          }
+          reminder_date: values.reminder_date
+            ? values.reminder_date.format("YYYY-MM-DD")
+            : null,
+          reminder_time: values.reminder_time
+            ? values.reminder_time.format("HH:mm:00")
+            : null,
+        }
         : null;
 
       // Update repeat data format to match task payload
       const repeatData =
         repeatType !== "none"
           ? {
-              repeat_type: repeatType,
-              repeat_end_type: repeatEndType,
-              repeat_times: repeatEndType === "after" ? repeatTimes : null,
-              repeat_end_date: values.repeat_end_date
-                ? values.repeat_end_date.format("YYYY-MM-DD")
+            repeat_type: repeatType,
+            repeat_end_type: repeatEndType,
+            repeat_times: repeatEndType === "after" ? repeatTimes : null,
+            repeat_end_date: values.repeat_end_date
+              ? values.repeat_end_date.format("YYYY-MM-DD")
+              : null,
+            repeat_start_date: values.repeat_start_date
+              ? values.repeat_start_date.format("YYYY-MM-DD")
+              : null,
+            repeat_start_time: values.repeat_start_time
+              ? values.repeat_start_time.format("HH:mm:00")
+              : null,
+            custom_repeat_interval:
+              repeatType === "custom" ? customRepeatInterval : null,
+            custom_repeat_days:
+              repeatType === "custom" && customFrequency === "weekly"
+                ? customRepeatDays
                 : null,
-              repeat_start_date: values.repeat_start_date
-                ? values.repeat_start_date.format("YYYY-MM-DD")
-                : null,
-              repeat_start_time: values.repeat_start_time
-                ? values.repeat_start_time.format("HH:mm:ss")
-                : null,
-              custom_repeat_interval:
-                repeatType === "custom" ? customRepeatInterval : null,
-              custom_repeat_days:
-                repeatType === "custom" && customFrequency === "weekly"
-                  ? customRepeatDays
-                  : null,
-              custom_repeat_frequency:
-                repeatType === "custom" ? customFrequency : null,
-            }
+            custom_repeat_frequency:
+              repeatType === "custom" ? customFrequency : null,
+          }
           : null;
 
-     // Only use current user as default if they are properly created
-     const assignedToArray = values.assigned_to && values.assigned_to.length > 0
-     ? values.assigned_to.map(username => {
-         const user = usersResponse?.data?.find(u => u.username === username);
-         return user?.id;
-       }).filter(id => id)
-     : [currentUser?.id];
+      // Only use current user as default if they are properly created
+      const assignedToArray = values.assigned_to && values.assigned_to.length > 0
+        ? values.assigned_to.map(username => {
+          const user = usersResponse?.data?.find(u => u.username === username);
+          return user?.id;
+        }).filter(id => id)
+        : [currentUser?.id];
 
       // Format the final payload
       const formattedValues = {
         title: values.title,
+        description: values.description,
+        notes: values.notes,
         section: "lead",
         meeting_type: values.meeting_type,
         venue: values.venue,
         location: values.location,
         meeting_link: values.meeting_link,
-        from_date: values.from_date.format("YYYY-MM-DD"),
-        from_time: values.from_time.format("HH:mm:ss"),
-        to_date: values.to_date.format("YYYY-MM-DD"),
-        to_time: values.to_time.format("HH:mm:ss"),
+        from_date: values.from_datetime?.format("YYYY-MM-DD"),
+        from_time: values.from_datetime?.format("HH:mm:00"),
+        to_date: values.to_datetime?.format("YYYY-MM-DD"),
+        to_time: values.to_datetime?.format("HH:mm:00"),
         meeting_status: "in_progress",
         assigned_to: {
           assigned_to: assignedToArray,
@@ -442,10 +444,8 @@ const CreateMeeting = ({
         layout="vertical"
         onFinish={handleSubmit}
         initialValues={{
-          from_date: initialDate,
-          from_time: initialTime,
-          to_date: initialDate,
-          to_time: initialTime,
+          from_datetime: initialDate && initialTime ? dayjs(initialDate).hour(dayjs(initialTime).hour()).minute(dayjs(initialTime).minute()).second(0) : dayjs(),
+          to_datetime: initialDate && initialTime ? dayjs(initialDate).hour(dayjs(initialTime).hour()).minute(dayjs(initialTime).minute()).second(0) : dayjs(),
           assigned_to: currentUser?.username ? [currentUser.username] : []
         }}
         style={{ padding: "24px" }}
@@ -469,6 +469,28 @@ const CreateMeeting = ({
                 borderRadius: "10px",
                 height: "48px",
               }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label={<span style={formItemStyle}>Description (Optional)</span>}
+          >
+            <Input.TextArea
+              placeholder="Enter meeting description..."
+              autoSize={{ minRows: 3, maxRows: 6 }}
+              style={{ borderRadius: "10px" }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="notes"
+            label={<span style={formItemStyle}>Notes (Optional)</span>}
+          >
+            <Input.TextArea
+              placeholder="Enter meeting notes..."
+              autoSize={{ minRows: 3, maxRows: 6 }}
+              style={{ borderRadius: "10px" }}
             />
           </Form.Item>
 
@@ -590,99 +612,48 @@ const CreateMeeting = ({
           }}
         >
           <Form.Item
-            name="from_date"
-            label={<span style={formItemStyle}>Meeting Start Date</span>}
+            name="from_datetime"
+            label={<span style={formItemStyle}>Meeting Start Date & Time</span>}
             rules={[
-              { required: true, message: "Please select meeting start date" },
+              { required: true, message: "Please select meeting start date & time" },
             ]}
           >
             <DatePicker
-              format="DD-MM-YYYY"
+              showTime
+              format="DD/MM/YYYY hh:mm A"
               size="large"
               style={{
                 width: "100%",
                 borderRadius: "10px",
                 height: "48px",
               }}
-              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              use12Hours
               onChange={handleFromDateChange}
             />
           </Form.Item>
 
           <Form.Item
-            name="from_time"
-            label={<span style={formItemStyle}>Meeting Start Time</span>}
-            rules={[
-              { required: true, message: "Please select meeting start time" },
-            ]}
-          >
-            <TimePicker
-              format="hh:mm A"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              minuteStep={15}
-              use12Hours
-            />
-          </Form.Item>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
-            marginTop: "20px",
-          }}
-        >
-          <Form.Item
-            name="to_date"
-            label={<span style={formItemStyle}>Meeting End Date</span>}
-            rules={[
-              { required: true, message: "Please select meeting end date" },
-            ]}
+            name="to_datetime"
+            label={<span style={formItemStyle}>Meeting End Date & Time (Optional)</span>}
           >
             <DatePicker
-              format="DD-MM-YYYY"
+              showTime
+              format="DD/MM/YYYY hh:mm A"
               size="large"
               style={{
                 width: "100%",
                 borderRadius: "10px",
                 height: "48px",
               }}
-              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              use12Hours
               disabledDate={disableToDate}
               onChange={(date) => {
-                // When end date changes, set the same date for reminder
                 if (date) {
                   form.setFieldsValue({
                     reminder_date: date,
                   });
                 }
               }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="to_time"
-            label={<span style={formItemStyle}>Meeting End Time</span>}
-            rules={[
-              { required: true, message: "Please select meeting end date" },
-            ]}
-          >
-            <TimePicker
-              format="hh:mm A"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              minuteStep={15}
-              use12Hours
             />
           </Form.Item>
         </div>
@@ -699,7 +670,7 @@ const CreateMeeting = ({
             name="priority"
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Priority 
+                Priority
               </span>
             }
             initialValue="medium"
@@ -795,8 +766,8 @@ const CreateMeeting = ({
                 height: "auto",
                 minHeight: "48px",
               }}
-             listHeight={300}
-                 maxTagCount="responsive"
+              listHeight={300}
+              maxTagCount="responsive"
               maxTagTextLength={15}
               dropdownStyle={{
                 maxHeight: "400px",
@@ -891,98 +862,98 @@ const CreateMeeting = ({
                 </>
               )}
             >
-                <Option key={currentUser?.id} value={currentUser?.username}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "4px 0",
-                }}
-              >
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "50%",
-                    background: "#e6f4ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#1890ff",
-                    fontSize: "16px",
-                    fontWeight: "500",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {currentUser?.profilePic ? (
-                    <img
-                      src={currentUser?.profilePic}
-                      alt={currentUser?.username}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    currentUser?.username?.charAt(0) || <FiUser />
-                  )}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "4px",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontWeight: 500,
-                      color: "rgba(0, 0, 0, 0.85)",
-                      fontSize: "14px",
-                    }}
-                  >
-                    {currentUser?.username}
-                  </span>
-                </div>
+              <Option key={currentUser?.id} value={currentUser?.username}>
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "8px",
-                    marginLeft: "auto",
+                    gap: "12px",
+                    padding: "4px 0",
                   }}
                 >
                   <div
-                    className="role-indicator"
                     style={{
-                      width: "8px",
-                      height: "8px",
+                      width: "40px",
+                      height: "40px",
                       borderRadius: "50%",
-                      background: getRoleColor(currentUser?.roleName).color,
-                      boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
-                      animation: "pulse 2s infinite",
-                    }}
-                  />
-                  <span
-                    style={{
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      background: getRoleColor(currentUser?.roleName).bg,
-                      color: getRoleColor(currentUser?.roleName).color,
-                      border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
-                      fontWeight: 500,
-                      textTransform: "capitalize",
+                      background: "#e6f4ff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#1890ff",
+                      fontSize: "16px",
+                      fontWeight: "500",
+                      textTransform: "uppercase",
                     }}
                   >
-                    {currentUser?.roleName || "User"}
-                  </span>
+                    {currentUser?.profilePic ? (
+                      <img
+                        src={currentUser?.profilePic}
+                        alt={currentUser?.username}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      currentUser?.username?.charAt(0) || <FiUser />
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      gap: "4px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontWeight: 500,
+                        color: "rgba(0, 0, 0, 0.85)",
+                        fontSize: "14px",
+                      }}
+                    >
+                      {currentUser?.username}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginLeft: "auto",
+                    }}
+                  >
+                    <div
+                      className="role-indicator"
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        background: getRoleColor(currentUser?.roleName).color,
+                        boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                        animation: "pulse 2s infinite",
+                      }}
+                    />
+                    <span
+                      style={{
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                        fontSize: "12px",
+                        background: getRoleColor(currentUser?.roleName).bg,
+                        color: getRoleColor(currentUser?.roleName).color,
+                        border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                        fontWeight: 500,
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {currentUser?.roleName || "User"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Option>
+              </Option>
               {Array.isArray(users) &&
                 users.map((user) => {
                   const userRole = rolesData?.data?.find(
@@ -1297,8 +1268,8 @@ const CreateMeeting = ({
                         {customFrequency === "weekly"
                           ? "weeks"
                           : customFrequency === "monthly"
-                          ? "months"
-                          : "years"}
+                            ? "months"
+                            : "years"}
                       </div>
                     </Input.Group>
                   </Form.Item>
@@ -1351,10 +1322,10 @@ const CreateMeeting = ({
                                 justifyContent: "center",
                                 ...(customRepeatDays.includes(index)
                                   ? {
-                                      background:
-                                        "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                                      border: "none",
-                                    }
+                                    background:
+                                      "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                                    border: "none",
+                                  }
                                   : {}),
                               }}
                             >
@@ -1494,3 +1465,4 @@ const CreateMeeting = ({
 };
 
 export default CreateMeeting;
+

@@ -32,7 +32,7 @@ import { useGetUsersQuery } from "../../../../../user-management/users/services/
 import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
-import { useCreateFollowupCallMutation } from "../../../services/LeadApi";
+import { useCreateFollowupCallMutation } from "./services/followupCallApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -128,7 +128,7 @@ const CreateFollowupCall = ({
           ? values.call_start_date.format("YYYY-MM-DD")
           : null,
         call_start_time: values.call_start_time
-          ? values.call_start_time.format("HH:mm:ss")
+          ? values.call_start_time.format("HH:mm:00")
           : null,
       };
 
@@ -375,7 +375,6 @@ const CreateFollowupCall = ({
                 Reminder
               </span>
             }
-            rules={[{ required: true, message: "Please select reminder" }]}
           >
             <Select
               placeholder="Select reminder"

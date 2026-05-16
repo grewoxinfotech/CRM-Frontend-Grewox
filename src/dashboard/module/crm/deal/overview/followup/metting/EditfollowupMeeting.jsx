@@ -179,14 +179,18 @@ const EditFollowupMeeting = ({
         // Set form values
         form.setFieldsValue({
           title: meetingData.title || "",
+          description: meetingData.description || "",
+          notes: meetingData.notes || "",
           meeting_type: meetingData.meeting_type || undefined,
           venue: meetingData.venue || undefined,
           location: meetingData.location || undefined,
           meeting_link: meetingData.meeting_link || undefined,
-          from_date: meetingData.from_date ? dayjs(meetingData.from_date) : null,
-          from_time: meetingData.from_time ? dayjs(meetingData.from_time, "HH:mm:ss") : null,
-          to_date: meetingData.to_date ? dayjs(meetingData.to_date) : null,
-          to_time: meetingData.to_time ? dayjs(meetingData.to_time, "HH:mm:ss") : null,
+          from_datetime: meetingData.from_date && meetingData.from_time 
+            ? dayjs(`${meetingData.from_date} ${meetingData.from_time}`, "YYYY-MM-DD HH:mm:ss") 
+            : null,
+          to_datetime: meetingData.to_date && meetingData.to_time 
+            ? dayjs(`${meetingData.to_date} ${meetingData.to_time}`, "YYYY-MM-DD HH:mm:ss") 
+            : null,
           assigned_to: assignedUsernames,
           participants_reminder: meetingData.participants_reminder || undefined,
           reminder_date: reminderData ? dayjs(reminderData.reminder_date) : null,
@@ -207,7 +211,7 @@ const EditFollowupMeeting = ({
       const reminderData = showReminder
         ? {
             reminder_date: values.reminder_date?.format("YYYY-MM-DD"),
-            reminder_time: values.reminder_time?.format("HH:mm:ss"),
+            reminder_time: values.reminder_time?.format("HH:mm:00"),
           }
         : null;
 
@@ -236,18 +240,20 @@ const EditFollowupMeeting = ({
             }
           : null;
 
-      // Format the final payload
+      // Format the update payload
       const formattedValues = {
         title: values.title,
+        description: values.description,
+        notes: values.notes,
         section: "deal",
         meeting_type: values.meeting_type,
         venue: values.venue,
         location: values.location,
         meeting_link: values.meeting_link,
-        from_date: values.from_date.format("YYYY-MM-DD"),
-        from_time: values.from_time.format("HH:mm:ss"),
-        to_date: values.to_date.format("YYYY-MM-DD"),
-        to_time: values.to_time.format("HH:mm:ss"),
+        from_date: values.from_datetime?.format("YYYY-MM-DD"),
+        from_time: values.from_datetime?.format("HH:mm:00"),
+        to_date: values.to_datetime?.format("YYYY-MM-DD"),
+        to_time: values.to_datetime?.format("HH:mm:00"),
         meeting_status: "in_progress",
         assigned_to: {
           assigned_to: values.assigned_to && values.assigned_to.length > 0
@@ -317,6 +323,12 @@ const EditFollowupMeeting = ({
     if (value === "online") {
       form.setFieldsValue({ location: undefined });
     }
+    // Reset to_datetime if it's before the new from_datetime
+    const toDate = form.getFieldValue("to_datetime");
+    const fromDate = form.getFieldValue("from_datetime");
+    if (toDate && fromDate && toDate.isBefore(fromDate)) {
+      form.setFieldValue("to_datetime", fromDate);
+    }
   };
 
   const handleCreateUserSuccess = (newUser) => {
@@ -327,6 +339,11 @@ const EditFollowupMeeting = ({
 
   const handleRepeatToggle = (checked) => {
     setRepeatType(checked ? "daily" : "none");
+  };
+
+  const disableRepeatEndDate = (current) => {
+    const fromDate = form.getFieldValue("from_datetime");
+    return current && current.isBefore(fromDate);
   };
 
   // Copy all the style constants
@@ -471,6 +488,22 @@ const EditFollowupMeeting = ({
             />
           </Form.Item>
 
+          <Form.Item name="description" label="Description (Optional)">
+            <Input.TextArea
+              placeholder="Enter meeting description..."
+              autoSize={{ minRows: 3, maxRows: 6 }}
+              style={{ borderRadius: "10px" }}
+            />
+          </Form.Item>
+
+          <Form.Item name="notes" label="Notes (Optional)">
+            <Input.TextArea
+              placeholder="Enter meeting notes..."
+              autoSize={{ minRows: 3, maxRows: 6 }}
+              style={{ borderRadius: "10px" }}
+            />
+          </Form.Item>
+
           <Form.Item name="meeting_type" label="Meeting Type">
             <Select
               placeholder="Select meeting type"
@@ -566,21 +599,23 @@ const EditFollowupMeeting = ({
             marginBottom: "16px",
           }}
         >
-          <Form.Item name="from_date" label="Meeting Start Date">
+          <Form.Item name="from_datetime" label="Meeting Start Date & Time" style={{ gridColumn: "1 / -1" }}>
             <DatePicker
-              format="DD/MM/YYYY"
+              showTime
+              format="DD/MM/YYYY hh:mm A"
               style={{
                 width: "100%",
                 borderRadius: "10px",
                 height: "48px",
               }}
-              suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
+              use12Hours
             />
           </Form.Item>
 
-          <Form.Item name="from_time" label="Meeting Start Time">
-            <TimePicker
-              format="hh:mm A"
+          <Form.Item name="to_datetime" label="Meeting End Date & Time (Optional)" style={{ gridColumn: "1 / -1" }}>
+            <DatePicker
+              showTime
+              format="DD/MM/YYYY hh:mm A"
               style={{
                 width: "100%",
                 borderRadius: "10px",
@@ -591,44 +626,7 @@ const EditFollowupMeeting = ({
           </Form.Item>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
-            marginBottom: "16px",
-          }}
-        >
-          <Form.Item name="to_date" label="Meeting End Date">
-            <DatePicker
-              format="DD/MM/YYYY"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
-            />
-          </Form.Item>
 
-          <Form.Item name="to_time" label="Meeting End Time">
-            <TimePicker
-              format="hh:mm A"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              use12Hours
-            />
-          </Form.Item>
-        </div>
-
-        <div
-        
-        >
-         
-         
 
          <div style={{ marginBottom: "24px" }}>
             <Text
@@ -952,7 +950,7 @@ const EditFollowupMeeting = ({
               </Select>
             </Form.Item>
           </div>
-        </div>
+
         <Form.Item
           name="meeting_status"
           label={
@@ -1477,3 +1475,4 @@ const EditFollowupMeeting = ({
 };
 
 export default EditFollowupMeeting;
+

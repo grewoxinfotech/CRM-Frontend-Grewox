@@ -68,10 +68,22 @@ const FollowupCallList = ({ dealId, users }) => {
     });
   };
 
-  const getStatusTag = (status) => {
+  const getStatusTag = (status, record) => {
+    let currentStatus = status;
+    
+    // Check if overdue based on exact time
+    if (status !== 'completed' && record?.call_start_date) {
+      const timeString = record?.call_start_time || '23:59:59';
+      const itemDateTime = dayjs(`${record.call_start_date} ${timeString}`);
+      if (itemDateTime.isValid() && dayjs().isAfter(itemDateTime)) {
+        currentStatus = 'overdue';
+      }
+    }
+
     const statusConfig = {
       not_started: { color: "default", text: "Not Started" },
       in_progress: { color: "processing", text: "In Progress" },
+      overdue: { color: "error", text: "Overdue" },
       completed: { color: "success", text: "Completed" },
       cancelled: { color: "error", text: "Cancelled" },
       no_answer: { color: "warning", text: "No Answer" },
@@ -80,7 +92,7 @@ const FollowupCallList = ({ dealId, users }) => {
       voicemail: { color: "purple", text: "Voicemail" },
     };
 
-    const config = statusConfig[status] || statusConfig.not_started;
+    const config = statusConfig[currentStatus] || statusConfig.not_started;
     return <Tag color={config.color}>{config.text}</Tag>;
   };
 
@@ -101,7 +113,7 @@ const FollowupCallList = ({ dealId, users }) => {
       dataIndex: "call_status",
       key: "call_status",
       width: 100,
-      render: (status) => getStatusTag(status),
+      render: (status, record) => getStatusTag(status, record),
     },
     {
       title: "Date & Time",

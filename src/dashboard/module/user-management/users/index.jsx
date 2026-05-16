@@ -44,8 +44,7 @@ const Users = () => {
 
     useEffect(() => {
         if (usersData?.data) {
-            const filteredData = usersData.data.filter(user => user?.created_by === loggedInUser?.username || user?.client_id === loggedInUser?.id);
-            const transformedData = filteredData.map(user => ({
+            const transformedData = usersData.data.map(user => ({
                 id: user.id,
                 username: user.username || 'N/A',
                 email: user.email || 'N/A',

@@ -135,9 +135,9 @@ const CreateMeeting = ({
 
   // Watch from_date field to enable repeat option
   useEffect(() => {
-    const fromDate = form.getFieldValue("from_date");
+    const fromDate = form.getFieldValue("from_datetime");
     setShowRepeat(!!fromDate);
-  }, [form.getFieldValue("from_date")]);
+  }, [form.getFieldValue("from_datetime")]);
 
   // Update repeat availability when from date changes
   const handleFromDateChange = (date) => {
@@ -155,10 +155,10 @@ const CreateMeeting = ({
     if (repeatEndDate && date && repeatEndDate.isBefore(date)) {
       form.setFieldValue("repeat_end_date", null);
     }
-    // Reset to_date if it's before the new from_date
-    const toDate = form.getFieldValue("to_date");
+    // Reset to_datetime if it's before the new from_datetime
+    const toDate = form.getFieldValue("to_datetime");
     if (toDate && date && toDate.isBefore(date)) {
-      form.setFieldValue("to_date", date);
+      form.setFieldValue("to_datetime", date);
     }
   };
 
@@ -180,12 +180,12 @@ const CreateMeeting = ({
 
   // Update disableReminderDate function
   const disableReminderDate = (current) => {
-    const toDate = form.getFieldValue("to_date");
+    const toDate = form.getFieldValue("to_datetime");
     return current && current.isAfter(toDate);
   };
 
   const disableRepeatEndDate = (current) => {
-    const fromDate = form.getFieldValue("from_date");
+    const fromDate = form.getFieldValue("from_datetime");
     return current && current.isBefore(fromDate);
   };
 
@@ -194,9 +194,9 @@ const CreateMeeting = ({
     return current && current.isBefore(dayjs(), "day");
   };
 
-  // Add this new function to disable dates before from_date for to_date
+  // Add this new function to disable dates before from_datetime for to_datetime
   const disableToDate = (current) => {
-    const fromDate = form.getFieldValue("from_date");
+    const fromDate = form.getFieldValue("from_datetime");
     return current && current.isBefore(fromDate, "day");
   };
 
@@ -209,7 +209,7 @@ const CreateMeeting = ({
               ? values.reminder_date.format("YYYY-MM-DD")
               : null,
             reminder_time: values.reminder_time
-              ? values.reminder_time.format("HH:mm:ss")
+              ? values.reminder_time.format("HH:mm:00")
               : null,
           }
         : null;
@@ -228,7 +228,7 @@ const CreateMeeting = ({
                 ? values.repeat_start_date.format("YYYY-MM-DD")
                 : null,
               repeat_start_time: values.repeat_start_time
-                ? values.repeat_start_time.format("HH:mm:ss")
+                ? values.repeat_start_time.format("HH:mm:00")
                 : null,
               custom_repeat_interval:
                 repeatType === "custom" ? customRepeatInterval : null,
@@ -245,15 +245,17 @@ const CreateMeeting = ({
           // Format the final payload
       const formattedValues = {
         title: values.title,
+        description: values.description,
+        notes: values.notes,
         section: "deal",
         meeting_type: values.meeting_type,
         venue: values.venue,
         location: values.location,
         meeting_link: values.meeting_link,
-        from_date: values.from_date.format("YYYY-MM-DD"),
-        from_time: values.from_time.format("HH:mm:ss"),
-        to_date: values.to_date.format("YYYY-MM-DD"),
-        to_time: values.to_time.format("HH:mm:ss"),
+        from_date: values.from_datetime?.format("YYYY-MM-DD"),
+        from_time: values.from_datetime?.format("HH:mm:00"),
+        to_date: values.to_datetime?.format("YYYY-MM-DD"),
+        to_time: values.to_datetime?.format("HH:mm:00"),
         meeting_status: "in_progress",
         assigned_to: {
           assigned_to: values.assigned_to && values.assigned_to.length > 0
@@ -448,10 +450,8 @@ const CreateMeeting = ({
         layout="vertical"
         onFinish={handleSubmit}
         initialValues={{
-          from_date: initialDate,
-          from_time: initialTime,
-          to_date: initialDate,
-          to_time: initialTime,
+          from_datetime: initialDate && initialTime ? dayjs(initialDate).hour(dayjs(initialTime).hour()).minute(dayjs(initialTime).minute()).second(0) : dayjs(),
+          to_datetime: initialDate && initialTime ? dayjs(initialDate).hour(dayjs(initialTime).hour()).minute(dayjs(initialTime).minute()).second(0) : dayjs(),
           assigned_to: currentUser?.username ? [currentUser.username] : [],
           priority: "medium"
         }}
@@ -466,7 +466,7 @@ const CreateMeeting = ({
         >
           <Form.Item
             name="title"
-            label={<span style={formItemStyle}>Title <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Title</span>}
             rules={[{ required: true, message: "Please enter meeting title" }]}
           >
             <Input
@@ -476,6 +476,28 @@ const CreateMeeting = ({
                 borderRadius: "10px",
                 height: "48px",
               }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label={<span style={formItemStyle}>Description (Optional)</span>}
+          >
+            <Input.TextArea
+              placeholder="Enter meeting description..."
+              autoSize={{ minRows: 3, maxRows: 6 }}
+              style={{ borderRadius: "10px" }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="notes"
+            label={<span style={formItemStyle}>Notes (Optional)</span>}
+          >
+            <Input.TextArea
+              placeholder="Enter meeting notes..."
+              autoSize={{ minRows: 3, maxRows: 6 }}
+              style={{ borderRadius: "10px" }}
             />
           </Form.Item>
 
@@ -596,70 +618,40 @@ const CreateMeeting = ({
           }}
         >
           <Form.Item
-            name="from_date"
-            label={<span style={formItemStyle}>Meeting Start Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            name="from_datetime"
+            label={<span style={formItemStyle}>Meeting Start Date & Time</span>}
             rules={[
-              { required: true, message: "Please select meeting start date" },
+              { required: true, message: "Please select meeting start date & time" },
             ]}
           >
             <DatePicker
-              format="DD-MM-YYYY"
+              showTime
+              format="DD/MM/YYYY hh:mm A"
               size="large"
               style={{
                 width: "100%",
                 borderRadius: "10px",
                 height: "48px",
               }}
-              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              use12Hours
               onChange={handleFromDateChange}
             />
           </Form.Item>
 
           <Form.Item
-            name="from_time"
-            label={<span style={formItemStyle}>Meeting Start Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
-            rules={[
-              { required: true, message: "Please select meeting start time" },
-            ]}
-          >
-            <TimePicker
-              format="hh:mm A"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              minuteStep={15}
-              use12Hours
-            />
-          </Form.Item>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
-            marginTop: "20px",
-          }}
-        >
-          <Form.Item
-            name="to_date"
-            label={<span style={formItemStyle}>Meeting End Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
-            rules={[
-              { required: true, message: "Please select meeting end date" },
-            ]}
+            name="to_datetime"
+            label={<span style={formItemStyle}>Meeting End Date & Time (Optional)</span>}
           >
             <DatePicker
-              format="DD-MM-YYYY"
+              showTime
+              format="DD/MM/YYYY hh:mm A"
               size="large"
               style={{
                 width: "100%",
                 borderRadius: "10px",
                 height: "48px",
               }}
-              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              use12Hours
               disabledDate={disableToDate}
               onChange={(date) => {
                 // When end date changes, set the same date for reminder
@@ -669,26 +661,6 @@ const CreateMeeting = ({
                   });
                 }
               }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="to_time"
-            label={<span style={formItemStyle}>Meeting End Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
-            rules={[
-              { required: true, message: "Please select meeting end time" },
-            ]}
-          >
-            <TimePicker
-              format="hh:mm A"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              minuteStep={15}
-              use12Hours
             />
           </Form.Item>
         </div>
@@ -1510,3 +1482,4 @@ const CreateMeeting = ({
 };
 
 export default CreateMeeting;
+

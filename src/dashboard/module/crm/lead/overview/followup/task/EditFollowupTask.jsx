@@ -35,7 +35,7 @@ import { selectCurrentUser } from "../../../../../../../auth/services/authSlice"
 import {
   useGetFollowupTaskByIdQuery,
 } from "./services/followupTaskApi";
-import { useUpdateFollowupTaskMutation } from "../../../services/LeadApi";
+import { useUpdateFollowupTaskMutation } from "./services/followupTaskApi";
 import { useParams } from "react-router-dom";
 
 const { Text } = Typography;
@@ -268,7 +268,7 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
       const reminderData = showReminder
         ? {
             reminder_date: values.reminder_date?.format("YYYY-MM-DD"),
-            reminder_time: values.reminder_time?.format("HH:mm:ss"),
+            reminder_time: values.reminder_time?.format("HH:mm:00"),
           }
         : null;
 
@@ -1205,3 +1205,4 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
 };
 
 export default EditFollowupTask;
+

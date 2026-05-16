@@ -8,7 +8,7 @@ export const leadApi = createApi({
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     getLeads: builder.query({
-      query: ({ page = 1, pageSize = 10, search = '', ...rest }) => {
+      query: ({ page = 1, pageSize = 10, search = '', ...rest } = {}) => {
         const queryParams = new URLSearchParams({
           page: page.toString(),
           pageSize: pageSize.toString(),
@@ -244,6 +244,12 @@ export const leadApi = createApi({
       }),
       invalidatesTags: ["Lead"],
     }),
+    getMetaFilterValues: builder.query({
+      query: () => ({
+        url: "/leads/meta-filter-values",
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -274,4 +280,5 @@ export const {
   useUpdateFollowupMeetingMutation,
   useCreateFollowupTaskMutation,
   useUpdateFollowupTaskMutation,
+  useGetMetaFilterValuesQuery,
 } = leadApi;

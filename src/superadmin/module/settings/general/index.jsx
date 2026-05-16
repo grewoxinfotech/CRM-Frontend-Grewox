@@ -91,6 +91,12 @@ const GeneralSettings = () => {
         termsandconditions: existingSettings.termsandconditions,
         merchant_name: existingSettings.merchant_name,
         merchant_upi_id: existingSettings.merchant_upi_id,
+        bank_name: existingSettings.bank_name,
+        account_holder_name: existingSettings.account_holder_name,
+        account_number: existingSettings.account_number,
+        ifsc_code: existingSettings.ifsc_code,
+        bank_branch: existingSettings.bank_branch,
+        gst_number: existingSettings.gst_number,
       });
 
       setTermsContent(existingSettings.termsandconditions || "");
@@ -136,12 +142,6 @@ const GeneralSettings = () => {
       // Validate form fields
       const values = await form.validateFields();
 
-      // Check if required files are present
-      if (!selectedLogo) {
-        message.error("Company logo is required");
-        return;
-      }
-
       // Create FormData object for file uploads
       const formData = new FormData();
 
@@ -160,6 +160,7 @@ const GeneralSettings = () => {
       formData.append("account_number", values.account_number || "");
       formData.append("ifsc_code", values.ifsc_code || "");
       formData.append("bank_branch", values.bank_branch || "");
+      formData.append("gst_number", values.gst_number || "");
 
       // Add files
       formData.append("companylogo", selectedLogo);
@@ -289,6 +290,12 @@ const GeneralSettings = () => {
       // Add merchant fields
       formData.append("merchant_name", values.merchant_name || "");
       formData.append("merchant_upi_id", values.merchant_upi_id || "");
+      formData.append("bank_name", values.bank_name || "");
+      formData.append("account_holder_name", values.account_holder_name || "");
+      formData.append("account_number", values.account_number || "");
+      formData.append("ifsc_code", values.ifsc_code || "");
+      formData.append("bank_branch", values.bank_branch || "");
+      formData.append("gst_number", values.gst_number || "");
 
       // Handle company logo
       if (selectedLogo) {
@@ -351,44 +358,47 @@ const GeneralSettings = () => {
 
   const ViewPage = () => (
     <div className="view-page">
-      <PageHeader
-        title="Current Settings"
-        subtitle="View your general settings configuration"
-        breadcrumbItems={[
-            {
-                title: (
-                    <Link to="/superadmin">
-                        <FiHome style={{ marginRight: '4px' }} />
-                        Home
-                    </Link>
-                )
-            },
-            { title: 'Settings' },
-            { title: 'General' }
-        ]}
-        extraActions={
-            <Space>
-              <Button
-                icon={<EditOutlined />}
-                onClick={handleEdit}
-                type="primary" 
-                style={{
-                  height: "30px",
-                  borderRadius: "8px"
-                }}
-              >
-                Edit
-              </Button>
-              <Button icon={<DeleteOutlined />} onClick={handleDelete} danger style={{
-                  height: "30px",
-                  borderRadius: "8px"
-                }}
-              >
-                Delete
-              </Button>
-            </Space>
-        }
-      />
+      <div style={{ textAlign: 'left', width: '100%' }}>
+        <PageHeader
+          title="Current Settings"
+          count={savedData ? 1 : 0}
+          subtitle={<span style={{ fontSize: "14px" }}>View your general settings configuration</span>}
+          breadcrumbItems={[
+              {
+                  title: (
+                      <Link to="/superadmin">
+                          <FiHome style={{ marginRight: '4px' }} />
+                          Home
+                      </Link>
+                  )
+              },
+              { title: 'Settings' },
+              { title: 'General' }
+          ]}
+          extraActions={
+              <Space>
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={handleEdit}
+                  type="primary" 
+                  style={{
+                    height: "30px",
+                    borderRadius: "8px"
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button icon={<DeleteOutlined />} onClick={handleDelete} danger style={{
+                    height: "30px",
+                    borderRadius: "8px"
+                  }}
+                >
+                  Delete
+                </Button>
+              </Space>
+          }
+        />
+      </div>
 
       <div className="view-content">
         <Row gutter={[24, 24]}>
@@ -448,22 +458,24 @@ const GeneralSettings = () => {
         <ViewPage />
       ) : (
         <>
-          <PageHeader
-            title="General Settings"
-            subtitle="Manage your organization's general configuration and branding"
-            breadcrumbItems={[
-                {
-                    title: (
-                        <Link to="/superadmin">
-                            <FiHome style={{ marginRight: '4px' }} />
-                            Home
-                        </Link>
-                    )
-                },
-                { title: 'Settings' },
-                { title: 'General' }
-            ]}
-          />
+          <div style={{ textAlign: 'left', width: '100%' }}>
+            <PageHeader
+              title="General Settings"
+              subtitle={<span style={{ fontSize: '14px' }}>Manage your organization's general configuration and branding</span>}
+              breadcrumbItems={[
+                  {
+                      title: (
+                          <Link to="/superadmin">
+                              <FiHome style={{ marginRight: '4px' }} />
+                              Home
+                          </Link>
+                      )
+                  },
+                  { title: 'Settings' },
+                  { title: 'General' }
+              ]}
+            />
+          </div>
 
           <div className="main-content">
             <div className="content-grid">
@@ -621,41 +633,46 @@ const GeneralSettings = () => {
                 <Form form={form} layout="vertical" className="settings-form">
                   <Row gutter={[24, 16]}>
                     <Col xs={24} md={12}>
-                      <Form.Item label="Merchant Name" name="merchant_name">
+                      <Form.Item label="Merchant Name (Optional)" name="merchant_name">
                         <Input placeholder="Enter merchant name" />
                       </Form.Item>
                     </Col>
                     <Col xs={24} md={12}>
-                      <Form.Item label="Merchant UPI ID" name="merchant_upi_id">
+                      <Form.Item label="Merchant UPI ID (Optional)" name="merchant_upi_id">
                         <Input placeholder="Enter merchant UPI ID" />
                       </Form.Item>
                     </Col>
                     <Col xs={24} md={12}>
-                      <Form.Item label="Bank Name" name="bank_name">
+                      <Form.Item label="Bank Name (Optional)" name="bank_name">
                         <Input placeholder="Enter bank name" />
                       </Form.Item>
                     </Col>
                     <Col xs={24} md={12}>
                       <Form.Item
-                        label="Account Holder Name"
+                        label="Account Holder Name (Optional)"
                         name="account_holder_name"
                       >
                         <Input placeholder="Enter account holder name" />
                       </Form.Item>
                     </Col>
                     <Col xs={24} md={12}>
-                      <Form.Item label="Account Number" name="account_number">
+                      <Form.Item label="Account Number (Optional)" name="account_number">
                         <Input placeholder="Enter account number" />
                       </Form.Item>
                     </Col>
                     <Col xs={24} md={12}>
-                      <Form.Item label="IFSC Code" name="ifsc_code">
+                      <Form.Item label="IFSC Code (Optional)" name="ifsc_code">
                         <Input placeholder="Enter IFSC code" />
                       </Form.Item>
                     </Col>
                     <Col xs={24} md={12}>
-                      <Form.Item label="Bank Branch" name="bank_branch">
+                      <Form.Item label="Bank Branch (Optional)" name="bank_branch">
                         <Input placeholder="Enter bank branch" />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item label="GSTIN (Optional)" name="gst_number">
+                        <Input placeholder="Enter GSTIN number" />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -666,7 +683,7 @@ const GeneralSettings = () => {
               <Card className="settings-card terms-section">
                 <div className="card-header">
                   <UploadOutlined className="section-icon" />
-                  <Title level={5}>Terms & Conditions</Title>
+                  <Title level={5}>Terms & Conditions (Optional)</Title>
                 </div>
                 <div className="editor-container">
                   <Form.Item
@@ -843,7 +860,7 @@ const GeneralSettings = () => {
                 name="merchant_name"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Merchant Name
+                    Merchant Name (Optional)
                   </span>
                 }
               >
@@ -862,7 +879,7 @@ const GeneralSettings = () => {
                 name="merchant_upi_id"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Merchant UPI ID
+                    Merchant UPI ID (Optional)
                   </span>
                 }
               >
@@ -882,7 +899,7 @@ const GeneralSettings = () => {
                 name="bank_name"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Bank Name
+                    Bank Name (Optional)
                   </span>
                 }
               >
@@ -901,7 +918,7 @@ const GeneralSettings = () => {
                 name="account_holder_name"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Account Holder Name
+                    Account Holder Name (Optional)
                   </span>
                 }
               >
@@ -920,7 +937,7 @@ const GeneralSettings = () => {
                 name="account_number"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Account Number
+                    Account Number (Optional)
                   </span>
                 }
               >
@@ -939,7 +956,7 @@ const GeneralSettings = () => {
                 name="ifsc_code"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    IFSC Code
+                    IFSC Code (Optional)
                   </span>
                 }
               >
@@ -958,12 +975,31 @@ const GeneralSettings = () => {
                 name="bank_branch"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Bank Branch
+                    Bank Branch (Optional)
                   </span>
                 }
               >
                 <Input
                   placeholder="Enter bank branch"
+                  size="large"
+                  style={{
+                    borderRadius: "10px",
+                    padding: "8px 16px",
+                  }}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item
+                name="gst_number"
+                label={
+                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                    GSTIN (Optional)
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter GSTIN number"
                   size="large"
                   style={{
                     borderRadius: "10px",
@@ -1033,7 +1069,7 @@ const GeneralSettings = () => {
                 name="termsandconditions"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Terms and Conditions
+                    Terms and Conditions (Optional)
                   </span>
                 }
               >

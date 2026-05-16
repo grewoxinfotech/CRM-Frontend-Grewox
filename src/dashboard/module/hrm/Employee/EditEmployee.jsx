@@ -74,12 +74,16 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
     // Get default currency and phone code
     const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
 
-    // Reset form and load initial values when modal opens
+    // Consolidated effect to initialize form values when modal opens
     useEffect(() => {
-        if (visible && initialValues) {
-            // Format the data before setting it to the form
+        if (visible && initialValues && branchesData && departmentsData && designationsData) {
+            // Get raw data arrays safely
+            const branchesArr = Array.isArray(branchesData) ? branchesData : (branchesData.data || []);
+            const departmentsArr = Array.isArray(departmentsData) ? departmentsData : (departmentsData.data || []);
+            const designationsArr = Array.isArray(designationsData) ? designationsData : (designationsData.data || []);
+
+            // 1. Initial format of basic values
             const formattedValues = {
-                // Basic Information
                 firstName: initialValues.firstName || '',
                 lastName: initialValues.lastName || '',
                 username: initialValues.username || '',
@@ -88,18 +92,9 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                 phone: initialValues.phone || '',
                 address: initialValues.address || '',
                 gender: initialValues.gender || '',
-                
-                // Employment Details
                 joiningDate: formatDateSafely(initialValues.joiningDate),
                 leaveDate: formatDateSafely(initialValues.leaveDate),
-                branch: initialValues.branch || null,
-                department: initialValues.department || null, // Map department ID
-                designation: initialValues.designation || null, // Map designation ID
-                
-                // Salary Information
                 salary: initialValues.salary || 0,
-                
-                // Bank Details
                 accountholder: initialValues.accountholder || '',
                 accountnumber: initialValues.accountnumber || '',
                 bankname: initialValues.bankname || '',
@@ -108,10 +103,27 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                 currency: initialValues.currency || defaultCurrency,
             };
 
-            // Set form values
+            // 2. Handle Branch/Dept/Desig relationships
+            const branchId = initialValues.branch;
+            if (branchId) {
+                formattedValues.branch = branchId;
+                
+                // Filter departments and designations for this branch
+                const depts = departmentsArr.filter(dept => String(dept.branch) === String(branchId));
+                setFilteredDepartments(depts);
+
+                const desigs = designationsArr.filter(desig => String(desig.branch) === String(branchId));
+                setFilteredDesignations(desigs);
+
+                // Set department and designation if they match
+                if (initialValues.department) formattedValues.department = initialValues.department;
+                if (initialValues.designation) formattedValues.designation = initialValues.designation;
+            }
+
+            // 3. Set all values at once to the form
             form.setFieldsValue(formattedValues);
             
-            // Set profile picture if exists
+            // 4. Handle profile picture
             if (initialValues?.profilePic) {
                 setFileList([{
                     uid: '-1',
@@ -122,17 +134,13 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
             } else {
                 setFileList([]);
             }
-
-            // Filter departments and designations if branch is selected
-            if (formattedValues.branch) {
-                handleBranchChange(formattedValues.branch);
-            }
-
-        } else {
+        } else if (!visible) {
             form.resetFields();
             setFileList([]);
+            setFilteredDepartments([]);
+            setFilteredDesignations([]);
         }
-    }, [visible, initialValues, form, defaultCurrency, defaultPhoneCode]);
+    }, [visible, initialValues, branchesData, departmentsData, designationsData, form, defaultCurrency, defaultPhoneCode]);
 
     // Transform branch data
     const branches = React.useMemo(() => {
@@ -209,12 +217,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
             </div>
         </>
     );
-     // Add this useEffect to set default currency when form is initialized
-     React.useEffect(() => {
-        form.setFieldsValue({
-            currency: defaultCurrency
-        });
-    }, [form, defaultCurrency]);
+
 
     const departmentDropdownRender = (menu) => (
         <>
@@ -312,22 +315,21 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                 }
             }
 
-            // Format data to match database structure
             const submitData = {
                 id: initialValues.id,
                 firstName: values.firstName,
                 lastName: values.lastName,
                 username: values.username,
                 email: values.email,
-                phoneCode: values.phoneCode, // Using the country ID directly
+                phoneCode: values.phoneCode,
                 phone: values.phone,
                 address: values.address,
                 gender: values.gender,
                 joiningDate: values.joiningDate ? values.joiningDate.format('YYYY-MM-DD') : null,
                 leaveDate: values.leaveDate ? values.leaveDate.format('YYYY-MM-DD') : null,
                 branch: values.branch,
-                department: values.department_name, // Map to department field
-                designation: values.designation_name, // Map to designation field
+                department: values.department, 
+                designation: values.designation,
                 salary: values.salary,
                 accountholder: values.accountholder,
                 accountnumber: values.accountnumber,
@@ -366,79 +368,17 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
     const handleBranchChange = (branchId) => {
         form.setFieldsValue({
             department: undefined,
-            designation_name: undefined
+            designation: undefined
         });
 
-        const depts = departments.filter(dept => dept.branch === branchId);
+        const depts = departments.filter(dept => String(dept.branch) === String(branchId));
         setFilteredDepartments(depts);
 
-        const desigs = Array.isArray(designations) 
-            ? designations.filter(desig => desig.branch === branchId)
-            : [];
+        const desigs = designations.filter(desig => String(desig.branch) === String(branchId));
         setFilteredDesignations(desigs);
     };
 
-    // Add this effect to handle initial branch, department, and designation
-    useEffect(() => {
-        if (visible && initialValues) {
-            // Find branch name
-            const selectedBranch = branches.find(branch => branch.id === initialValues.branch);
-            
-            if (selectedBranch) {
-                // Set branch and filter departments and designations
-                form.setFieldsValue({
-                    branch: selectedBranch.id
-                });
 
-                // Filter and set departments for selected branch
-                const depts = departments.filter(dept => dept.branch === selectedBranch.id);
-                setFilteredDepartments(depts);
-
-                // Filter and set designations for selected branch
-                const desigs = designations.filter(desig => desig.branch === selectedBranch.id);
-                setFilteredDesignations(desigs);
-
-                // Find and set department
-                const selectedDepartment = depts.find(dept => dept.id === initialValues.department);
-                if (selectedDepartment) {
-                    form.setFieldsValue({
-                        department: selectedDepartment.id
-                    });
-                }
-
-                // Find and set designation
-                const selectedDesignation = desigs.find(desig => desig.id === initialValues.designation);
-                if (selectedDesignation) {
-                    form.setFieldsValue({
-                        designation: selectedDesignation.id
-                    });
-                }
-            }
-
-            // Set other form values
-            const formattedValues = {
-                firstName: initialValues.firstName || '',
-                lastName: initialValues.lastName || '',
-                username: initialValues.username || '',
-                email: initialValues.email || '',
-                phoneCode: initialValues.phoneCode || defaultPhoneCode,
-                phone: initialValues.phone || '',
-                address: initialValues.address || '',
-                gender: initialValues.gender || '',
-                joiningDate: formatDateSafely(initialValues.joiningDate),
-                leaveDate: formatDateSafely(initialValues.leaveDate),
-                salary: initialValues.salary || 0,
-                accountholder: initialValues.accountholder || '',
-                accountnumber: initialValues.accountnumber || '',
-                bankname: initialValues.bankname || '',
-                ifsc: initialValues.ifsc || '',
-                banklocation: initialValues.banklocation || '',
-                currency: initialValues.currency || defaultCurrency,
-            };
-
-            form.setFieldsValue(formattedValues);
-        }
-    }, [visible, initialValues, branches, departments, designations, form, defaultCurrency, defaultPhoneCode]);
 
     return (
         <>
@@ -813,7 +753,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                 <Form.Item
                                     name="phoneCode"
                                     noStyle
-                                    initialValue={defaultPhoneCode}
                                 >
                                     <Select
                                         size="large"
@@ -1335,112 +1274,111 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
             onCancel={() => setIsCreateDesignationModalOpen(false)}
             onSuccess={handleCreateDesignationSuccess}
         />
+        <style jsx="true" global="true">{`
+          .price-input-group {
+            display: flex !important;
+            align-items: stretch !important;
+
+            .ant-select {
+              .ant-select-selector {
+                height: 100% !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+              }
+            }
+
+            .ant-input-number {
+              border-top-left-radius: 0 !important;
+              border-bottom-left-radius: 0 !important;
+            }
+          }
+
+          .currency-select {
+            cursor: pointer;
+            .ant-select-selector {
+              padding: 8px 8px !important;
+              height: 48px !important;
+            }
+            
+            .ant-select-selection-search {
+              input {
+                height: 100% !important;
+              }
+            }
+
+            .ant-select-selection-item {
+              padding-right: 20px !important;
+              display: flex !important;
+              align-items: center !important;
+              gap: 8px !important;
+            }
+          }
+
+          .ant-select-dropdown {
+            padding: 8px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+
+            .ant-select-item {
+              padding: 8px 12px !important;
+              border-radius: 6px !important;
+              min-height: 32px !important;
+              display: flex !important;
+              align-items: center !important;
+
+              &-option-selected {
+                background-color: #E6F4FF !important;
+                font-weight: 500 !important;
+                color: #1890ff !important;
+              }
+
+              &-option-active {
+                background-color: #F3F4F6 !important;
+              }
+            }
+
+            .ant-select-item-option-content {
+              font-size: 14px !important;
+            }
+          }
+
+          /* DatePicker styling */
+          .ant-picker-dropdown {
+            .ant-picker-panel-container {
+              box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+              border-radius: 8px !important;
+            }
+            
+            .ant-picker-cell {
+              &-in-view {
+                color: rgba(0, 0, 0, 0.85) !important;
+              }
+              
+              &-today .ant-picker-cell-inner::before {
+                border: 1px solid #1890ff !important;
+              }
+              
+              &-selected .ant-picker-cell-inner {
+                background-color: #1890ff !important;
+                color: #fff !important;
+              }
+            }
+            
+            .ant-picker-today-btn {
+              color: #1890ff !important;
+            }
+          }
+          
+          .ant-picker {
+            width: 100% !important;
+            
+            .ant-picker-input > input {
+              font-size: 14px !important;
+            }
+          }
+        `}</style>
         </>
     );
 };
 
 export default EditEmployee; 
-
-<style jsx="true" global="true">{`
-  .price-input-group {
-    display: flex !important;
-    align-items: stretch !important;
-
-    .ant-select {
-      .ant-select-selector {
-        height: 100% !important;
-        border-top-right-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
-      }
-    }
-
-    .ant-input-number {
-      border-top-left-radius: 0 !important;
-      border-bottom-left-radius: 0 !important;
-    }
-  }
-
-  .currency-select {
-    cursor: pointer;
-    .ant-select-selector {
-      padding: 8px 8px !important;
-      height: 48px !important;
-    }
-    
-    .ant-select-selection-search {
-      input {
-        height: 100% !important;
-      }
-    }
-
-    .ant-select-selection-item {
-      padding-right: 20px !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-    }
-  }
-
-  .ant-select-dropdown {
-    padding: 8px !important;
-    border-radius: 10px !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
-
-    .ant-select-item {
-      padding: 8px 12px !important;
-      border-radius: 6px !important;
-      min-height: 32px !important;
-      display: flex !important;
-      align-items: center !important;
-
-      &-option-selected {
-        background-color: #E6F4FF !important;
-        font-weight: 500 !important;
-        color: #1890ff !important;
-      }
-
-      &-option-active {
-        background-color: #F3F4F6 !important;
-      }
-    }
-
-    .ant-select-item-option-content {
-      font-size: 14px !important;
-    }
-  }
-
-  /* DatePicker styling */
-  .ant-picker-dropdown {
-    .ant-picker-panel-container {
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
-      border-radius: 8px !important;
-    }
-    
-    .ant-picker-cell {
-      &-in-view {
-        color: rgba(0, 0, 0, 0.85) !important;
-      }
-      
-      &-today .ant-picker-cell-inner::before {
-        border: 1px solid #1890ff !important;
-      }
-      
-      &-selected .ant-picker-cell-inner {
-        background-color: #1890ff !important;
-        color: #fff !important;
-      }
-    }
-    
-    .ant-picker-today-btn {
-      color: #1890ff !important;
-    }
-  }
-  
-  .ant-picker {
-    width: 100% !important;
-    
-    .ant-picker-input > input {
-      font-size: 14px !important;
-    }
-  }
-`}</style> 

@@ -72,6 +72,7 @@ import LeadFollowup from "./followup/index.jsx";
 import LeadAI from "./ai";
 import LeadWhatsapp from "./LeadWhatsapp.jsx";
 import PageHeader from "../../../../../components/PageHeader";
+import { useFeatureAccess } from "../../../../../hooks/useFeatureAccess";
 import "./LeadOverview.scss";
 
 const { Title, Text } = Typography;
@@ -1240,7 +1241,6 @@ const LeadOverview = () => {
     skip: !localLeadData?.contact_id 
   });
 
-  console.log("asdsads",localLeadData)
 
   // Update local state when lead data changes
   React.useEffect(() => {
@@ -1378,107 +1378,156 @@ const LeadOverview = () => {
     }
   };
 
-  const items = useMemo(() => [
-    {
-      key: "overview",
-      label: (
-        <span>
-          <FiFileText /> Overview
-        </span>
-      ),
-      children: (
-        <LeadOverviewContent
-          leadData={localLeadData}
-          pipelineStages={pipelineStages}
-          onStageUpdate={handleStageUpdate}
-          isUpdating={isUpdatingLead}
-          setIsEditModalOpen={setIsEditModalOpen}
-          pipelines={pipelines}
-        />
-      ),
-    },
-    {
-      key: "members",
-      label: (
-        <span>
-          <FiUsers /> Lead Members
-        </span>
-      ),
-      children: <LeadMembers leadId={leadId} leadData={localLeadData} />,
-    },
-    {
-      key: "activity",
-      label: (
-        <span>
-          <FiActivity /> Activity
-        </span>
-      ),
-      children: <LeadActivity leadId={leadId} />,
-    },
-    {
-      key: "notes",
-      label: (
-        <span>
-          <FiFileText /> Notes
-        </span>
-      ),
-      children: <LeadNotes leadId={leadId} />,
-    },
-    {
-      key: "files",
-      label: (
-        <span>
-          <FiPaperclip /> Files
-        </span>
-      ),
-      children: <LeadFiles leadId={leadId} />,
-    },
-    {
-      key: "followup",
-      label: (
-        <span>
-          <FiPhoneCall /> Follow-up
-        </span>
-      ),
-      children: <LeadFollowup leadId={leadId} />,
-    },
-    {
-      key: "ai",
-      label: (
-        <span style={{ display: 'flex', alignItems: 'center' }}>
-          <FiCpu style={{ marginRight: '8px' }} /> 
-          AI Assistant
-          <Tag 
-            color="purple" 
-            style={{ 
-              fontSize: '10px', 
-              marginLeft: '8px', 
-              borderRadius: '10px',
-              border: 'none',
-              fontWeight: '600',
-              padding: '0 8px',
-              lineHeight: '18px'
-            }}
-          >
-            BETA
-          </Tag>
-        </span>
-      ),
-      children: <LeadAI leadId={leadId} leadData={localLeadData} />,
-    },
-    {
-      key: "whatsapp",
-      label: (
-        <span>
-          <FaWhatsapp style={{ color: '#25D366', marginRight: '6px' }} /> WhatsApp
-        </span>
-      ),
-      children: <LeadWhatsapp 
-        leadId={leadId} 
-        phone={associatedContact?.phone || localLeadData?.telephone} 
-      />,
-    }
-  ], [localLeadData, pipelineStages, handleStageUpdate, isUpdatingLead, setIsEditModalOpen, associatedContact, pipelines]);
+  const { hasFeature } = useFeatureAccess();
+
+  const items = useMemo(() => {
+    const allItems = [
+      {
+        key: "overview",
+        label: (
+          <span>
+            <FiFileText /> Overview
+          </span>
+        ),
+        children: (
+          <LeadOverviewContent
+            leadData={localLeadData}
+            pipelineStages={pipelineStages}
+            onStageUpdate={handleStageUpdate}
+            isUpdating={isUpdatingLead}
+            setIsEditModalOpen={setIsEditModalOpen}
+            pipelines={pipelines}
+          />
+        ),
+      },
+      {
+        key: "members",
+        label: (
+          <span>
+            <FiUsers /> Lead Members
+          </span>
+        ),
+        children: <LeadMembers leadId={leadId} leadData={localLeadData} />,
+      },
+      {
+        key: "activity",
+        label: (
+          <span>
+            <FiActivity /> Activity
+          </span>
+        ),
+        children: <LeadActivity leadId={leadId} />,
+      },
+      {
+        key: "notes",
+        label: (
+          <span>
+            <FiFileText /> Notes
+          </span>
+        ),
+        children: <LeadNotes leadId={leadId} />,
+      },
+      {
+        key: "files",
+        label: (
+          <span>
+            <FiPaperclip /> Files
+          </span>
+        ),
+        children: <LeadFiles leadId={leadId} />,
+      },
+      {
+        key: "followup",
+        label: (
+          <span>
+            <FiPhoneCall /> Follow-up
+          </span>
+        ),
+        children: <LeadFollowup leadId={leadId} />,
+      },
+      {
+        key: "ai",
+        label: (
+          <span style={{ display: 'flex', alignItems: 'center' }}>
+            <FiCpu style={{ marginRight: '8px' }} /> 
+            AI Assistant
+            {!hasFeature('ai_features') ? <span style={{ marginLeft: '4px' }}>🔒</span> : (
+              <Tag 
+                color="purple" 
+                style={{ 
+                  fontSize: '10px', 
+                  marginLeft: '8px', 
+                  borderRadius: '10px',
+                  border: 'none',
+                  fontWeight: '600',
+                  padding: '0 8px',
+                  lineHeight: '18px'
+                }}
+              >
+                BETA
+              </Tag>
+            )}
+          </span>
+        ),
+        children: hasFeature('ai_features') ? (
+          <LeadAI leadId={leadId} leadData={localLeadData} />
+        ) : (
+          <div style={{ textAlign: 'center', padding: '60px 20px', background: '#f8fafc', borderRadius: '12px' }}>
+            <div style={{ width: '80px', height: '80px', background: 'rgba(114, 46, 209, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+              <FiCpu size={40} style={{ color: '#722ed1' }} />
+            </div>
+            <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>AI Assistant Locked</h3>
+            <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto 24px', fontSize: '15px' }}>
+              Unlock AI-powered lead scoring, smart suggestions, and automated summaries by upgrading your plan.
+            </p>
+            <Button 
+              type="primary" 
+              size="large"
+              onClick={() => navigate('/dashboard/settings/plan')}
+              style={{ background: 'linear-gradient(135deg, #722ed1 0%, #531dab 100%)', border: 'none', height: '44px', padding: '0 32px', borderRadius: '8px', fontWeight: '600' }}
+            >
+              Upgrade Now
+            </Button>
+          </div>
+        )
+      },
+      {
+        key: "whatsapp",
+        label: (
+          <span>
+            <FaWhatsapp style={{ color: '#25D366', marginRight: '6px' }} /> WhatsApp
+            {!hasFeature('whatsapp') && <span style={{ marginLeft: '4px' }}>🔒</span>}
+          </span>
+        ),
+        children: hasFeature('whatsapp') ? (
+          <LeadWhatsapp 
+            leadId={leadId} 
+            phone={associatedContact?.phone || localLeadData?.telephone} 
+          />
+        ) : (
+          <div style={{ textAlign: 'center', padding: '60px 20px', background: '#f8fafc', borderRadius: '12px' }}>
+            <div style={{ width: '80px', height: '80px', background: 'rgba(37, 211, 102, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+              <FaWhatsapp size={40} style={{ color: '#25D366' }} />
+            </div>
+            <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>WhatsApp Messaging Locked</h3>
+            <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto 24px', fontSize: '15px' }}>
+              Connect with your leads instantly on WhatsApp. Upgrade your plan to enable direct messaging and chat history.
+            </p>
+            <Button 
+              type="primary" 
+              size="large"
+              onClick={() => navigate('/dashboard/settings/plan')}
+              style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', border: 'none', height: '44px', padding: '0 32px', borderRadius: '8px', fontWeight: '600' }}
+            >
+              Unlock WhatsApp
+            </Button>
+          </div>
+        )
+      }
+    ];
+
+    return allItems;
+  }, [localLeadData, pipelineStages, handleStageUpdate, isUpdatingLead, setIsEditModalOpen, associatedContact, pipelines, hasFeature]);
 
   const isLoading = isLoadingLead || isLoadingStages;
 
@@ -1488,57 +1537,75 @@ const LeadOverview = () => {
         title={
           <Space size="middle">
             {localLeadData?.leadTitle || "Lead Details"}
-            <Tooltip title={(!localLeadData?.lead_score) ? "AI Analysis pending or low interest" : `AI Lead Score: ${localLeadData.lead_score}%`}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: 'rgba(24, 144, 255, 0.05)',
-                padding: '2px 10px',
-                borderRadius: '20px',
-                border: '1px solid rgba(24, 144, 255, 0.2)',
-                gap: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-              }}>
-                <div style={{ 
-                  width: '8px', 
-                  height: '8px', 
-                  borderRadius: '50%', 
-                  background: (localLeadData?.lead_score > 70) ? '#52c41a' : (localLeadData?.lead_score > 40) ? '#faad14' : '#ff4d4f',
-                  boxShadow: `0 0 8px ${(localLeadData?.lead_score > 70) ? '#52c41a80' : (localLeadData?.lead_score > 40) ? '#faad1480' : '#ff4d4f80'}`
-                }} />
-                <span style={{ 
-                  fontSize: '12px', 
-                  fontWeight: '600', 
-                  color: '#475569',
-                  letterSpacing: '0.5px'
+            {hasFeature('ai_features') ? (
+              <Tooltip title={(!localLeadData?.lead_score) ? "AI Analysis pending or low interest" : `AI Lead Score: ${localLeadData.lead_score}%`}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(24, 144, 255, 0.05)',
+                  padding: '2px 10px',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(24, 144, 255, 0.2)',
+                  gap: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                 }}>
-                  LEAD SCORE: <span style={{ color: '#1e293b', fontSize: '14px' }}>
-                    {isAiAnalyzing 
-                      ? "Analyzing..." 
-                      : (aiSuggestionsData?.data?.score !== undefined && aiSuggestionsData?.data?.score !== null
-                        ? aiSuggestionsData.data.score
-                        : (localLeadData?.lead_score !== null && localLeadData?.lead_score !== undefined 
-                          ? localLeadData.lead_score 
-                          : "0"))}
+                  <div style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    background: (localLeadData?.lead_score > 70) ? '#52c41a' : (localLeadData?.lead_score > 40) ? '#faad14' : '#ff4d4f',
+                    boxShadow: `0 0 8px ${(localLeadData?.lead_score > 70) ? '#52c41a80' : (localLeadData?.lead_score > 40) ? '#faad1480' : '#ff4d4f80'}`
+                  }} />
+                  <span style={{ 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    color: '#475569',
+                    letterSpacing: '0.5px'
+                  }}>
+                    LEAD SCORE: <span style={{ color: '#1e293b', fontSize: '14px' }}>
+                      {isAiAnalyzing 
+                        ? "Analyzing..." 
+                        : (aiSuggestionsData?.data?.score !== undefined && aiSuggestionsData?.data?.score !== null
+                          ? aiSuggestionsData.data.score
+                          : (localLeadData?.lead_score !== null && localLeadData?.lead_score !== undefined 
+                            ? localLeadData.lead_score 
+                            : "0"))}
+                    </span>
                   </span>
-                </span>
-                <Tag 
-                  color="blue" 
-                  style={{ 
-                    margin: 0, 
-                    fontSize: '10px', 
-                    borderRadius: '4px', 
-                    border: 'none', 
-                    background: 'rgba(24, 144, 255, 0.1)',
-                    color: '#096dd9',
-                    fontWeight: 'bold',
-                    padding: '0 4px'
-                  }}
-                >
-                  AI
-                </Tag>
-              </div>
-            </Tooltip>
+                  <Tag 
+                    color="blue" 
+                    style={{ 
+                      margin: 0, 
+                      fontSize: '10px', 
+                      borderRadius: '4px', 
+                      border: 'none', 
+                      background: 'rgba(24, 144, 255, 0.1)',
+                      color: '#096dd9',
+                      fontWeight: 'bold',
+                      padding: '0 4px'
+                    }}
+                  >
+                    AI
+                  </Tag>
+                </div>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Upgrade plan to unlock AI Lead Scoring">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: '#f1f5f9',
+                  padding: '2px 10px',
+                  borderRadius: '20px',
+                  border: '1px solid #e2e8f0',
+                  gap: '8px',
+                  opacity: 0.8,
+                  cursor: 'help'
+                }}>
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>AI SCORE LOCKED 🔒</span>
+                </div>
+              </Tooltip>
+            )}
           </Space>
         }
         subtitle="Manage lead details and activities"

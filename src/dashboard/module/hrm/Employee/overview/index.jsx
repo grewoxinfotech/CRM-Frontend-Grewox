@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Row, Col, Card, Avatar, Typography, Tag, Space, Tabs, Statistic, Button, Breadcrumb, Table, Tooltip } from "antd";
 import { FiUser, FiTarget, FiCheckSquare, FiMail, FiPhone, FiArrowLeft, FiGrid, FiAward, FiCalendar, FiHome, FiMapPin, FiBriefcase, FiEdit2, FiFileText } from "react-icons/fi";
-import { useGetEmployeesQuery } from "../services/employeeApi.js";
+import { useGetEmployeesQuery, useUpdateEmployeeMutation } from "../services/employeeApi.js";
 import { useGetLeadsQuery } from "../../../crm/lead/services/LeadApi.js";
 import { useGetAllTasksQuery } from "../../../crm/task/services/taskApi.js";
 import PageHeader from "../../../../../components/PageHeader";
+import EditEmployee from "../EditEmployee";
 import moment from "moment";
 import "./EmployeeOverview.scss";
 
@@ -15,6 +16,7 @@ const EmployeeOverview = () => {
   const { employeeId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("leads");
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   const { data: employeesData } = useGetEmployeesQuery();
   const employee = employeesData?.data?.find(emp => emp.id === employeeId);
@@ -23,13 +25,13 @@ const EmployeeOverview = () => {
     page: 1,
     pageSize: -1,
     memberId: employeeId
-  });
+  }, { skip: !employeeId });
 
   const { data: tasksData, isLoading: tasksLoading } = useGetAllTasksQuery({
     id: employee?.client_id,
     pageSize: -1,
     memberId: employeeId
-  });
+  }, { skip: !employee?.client_id || !employeeId });
 
   const assignedLeads = leadsData?.data || [];
   const assignedTasks = tasksData?.data || [];
@@ -45,19 +47,22 @@ const EmployeeOverview = () => {
       title: "Value",
       dataIndex: "leadValue",
       key: "leadValue",
-      render: (val, record) => (
-        <Text style={{ color: '#059669', fontWeight: '600' }}>
-          {record.currency || 'INR'} {val?.toLocaleString() || 0}
-        </Text>
-      ),
+      render: (val, record) => {
+        const currency = (record.currency && record.currency.length < 15) ? record.currency : 'INR';
+        return (
+          <Text style={{ color: '#059669', fontWeight: '600' }}>
+            {currency} {val?.toLocaleString() || 0}
+          </Text>
+        );
+      },
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (_, record) => (
+      render: (status, record) => (
         <Tag color="blue" style={{ borderRadius: '6px', border: 'none', padding: '2px 10px' }}>
-          {record.LeadStatus?.name?.toUpperCase() || record.status?.toUpperCase() || 'ACTIVE'}
+          {record.LeadStatus?.name?.toUpperCase() || (status && status.length < 20 ? status.toUpperCase() : 'NEW LEAD')}
         </Tag>
       ),
     },
@@ -65,8 +70,10 @@ const EmployeeOverview = () => {
       title: "Source",
       dataIndex: "source",
       key: "source",
-      render: (_, record) => (
-        <Text>{record.LeadSource?.name || record.source || 'N/A'}</Text>
+      render: (source, record) => (
+        <Tag color="cyan" style={{ borderRadius: '6px', border: 'none', padding: '2px 10px' }}>
+          {record.LeadSource?.name?.toUpperCase() || (source && source.length < 20 ? source.toUpperCase() : 'MANUAL')}
+        </Tag>
       ),
     },
     {
@@ -151,7 +158,14 @@ const EmployeeOverview = () => {
           { title: "Overview" },
         ]}
         extraActions={
-            <Button type="primary" icon={<FiEdit2 />} className="edit-btn">Edit Profile</Button>
+            <Button 
+              type="primary" 
+              icon={<FiEdit2 />} 
+              className="edit-btn"
+              onClick={() => setIsEditModalVisible(true)}
+            >
+              Edit Profile
+            </Button>
         }
       />
 
@@ -346,6 +360,17 @@ const EmployeeOverview = () => {
             </Card>
         </div>
       </div>
+
+      <EditEmployee
+        visible={isEditModalVisible}
+        onCancel={() => setIsEditModalVisible(false)}
+        initialValues={employee}
+        onSuccess={() => {
+          setIsEditModalVisible(false);
+          // refetch is handled by the query's tags if configured, 
+          // or we can manually refetch if needed.
+        }}
+      />
     </div>
   );
 };

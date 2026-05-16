@@ -65,7 +65,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
     useGetProductsQuery(loggedInUser?.id);
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
 
-  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true);
+  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("customer");
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
@@ -120,7 +120,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         (c) => c.id === initialValues.customer
       );
       const customerName = selectedCustomer?.name || "null";
-      const taxNumber = selectedCustomer?.tax_number || "";
+      const taxNumber = initialValues.tax_number || selectedCustomer?.tax_number || "";
 
       // Format initial values for the form
       const formattedValues = {
@@ -195,7 +195,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             setSelectedProductCurrency(productCurrency);
             setSelectedCurrency(productCurrency.currencyIcon);
             setSelectedCurrencyId(productCurrency.id);
-            setIsCurrencyDisabled(true);
+            setIsCurrencyDisabled(false);
           }
         }
       }
@@ -338,7 +338,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         setSelectedProductCurrency(productCurrency);
         setSelectedCurrency(productCurrency.currencyIcon);
         setSelectedCurrencyId(productCurrency.id);
-        setIsCurrencyDisabled(true);
+        setIsCurrencyDisabled(false);
       }
 
       // Update the items list
@@ -417,6 +417,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         discount: Number(totalDiscountAmount) || 0,
         total: Number(values.total) || 0,
         payment_status: values.status || "unpaid",
+        tax_number: values.tax_number || "",
         additional_notes: values.additionalNotes || "",
       };
 
@@ -990,28 +991,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               ))}
             </Select>
           </Form.Item>
-          <Form.Item
-            name="tax_number"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-                GSTIN
-              </span>
-            }
-          >
-            <Input
-              disabled
-              placeholder="Tax number"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-              }}
-            />
-          </Form.Item>
+
           <Form.Item
             name="currency"
             label={
@@ -1124,7 +1104,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 borderRadius: "10px",
               }}
               onChange={(value) => setPaymentStatus(value)}
-              disabled={true}
+              disabled={false}
             >
               <Option value="paid">Paid</Option>
               <Option value="unpaid">Unpaid</Option>
@@ -1219,7 +1199,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                       productCurrency.currencyIcon
                                     );
                                     setSelectedCurrencyId(productCurrency.id);
-                                    setIsCurrencyDisabled(true);
+                                    setIsCurrencyDisabled(false);
                                   }
 
                                   const items =

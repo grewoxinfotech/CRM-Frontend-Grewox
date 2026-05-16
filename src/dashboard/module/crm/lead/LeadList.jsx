@@ -62,8 +62,8 @@ const adjustColor = (color, amount) => {
 
 const getRandomColor = (name) => {
   const colors = [
-    "#1890ff", "#2f54eb", "#722ed1", "#eb2f96", 
-    "#fa8c16", "#faad14", "#a0d911", "#52c41a", 
+    "#1890ff", "#2f54eb", "#722ed1", "#eb2f96",
+    "#fa8c16", "#faad14", "#a0d911", "#52c41a",
     "#13c2c2", "#fa541c"
   ];
   let hash = 0;
@@ -231,7 +231,10 @@ const LeadList = ({
               Overview
             </Text>
           ),
-          onClick: () => onLeadClick(record),
+          onClick: (e) => {
+            e.domEvent.stopPropagation();
+            onLeadClick(record);
+          },
         },
         shouldShowEditDelete && {
           key: "edit",
@@ -241,7 +244,10 @@ const LeadList = ({
               Edit Lead
             </Text>
           ),
-          onClick: () => onEdit(record),
+          onClick: (e) => {
+            e.domEvent.stopPropagation();
+            onEdit(record);
+          },
         },
         shouldShowEditDelete && {
           key: "delete",
@@ -251,7 +257,10 @@ const LeadList = ({
               Delete Lead
             </Text>
           ),
-          onClick: () => onDelete(record),
+          onClick: (e) => {
+            e.domEvent.stopPropagation();
+            onDelete(record);
+          },
           danger: true,
         },
       ].filter(Boolean),
@@ -301,9 +310,9 @@ const LeadList = ({
               textTransform: 'uppercase'
             }}
           >
-            {leadDate.isSame(today, 'day') ? "Today" : 
-             leadDate.isSame(yesterday, 'day') ? "Yesterday" : 
-             leadDate.format("DD MMM YYYY")}
+            {leadDate.isSame(today, 'day') ? "Today" :
+              leadDate.isSame(yesterday, 'day') ? "Yesterday" :
+                leadDate.format("DD MMM YYYY")}
           </Tag>
         );
       }
@@ -312,7 +321,7 @@ const LeadList = ({
       title: "Lead Name",
       dataIndex: "leadTitle",
       key: "leadTitle",
-      width: 150,
+      width: 170,
       filterDropdown: ({
         setSelectedKeys,
         selectedKeys,
@@ -381,6 +390,25 @@ const LeadList = ({
       dataIndex: ["Company", "company_name"],
       key: "company",
       width: 150,
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search company"
+            value={selectedKeys[0]}
+            onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
+          />
+          <Space>
+            <Button type="primary" onClick={() => confirm()} size="small" style={{ width: 90 }}>Filter</Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>Reset</Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) => {
+        const companyName = getCompanyName(record) || "";
+        return companyName.toLowerCase().includes(value.toLowerCase());
+      },
       render: (name, record) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FiBriefcase style={{ color: "#1890ff" }} />
@@ -392,7 +420,26 @@ const LeadList = ({
       title: "Phone",
       dataIndex: ["Contact", "phone"],
       key: "phone",
-      width: 150,
+      width: 100,
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search phone"
+            value={selectedKeys[0]}
+            onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
+          />
+          <Space>
+            <Button type="primary" onClick={() => confirm()} size="small" style={{ width: 90 }}>Filter</Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>Reset</Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) => {
+        const phone = record.Contact?.phone || "";
+        return phone.toLowerCase().includes(value.toLowerCase());
+      },
       render: (phone) => (phone && !phone.startsWith("META_")) ? phone : "N/A"
     },
     {
@@ -423,7 +470,7 @@ const LeadList = ({
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 100,
+      width: 150,
       filters: statuses.map((status) => ({
         text: status.name,
         value: status.id,
@@ -480,7 +527,7 @@ const LeadList = ({
           icon: <FiTarget style={{ marginRight: "4px" }} />,
           text: "Unknown",
         };
- 
+
         return (
           <Tag
             style={{
@@ -506,7 +553,7 @@ const LeadList = ({
       title: "Lead Value",
       dataIndex: "leadValue",
       key: "leadValue",
-      width: 150,
+      width: 120,
       sorter: (a, b) => (a.leadValue || 0) - (b.leadValue || 0),
       render: (value, record) => {
         return (
@@ -521,6 +568,11 @@ const LeadList = ({
       dataIndex: "Creator",
       key: "owner",
       width: 120,
+      filters: users?.map((user) => ({
+        text: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username || "Unknown",
+        value: user.id,
+      })) || [],
+      onFilter: (value, record) => record.Creator?.id === value,
       render: (creator) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <Text>{creator ? `${creator.firstName || ""} ${creator.lastName || ""}` : "Unknown"}</Text>
@@ -532,6 +584,24 @@ const LeadList = ({
       dataIndex: 'lead_members',
       key: 'assignee',
       width: 150,
+      filters: users?.map((user) => ({
+        text: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username || "Unknown",
+        value: user.id,
+      })) || [],
+      onFilter: (value, record) => {
+        let assignedIds = [];
+        try {
+          let parsed = record.lead_members;
+          if (typeof parsed === 'string') {
+            try {
+              parsed = JSON.parse(parsed);
+              if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+            } catch (e) { parsed = []; }
+          }
+          assignedIds = parsed?.lead_members || parsed?.assignedusers || (Array.isArray(parsed) ? parsed : []);
+        } catch (e) { assignedIds = []; }
+        return assignedIds.includes(value);
+      },
       render: (lead_members) => {
         let assignedIds = [];
         try {
@@ -544,22 +614,22 @@ const LeadList = ({
             } catch (e) { parsed = []; }
           }
           assignedIds = parsed?.lead_members || parsed?.assignedusers || (Array.isArray(parsed) ? parsed : []);
-        } catch(e) { assignedIds = []; }
-        
-        const assignedUsers = Array.isArray(assignedIds) 
+        } catch (e) { assignedIds = []; }
+
+        const assignedUsers = Array.isArray(assignedIds)
           ? assignedIds.map(id => users?.find(u => u.id === id)).filter(Boolean)
           : [];
 
         if (assignedIds.length > 0 && assignedUsers.length === 0) {
-            console.warn("Assignee Mapping Failed:", { assignedIds, availableUserIds: users?.map(u => u.id) });
+          console.warn("Assignee Mapping Failed:", { assignedIds, availableUserIds: users?.map(u => u.id) });
         }
 
         return (
           <Avatar.Group maxCount={3} size="small">
             {assignedUsers.map(user => (
               <Tooltip key={user.id} title={user.username || `${user.firstName} ${user.lastName}`}>
-                <Avatar 
-                  src={user.profilePic} 
+                <Avatar
+                  src={user.profilePic}
                   style={{ backgroundColor: getRandomColor(user.username || user.id) }}
                 >
                   {user.username?.charAt(0).toUpperCase() || user.firstName?.charAt(0).toUpperCase()}
@@ -582,7 +652,7 @@ const LeadList = ({
             menu={getDropdownItems(record)}
             trigger={["click"]}
             placement="bottomRight"
- 
+
           >
             <Button
               type="text"

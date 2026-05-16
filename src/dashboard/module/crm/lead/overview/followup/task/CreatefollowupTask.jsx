@@ -35,7 +35,7 @@ import { selectCurrentUser } from "../../../../../../../auth/services/authSlice"
 import {
   useGetFollowupTaskByIdQuery,
 } from "./services/followupTaskApi";
-import { useCreateFollowupTaskMutation } from "../../../services/LeadApi";
+import { useCreateFollowupTaskMutation } from "./services/followupTaskApi";
 import { useParams } from "react-router-dom";
 const { Text } = Typography;
 const { Option } = Select;
@@ -218,7 +218,7 @@ const CreatefollowupTask = ({
       const reminderData = showReminder
         ? {
             reminder_date: values.reminder_date?.format("YYYY-MM-DD"),
-            reminder_time: values.reminder_time?.format("HH:mm:ss"),
+            reminder_time: values.reminder_time?.format("HH:mm:00"),
           }
         : null;
 
@@ -236,7 +236,7 @@ const CreatefollowupTask = ({
                 ? values.repeat_start_date.format("YYYY-MM-DD")
                 : null,
               repeat_start_time: values.repeat_start_time
-                ? values.repeat_start_time.format("HH:mm:ss")
+                ? values.repeat_start_time.format("HH:mm:00")
                 : null,
               custom_repeat_interval:
                 repeatType === "custom" ? customRepeatInterval : null,
@@ -1282,3 +1282,4 @@ const CreatefollowupTask = ({
 };
 
 export default CreatefollowupTask;
+

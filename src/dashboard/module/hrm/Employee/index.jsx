@@ -66,6 +66,7 @@ const Employee = () => {
         );
 
         const transformedData = filteredData.map((employee) => ({
+            ...employee,
             id: employee.id,
             employeeId: employee.employeeId,
             firstName: employee.firstName || "N/A",

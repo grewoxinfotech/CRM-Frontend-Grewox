@@ -90,11 +90,17 @@ const CreateInvoice = ({
     });
 
   useEffect(() => {
-    if (currenciesData?.data?.length > 0) {
+    const currencies = currenciesData?.data || currenciesData;
+    if (Array.isArray(currencies) && currencies.length > 0) {
       const defaultCurrency =
-        currenciesData.find((c) => c.currencyCode === "INR") ||
-        currenciesData.data[0];
-      form.setFieldValue("currency", defaultCurrency.id);
+        currencies.find((c) => c.currencyCode === "INR" || c.currencyName === "INR") ||
+        currencies[0];
+      
+      if (defaultCurrency) {
+        form.setFieldValue("currency", defaultCurrency.id);
+        setSelectedCurrency(defaultCurrency.currencyIcon || "₹");
+        setSelectedCurrencyId(defaultCurrency.id);
+      }
     }
   }, [currenciesData, form]);
 
@@ -275,12 +281,12 @@ const CreateInvoice = ({
         discount: totalDiscountAmount,
         total: Number(values.total) || 0,
         payment_status: values.status || "unpaid",
+        tax_number: values.tax_number || "",
       };
 
       await createInvoicee({ id: id, data: payload }).unwrap();
       message.success("Invoice created successfully");
       form.resetFields();
-      setCreateModalVisible(false);
       onCancel();
     } catch (error) {
       const errorMessage =
@@ -909,28 +915,7 @@ const CreateInvoice = ({
             </Select>
           </Form.Item>
 
-          <Form.Item
-            name="tax_number"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-                GSTIN
-              </span>
-            }
-          >
-            <Input
-              disabled
-              placeholder="Tax number"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-              }}
-            />
-          </Form.Item>
+
 
           <Form.Item
             name="currency"
@@ -946,7 +931,6 @@ const CreateInvoice = ({
               size="large"
               value={selectedCurrencyId}
               onChange={handleCurrencyChange}
-              disabled={isCurrencyDisabled}
               style={{
                 borderRadius: "10px",
               }}

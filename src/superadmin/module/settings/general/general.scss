@@ -380,10 +380,11 @@ background: $background-color;
 
     .header-content {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: center;
       width: 100%;
-      margin: 0 auto;
+      text-align: left;
+      margin: 0;
 
       .header-info {
         h1 {
@@ -920,8 +921,9 @@ background: $background-color;
 
       .header-content {
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-start;
         align-items: center;
+        text-align: left;
 
         .header-info {
           h1 {

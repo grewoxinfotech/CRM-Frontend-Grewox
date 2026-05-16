@@ -23,7 +23,15 @@ function parseAutomationArray(value) {
   if (Array.isArray(value)) return value;
   if (typeof value === "string") {
     try {
-      const parsed = JSON.parse(value);
+      let parsed = JSON.parse(value);
+      // If parsing resulted in another string, try parsing it again (handles double stringification)
+      if (typeof parsed === "string") {
+        try {
+          parsed = JSON.parse(parsed);
+        } catch {
+          return [];
+        }
+      }
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
@@ -465,7 +473,7 @@ const AutomationPage = () => {
             </div>
 
             <Card 
-                title={<div style={{ fontWeight: '700' }}>Active Automation Workflows</div>} 
+                title={<div style={{ fontWeight: '700' }}>Automation Workflows</div>} 
                 extra={
                     <Space>
                         <Button 

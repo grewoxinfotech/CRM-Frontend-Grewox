@@ -217,10 +217,10 @@ const EditLog = ({ open, onCancel, onSubmit, callId, callData, rtiId }) => {
           ? values.call_start_date.format("YYYY-MM-DD")
           : null,
         call_start_time: values.call_start_time
-          ? values.call_start_time.format("HH:mm:ss")
+          ? values.call_start_time.format("HH:mm:00")
           : null,
         call_end_time: values.call_end_time
-          ? values.call_end_time.format("HH:mm:ss")
+          ? values.call_end_time.format("HH:mm:00")
           : null,
           assigned_to: {
             assigned_to: values.assigned_to && values.assigned_to.length > 0
@@ -910,3 +910,4 @@ const EditLog = ({ open, onCancel, onSubmit, callId, callData, rtiId }) => {
 };
 
 export default EditLog;
+

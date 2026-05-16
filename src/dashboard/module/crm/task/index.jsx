@@ -6,7 +6,14 @@ import {
   DatePicker,
   Tabs,
   Badge,
+  Drawer,
+  Form,
+  Select,
+  Button,
 } from "antd";
+import { FiFilter } from "react-icons/fi";
+
+const { Option } = Select;
 import {
   FiPlus,
   FiDownload,
@@ -32,9 +39,10 @@ const Task = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [searchText, setSearchText] = useState("");
-  const [filters, setFilters] = useState({ dateRange: [], status: undefined, priority: undefined });
+  const [filters, setFilters] = useState({ dateRange: [], status: undefined, priority: undefined, assignee: undefined });
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10 });
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
   const user = useSelector(selectCurrentUser);
@@ -43,11 +51,9 @@ const Task = () => {
 
   const { data: tasksResponse = { data: [], pagination: {} }, isLoading: tasksLoading, refetch } = useGetAllTasksQuery({
     id, 
-    page: 1, // Fetch first page for now, or use a larger pageSize if needed
-    pageSize: 1000, // Fetch more for frontend filtering to make tabs work globally
+    page: 1, 
+    pageSize: 1000, 
     search: searchText,
-    ...(filters.status && { status: filters.status }),
-    ...(filters.priority && { priority: filters.priority }),
   });
 
   const allTasks = tasksResponse.data || [];
@@ -72,7 +78,27 @@ const Task = () => {
       matchesDateRange = dueDate.isBetween(start, end, 'day', '[]');
     }
 
-    return matchesTab && matchesDateRange;
+    if (!matchesTab || !matchesDateRange) return false;
+
+    if (filters.status && task.status !== filters.status) return false;
+    if (filters.priority && task.priority !== filters.priority) return false;
+    
+    if (filters.assignee) {
+        let assignedIds = [];
+        try {
+            let parsed = task.assigned_to;
+            if (typeof parsed === 'string') {
+                try {
+                    parsed = JSON.parse(parsed);
+                    if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+                } catch(e) { parsed = []; }
+            }
+            assignedIds = parsed?.assignedusers || parsed?.assigned_to || (Array.isArray(parsed) ? parsed : []);
+        } catch(e) { assignedIds = []; }
+        if (!assignedIds.includes(filters.assignee)) return false;
+    }
+
+    return true;
   });
 
   const { data: usersData = [] } = useGetUsersQuery();
@@ -106,13 +132,7 @@ const Task = () => {
             { key: 'pdf', label: 'Export PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') },
           ]
         }}
-        extraActions={
-          <DatePicker.RangePicker 
-            onChange={(dates) => setFilters(prev => ({ ...prev, dateRange: dates || [] }))}
-            style={{ borderRadius: '8px', height: '30px' }}
-            format="DD MMM YYYY"
-          />
-        }
+        extraActions={null}
       />
 
       <Card className="standard-content-card">
@@ -120,6 +140,16 @@ const Task = () => {
           activeKey={activeTab}
           onChange={setActiveTab}
           style={{ marginBottom: '16px' }}
+          tabBarExtraContent={
+            <Button
+              icon={<FiFilter />}
+              onClick={() => setIsFilterDrawerOpen(true)}
+              style={{ borderRadius: '8px', height: '32px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              type={Object.keys(filters).some(k => filters[k] && (!Array.isArray(filters[k]) || filters[k].length > 0)) ? "primary" : "default"}
+            >
+              Filter {Object.keys(filters).filter(k => filters[k] && (!Array.isArray(filters[k]) || filters[k].length > 0)).length > 0 && `(${Object.keys(filters).filter(k => filters[k] && (!Array.isArray(filters[k]) || filters[k].length > 0)).length})`}
+            </Button>
+          }
           items={[
             {
               key: 'all',
@@ -198,6 +228,64 @@ const Task = () => {
         relatedId={id}
         users={users}
       />
+
+      <Drawer
+        title="Advanced Filters"
+        placement="right"
+        onClose={() => setIsFilterDrawerOpen(false)}
+        open={isFilterDrawerOpen}
+        extra={
+          <Button onClick={() => setFilters({ dateRange: [], status: undefined, priority: undefined, assignee: undefined })}>Clear All</Button>
+        }
+      >
+        <Form layout="vertical">
+          <Form.Item label="Date Range">
+            <DatePicker.RangePicker
+              value={filters.dateRange?.length ? filters.dateRange : null}
+              onChange={(dates) => setFilters(prev => ({ ...prev, dateRange: dates || [] }))}
+              style={{ width: '100%' }}
+              format="DD MMM YYYY"
+            />
+          </Form.Item>
+          <Form.Item label="Status">
+            <Select
+              allowClear
+              placeholder="Select Status"
+              value={filters.status}
+              onChange={(val) => setFilters(prev => ({ ...prev, status: val }))}
+            >
+              <Option value="not_started">Not Started</Option>
+              <Option value="in_progress">In Progress</Option>
+              <Option value="testing">Testing</Option>
+              <Option value="awaiting_feedback">Awaiting Feedback</Option>
+              <Option value="completed">Completed</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Priority">
+            <Select
+              allowClear
+              placeholder="Select Priority"
+              value={filters.priority}
+              onChange={(val) => setFilters(prev => ({ ...prev, priority: val }))}
+            >
+              <Option value="low">Low</Option>
+              <Option value="medium">Medium</Option>
+              <Option value="high">High</Option>
+              <Option value="urgent">Urgent</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Assignee">
+            <Select
+              allowClear
+              placeholder="Select Assignee"
+              value={filters.assignee}
+              onChange={(val) => setFilters(prev => ({ ...prev, assignee: val }))}
+            >
+              {users?.map(u => <Option key={u.id} value={u.id}>{`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.username}</Option>)}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Drawer>
     </div>
   );
 };

@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import './vendor.scss';
 import { useCreateVendorMutation } from './services/vendorApi';
 import { useGetAllCountriesQuery, useGetAllCurrenciesQuery } from '../../settings/services/settingsApi';
+import LimitReachedModal from '../../../../components/LimitReachedModal';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -16,6 +17,8 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
     const [fileList, setFileList] = useState([]);
     const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery();
     const { data: currencies = [] } = useGetAllCurrenciesQuery();
+    const [isLimitModalVisible, setIsLimitModalVisible] = useState(false);
+    const [limitErrorMessage, setLimitErrorMessage] = useState('');
 
     useEffect(() => {
         if (open) {
@@ -43,7 +46,13 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
             onCancel();
         } catch (error) {
             console.error('Submit Error:', error);
-            message.error('Failed to create vendor');
+            const errorMsg = error?.data?.message || '';
+            if (errorMsg.toLowerCase().includes('limit reached')) {
+                setLimitErrorMessage(errorMsg);
+                setIsLimitModalVisible(true);
+            } else {
+                message.error(errorMsg || 'Failed to create vendor');
+            }
         }
     };
 
@@ -444,6 +453,13 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                     </Button>
                 </div>
             </Form>
+            <LimitReachedModal
+                visible={isLimitModalVisible}
+                onCancel={() => setIsLimitModalVisible(false)}
+                title="Vendor Limit Reached"
+                message={limitErrorMessage || "You have reached the maximum number of vendors allowed in your current plan."}
+                limitType="vendors"
+            />
         </Modal>
     );
 };

@@ -270,7 +270,7 @@ const EditFollowupTask = ({ open, taskId, taskData, onCancel, onSubmit }) => {
       // Prepare reminder data
       const reminderData = showReminder ? {
         reminder_date: values.reminder_date?.format('YYYY-MM-DD'),
-        reminder_time: values.reminder_time?.format('HH:mm:ss'),
+        reminder_time: values.reminder_time?.format("HH:mm:00"),
       } : null;
 
       // Prepare repeat data

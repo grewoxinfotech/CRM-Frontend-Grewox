@@ -11,21 +11,17 @@ const EmployeeOverviewModal = ({ visible, onCancel, employee }) => {
   const { data: leadsData, isLoading: leadsLoading } = useGetLeadsQuery({
     page: 1,
     pageSize: -1,
-  });
+    memberId: employee?.id
+  }, { skip: !employee?.id });
 
-  const { data: tasksData, isLoading: tasksLoading } = useGetAllTasksQuery(employee?.client_id);
+  const { data: tasksData, isLoading: tasksLoading } = useGetAllTasksQuery({ 
+    id: employee?.client_id,
+    pageSize: -1,
+    memberId: employee?.id
+  }, { skip: !employee?.client_id || !employee?.id });
 
-  // Filter leads where this employee is a member
-  const assignedLeads = leadsData?.data?.filter(lead => {
-    const members = lead.lead_members?.lead_members || [];
-    return members.includes(employee?.id);
-  }) || [];
-
-  // Filter tasks where this employee is assigned
-  const assignedTasks = tasksData?.data?.filter(task => {
-    const assignedUsers = task.assignTo?.assignedusers || [];
-    return assignedUsers.includes(employee?.id);
-  }) || [];
+  const assignedLeads = leadsData?.data || [];
+  const assignedTasks = tasksData?.data || [];
 
   const leadColumns = [
     {
@@ -38,14 +34,29 @@ const EmployeeOverviewModal = ({ visible, onCancel, employee }) => {
       title: "Value",
       dataIndex: "leadValue",
       key: "leadValue",
-      render: (val, record) => `${record.currency || 'INR'} ${val || 0}`,
+      render: (val, record) => {
+        const currency = (record.currency && record.currency.length < 15) ? record.currency : 'INR';
+        return `${currency} ${val || 0}`;
+      },
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status) => (
-        <Tag color="blue" style={{ borderRadius: '4px' }}>{status || 'active'}</Tag>
+      render: (status, record) => (
+        <Tag color="blue" style={{ borderRadius: '4px' }}>
+          {record.LeadStatus?.name || status || 'New Lead'}
+        </Tag>
+      ),
+    },
+    {
+      title: "Source",
+      dataIndex: "source",
+      key: "source",
+      render: (source, record) => (
+        <Tag color="cyan" style={{ borderRadius: '4px' }}>
+          {record.LeadSource?.name || source || 'Manual'}
+        </Tag>
       ),
     },
     {
@@ -54,8 +65,14 @@ const EmployeeOverviewModal = ({ visible, onCancel, employee }) => {
       key: "interest",
       render: (level) => {
         const colors = { high: 'red', medium: 'orange', low: 'green' };
-        return <Tag color={colors[level] || 'blue'}>{level?.toUpperCase()}</Tag>;
+        return <Tag color={colors[level] || 'blue'}>{level?.toUpperCase() || 'MEDIUM'}</Tag>;
       }
+    },
+    {
+      title: "Created At",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (date) => moment(date).format("DD MMM YYYY"),
     }
   ];
 

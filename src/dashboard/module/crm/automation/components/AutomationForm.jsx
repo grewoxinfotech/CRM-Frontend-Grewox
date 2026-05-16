@@ -85,8 +85,8 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     <Form.Item 
                         name="name" 
-                        label={<span style={{ fontWeight: "500" }}>Workflow Name <span style={{ color: "#ff4d4f" }}>*</span></span>} 
-                        rules={[{ required: true, message: 'Please enter workflow name' }]}
+                        label={<span style={{ fontWeight: "500" }}>Automation Name</span>} 
+                        rules={[{ required: true, message: 'Please enter automation name' }]}
                     >
                         <Input 
                             placeholder="e.g. 24h Welcome Sequence" 
@@ -95,7 +95,7 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                     </Form.Item>
                     <Form.Item 
                         name="triggerType" 
-                        label={<span style={{ fontWeight: "500" }}>Trigger Event <span style={{ color: "#ff4d4f" }}>*</span></span>} 
+                        label={<span style={{ fontWeight: "500" }}>Trigger Event</span>} 
                         rules={[{ required: true }]}
                     >
                         <Select 
@@ -271,7 +271,7 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                                         <Form.Item {...restField} name={[name, 'delayInHours']} label="Delay (Hours)" rules={[{ required: true }]}>
                                             <InputNumber min={0} step={0.25} style={{ width: '100%', borderRadius: '8px' }} placeholder="0 = Instant" />
                                         </Form.Item>
-                                        <Form.Item {...restField} name={[name, 'requireNoResponse']} label="Stop Logic" valuePropName="checked">
+                                        <Form.Item {...restField} name={[name, 'requireNoResponse']} label="Stop Logic">
                                             <Select>
                                                 <Option value={false}>Always Execute</Option>
                                                 <Option value={true}>Cancel if Replied</Option>
@@ -330,7 +330,7 @@ const AutomationForm = ({ visible, onCancel, onFinish, form, statuses, categorie
                                                     <Form.Item {...restField} name={[name, 'stageId']} label="Move to Stage" rules={[{ required: true }]}>
                                                         <Select placeholder="Select Stage">
                                                             {leadStages?.map(stage => (
-                                                                <Option key={stage.id} value={stage.id}>{stage.name}</Option>
+                                                                <Option key={stage.id} value={stage.id}>{stage.stageName}</Option>
                                                             ))}
                                                         </Select>
                                                     </Form.Item>

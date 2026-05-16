@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Form, Input, Button, Typography, Divider, message, Alert } from 'antd';
 import { FiUser, FiMail, FiLock, FiX } from 'react-icons/fi';
 import { useCreateSubclientMutation, useVerifySignupMutation, useResendSignupOtpMutation } from './services/subClientApi';
+import LimitReachedModal from '../../../../components/LimitReachedModal';
 
 const { Text } = Typography;
 
@@ -15,6 +16,8 @@ const CreateSubclient = ({ open, onCancel }) => {
     const [sessionToken, setSessionToken] = useState(null);
     const [userFormData, setUserFormData] = useState(null);
     const [otpLoading, setOtpLoading] = useState(false);
+    const [isLimitModalVisible, setIsLimitModalVisible] = useState(false);
+    const [limitErrorMessage, setLimitErrorMessage] = useState('');
 
     const handleSubmit = async () => {
         try {
@@ -27,7 +30,13 @@ const CreateSubclient = ({ open, onCancel }) => {
                 setIsOtpModalVisible(true);
             }
         } catch (error) {
-            message.error(error?.data?.message || 'Failed to create subclient');
+            const errorMsg = error?.data?.message || '';
+            if (errorMsg.toLowerCase().includes('limit reached')) {
+                setLimitErrorMessage(errorMsg);
+                setIsLimitModalVisible(true);
+            } else {
+                message.error(errorMsg || 'Failed to create subclient');
+            }
         }
     };
 
@@ -501,6 +510,13 @@ const CreateSubclient = ({ open, onCancel }) => {
                 </Form>
             </Modal>
 
+            <LimitReachedModal
+                visible={isLimitModalVisible}
+                onCancel={() => setIsLimitModalVisible(false)}
+                title="Client Limit Reached"
+                message={limitErrorMessage || "You have reached the maximum number of clients allowed in your current plan."}
+                limitType="clients"
+            />
             <OtpModal />
         </>
     );

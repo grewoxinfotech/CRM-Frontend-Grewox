@@ -41,8 +41,9 @@ import {
   FiZap,
 } from "react-icons/fi";
 
-export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) => [
-  { title: "Dashboard", icon: <FiHome />, path: "/dashboard" },
+export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired, checkFeature = () => true, userRole = '') => {
+  const items = [
+    { title: "Dashboard", icon: <FiHome />, path: "/dashboard" },
   {
     title: "CRM",
     icon: <FiUsers />,
@@ -52,14 +53,21 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
       { title: "Leads", icon: <FiTarget />, path: "/dashboard/crm/leads", permission: "dashboards-lead" },
       { title: "Task", icon: <FiCheckSquare />, path: "/dashboard/crm/tasks", permission: "dashboards-task" },
       { title: "Follow-up", icon: <FiClock />, path: "/dashboard/crm/followups", permission: "dashboards-lead" },
-      { title: "Task Calendar", icon: <FiCalendar />, path: "/dashboard/crm/task-calendar", permission: "dashboards-TaskCalendar" },
       { title: "Custom Form", icon: <FiFileText />, path: "/dashboard/crm/custom-form", permission: "dashboards-custom-form" },
       { title: "Deals", icon: <FiShoppingBag />, path: "/dashboard/crm/deals", permission: "dashboards-deal" },
       { title: "Company", icon: <FiBriefcase />, path: "/dashboard/crm/company-account", permission: "dashboards-crm-company-account" },
-      { title: "Automation", icon: <FiSliders />, path: "/dashboard/crm/automation", permission: "dashboards-automation" },
+      { title: "Automation", icon: <FiSliders />, path: "/dashboard/crm/automation", permission: "dashboards-automation", feature: "workflows" },
+      { title: "Calendar", icon: <FiCalendar />, path: "/dashboard/crm/task-calendar", permission: "dashboards-TaskCalendar" },
       { title: "Contact", icon: <FiFileText />, path: "/dashboard/crm/contact", permission: "dashboards-crm-contact" },
       { title: "CRM System Setup", icon: <FiSettings />, path: "/dashboard/crm-setup", permission: "dashboards-systemsetup" }
-    ].filter(item => !item.permission || checkPermission(item.permission))
+    ].map(item => {
+      const isLocked = item.feature ? !checkFeature(item.feature) : false;
+      return {
+        ...item,
+        isLocked,
+        badge: isLocked ? "UPGRADE" : item.badge
+      };
+    }).filter(item => !item.permission || checkPermission(item.permission))
   },
   {
     title: "Sales",
@@ -71,8 +79,15 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
       { title: "Customer", icon: <FiUsers />, path: "/dashboard/sales/customer", permission: "dashboards-sales-customer" },
       { title: "Invoice", icon: <FiFileText />, path: "/dashboard/sales/invoice", permission: "dashboards-sales-invoice" },
       { title: "Credit Notes", icon: <FiFile />, path: "/dashboard/sales/credit-notes", permission: "dashboards-sales-credit-notes" },
-      { title: "Revenue", icon: <FiTrendingUp />, path: "/dashboard/sales/revenue", permission: "dashboards-sales-revenue" }
-    ].filter(item => !item.permission || checkPermission(item.permission))
+      { title: "Revenue", icon: <FiTrendingUp />, path: "/dashboard/sales/revenue", permission: "dashboards-sales-revenue", feature: "reports" }
+    ].map(item => {
+      const isLocked = item.feature ? !checkFeature(item.feature) : false;
+      return {
+        ...item,
+        isLocked,
+        badge: isLocked ? "UPGRADE" : item.badge
+      };
+    }).filter(item => !item.permission || checkPermission(item.permission))
   },
   {
     title: "Purchase",
@@ -108,11 +123,21 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
     icon: <FiPhone />,
     isDropdown: true,
     permission: "dashboards-communication",
+    feature: "whatsapp",
+    badge: !checkFeature("whatsapp") ? "UPGRADE" : "",
     subItems: [
       { title: "WhatsApp Chat", icon: <FiMessageSquare />, path: "/dashboard/whatsapp-chat", permission: "dashboards-communication" },
       { title: "Broadcast", icon: <FiZap />, path: "/dashboard/whatsapp/broadcast", permission: "dashboards-communication" },
       { title: "Message log", icon: <FiList />, path: "/dashboard/whatsapp/messages", permission: "dashboards-communication" }
     ].filter(item => !item.permission || checkPermission(item.permission))
+     .map(item => {
+       const isLocked = !checkFeature("whatsapp");
+       return {
+         ...item,
+         isLocked,
+         badge: isLocked ? "UPGRADE" : item.badge
+       };
+     })
   },
   {
     title: "Integrations",
@@ -125,9 +150,16 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
       { title: "Google Meet", icon: <FiVideo />, path: "/dashboard/integrations/google-meet" },
       { title: "Zoom Meet", icon: <FiVideo />, path: "/dashboard/integrations/zoom-meet" },
       { title: "Meta Ads", icon: <FiTarget />, path: "/dashboard/integrations/meta-ads" },
-      { title: "WhatsApp API", icon: <FiPhone />, path: "/dashboard/settings/whatsapp" },
+      { title: "WhatsApp API", icon: <FiPhone />, path: "/dashboard/settings/whatsapp", feature: "whatsapp" },
       { title: "Website Webhooks", icon: <FiLink />, path: "/dashboard/integrations/webhooks" }
-    ]
+    ].map(item => {
+      const isLocked = item.feature ? !checkFeature(item.feature) : false;
+      return {
+        ...item,
+        isLocked,
+        badge: isLocked ? "UPGRADE" : item.badge
+      };
+    })
   },
   {
     title: "HRM",
@@ -144,7 +176,7 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
       { title: "Attendance", icon: <FiClock />, path: "/dashboard/hrm/attendance", permission: "extra-hrm-attendance-attendancelist" },
       { title: "Holiday", icon: <FiCalendar />, path: "/dashboard/hrm/holiday", permission: "extra-hrm-holiday" },
       { title: "Leave Management", icon: <FiCalendar />, path: "/dashboard/hrm/leave", permission: "extra-hrm-leave-leavelist" },
-      { title: "Calendar", icon: <FiCalendar />, path: "/dashboard/hrm/calendar", permission: "extra-hrm-calendar" },
+
       { title: "Meeting", icon: <FiVideo />, path: "/dashboard/hrm/meeting", permission: "extra-hrm-meeting" },
       { title: "Announcement", icon: <FiBell />, path: "/dashboard/hrm/announcement", permission: "extra-hrm-announcement" },
       { title: "Document", icon: <FiFile />, path: "/dashboard/hrm/document", permission: "extra-hrm-document" },
@@ -187,8 +219,18 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired) =>
       { title: "Ticket", icon: <FiMessageSquare />, path: "/dashboard/support/ticket" },
       { title: "Help Support", icon: <FiHelpCircle />, path: "/dashboard/support/help-support" }
     ].filter(item => !item.permission || checkPermission(item.permission))
+  },
+  {
+    title: "Upgrade Plan",
+    icon: <FiZap style={{ color: '#faad14' }} />,
+    path: "/dashboard/settings/plan",
+    badge: "PRO",
+    hidden: userRole === 'super-admin'
   }
 ];
+
+return items.filter(item => !item.hidden);
+};
 
 export const getSuperAdminMenuItems = () => [
   {

@@ -89,22 +89,57 @@ const Sidebar = ({
     };
 
     const renderNavItem = (item, index) => {
+        const isLocked = item.isLocked;
+
+        const handleItemClick = (e) => {
+            if (isLocked) {
+                e.preventDefault();
+                if (item.onLockedClick) item.onLockedClick(item);
+                return;
+            }
+            handleNavigation();
+        };
+
         if (item.isDropdown) {
             const isOpen = openDropdowns[item.title];
             const hasActiveChild = item.subItems.some(sub => location.pathname === sub.path);
 
             return (
-                <div key={item.title || index} className={`nav-dropdown ${isOpen ? 'open' : ''} ${hasActiveChild ? 'has-active-child' : ''}`}>
+                <div key={item.title || index} className={`nav-dropdown ${isOpen ? 'open' : ''} ${hasActiveChild ? 'has-active-child' : ''} ${isLocked ? 'locked' : ''}`}>
                     <div 
                         className={`nav-item dropdown-trigger ${hasActiveChild ? 'parent-active' : ''}`} 
-                        onClick={(e) => toggleDropdown(e, item.title)}
+                        onClick={(e) => isLocked ? handleItemClick(e) : toggleDropdown(e, item.title)}
                     >
                         <div className="nav-item-content">
                             <span className="icon">{item.icon}</span>
                             {!isCollapsed && (
                                 <>
-                                    <span className="title">{item.title}</span>
-                                    {item.badge && (
+                                    <span className="title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                        {item.title}
+                                        {isLocked && <span className="lock-tag" style={{ 
+                                            color: '#faad14', 
+                                            fontSize: '12px',
+                                            background: 'rgba(250, 173, 20, 0.1)',
+                                            padding: '2px 6px',
+                                            borderRadius: '4px',
+                                            marginLeft: '8px'
+                                        }}>🔒</span>}
+                                    </span>
+                                    {isLocked ? (
+                                        <span className="nav-badge upgrade-badge" style={{
+                                            fontSize: '10px',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            background: 'linear-gradient(135deg, #faad14 0%, #d48806 100%)',
+                                            color: 'white',
+                                            marginLeft: 'auto',
+                                            marginRight: '8px',
+                                            fontWeight: 'bold',
+                                            boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
+                                        }}>
+                                            UPGRADE
+                                        </span>
+                                    ) : item.badge && (
                                         <span className="nav-badge" style={{
                                             fontSize: '10px',
                                             padding: '2px 6px',
@@ -135,12 +170,35 @@ const Sidebar = ({
                                 <NavLink 
                                     key={subItem.path || idx} 
                                     to={subItem.path}
-                                    className={({ isActive }) => `sub-item ${isActive ? 'active' : ''}`}
-                                    onClick={handleNavigation}
+                                    className={({ isActive }) => `sub-item ${isActive ? 'active' : ''} ${subItem.isLocked ? 'locked' : ''}`}
+                                    onClick={(e) => {
+                                        if (subItem.isLocked) {
+                                            e.preventDefault();
+                                            if (subItem.onLockedClick) subItem.onLockedClick(subItem);
+                                        } else {
+                                            handleNavigation();
+                                        }
+                                    }}
                                 >
                                     <div className="nav-item-content">
                                         <span className="icon">{subItem.icon}</span>
-                                        <span className="title">{subItem.title}</span>
+                                        <span className="title" style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
+                                            {subItem.title}
+                                            {subItem.isLocked && (
+                                                <span className="nav-badge upgrade-badge" style={{
+                                                    fontSize: '9px',
+                                                    padding: '1px 5px',
+                                                    borderRadius: '8px',
+                                                    background: 'rgba(250, 173, 20, 0.15)',
+                                                    color: '#faad14',
+                                                    marginLeft: 'auto',
+                                                    fontWeight: '700',
+                                                    border: '1px solid rgba(250, 173, 20, 0.3)'
+                                                }}>
+                                                    UPGRADE
+                                                </span>
+                                            )}
+                                        </span>
                                     </div>
                                 </NavLink>
                             ))}
@@ -153,13 +211,31 @@ const Sidebar = ({
         return (
             <NavLink 
                 key={item.path || index} 
-                to={item.path}
-                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                onClick={handleNavigation}
+                to={isLocked ? '#' : item.path}
+                className={({ isActive }) => `nav-item ${!isLocked && isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+                onClick={handleItemClick}
             >
                 <div className="nav-item-content">
                     <span className="icon">{item.icon}</span>
-                    {!isCollapsed && <span className="title">{item.title}</span>}
+                    {!isCollapsed && (
+                        <span className="title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            {item.title}
+                            {isLocked && (
+                                <span className="nav-badge upgrade-badge" style={{
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '10px',
+                                    background: 'linear-gradient(135deg, #faad14 0%, #d48806 100%)',
+                                    color: 'white',
+                                    marginLeft: 'auto',
+                                    fontWeight: 'bold',
+                                    boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
+                                }}>
+                                    UPGRADE
+                                </span>
+                            )}
+                        </span>
+                    )}
                 </div>
             </NavLink>
         );

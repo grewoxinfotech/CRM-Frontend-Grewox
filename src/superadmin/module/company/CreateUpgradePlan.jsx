@@ -77,13 +77,9 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
         return endDate;
     };
 
-    // Reset form when modal closes
-    useEffect(() => {
-        if (!open) {
-            form.resetFields();
-        }
-    }, [open, form]);
-
+    // Reset form when modal closes - handled by destroyOnClose in Modal
+    // No need for useEffect resetFields here as it causes "not connected" warnings
+    
     // Set initial values when modal opens with preselected plan
     useEffect(() => {
         if (open && preselectedPlanId && plans.length > 0) {
@@ -417,6 +413,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                 layout="vertical"
                 onFinish={handleSubmit}
                 requiredMark={false}
+                preserve={false}
                 style={{ padding: '24px' }}
             >
                 <Form.Item

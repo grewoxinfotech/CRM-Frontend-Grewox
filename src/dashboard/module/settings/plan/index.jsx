@@ -27,9 +27,21 @@ const Plan = () => {
     const loggedInUser = useSelector(selectCurrentUser);
 
     const id = loggedInUser.client_plan_id;
-    const { data: subscriptionData, isLoading } = useGetsubcriptionByIdQuery(id);
-    const { data: plansData, isLoading: isPlansLoading } = useGetAllPlansQuery({ page: 1, limit: 100, status: 'active' });
-    const { data: currencies } = useGetAllCurrenciesQuery({ page: 1, limit: 100 });
+    const { data: subscriptionData, isLoading } = useGetsubcriptionByIdQuery(id, { skip: !id });
+    const { data: plansData, isLoading: isPlansLoading } = useGetAllPlansQuery({ page: 1, limit: 10, status: 'active' });
+    const { data: currenciesData } = useGetAllCurrenciesQuery({ page: 1, limit: 100 });
+
+    const currencyMap = React.useMemo(() => {
+        const map = {};
+        currenciesData?.forEach(c => {
+            map[c.id] = c.currencyIcon;
+        });
+        return map;
+    }, [currenciesData]);
+
+    const activePlans = React.useMemo(() => {
+        return plansData?.data?.filter(p => p.status === 'active') || [];
+    }, [plansData]);
 
     if (isLoading || isPlansLoading) {
         return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}><Spin size="large" /></div>;
@@ -38,8 +50,7 @@ const Plan = () => {
     const subscription = subscriptionData?.data;
 
     const getCurrencyIcon = (currencyId) => {
-        const currency = currencies?.find(c => c.id === currencyId);
-        return currency?.currencyIcon || '₹';
+        return currencyMap[currencyId] || '₹';
     };
 
     const formatStorageSize = (sizeInMB) => {
@@ -69,8 +80,8 @@ const Plan = () => {
                     <Card className="standard-content-card" title={<><FiHardDrive /> Storage Usage</>} extra={<Tag color={subscription?.storage?.percentage > 90 ? 'error' : 'success'}>{subscription?.storage?.percentage > 90 ? 'Critical' : 'Healthy'}</Tag>}>
                         <Progress percent={subscription?.storage?.percentage} status={subscription?.storage?.percentage > 90 ? 'exception' : 'normal'} />
                         <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
-                            <Text type="secondary">Used: {subscription?.storage?.used.toFixed(2)} GB</Text>
-                            <Text type="secondary">Total: {subscription?.storage?.total} GB</Text>
+                            <Text type="secondary">Used: {formatStorageSize(subscription?.storage?.used)}</Text>
+                            <Text type="secondary">Total: {formatStorageSize(subscription?.storage?.total)}</Text>
                         </div>
                     </Card>
                 </Col>
@@ -90,14 +101,23 @@ const Plan = () => {
                 <Col xs={24} sm={12} lg={6}>
                     <Card className="standard-content-card" title={<><FiUsers /> User Limits</>}>
                         <Row gutter={[8, 8]}>
-                            {['Users', 'Clients', 'Vendors', 'Customers'].map(label => (
-                                <Col span={12} key={label}>
-                                    <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '6px' }}>
-                                        <Text type="secondary" style={{ fontSize: '11px' }}>{label}</Text>
-                                        <div style={{ fontWeight: 600 }}>{subscription?.[`current_${label.toLowerCase()}_count`] || 0}</div>
-                                    </div>
-                                </Col>
-                            ))}
+                            {['Users', 'Clients', 'Vendors', 'Customers'].map(label => {
+                                const current = subscription?.[`current_${label.toLowerCase()}_count`] || 0;
+                                const max = subscription?.Plan?.[`max_${label.toLowerCase()}`] || '∞';
+                                const isExceeded = max !== '∞' && Number(current) > Number(max);
+                                
+                                return (
+                                    <Col span={12} key={label}>
+                                        <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '6px', border: isExceeded ? '1px solid #ff4d4f' : '1px solid transparent' }}>
+                                            <Text type="secondary" style={{ fontSize: '11px' }}>{label}</Text>
+                                            <div style={{ fontWeight: 600, display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                                                <span style={{ fontSize: '16px', color: isExceeded ? '#ff4d4f' : 'inherit' }}>{current}</span>
+                                                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 400 }}>/ {max}</span>
+                                            </div>
+                                        </div>
+                                    </Col>
+                                );
+                            })}
                         </Row>
                     </Card>
                 </Col>
@@ -107,7 +127,7 @@ const Plan = () => {
                 <div style={{ marginTop: '24px' }}>
                     <Divider orientation="left"><Title level={4}>Available Plans</Title></Divider>
                     <Row gutter={[16, 16]}>
-                        {plansData?.data?.filter(p => p.status === 'active').map(plan => (
+                        {activePlans.map(plan => (
                             <Col xs={24} sm={12} lg={6} key={plan.id}>
                                 <Card className="standard-content-card" hoverable>
                                     <Title level={4}>{plan.name}</Title>

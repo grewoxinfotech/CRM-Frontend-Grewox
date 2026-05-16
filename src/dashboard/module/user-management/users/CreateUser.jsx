@@ -5,6 +5,7 @@ import { useCreateUserMutation, useResendOtpMutation, useVerifySignupMutation, u
 import { useCreateRoleMutation, useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
 import CreateRole from '../../hrm/role/CreateRole';
+import LimitReachedModal from '../../../../components/LimitReachedModal';
 
 const CreateUser = ({ visible, onCancel }) => {
     const [form] = Form.useForm();
@@ -23,6 +24,8 @@ const CreateUser = ({ visible, onCancel }) => {
     const [otpLoading, setOtpLoading] = useState(false);
     const [verifySignup] = useVerifySignupMutation();
     const [resendSignupOtp] = useResendSignupOtpMutation();
+    const [isLimitModalVisible, setIsLimitModalVisible] = useState(false);
+    const [limitErrorMessage, setLimitErrorMessage] = useState('');
 
     React.useEffect(() => {
         return () => {
@@ -44,7 +47,13 @@ const CreateUser = ({ visible, onCancel }) => {
                 message.error(response.message || 'Failed to create user');
             }
         } catch (error) {
-            message.error(error?.data?.message || 'Failed to create user');
+            const errorMsg = error?.data?.message || '';
+            if (errorMsg.toLowerCase().includes('limit reached') || errorMsg.toLowerCase().includes('maximum number of users')) {
+                setLimitErrorMessage(errorMsg);
+                setIsLimitModalVisible(true);
+            } else {
+                message.error(errorMsg || 'Failed to create user');
+            }
         }
     };
 
@@ -606,6 +615,14 @@ const CreateUser = ({ visible, onCancel }) => {
                 onCancel={() => setIsCreateRoleVisible(false)}
                 onSubmit={handleCreateSubmit}
                 loading={isCreating}
+            />
+
+            <LimitReachedModal
+                visible={isLimitModalVisible}
+                onCancel={() => setIsLimitModalVisible(false)}
+                title="User Limit Reached"
+                message={limitErrorMessage || "You have reached the maximum number of users allowed in your current plan."}
+                limitType="users"
             />
 
             <OtpModal />

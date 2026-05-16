@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Space, Card, Typography, Progress, Tooltip, message, Modal, Alert, Steps, Row, Col, Tabs, Select, Input, List } from 'antd';
+import { Table, Button, Tag, Space, Card, Typography, Progress, Tooltip, message, Modal, Alert, Steps, Row, Col, Tabs, Select, Input, List, Drawer, Form, DatePicker } from 'antd';
 import {
     PlusOutlined,
     SendOutlined,
@@ -17,8 +17,10 @@ import {
     MessageOutlined,
     SyncOutlined,
     CalendarOutlined,
-    ThunderboltOutlined
+    ThunderboltOutlined,
+    CheckCircleOutlined
 } from '@ant-design/icons';
+import { FiFilter } from 'react-icons/fi';
 import {
     useGetWhatsappBroadcastsQuery,
     usePauseWhatsappBroadcastMutation,
@@ -47,12 +49,13 @@ const BroadcastList = () => {
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
-    // Filters state
     const [filters, setFilters] = useState({
         source: null,
         category: null,
-        minValue: null
+        target_module: null,
+        dateRange: null
     });
 
     const loggedInUser = useSelector(selectCurrentUser);
@@ -145,6 +148,22 @@ const BroadcastList = () => {
             )
         },
         {
+            title: 'Delivery Rate',
+            key: 'deliveryRate',
+            render: (_, record) => {
+                const rate = record.sent_count > 0 ? Math.round((record.delivered_count / record.sent_count) * 100) : 0;
+                let color = 'red';
+                if (rate >= 80) color = 'green';
+                else if (rate >= 50) color = 'orange';
+                
+                return (
+                    <Text strong style={{ color: `var(--ant-${color}-6)` }}>
+                        {rate}%
+                    </Text>
+                );
+            }
+        },
+        {
             title: 'Broadcast Time',
             key: 'broadcastTime',
             render: (_, record) => {
@@ -197,19 +216,9 @@ const BroadcastList = () => {
         }
     ];
 
-    const stats = {
-        total: broadcasts.length,
-        live: broadcasts.filter(b => b.status === 'processing').length,
-        sent: broadcasts.reduce((acc, b) => acc + (b.sent_count || 0), 0),
-        scheduled: broadcasts.filter(b => b.status === 'scheduled').length,
-        draft: broadcasts.filter(b => b.status === 'draft').length,
-        completed: broadcasts.filter(b => b.status === 'completed').length,
-    };
-
-    const filteredBroadcasts = broadcasts.filter(b => {
-        // Tab filter
-        const matchesTab = activeTab === 'all' || b.status === activeTab;
-        if (!matchesTab) return false;
+    const globalFilteredBroadcasts = broadcasts.filter(b => {
+        // Search query
+        if (searchQuery && !b.name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
 
         // Source filter
         if (filters.source && b.audience_filter?.source !== filters.source) return false;
@@ -217,10 +226,38 @@ const BroadcastList = () => {
         // Category filter
         if (filters.category && b.audience_filter?.category !== filters.category) return false;
 
-        // Value filter (Min)
-        if (filters.minValue && (!b.audience_filter?.min_value || Number(b.audience_filter.min_value) < Number(filters.minValue))) return false;
+        // Target Module filter
+        if (filters.target_module && b.target_module !== filters.target_module) return false;
+
+        // Date Range filter
+        if (filters.dateRange && filters.dateRange[0] && filters.dateRange[1]) {
+            const createdAt = new Date(b.createdAt);
+            const start = filters.dateRange[0].toDate();
+            const end = filters.dateRange[1].toDate();
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+            if (createdAt < start || createdAt > end) return false;
+        }
 
         return true;
+    });
+
+    const stats = {
+        total: globalFilteredBroadcasts.length,
+        live: globalFilteredBroadcasts.filter(b => b.status === 'processing').length,
+        sent: globalFilteredBroadcasts.reduce((acc, b) => acc + (b.sent_count || 0), 0),
+        delivered: globalFilteredBroadcasts.reduce((acc, b) => acc + (b.delivered_count || 0), 0),
+        scheduled: globalFilteredBroadcasts.filter(b => b.status === 'scheduled').length,
+        draft: globalFilteredBroadcasts.filter(b => b.status === 'draft').length,
+        completed: globalFilteredBroadcasts.filter(b => b.status === 'completed').length,
+    };
+
+    const deliveryRate = stats.sent > 0 ? Math.round((stats.delivered / stats.sent) * 100) : 0;
+
+    const filteredBroadcasts = globalFilteredBroadcasts.filter(b => {
+        // Tab filter
+        const matchesTab = activeTab === 'all' || b.status === activeTab;
+        return matchesTab;
     });
 
     const iconBgMap = {
@@ -228,9 +265,10 @@ const BroadcastList = () => {
         LIVE: "linear-gradient(135deg, #10b981, #34d399)",
         SENT: "linear-gradient(135deg, #722ed1, #a78bfa)",
         SCHEDULED: "linear-gradient(135deg, #faad14, #fbbf24)",
+        DELIVERY: "linear-gradient(135deg, #2f54eb, #597ef7)",
     };
 
-    const StatCard = ({ title, value, icon, index, type }) => (
+    const StatCard = ({ title, value, icon, index, type, suffix = "" }) => (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -274,7 +312,7 @@ const BroadcastList = () => {
                             display: 'inline-block',
                             lineHeight: '1.2'
                         }}>
-                            <CountUp start={0} end={value} duration={2} separator="," />
+                            <CountUp start={0} end={value} duration={2} separator="," suffix={suffix} />
                         </Title>
                     </div>
                 </div>
@@ -314,7 +352,7 @@ const BroadcastList = () => {
             />
 
             <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} md={4}>
                     <StatCard
                         title="Total Campaigns"
                         value={stats.total}
@@ -323,7 +361,7 @@ const BroadcastList = () => {
                         index={0}
                     />
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} md={5}>
                     <StatCard
                         title="Live Now"
                         value={stats.live}
@@ -332,7 +370,7 @@ const BroadcastList = () => {
                         index={1}
                     />
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} md={5}>
                     <StatCard
                         title="Messages Sent"
                         value={stats.sent}
@@ -341,13 +379,23 @@ const BroadcastList = () => {
                         index={2}
                     />
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} md={5}>
+                    <StatCard
+                        title="Delivery Rate"
+                        value={deliveryRate}
+                        icon={<CheckCircleOutlined />}
+                        type="DELIVERY"
+                        index={3}
+                        suffix="%"
+                    />
+                </Col>
+                <Col xs={24} sm={12} md={5}>
                     <StatCard
                         title="Scheduled"
                         value={stats.scheduled}
                         icon={<CalendarOutlined />}
                         type="SCHEDULED"
-                        index={3}
+                        index={4}
                     />
                 </Col>
             </Row>
@@ -375,6 +423,14 @@ const BroadcastList = () => {
                             onChange={(e) => !e.target.value && setSearchQuery('')}
                             style={{ width: 250, borderRadius: '8px' }}
                         />
+                        <Button
+                            icon={<FiFilter />}
+                            onClick={() => setIsFilterDrawerOpen(true)}
+                            type={Object.keys(filters).filter(k => filters[k]).length > 0 ? "primary" : "default"}
+                            style={{ borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                            Filter {Object.keys(filters).filter(k => filters[k]).length > 0 && `(${Object.keys(filters).filter(k => filters[k]).length})`}
+                        </Button>
                         <Button
                             icon={<QuestionCircleOutlined />}
                             onClick={() => setIsHelpModalOpen(true)}
@@ -407,6 +463,63 @@ const BroadcastList = () => {
                     pagination={{ pageSize: 10 }}
                 />
             </Card>
+
+            <Drawer
+                title="Advanced Filters"
+                placement="right"
+                onClose={() => setIsFilterDrawerOpen(false)}
+                open={isFilterDrawerOpen}
+                width={350}
+                extra={
+                    <Button onClick={() => setFilters({ source: null, category: null, target_module: null, dateRange: null })}>
+                        Clear All
+                    </Button>
+                }
+            >
+                <Form layout="vertical">
+                    <Form.Item label="Date Range">
+                        <DatePicker.RangePicker 
+                            style={{ width: '100%' }}
+                            value={filters.dateRange}
+                            onChange={(dates) => setFilters(prev => ({ ...prev, dateRange: dates }))}
+                        />
+                    </Form.Item>
+                    <Form.Item label="Target Module">
+                        <Select
+                            placeholder="Select Module"
+                            allowClear
+                            value={filters.target_module}
+                            onChange={(val) => setFilters(prev => ({ ...prev, target_module: val }))}
+                        >
+                            <Option value="leads">Leads</Option>
+                            <Option value="deals">Deals</Option>
+                            <Option value="contacts">Contacts</Option>
+                            <Option value="companies">Companies</Option>
+                            <Option value="excel">Excel</Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item label="Audience Source">
+                        <Select
+                            placeholder="Select Source"
+                            allowClear
+                            value={filters.source}
+                            onChange={(val) => setFilters(prev => ({ ...prev, source: val }))}
+                        >
+                            {sources.map(s => <Option key={s.id} value={s.id}>{s.name}</Option>)}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item label="Audience Category">
+                        <Select
+                            placeholder="Select Category"
+                            allowClear
+                            value={filters.category}
+                            onChange={(val) => setFilters(prev => ({ ...prev, category: val }))}
+                        >
+                            {categories.map(c => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+                        </Select>
+                    </Form.Item>
+                </Form>
+            </Drawer>
 
             <Modal
                 title={null}

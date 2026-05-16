@@ -14,6 +14,8 @@ import {
   DatePicker,
   Tabs,
   Badge,
+  Drawer,
+  Form,
 } from "antd";
 import {
   FiDownload,
@@ -26,6 +28,7 @@ import {
   FiEdit2,
   FiTrash2,
   FiX,
+  FiFilter,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { 
@@ -109,6 +112,8 @@ const Followups = () => {
   const [isEditMeetingOpen, setIsEditMeetingOpen] = useState(false);
   const [isEditTaskOpen, setIsEditTaskOpen] = useState(false);
   const [dateRange, setDateRange] = useState(null);
+  const [advancedFilters, setAdvancedFilters] = useState({});
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   
   const { data: usersResponse } = useGetUsersQuery();
   const users = usersResponse?.data || [];
@@ -238,11 +243,27 @@ const Followups = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status) => (
-        <Tag color={status === 'completed' ? 'success' : 'processing'}>
-          {status?.replace(/_/g, ' ').toUpperCase()}
-        </Tag>
-      )
+      render: (status, record) => {
+        let isOverdue = false;
+        if (status !== 'completed' && record.date) {
+            const timeString = record.time || '23:59:59';
+            // Parse the combined date and time
+            const itemDateTime = moment(`${record.date} ${timeString}`);
+            if (itemDateTime.isValid() && itemDateTime.isBefore(moment())) {
+                isOverdue = true;
+            }
+        }
+
+        if (isOverdue) {
+            return <Tag color="error">OVERDUE</Tag>;
+        }
+
+        return (
+            <Tag color={status === 'completed' ? 'success' : 'processing'}>
+            {status?.replace(/_/g, ' ').toUpperCase()}
+            </Tag>
+        );
+      }
     },
     {
       title: "Assignee",
@@ -366,10 +387,33 @@ const Followups = () => {
       matchesTab = itemDate.isBefore(today, 'day') && f.status !== 'completed';
     }
     
-    return matchesSearch && matchesDateRange && matchesTab;
+    if (!matchesSearch || !matchesDateRange || !matchesTab) return false;
+
+    // 4. Advanced Filters
+    if (advancedFilters.type && f.type !== advancedFilters.type) return false;
+    if (advancedFilters.status && f.status !== advancedFilters.status) return false;
+    if (advancedFilters.priority && f.rawData?.priority !== advancedFilters.priority) return false;
+    if (advancedFilters.assignee) {
+        let assignedIds = [];
+        try {
+          if (f.rawData?.assigned_to) {
+            const parsed = typeof f.rawData.assigned_to === 'string' 
+              ? JSON.parse(f.rawData.assigned_to) 
+              : f.rawData.assigned_to;
+            assignedIds = parsed?.assigned_to || [];
+          }
+        } catch (e) {
+          console.error("Error parsing assigned_to", e);
+        }
+        if (!assignedIds.includes(advancedFilters.assignee) && !assignedIds.includes(String(advancedFilters.assignee))) return false;
+    }
+
+    return true;
   }).sort((a, b) => {
-    // Sort by date: upcoming first, then today, then past
-    return moment(a.date).valueOf() - moment(b.date).valueOf();
+    // Sort by newest created first globally for all tabs
+    const timeA = moment(a.rawData?.createdAt || a.date).valueOf();
+    const timeB = moment(b.rawData?.createdAt || b.date).valueOf();
+    return timeB - timeA;
   });
 
   return (
@@ -565,13 +609,7 @@ const Followups = () => {
         addText="Add Follow-up"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
-        extraActions={
-          <DatePicker.RangePicker 
-            onChange={(dates) => setDateRange(dates)}
-            style={{ borderRadius: '8px', height: '30px' }}
-            format="DD MMM YYYY"
-          />
-        }
+        extraActions={null}
       />
 
       <Card className="standard-content-card">
@@ -580,6 +618,16 @@ const Followups = () => {
           onChange={setActiveTab}
           className="followup-tabs"
           style={{ marginBottom: '16px' }}
+          tabBarExtraContent={
+            <Button
+              icon={<FiFilter />}
+              onClick={() => setIsFilterDrawerOpen(true)}
+              style={{ borderRadius: '8px', height: '32px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              type={Object.keys(advancedFilters).some(k => advancedFilters[k]) ? "primary" : "default"}
+            >
+              Filter {Object.keys(advancedFilters).filter(k => advancedFilters[k]).length > 0 && `(${Object.keys(advancedFilters).filter(k => advancedFilters[k]).length})`}
+            </Button>
+          }
           items={[
             {
               key: 'all',
@@ -631,6 +679,73 @@ const Followups = () => {
           }}
         />
       </Card>
+      <Drawer
+        title="Advanced Filters"
+        placement="right"
+        onClose={() => setIsFilterDrawerOpen(false)}
+        open={isFilterDrawerOpen}
+        extra={
+          <Button onClick={() => { setDateRange(null); setAdvancedFilters({}); }}>Clear All</Button>
+        }
+      >
+        <Form layout="vertical">
+          <Form.Item label="Date Range">
+            <DatePicker.RangePicker
+              value={dateRange}
+              onChange={(dates) => setDateRange(dates)}
+              style={{ width: '100%' }}
+              format="DD MMM YYYY"
+            />
+          </Form.Item>
+          <Form.Item label="Interaction Type">
+            <Select
+              allowClear
+              placeholder="Select Type"
+              value={advancedFilters.type}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, type: val }))}
+            >
+              <Option value="call">Call</Option>
+              <Option value="meeting">Meeting</Option>
+              <Option value="task">Task</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Status">
+            <Select
+              allowClear
+              placeholder="Select Status"
+              value={advancedFilters.status}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, status: val }))}
+            >
+              <Option value="pending">Pending</Option>
+              <Option value="in_progress">In Progress</Option>
+              <Option value="completed">Completed</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Priority">
+            <Select
+              allowClear
+              placeholder="Select Priority"
+              value={advancedFilters.priority}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, priority: val }))}
+            >
+              <Option value="low">Low</Option>
+              <Option value="medium">Medium</Option>
+              <Option value="high">High</Option>
+              <Option value="highest">Highest</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Assignee">
+            <Select
+              allowClear
+              placeholder="Select Assignee"
+              value={advancedFilters.assignee}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, assignee: val }))}
+            >
+              {users?.map(u => <Option key={u.id} value={u.id}>{`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.username}</Option>)}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Drawer>
     </div>
   );
 };

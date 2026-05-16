@@ -173,9 +173,11 @@ const EmployeeList = ({ employees, onEdit, onViewOverview, onDelete, loading }) 
       fixed: "right",
       width: 80,
       render: (_, record) => (
-        <Dropdown menu={{ items: getActionMenuItems(record) }} trigger={["click"]} placement="bottomRight">
-          <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-        </Dropdown>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown menu={{ items: getActionMenuItems(record) }} trigger={["click"]} placement="bottomRight">
+            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+          </Dropdown>
+        </div>
       ),
     },
   ];

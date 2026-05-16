@@ -133,8 +133,8 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
         section: "lead",
         priority: values.priority || 'medium',
         call_start_date: values.call_start_date ? values.call_start_date.format('YYYY-MM-DD') : null,
-        call_start_time: values.call_start_time ? values.call_start_time.format('HH:mm:ss') : null,
-        call_end_time: values.call_end_time ? values.call_end_time.format('HH:mm:ss') : null,
+        call_start_time: values.call_start_time ? values.call_start_time.format("HH:mm:00") : null,
+        call_end_time: values.call_end_time ? values.call_end_time.format("HH:mm:00") : null,
         assigned_to: {
           assigned_to: assignedTo
         }
@@ -756,3 +756,4 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
 };
 
 export default CreateLog;
+

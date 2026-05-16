@@ -201,6 +201,23 @@ $accent-blue: #4070FF;
             box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
             .icon { opacity: 1; }
         }
+
+        &.locked {
+            opacity: 0.8;
+            cursor: pointer;
+            
+            .icon {
+                color: #faad14;
+            }
+            
+            .title {
+                color: rgba(255, 255, 255, 0.5) !important;
+            }
+
+            &:hover {
+                background: rgba(250, 173, 20, 0.05);
+            }
+        }
     }
 
     .nav-dropdown {
@@ -271,6 +288,19 @@ $accent-blue: #4070FF;
                     color: $text-white;
                     box-shadow: 0 2px 8px rgba(22, 119, 255, 0.2);
                     .icon { color: $text-white; }
+                }
+
+                &.locked {
+                    opacity: 0.7;
+                    cursor: pointer;
+                    
+                    .icon {
+                        color: #faad14;
+                    }
+
+                    .title {
+                        color: rgba(255, 255, 255, 0.4) !important;
+                    }
                 }
             }
         }

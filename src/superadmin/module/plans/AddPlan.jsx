@@ -79,15 +79,14 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
             const formattedValues = {
                 ...values,
                 duration: formattedDuration,
-                trial_period: values.trial_period.toString(),
-                features: {},
+                trial_period: values.trial_period?.toString() || '0',
+                features: values.features || {},
                 status: values.status ? 'active' : 'inactive',
                 is_default: values.is_default || false,
-                max_users: values.max_users.toString(),
-                max_clients: values.max_clients.toString(),
-                max_customers: values.max_customers.toString(),
-                max_vendors: values.max_vendors.toString(),
-                storage_limit: form.getFieldValue('_storage_limit_mb') || values.storage_limit.toString(),
+                max_users: values.max_users?.toString(),
+                max_customers: values.max_customers?.toString(),
+                max_vendors: values.max_vendors?.toString(),
+                storage_limit: form.getFieldValue('_storage_limit_mb')?.toString() || values.storage_limit?.toString(),
                 price: values.price.toString(),
                 currency: values.currency
             };
@@ -638,33 +637,6 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             min={1}
                         />
                     </Form.Item>
-
-                    <Form.Item
-                        name="max_clients"
-                        label={
-                            <span style={{
-                                fontSize: '14px',
-                                fontWeight: '500',
-                            }}>
-                                Max Clients
-                            </span>
-                        }
-                        rules={[{ required: true }]}
-                        style={{ flex: 1, marginTop: "22px" }}
-                    >
-                        <InputNumber
-                            prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            size="large"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                            }}
-                            min={1}
-                        />
-                    </Form.Item>
                 </div>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
@@ -766,6 +738,70 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                         }}
                     />
                 </Form.Item>
+
+                <Divider orientation="left" style={{ margin: '24px 0' }}>
+                    <span style={{ fontSize: '16px', fontWeight: '600', color: '#1890ff' }}>Feature Access</span>
+                </Divider>
+
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                    gap: '24px',
+                    backgroundColor: '#f8fafc',
+                    padding: '20px',
+                    borderRadius: '12px',
+                    border: '1px solid #e6e8eb'
+                }}>
+                    <Form.Item
+                        name={['features', 'whatsapp']}
+                        label="WhatsApp Automation"
+                        valuePropName="checked"
+                        initialValue={false}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'ai_features']}
+                        label="AI Analysis & Chat"
+                        valuePropName="checked"
+                        initialValue={false}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'reports']}
+                        label="Advanced Reports"
+                        valuePropName="checked"
+                        initialValue={true}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'bulk_operations']}
+                        label="Bulk Import/Export"
+                        valuePropName="checked"
+                        initialValue={true}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'workflows']}
+                        label="Automated Workflows"
+                        valuePropName="checked"
+                        initialValue={false}
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+                </div>
 
                 <Divider style={{ margin: '24px 0' }} />
 

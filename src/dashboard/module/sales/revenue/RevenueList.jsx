@@ -69,8 +69,12 @@ const RevenueList = ({
             <FiTrendingUp size={14} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <Text strong style={{ color: '#1e293b' }}>{record.description || `Invoice #${record.salesInvoiceNumber}`}</Text>
-            <Text type="secondary" style={{ fontSize: '11px' }}>{getCustomerName(record.customer)}</Text>
+            <Text strong style={{ color: '#1e293b' }}>
+              {record.salesInvoiceNumber ? `Invoice #${record.salesInvoiceNumber}` : record.category}
+            </Text>
+            <Text type="secondary" style={{ fontSize: '11px' }}>
+              {record.description || getCustomerName(record.customer)}
+            </Text>
           </div>
         </div>
       ),

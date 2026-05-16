@@ -20,6 +20,7 @@ import {
   DatePicker,
   Tabs,
   Badge,
+  Drawer,
 } from "antd";
 import {
   FiPlus,
@@ -40,7 +41,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import EditLead from "./EditLead";
 import ImportLeadsModal from "./import/ImportLeadsModal";
 import PageHeader from "../../../../components/PageHeader";
-import { useDeleteLeadMutation, useGetLeadsQuery } from "./services/LeadApi";
+import { useDeleteLeadMutation, useGetLeadsQuery, useGetMetaFilterValuesQuery } from "./services/LeadApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import {
@@ -60,6 +61,7 @@ import "jspdf-autotable";
 import moment from "moment";
 import { Switch } from "antd";
 import { useGetUsersQuery } from "../../user-management/users/services/userApi";
+import { useFeatureAccess } from "../../../../hooks/useFeatureAccess";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -83,6 +85,8 @@ const Lead = () => {
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteLead, { isLoading: isDeleteLoading }] = useDeleteLeadMutation();
   const [dateRange, setDateRange] = useState(null);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({});
   const { data: leads, isLoading } = useGetLeadsQuery({
     page: 1,
     pageSize: 1000, // Fetch more for frontend filtering
@@ -107,7 +111,32 @@ const Lead = () => {
       matchesTab = lead.is_converted === true;
     }
 
-    return matchesTab;
+    if (!matchesTab) return false;
+
+    // Advanced filters
+    if (advancedFilters.source && lead.source !== advancedFilters.source) return false;
+    if (advancedFilters.status && lead.status !== advancedFilters.status) return false;
+    if (advancedFilters.interest_level && lead.interest_level !== advancedFilters.interest_level) return false;
+    if (advancedFilters.campaign_name && !lead.campaign_name?.toLowerCase().includes(advancedFilters.campaign_name.toLowerCase())) return false;
+    if (advancedFilters.adset_name && !lead.adset_name?.toLowerCase().includes(advancedFilters.adset_name.toLowerCase())) return false;
+    if (advancedFilters.ad_name && !lead.ad_name?.toLowerCase().includes(advancedFilters.ad_name.toLowerCase())) return false;
+    if (advancedFilters.owner && lead.Creator?.id !== advancedFilters.owner) return false;
+    if (advancedFilters.assignee) {
+        let assignedIds = [];
+        try {
+          let parsed = lead.lead_members;
+          if (typeof parsed === 'string') {
+            try {
+              parsed = JSON.parse(parsed);
+              if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+            } catch (e) { parsed = []; }
+          }
+          assignedIds = parsed?.lead_members || parsed?.assignedusers || (Array.isArray(parsed) ? parsed : []);
+        } catch (e) { assignedIds = []; }
+        if (!assignedIds.includes(advancedFilters.assignee)) return false;
+    }
+
+    return true;
   });
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
@@ -117,6 +146,7 @@ const Lead = () => {
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: usersResponse } = useGetUsersQuery();
+  const { data: metaFilters } = useGetMetaFilterValuesQuery();
   const [initialFormData, setInitialFormData] = useState(null);
   const [isQuickMode, setIsQuickMode] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -253,16 +283,22 @@ const Lead = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = leads.data.map((lead) => ({
+      if (!filteredLeads || filteredLeads.length === 0) {
+        message.warning("No leads available to export with current filters.");
+        setLoading(false);
+        return;
+      }
+
+      const data = filteredLeads.map((lead) => ({
         "Lead Title": lead.leadTitle,
-        Company: lead.company_name,
+        Company: lead.Company?.company_name || lead.company_name || "N/A",
         Source:
           sourcesData?.data?.find((s) => s.id === lead.source)?.name ||
-          lead.source,
+          lead.source || "N/A",
         Status:
           statusesData?.data?.find((s) => s.id === lead.status)?.name ||
-          lead.status,
-        "Interest Level": lead.interest_level,
+          lead.status || "N/A",
+        "Interest Level": lead.interest_level || "N/A",
         "Lead Value": `${currencies?.find((c) => c.id === lead.currency)?.currencyIcon || ""
           } ${lead.leadValue || 0}`,
         "Created Date": moment(lead.createdAt).format("DD-MM-YYYY"),
@@ -368,6 +404,8 @@ const Lead = () => {
     </div>
   );
 
+  const { hasFeature } = useFeatureAccess();
+
   return (
     <div className="lead-page">
       <PageHeader
@@ -425,24 +463,24 @@ const Lead = () => {
         extraActions={
           <Space size={12}>
             <Button
-              icon={<FiDownload style={{ transform: 'rotate(180deg)' }} />}
-              onClick={() => setIsImportModalOpen(true)}
-              style={{ borderRadius: '8px', height: '30px' }}
+              icon={hasFeature('bulk_operations') ? <FiDownload style={{ transform: 'rotate(180deg)' }} /> : <span style={{ marginRight: '4px' }}>🔒</span>}
+              onClick={() => {
+                if (hasFeature('bulk_operations')) {
+                  setIsImportModalOpen(true);
+                } else {
+                  message.info("Upgrade your plan to unlock the Bulk Import feature!");
+                }
+              }}
+              style={{ 
+                borderRadius: '8px', 
+                height: '30px',
+                opacity: hasFeature('bulk_operations') ? 1 : 0.7,
+                display: 'flex',
+                alignItems: 'center'
+              }}
             >
               Import
             </Button>
-            <DatePicker.RangePicker
-              value={dateRange}
-              onChange={(dates) => {
-                setDateRange(dates);
-                setPagination(prev => ({ ...prev, current: 1 }));
-              }}
-              style={{
-                borderRadius: '8px',
-                height: '30px',
-                width: '260px'
-              }}
-            />
           </Space>
         }
       />
@@ -452,6 +490,16 @@ const Lead = () => {
           activeKey={activeTab}
           onChange={setActiveTab}
           style={{ marginBottom: '16px', padding: '0 16px' }}
+          tabBarExtraContent={
+            <Button
+              icon={<FiFilter />}
+              onClick={() => setIsFilterDrawerOpen(true)}
+              style={{ borderRadius: '8px', height: '32px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              type={Object.keys(advancedFilters).filter(k => advancedFilters[k]).length > 0 ? "primary" : "default"}
+            >
+              Filter {Object.keys(advancedFilters).filter(k => advancedFilters[k]).length > 0 && `(${Object.keys(advancedFilters).filter(k => advancedFilters[k]).length})`}
+            </Button>
+          }
           items={[
             {
               key: 'all',
@@ -573,6 +621,112 @@ const Lead = () => {
         initialValues={selectedLead}
         key={selectedLead?.id}
       />
+
+      <Drawer
+        title="Advanced Filters"
+        placement="right"
+        onClose={() => setIsFilterDrawerOpen(false)}
+        open={isFilterDrawerOpen}
+        extra={
+          <Button onClick={() => setAdvancedFilters({})}>Clear All</Button>
+        }
+      >
+        <Form layout="vertical">
+          <Form.Item label="Date Range">
+            <DatePicker.RangePicker
+              value={dateRange}
+              onChange={(dates) => {
+                setDateRange(dates);
+                setPagination(prev => ({ ...prev, current: 1 }));
+              }}
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+          <Form.Item label="Lead Source">
+            <Select
+              allowClear
+              placeholder="Select Source"
+              value={advancedFilters.source}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, source: val }))}
+            >
+              {sourcesData?.data?.map(s => <Option key={s.id} value={s.id}>{s.name}</Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item label="Status">
+            <Select
+              allowClear
+              placeholder="Select Status"
+              value={advancedFilters.status}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, status: val }))}
+            >
+              {statusesData?.data?.map(s => <Option key={s.id} value={s.id}>{s.name}</Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item label="Interest Level">
+            <Select
+              allowClear
+              placeholder="Select Interest Level"
+              value={advancedFilters.interest_level}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, interest_level: val }))}
+            >
+              <Option value="high">High Interest</Option>
+              <Option value="medium">Medium Interest</Option>
+              <Option value="low">Low Interest</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Lead Owner">
+            <Select
+              allowClear
+              placeholder="Select Owner"
+              value={advancedFilters.owner}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, owner: val }))}
+            >
+              {usersResponse?.data?.map(u => <Option key={u.id} value={u.id}>{`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.username}</Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item label="Assignee">
+            <Select
+              allowClear
+              placeholder="Select Assignee"
+              value={advancedFilters.assignee}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, assignee: val }))}
+            >
+              {usersResponse?.data?.map(u => <Option key={u.id} value={u.id}>{`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.username}</Option>)}
+            </Select>
+          </Form.Item>
+
+          <Form.Item label="Campaign Name">
+            <Select 
+              allowClear
+              placeholder="Select Campaign" 
+              value={advancedFilters.campaign_name}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, campaign_name: val }))}
+            >
+              {metaFilters?.message?.campaigns?.map(c => <Option key={c} value={c}>{c}</Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item label="Ad Set Name">
+            <Select 
+              allowClear
+              placeholder="Select Ad Set" 
+              value={advancedFilters.adset_name}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, adset_name: val }))}
+            >
+              {metaFilters?.message?.adsets?.map(a => <Option key={a} value={a}>{a}</Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item label="Ad Name">
+            <Select 
+              allowClear
+              placeholder="Select Ad" 
+              value={advancedFilters.ad_name}
+              onChange={(val) => setAdvancedFilters(prev => ({ ...prev, ad_name: val }))}
+            >
+              {metaFilters?.message?.ads?.map(a => <Option key={a} value={a}>{a}</Option>)}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Drawer>
     </div>
   );
 };

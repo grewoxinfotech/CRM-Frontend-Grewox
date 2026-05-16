@@ -25,6 +25,7 @@ import {
 } from "react-icons/fi";
 import { useGetAllCountriesQuery } from "../../settings/services/settingsApi";
 import { useGetCustomersQuery } from "./services/custApi";
+import LimitReachedModal from "../../../../components/LimitReachedModal";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -36,6 +37,8 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
   const { data: countries = [], loading: countriesLoading } = useGetAllCountriesQuery();
   const [selectedCountry, setSelectedCountry] = useState(null);
   const { data: customersData } = useGetCustomersQuery();
+  const [isLimitModalVisible, setIsLimitModalVisible] = useState(false);
+  const [limitErrorMessage, setLimitErrorMessage] = useState('');
 
   // Find India in countries array and set as default
   useEffect(() => {
@@ -119,7 +122,13 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
       setFileList([]);
     } catch (error) {
       console.error("Submit Error:", error);
-      message.error("Failed to create customer");
+      const errorMsg = error?.data?.message || '';
+      if (errorMsg.toLowerCase().includes('limit reached')) {
+        setLimitErrorMessage(errorMsg);
+        setIsLimitModalVisible(true);
+      } else {
+        message.error(errorMsg || "Failed to create customer");
+      }
     }
   };
 
@@ -700,6 +709,13 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
           </Button>
         </div>
       </Form>
+      <LimitReachedModal
+          visible={isLimitModalVisible}
+          onCancel={() => setIsLimitModalVisible(false)}
+          title="Customer Limit Reached"
+          message={limitErrorMessage || "You have reached the maximum number of customers allowed in your current plan."}
+          limitType="customers"
+      />
     </Modal>
   );
 };

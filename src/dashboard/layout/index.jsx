@@ -17,6 +17,8 @@ import BrandConfig from '../../utils/brandName';
 import moment from 'moment';
 
 import FloatingAIBtn from '../../components/AISupport/FloatingAIBtn';
+import { useFirebaseNotifications } from '../../utils/useFirebaseNotifications';
+import LimitReachedModal from '../../components/LimitReachedModal';
 
 const DashboardLayout = () => {
     const dispatch = useDispatch();
@@ -28,6 +30,9 @@ const DashboardLayout = () => {
     const { data: rolesData, isLoading: isLoadingRoles, refetch } = useGetRolesQuery({
         skip: !loggedInUser // Skip query if user not logged in
     });
+
+    // Initialize Firebase Push Notifications
+    useFirebaseNotifications();
 
 
     // Find user's role data
@@ -153,6 +158,18 @@ const DashboardLayout = () => {
       return moment(subscriptionData.data.end_date).isBefore(moment());
     }, [subscriptionData, userRole, isSuperAdminCompanyLogin]);
 
+    const checkFeature = (featureKey) => {
+        if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return true;
+        let features = subscriptionData?.data?.Plan?.features || subscriptionData?.data?.plan?.features || subscriptionData?.data?.features;
+        
+        if (typeof features === 'string') {
+            try { features = JSON.parse(features); } catch (e) { features = null; }
+        }
+
+        if (!features) return false;
+        return !!features[featureKey];
+    };
+
     const checkPermission = (moduleKey) => {
         if (['settings', 'communication', 'support'].includes(moduleKey?.toLowerCase())) return true;
         if (userRole?.toLowerCase() === 'client') return true;
@@ -170,9 +187,41 @@ const DashboardLayout = () => {
         return checkPermission(item.permission);
     };
 
+    const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
+    const [lockedFeatureName, setLockedFeatureName] = useState('');
+
+    const handleLockedClick = (item) => {
+        setLockedFeatureName(item.title);
+        setUpgradeModalVisible(true);
+    };
+
     const menuItems = React.useMemo(() => {
-        return getDashboardMenuItems(checkPermission, isSubscriptionExpired).filter(shouldShowMenuItem);
-    }, [userPermissions, userRole, isSubscriptionExpired]);
+        const rawItems = getDashboardMenuItems(checkPermission, isSubscriptionExpired, checkFeature, userRole);
+        
+        const filteredItems = rawItems.filter(shouldShowMenuItem);
+        
+        // Propagate isLocked and add onLockedClick
+        return filteredItems.map(item => {
+            const isParentLocked = item.isLocked;
+            const newItem = { ...item };
+            
+            if (isParentLocked) {
+                newItem.onLockedClick = handleLockedClick;
+            }
+            
+            if (newItem.subItems) {
+                newItem.subItems = newItem.subItems.map(sub => {
+                    const isSubLocked = sub.isLocked || isParentLocked;
+                    return {
+                        ...sub,
+                        isLocked: isSubLocked,
+                        onLockedClick: isSubLocked ? handleLockedClick : undefined
+                    };
+                });
+            }
+            return newItem;
+        });
+    }, [userPermissions, userRole, isSubscriptionExpired, subscriptionData, isSuperAdminCompanyLogin]);
 
     return (
         <div className={`dashboard-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
@@ -195,6 +244,13 @@ const DashboardLayout = () => {
                 <div className="sidebar-overlay" onClick={handleMobileMenuToggle} />
             )}
             <FloatingAIBtn />
+            
+            <LimitReachedModal
+                visible={upgradeModalVisible}
+                onCancel={() => setUpgradeModalVisible(false)}
+                title={`${lockedFeatureName} Locked`}
+                message={`The ${lockedFeatureName} feature is not included in your current plan. Upgrade now to unlock automated messaging and advanced features!`}
+            />
         </div>
     );
 };
