@@ -31,6 +31,7 @@ import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import EditEmployee from "./EditEmployee";
 import ResetPasswordModal from "../../../../superadmin/module/company/ResetPasswordModal";
 import PageHeader from "../../../../components/PageHeader";
+import { useGetRolesQuery } from "../../role/services/roleApi";
 
 const Employee = () => {
   // States
@@ -55,6 +56,25 @@ const Employee = () => {
 
   const [viewMode, setViewMode] = useState("table");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+      skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+      if (!userRoleData?.permissions) return null;
+      try {
+          return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+      } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+      if (!loggedInUser) return false;
+      if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+      if (!userPermissions) return false;
+      const perms = userPermissions['extra-hrm-employee'];
+      if (!perms || perms.length === 0) return false;
+      return (perms[0]?.permissions || []).includes(action);
+  }, [loggedInUser, userPermissions]);
 
   useEffect(() => {
     if (employeesData?.data) {
@@ -205,18 +225,18 @@ const Employee = () => {
         searchPlaceholder="Search employees..."
         viewMode={viewMode}
         onViewChange={setViewMode}
-        onAdd={handleAddEmployee}
+        onAdd={hasPermission('create') ? handleAddEmployee : undefined}
         addText="Add Employee"
         mobileSearchContent={searchContent}
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
-        exportMenu={{
+        exportMenu={hasPermission('export') ? {
           items: [
             { key: 'csv', label: 'Export as CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
             { key: 'excel', label: 'Export as Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
             { key: 'pdf', label: 'Export as PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') },
           ]
-        }}
+        } : undefined}
       />
 
       <Card className="standard-content-card">
@@ -226,6 +246,7 @@ const Employee = () => {
             loading={isLoadingEmployees}
             onEdit={(emp) => { setSelectedEmployee(emp); setIsEditFormVisible(true); }}
             onDelete={refetch}
+            hasPermission={hasPermission}
           />
         ) : (
           <div className="employee-grid">
@@ -235,6 +256,7 @@ const Employee = () => {
                 employee={employee}
                 onEdit={(emp) => { setSelectedEmployee(emp); setIsEditFormVisible(true); }}
                 onDelete={refetch}
+                hasPermission={hasPermission}
               />
             ))}
           </div>

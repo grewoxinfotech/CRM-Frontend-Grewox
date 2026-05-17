@@ -11,7 +11,8 @@ const BillingList = ({
   onDelete,
   loading,
   billings = [],
-  pagination
+  pagination,
+  hasPermission
 }) => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedBilling, setSelectedBilling] = useState(null);
@@ -126,31 +127,32 @@ const BillingList = ({
       key: "actions",
       fixed: 'right',
       width: 80,
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: [
-              { key: 'view', icon: <FiEye />, label: 'View', onClick: () => handleViewBilling(record) },
-              { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
-              { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
-            ]
-          }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const items = [
+          { key: 'view', icon: <FiEye />, label: 'View', onClick: () => handleViewBilling(record) },
+        ];
+        if (!hasPermission || hasPermission('update')) {
+          items.push({ key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) });
+        }
+        if (!hasPermission || hasPermission('delete')) {
+          items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) });
+        }
+        return (
+          <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+          </Dropdown>
+        );
+      },
     },
   ];
 
   return (
     <div className="billing-list-container">
       <Table
-        rowSelection={{
+        rowSelection={(!hasPermission || hasPermission('delete')) ? {
           selectedRowKeys,
           onChange: setSelectedRowKeys,
-        }}
+        } : undefined}
         columns={columns}
         dataSource={billings}
         rowKey="id"

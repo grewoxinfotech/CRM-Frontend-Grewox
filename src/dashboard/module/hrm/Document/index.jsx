@@ -9,6 +9,9 @@ import CreateDocument from "./CreateDocument";
 import DocumentList from "./DocumentList";
 import { useGetDocumentsQuery, useDeleteDocumentMutation } from "./services/documentApi";
 import PageHeader from "../../../../components/PageHeader";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../role/services/roleApi";
 
 const Document = () => {
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -25,6 +28,26 @@ const Document = () => {
     pageSize,
     search: searchText
   });
+
+  const loggedInUser = useSelector(selectCurrentUser);
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+      skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+      if (!userRoleData?.permissions) return null;
+      try {
+          return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+      } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+      if (!loggedInUser) return false;
+      if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+      if (!userPermissions) return false;
+      const perms = userPermissions['extra-hrm-document'];
+      if (!perms || perms.length === 0) return false;
+      return (perms[0]?.permissions || []).includes(action);
+  }, [loggedInUser, userPermissions]);
 
   const documents = response?.message?.data || [];
   const pagination = response?.message?.pagination || { total: 0, current: 1, pageSize: 10 };
@@ -78,13 +101,13 @@ const Document = () => {
         ]}
         searchText={searchText}
         onSearch={setSearchText}
-        onAdd={() => { setSelectedDocument(null); setIsEditing(false); setIsFormVisible(true); }}
+        onAdd={hasPermission('create') ? () => { setSelectedDocument(null); setIsEditing(false); setIsFormVisible(true); } : undefined}
         addText="Create Document"
-        extraActions={[
+        extraActions={hasPermission('export') ? [
           <Dropdown key="export" overlay={exportMenu} trigger={['click']}>
             <Button icon={<FiDownload />}>Export</Button>
           </Dropdown>
-        ]}
+        ] : []}
       />
 
       <div className="standard-content-card" style={{ marginTop: '12px' }}>
@@ -96,6 +119,7 @@ const Document = () => {
           onDelete={handleDeleteConfirm}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
+          hasPermission={hasPermission}
         />
       </div>
 

@@ -7,7 +7,7 @@ import { useAdminLoginMutation } from '../../../../auth/services/authApi';
 import { useGetRolesQuery } from '../role/services/roleApi';
 import ResetPasswordModal from '../../../../superadmin/module/company/ResetPasswordModal';
 
-const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
+const EmployeeCard = ({ employee, onEdit, onDelete, onView, hasPermission }) => {
     const navigate = useNavigate();
     const [adminLogin] = useAdminLoginMutation();
     const { data: rolesData } = useGetRolesQuery();
@@ -79,44 +79,54 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
         setResetPasswordVisible(true);
     };
 
-    const getActionMenuItems = (record) => [
-        {
-            key: "overview",
-            label: "View Overview",
-            icon: <FiEye />,
-            onClick: () => navigate(`/dashboard/hrm/employee/${record.id}`)
-        },
-        {
-            key: "view",
-            label: "View Details",
-            icon: <FiEye />,
-            onClick: () => onView(record)
-        },
-        {
-            key: "edit",
-            label: "Edit Employee",
-            icon: <FiEdit2 />,
-            onClick: () => onEdit(record)
-        },
-        {
-            key: "status",
-            label: "Change Status",
-            icon: <FiUserCheck />
-        },
-        {
-            key: "reset",
-            label: "Reset Password",
-            icon: <FiLock />,
-            onClick: handleResetPassword
-        },
-        {
-            key: "delete",
-            label: "Delete Employee",
-            icon: <FiTrash2 />,
-            danger: true,
-            onClick: () => onDelete(record)
+    const getActionMenuItems = (record) => {
+        const items = [
+            {
+                key: "overview",
+                label: "View Overview",
+                icon: <FiEye />,
+                onClick: () => navigate(`/dashboard/hrm/employee/${record.id}`)
+            },
+            {
+                key: "view",
+                label: "View Details",
+                icon: <FiEye />,
+                onClick: () => onView(record)
+            }
+        ];
+
+        if (!hasPermission || hasPermission('update')) {
+            items.push({
+                key: "edit",
+                label: "Edit Employee",
+                icon: <FiEdit2 />,
+                onClick: () => onEdit(record)
+            });
+            items.push({
+                key: "status",
+                label: "Change Status",
+                icon: <FiUserCheck />
+            });
+            items.push({
+                key: "reset",
+                label: "Reset Password",
+                icon: <FiLock />,
+                onClick: handleResetPassword
+            });
         }
-    ];
+
+        if (!hasPermission || hasPermission('delete')) {
+            items.push({
+                key: "delete",
+                label: "Delete Employee",
+                icon: <FiTrash2 />,
+                danger: true,
+                onClick: () => onDelete(record)
+            });
+        }
+
+        return items;
+    };
 
     const roleName = getRoleName(employee.role_id);
     const roleStyle = getRoleColor(roleName);

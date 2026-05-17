@@ -64,6 +64,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
                 country: initialValues?.country || '',
                 zipcode: initialValues?.zipcode || '',
                 address: initialValues?.address || '',
+                status: initialValues?.status || 'active',
             });
 
             if (initialValues?.profilePic) {
@@ -906,6 +907,44 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
                                 transition: 'all 0.3s ease',
                             }}
                         />
+                    </Form.Item>
+                </div>
+
+                <Divider orientation="left" style={{ margin: '24px 0 24px' }}>
+                    <span style={{ fontSize: '16px', fontWeight: '500', color: '#262626' }}>
+                        Account Control
+                    </span>
+                </Divider>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '18px', marginBottom: '24px' }}>
+                    <Form.Item
+                        name="status"
+                        label={
+                            <span style={{
+                                fontSize: '14px',
+                                fontWeight: '500',
+                            }}>
+                                Account Status
+                            </span>
+                        }
+                    >
+                        <Select
+                            placeholder="Select account status"
+                            size="large"
+                            style={{
+                                width: '100%',
+                                height: '48px'
+                            }}
+                            dropdownStyle={{
+                                padding: '8px',
+                                borderRadius: '10px',
+                            }}
+                        >
+                            <Option value="active">Active</Option>
+                            <Option value="inactive">Deactivated (Bandh)</Option>
+                            <Option value="suspended">Suspended</Option>
+                            <Option value="blocked">Temporary Blocked</Option>
+                        </Select>
                     </Form.Item>
                 </div>
 

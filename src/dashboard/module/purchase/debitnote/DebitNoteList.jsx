@@ -18,7 +18,8 @@ const DebitNoteList = ({
   loading,
   debitNotes = [],
   pagination,
-  onChange
+  onChange,
+  hasPermission
 }) => {
   const companyId = useSelector(getCompanyId);
   const { data: billingss } = useGetBillingsQuery({
@@ -94,29 +95,28 @@ const DebitNoteList = ({
       key: "actions",
       fixed: 'right',
       width: 80,
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: [
-              { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
-            ]
-          }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const items = [];
+        if (!hasPermission || hasPermission('delete')) {
+          items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) });
+        }
+        if (items.length === 0) return null;
+        return (
+          <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+          </Dropdown>
+        );
+      },
     },
   ];
 
   return (
     <div className="debitnote-list-container">
       <Table
-        rowSelection={{
+        rowSelection={(!hasPermission || hasPermission('delete')) ? {
           selectedRowKeys,
           onChange: setSelectedRowKeys,
-        }}
+        } : undefined}
         columns={columns}
         dataSource={debitNotes}
         rowKey={record => record.id || record._id}

@@ -6,7 +6,7 @@ import { useGetEmployeesQuery } from '../../hrm/Employee/services/employeeApi';
 
 const { Text } = Typography;
 
-const TicketList = ({ tickets, onEdit, onDelete, loading }) => {
+const TicketList = ({ tickets, onEdit, onDelete, loading, hasPermission }) => {
     const { data: employeesData } = useGetEmployeesQuery();
     
     const employeesMap = React.useMemo(() => {
@@ -17,6 +17,17 @@ const TicketList = ({ tickets, onEdit, onDelete, loading }) => {
     }, [employeesData]);
     
     const getEmployeeName = useCallback((id) => id ? employeesMap[id] || 'N/A' : 'N/A', [employeesMap]);
+
+    const getDropdownItems = (record) => {
+        const items = [];
+        if (!hasPermission || hasPermission('update')) {
+            items.push({ key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) });
+        }
+        if (!hasPermission || hasPermission('delete')) {
+            items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) });
+        }
+        return items;
+    };
 
     const columns = [
         {
@@ -65,20 +76,19 @@ const TicketList = ({ tickets, onEdit, onDelete, loading }) => {
             key: 'actions',
             fixed: 'right',
             width: 80,
-            render: (_, record) => (
-                <Dropdown
-                    menu={{
-                        items: [
-                            { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
-                            { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
-                        ]
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                >
-                    <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-                </Dropdown>
-            )
+            render: (_, record) => {
+                const items = getDropdownItems(record);
+                if (items.length === 0) return null;
+                return (
+                    <Dropdown
+                        menu={{ items }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+                    </Dropdown>
+                );
+            }
         }
     ];
 

@@ -45,40 +45,61 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
     }, [assignedPlans, company.id]);
 
     // Update the status configuration
-    const getStatusStyles = (isActive) => ({
-        active: {
-            background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)',
-            color: '#15803d',
-            border: '1px solid #86efac',
-            boxShadow: '0 2px 4px rgba(22, 101, 52, 0.1)',
-            icon: <CheckCircleOutlined style={{
-                fontSize: '12px',
-                color: '#16a34a',
-                filter: 'drop-shadow(0 1px 1px rgba(22, 101, 52, 0.1))'
-            }} />,
-            hover: {
-                background: 'linear-gradient(135deg, #bbf7d0 0%, #86efac 100%)',
-                boxShadow: '0 4px 6px rgba(22, 101, 52, 0.15)'
+    const getStatusStyles = (status, hasActiveSub) => {
+        const styles = {
+            active: {
+                background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)',
+                color: '#15803d',
+                border: '1px solid #86efac',
+                boxShadow: '0 2px 4px rgba(22, 101, 52, 0.1)',
+                icon: <CheckCircleOutlined style={{
+                    fontSize: '12px',
+                    color: '#16a34a',
+                    filter: 'drop-shadow(0 1px 1px rgba(22, 101, 52, 0.1))'
+                }} />,
+                text: hasActiveSub ? 'ACTIVE' : 'NO PLAN'
+            },
+            inactive: {
+                background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+                color: '#b91c1c',
+                border: '1px solid #fca5a5',
+                boxShadow: '0 2px 4px rgba(153, 27, 27, 0.1)',
+                icon: <CloseCircleOutlined style={{
+                    fontSize: '12px',
+                    color: '#dc2626',
+                    filter: 'drop-shadow(0 1px 1px rgba(153, 27, 27, 0.1))'
+                }} />,
+                text: 'DEACTIVATED (BANDH)'
+            },
+            suspended: {
+                background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                color: '#b45309',
+                border: '1px solid #fcd34d',
+                boxShadow: '0 2px 4px rgba(180, 83, 9, 0.1)',
+                icon: <CloseCircleOutlined style={{
+                    fontSize: '12px',
+                    color: '#d97706',
+                    filter: 'drop-shadow(0 1px 1px rgba(180, 83, 9, 0.1))'
+                }} />,
+                text: 'SUSPENDED'
+            },
+            blocked: {
+                background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                color: '#4b5563',
+                border: '1px solid #d1d5db',
+                boxShadow: '0 2px 4px rgba(75, 85, 99, 0.1)',
+                icon: <CloseCircleOutlined style={{
+                    fontSize: '12px',
+                    color: '#4b5563',
+                    filter: 'drop-shadow(0 1px 1px rgba(75, 85, 99, 0.1))'
+                }} />,
+                text: 'TEMPORARY BLOCKED'
             }
-        },
-        inactive: {
-            background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
-            color: '#b91c1c',
-            border: '1px solid #fca5a5',
-            boxShadow: '0 2px 4px rgba(153, 27, 27, 0.1)',
-            icon: <CloseCircleOutlined style={{
-                fontSize: '12px',
-                color: '#dc2626',
-                filter: 'drop-shadow(0 1px 1px rgba(153, 27, 27, 0.1))'
-            }} />,
-            hover: {
-                background: 'linear-gradient(135deg, #fecaca 0%, #fca5a5 100%)',
-                boxShadow: '0 4px 6px rgba(153, 27, 27, 0.15)'
-            }
-        }
-    })[isActive ? 'active' : 'inactive'];
+        };
+        return styles[status?.toLowerCase()] || styles.active;
+    };
 
-    const statusStyle = getStatusStyles(!!activeSubscription);
+    const statusStyle = getStatusStyles(company.status || 'active', !!activeSubscription);
 
     const handleEdit = () => {
         setEditModalVisible(true);
@@ -296,7 +317,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                             }}
                         >
                             {statusStyle.icon}
-                            <span>{activeSubscription ? 'ACTIVE' : 'INACTIVE'}</span>
+                            <span>{statusStyle.text}</span>
                         </Tag>
                     </div>
 
@@ -612,7 +633,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                 fontWeight: '500'
                             }}>
                                 {statusStyle.icon}
-                                {activeSubscription ? 'Active' : 'Inactive'}
+                                {statusStyle.text}
                             </span>
                         </div>
                     </div>

@@ -22,6 +22,7 @@ import { useGetPipelinesQuery } from '../crmsystem/pipeline/services/pipelineApi
 import { useDispatch, useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { setStageOrder, selectStageOrder } from '../crmsystem/leadstage/services/leadStageSlice';
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import {
   DndContext,
   useDraggable,
@@ -89,6 +90,33 @@ const getRandomColor = (name) => {
 };
 
 const DraggableCard = ({ lead, stage, currencies = [], users = [], onLeadClick, onEdit, onDelete, onView }) => {
+  const loggedInUser = useSelector(selectCurrentUser);
+  
+  // Fetch role and permissions
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) {
+      return null;
+    }
+  }, [userRoleData]);
+
+  const hasPermission = (action) => {
+    if (!loggedInUser) return false;
+    if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const leadPerms = userPermissions['dashboards-lead'];
+    if (!leadPerms || leadPerms.length === 0) return false;
+    const allowed = leadPerms[0]?.permissions || [];
+    return allowed.includes(action);
+  };
+
   // Dropdown menu items
   const getDropdownItems = (lead) => ({
     items: [
@@ -98,20 +126,20 @@ const DraggableCard = ({ lead, stage, currencies = [], users = [], onLeadClick, 
         label: "View Details",
         onClick: (e) => { e.stopPropagation(); onView?.(lead); },
       },
-      {
+      hasPermission('update') && {
         key: "edit",
         icon: <FiEdit2 />,
         label: "Edit",
         onClick: (e) => { e.stopPropagation(); onEdit?.(lead); },
       },
-      {
+      hasPermission('delete') && {
         key: "delete",
         icon: <FiTrash2 />,
         label: "Delete",
         onClick: (e) => { e.stopPropagation(); onDelete?.(lead); },
         danger: true,
       },
-    ],
+    ].filter(Boolean),
   });
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -198,6 +226,30 @@ const DraggableCard = ({ lead, stage, currencies = [], users = [], onLeadClick, 
         position: 'absolute', left: 0, top: 0, width: '100%', height: '3px',
         background: getInterestLevel(lead.interest_level).color, opacity: 0.9
       }} />
+
+      {/* Action Dropdown Menu Trigger */}
+      <div 
+        style={{ position: 'absolute', right: '12px', top: '12px', zIndex: 10 }} 
+        onClick={e => e.stopPropagation()}
+      >
+        <Dropdown menu={getDropdownItems(lead)} trigger={['click']} placement="bottomRight">
+          <Button
+            type="text"
+            icon={<FiMoreVertical size={16} style={{ color: '#8c8c8c' }} />}
+            style={{ 
+              padding: 0, 
+              width: '24px', 
+              height: '24px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.8)',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+            }}
+          />
+        </Dropdown>
+      </div>
 
 
       {/* Card Content */}

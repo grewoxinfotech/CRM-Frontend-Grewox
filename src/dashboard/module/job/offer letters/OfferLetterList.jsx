@@ -13,7 +13,7 @@ import { useGetAllJobApplicationsQuery } from '../job applications/services/jobA
 
 const { Text } = Typography;
 
-const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, loading, pagination }) => {
+const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, loading, pagination, hasPermission }) => {
     const { data: jobsData } = useGetAllJobsQuery();
     const { data: applicationsData } = useGetAllJobApplicationsQuery();
 
@@ -26,6 +26,17 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, loading, paginat
         if (!applicationsData?.data) return {};
         return applicationsData.data.reduce((acc, app) => { acc[app.id] = app; return acc; }, {});
     }, [applicationsData]);
+
+    const getDropdownItems = (record) => {
+        const items = [];
+        if (!hasPermission || hasPermission('update')) {
+            items.push({ key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) });
+        }
+        if (!hasPermission || hasPermission('delete')) {
+            items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) });
+        }
+        return items;
+    };
 
     const columns = [
         {
@@ -97,20 +108,19 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, loading, paginat
             key: 'actions',
             fixed: 'right',
             width: 80,
-            render: (_, record) => (
-                <Dropdown
-                    menu={{
-                        items: [
-                            { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
-                            { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
-                        ]
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                >
-                    <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-                </Dropdown>
-            )
+            render: (_, record) => {
+                const items = getDropdownItems(record);
+                if (items.length === 0) return null;
+                return (
+                    <Dropdown
+                        menu={{ items }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+                    </Dropdown>
+                );
+            }
         }
     ];
 

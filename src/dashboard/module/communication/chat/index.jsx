@@ -27,6 +27,7 @@ import {
 import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { io } from 'socket.io-client';
 import "./chat.scss";
 import { FiX, FiUsers, FiUserPlus, FiMoreVertical } from 'react-icons/fi';
@@ -111,6 +112,23 @@ export default function Chat() {
 
     // Get current user from auth state
     const currentUser = useSelector((state) => state.auth.user);
+
+    const loggedInUser = useSelector(selectCurrentUser);
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-communication'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [loggedInUser, userPermissions]);
 
     // Define getMessages function before using it
     const getMessages = () => {
@@ -1666,7 +1684,7 @@ export default function Chat() {
                     </div>
                 ),
             },
-            {
+            ...(hasPermission('create') ? [{
                 key: 'create-group',
                 label: (
                     <div className="mobile-create-group" onClick={() => setCreateGroupModalVisible(true)}>
@@ -1674,7 +1692,7 @@ export default function Chat() {
                         <span>Create New Group</span>
                     </div>
                 ),
-            },
+            }] : []),
             {
                 type: 'divider'
             },
@@ -1770,20 +1788,22 @@ export default function Chat() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="theme-search-input"
                             />
-                            <Button
-                                type="text"
-                                icon={<FiUserPlus />}
-                                onClick={() => setCreateGroupModalVisible(true)}
-                                className="create-group-button"
-                                style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: '#1890ff',
-                                }}
-                            />
+                            {hasPermission('create') && (
+                                <Button
+                                    type="text"
+                                    icon={<FiUserPlus />}
+                                    onClick={() => setCreateGroupModalVisible(true)}
+                                    className="create-group-button"
+                                    style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#1890ff',
+                                    }}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

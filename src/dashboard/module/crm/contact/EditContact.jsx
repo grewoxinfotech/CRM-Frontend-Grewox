@@ -257,25 +257,6 @@ const EditContact = ({ open, onCancel, contactData }) => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="contact_owner"
-                label={
-                  <span className="form-label">
-                    <FiUsers />
-                    Contact Owner <span className="required">*</span>
-                  </span>
-                }
-              >
-                <Input
-                  placeholder="Enter contact owner"
-                  size="large"
-                  className="form-input"
-                  disabled
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item
                 name="first_name"
                 label={
                   <span className="form-label">
@@ -314,7 +295,6 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Last Name
                   </span>
                 }
-                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter last name"
@@ -332,7 +312,6 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Email
                   </span>
                 }
-                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter email"

@@ -7,7 +7,7 @@ import './followupmetting.scss';
 import { useGetFollowupMeetingsQuery, useDeleteFollowupMeetingMutation } from './services/followupMettingApi';
 import EditFollowupMeeting from './EditfollowupMeeting';
 
-const FollowupMeetingList = ({ leadId, users }) => {
+const FollowupMeetingList = ({ leadId, users, hasPermission }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedMeetingId, setSelectedMeetingId] = useState(null);
 
@@ -180,36 +180,36 @@ const FollowupMeetingList = ({ leadId, users }) => {
             key: 'actions',
             width: 80,
             fixed: 'right', 
-            render: (_, record) => (
-                <Space>
-                    <Dropdown
-                        menu={{
-                            items: [
-                                {
-                                    key: 'edit',
-                                    label: 'Edit',
-                                    icon: <FiEdit2 />,
-                                    onClick: () => handleEdit(record.id)
-                                },
-                                {
-                                    key: 'delete',
-                                    label: 'Delete',
-                                    icon: <FiTrash2 style={{ color: '#ff4d4f' }} />,
-                                    danger: true,
-                                    onClick: () => handleDelete(record.id)
-                                }
-                            ]
-                        }}
-                        trigger={['click']}
-                    >
-                        <Button
-                            type="text"
-                            icon={<FiMoreVertical />}
-                            className="action-btn"
-                        />
-                    </Dropdown>
-                </Space>
-            )
+            render: (_, record) => {
+                const actionItems = [];
+                if (!hasPermission || hasPermission('update')) {
+                    actionItems.push({
+                        key: 'edit',
+                        label: 'Edit',
+                        icon: <FiEdit2 />,
+                        onClick: () => handleEdit(record.id)
+                    });
+                }
+                if (!hasPermission || hasPermission('delete')) {
+                    actionItems.push({
+                        key: 'delete',
+                        label: 'Delete',
+                        icon: <FiTrash2 style={{ color: '#ff4d4f' }} />,
+                        danger: true,
+                        onClick: () => handleDelete(record.id)
+                    });
+                }
+
+                if (actionItems.length === 0) return null;
+
+                return (
+                    <Space>
+                        <Dropdown menu={{ items: actionItems }} trigger={['click']}>
+                            <Button type="text" icon={<FiMoreVertical />} className="action-btn" />
+                        </Dropdown>
+                    </Space>
+                );
+            }
         }
     ];
 

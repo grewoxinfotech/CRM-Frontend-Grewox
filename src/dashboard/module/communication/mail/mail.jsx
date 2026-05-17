@@ -10,6 +10,7 @@ import {
 } from "./services/mailApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import ComposeModal from "./components/ComposeModal";
 import EmailList from "./components/EmailList";
 import Sidebar from "./components/Sidebar";
@@ -30,6 +31,25 @@ const Mail = () => {
   const [toggleImportant] = useToggleImportantMutation();
   const [moveToTrash] = useMoveToTrashMutation();
   const [deleteEmail] = useDeleteEmailMutation();
+
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+    if (!currentUser) return false;
+    if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const perms = userPermissions['dashboards-communication'];
+    if (!perms || perms.length === 0) return false;
+    return (perms[0]?.permissions || []).includes(action);
+  }, [currentUser, userPermissions]);
 
   // State variables
   const [selectedMenu, setSelectedMenu] = useState("inbox");
@@ -292,6 +312,7 @@ const Mail = () => {
         setComposeVisible={setComposeVisible}
         className={`mail-sider ${sidebarVisible ? "visible" : ""}`}
         setSidebarVisible={setSidebarVisible}
+        hasPermission={hasPermission}
       />
 
       <Layout className="mail-content">
@@ -316,6 +337,7 @@ const Mail = () => {
             handleDelete={handleDelete}
             handleRestore={handleRestore}
             isLoading={isLoading}
+            hasPermission={hasPermission}
           />
         )}
       </Layout>

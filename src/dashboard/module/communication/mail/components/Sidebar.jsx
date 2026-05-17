@@ -16,7 +16,8 @@ const Sidebar = ({
   trashCount,
   setComposeVisible,
   className,
-  setSidebarVisible
+  setSidebarVisible,
+  hasPermission
 }) => {
   const [settingsVisible, setSettingsVisible] = useState(false);
 
@@ -31,24 +32,18 @@ const Sidebar = ({
           />
         </div>
 
-        {/* <div className="user-profile">
-          <Avatar size={48} icon={<FiUser />} className="user-avatar" />
-          <div className="user-info">
-            <Text strong>John Doe</Text>
-            <Text type="secondary">john.doe@example.com</Text>
-          </div>
-        </div> */}
-
-        <Button
-          type="primary"
-          icon={<FiEdit />}
-          size="large"
-          block
-          onClick={() => setComposeVisible(true)}
-          className="compose-button"
-        >
-          Compose
-        </Button>
+        {hasPermission && hasPermission('create') && (
+          <Button
+            type="primary"
+            icon={<FiEdit />}
+            size="large"
+            block
+            onClick={() => setComposeVisible(true)}
+            className="compose-button"
+          >
+            Compose
+          </Button>
+        )}
 
         <Menu
           selectedKeys={[selectedMenu]}

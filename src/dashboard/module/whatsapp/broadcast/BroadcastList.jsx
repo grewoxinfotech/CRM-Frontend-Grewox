@@ -31,6 +31,7 @@ import {
 import { useGetSourcesQuery, useGetCategoriesQuery } from '../../crm/crmsystem/souce/services/SourceApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import CreateBroadcast from './CreateBroadcast';
 import { motion } from "framer-motion";
 import CountUp from 'react-countup';
@@ -59,6 +60,25 @@ const BroadcastList = () => {
     });
 
     const loggedInUser = useSelector(selectCurrentUser);
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-communication'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [loggedInUser, userPermissions]);
+
     const { data: broadcasts = [], isLoading, isFetching, refetch } = useGetWhatsappBroadcastsQuery({
         search: searchQuery
     });
@@ -199,16 +219,20 @@ const BroadcastList = () => {
             key: 'actions',
             render: (_, record) => (
                 <Space>
-                    {record.status === 'draft' && (
-                        <Button type="text" icon={<SendOutlined />} title="Launch" onClick={() => handleAction('send', record.id)} />
-                    )}
-                    {record.status === 'processing' ? (
-                        <Button type="text" icon={<PauseCircleOutlined />} title="Pause" onClick={() => handleAction('pause', record.id)} />
-                    ) : record.status === 'paused' ? (
-                        <Button type="text" icon={<PlayCircleOutlined />} title="Resume" onClick={() => handleAction('resume', record.id)} />
-                    ) : null}
-                    {record.failed_count > 0 && (
-                        <Button type="text" icon={<ReloadOutlined />} title="Retry Failed" onClick={() => handleAction('retry', record.id)} />
+                    {hasPermission('update') && (
+                        <>
+                            {record.status === 'draft' && (
+                                <Button type="text" icon={<SendOutlined />} title="Launch" onClick={() => handleAction('send', record.id)} />
+                            )}
+                            {record.status === 'processing' ? (
+                                <Button type="text" icon={<PauseCircleOutlined />} title="Pause" onClick={() => handleAction('pause', record.id)} />
+                            ) : record.status === 'paused' ? (
+                                <Button type="text" icon={<PlayCircleOutlined />} title="Resume" onClick={() => handleAction('resume', record.id)} />
+                            ) : null}
+                            {record.failed_count > 0 && (
+                                <Button type="text" icon={<ReloadOutlined />} title="Retry Failed" onClick={() => handleAction('retry', record.id)} />
+                            )}
+                        </>
                     )}
                     <Button type="text" icon={<EyeOutlined />} title="View Details" />
                 </Space>
@@ -338,7 +362,7 @@ const BroadcastList = () => {
                     { title: "WhatsApp" },
                     { title: "Broadcast" }
                 ]}
-                onAdd={() => setIsCreateModalOpen(true)}
+                onAdd={hasPermission('create') ? () => setIsCreateModalOpen(true) : undefined}
                 addText="New Campaign"
             />
 

@@ -16,7 +16,7 @@ import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
 
 const { Text } = Typography;
 
-const SalaryList = ({ onEdit, salaries = [], loading, pagination }) => {
+const SalaryList = ({ onEdit, salaries = [], loading, pagination, hasPermission }) => {
   const { data: employeesData } = useGetEmployeesQuery();
   const [deleteSalary] = useDeleteSalaryMutation();
   const [updateSalary] = useUpdateSalaryMutation();
@@ -42,6 +42,36 @@ const SalaryList = ({ onEdit, salaries = [], loading, pagination }) => {
     } catch (error) {
       message.error('Failed to update status');
     }
+  };
+
+  const getDropdownItems = (record) => {
+    const items = [
+      { key: "payslip", icon: <FiFileText />, label: "Payslip", onClick: () => message.info('Generating Payslip...') }
+    ];
+
+    if (!hasPermission || hasPermission('update')) {
+      items.push({ key: "edit", icon: <FiEdit2 />, label: "Edit", onClick: () => onEdit(record) });
+    }
+    if (!hasPermission || hasPermission('delete')) {
+      items.push({
+        key: "delete", icon: <FiTrash2 />, label: "Delete", danger: true, onClick: () => {
+          Modal.confirm({
+            title: 'Delete Salary Record',
+            content: 'Are you sure?',
+            onOk: async () => {
+              try {
+                await deleteSalary(record.id).unwrap();
+                message.success('Deleted successfully');
+              } catch (error) {
+                message.error('Failed to delete');
+              }
+            }
+          });
+        }
+      });
+    }
+
+    return items;
   };
 
   const columns = [
@@ -87,6 +117,7 @@ const SalaryList = ({ onEdit, salaries = [], loading, pagination }) => {
           <Switch
             size="small"
             checked={status === 'paid'}
+            disabled={hasPermission && !hasPermission('update')}
             onChange={(checked) => handleStatusChange(checked, record)}
           />
           <Tag color={status === 'paid' ? 'success' : 'warning'} style={{ borderRadius: '4px', border: 'none', margin: 0 }}>
@@ -102,26 +133,7 @@ const SalaryList = ({ onEdit, salaries = [], loading, pagination }) => {
       fixed: "right",
       render: (_, record) => (
         <Dropdown
-          menu={{
-            items: [
-              { key: "payslip", icon: <FiFileText />, label: "Payslip", onClick: () => message.info('Generating Payslip...') },
-              { key: "edit", icon: <FiEdit2 />, label: "Edit", onClick: () => onEdit(record) },
-              { key: "delete", icon: <FiTrash2 />, label: "Delete", danger: true, onClick: () => {
-                Modal.confirm({
-                    title: 'Delete Salary Record',
-                    content: 'Are you sure?',
-                    onOk: async () => {
-                        try {
-                            await deleteSalary(record.id).unwrap();
-                            message.success('Deleted successfully');
-                        } catch (error) {
-                            message.error('Failed to delete');
-                        }
-                    }
-                });
-              }}
-            ]
-          }}
+          menu={{ items: getDropdownItems(record) }}
           trigger={["click"]}
           placement="bottomRight"
         >

@@ -10,7 +10,7 @@ import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 
-const ContractType = ({ isModalOpen, setIsModalOpen }) => {
+const ContractType = ({ isModalOpen, setIsModalOpen, hasPermission }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedContractType, setSelectedContractType] = useState(null);
   const userdata = useSelector(selectCurrentUser);
@@ -41,6 +41,17 @@ const ContractType = ({ isModalOpen, setIsModalOpen }) => {
     });
   };
 
+  const getDropdownItems = (record) => {
+    const items = [];
+    if (!hasPermission || hasPermission('update')) {
+      items.push({ key: 'edit', icon: <FiEdit2 size={14} />, label: 'Edit', onClick: () => handleEditClick(record) });
+    }
+    if (!hasPermission || hasPermission('delete')) {
+      items.push({ key: 'delete', icon: <FiTrash2 size={14} />, label: 'Delete', danger: true, onClick: () => handleDeleteContractType(record.id) });
+    }
+    return items;
+  };
+
   const columns = [
     {
       title: 'Contract Type Name',
@@ -61,20 +72,19 @@ const ContractType = ({ isModalOpen, setIsModalOpen }) => {
       width: 60,
       fixed: 'right',
       align: 'center',
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: [
-              { key: 'edit', icon: <FiEdit2 size={14} />, label: 'Edit', onClick: () => handleEditClick(record) },
-              { key: 'delete', icon: <FiTrash2 size={14} />, label: 'Delete', danger: true, onClick: () => handleDeleteContractType(record.id) }
-            ]
-          }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button type="text" icon={<FiMoreVertical size={16} />} size="small" />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const items = getDropdownItems(record);
+        if (items.length === 0) return null;
+        return (
+          <Dropdown
+            menu={{ items }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button type="text" icon={<FiMoreVertical size={16} />} size="small" />
+          </Dropdown>
+        );
+      },
     },
   ];
 

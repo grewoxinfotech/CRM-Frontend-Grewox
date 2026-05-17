@@ -11,7 +11,8 @@ const DocumentList = ({
   onEdit,
   onDelete,
   onPageChange,
-  onPageSizeChange
+  onPageSizeChange,
+  hasPermission
 }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
@@ -20,6 +21,17 @@ const DocumentList = ({
     const ext = fileName.split('.').pop().toLowerCase();
     const map = { pdf: <FiFileText color="#ef4444" />, doc: <FiFileText color="#3b82f6" />, docx: <FiFileText color="#3b82f6" />, jpg: <FiImage color="#10b981" />, png: <FiImage color="#10b981" />, mp4: <FiVideo color="#f59e0b" />, zip: <FiArchive color="#6366f1" /> };
     return map[ext] || <FiFile color="#64748b" />;
+  };
+
+  const getDropdownItems = (record) => {
+    const items = [];
+    if (!hasPermission || hasPermission('update')) {
+      items.push(<Menu.Item key="edit" icon={<FiEdit2 size={14} />} onClick={() => onEdit(record)}>Edit</Menu.Item>);
+    }
+    if (!hasPermission || hasPermission('delete')) {
+      items.push(<Menu.Item key="delete" danger icon={<FiTrash2 size={14} />} onClick={() => onDelete(record.id)}>Delete</Menu.Item>);
+    }
+    return items;
   };
 
   const columns = [
@@ -78,19 +90,18 @@ const DocumentList = ({
       width: 60,
       fixed: 'right',
       align: 'center',
-      render: (_, record) => (
-        <Dropdown
-          overlay={
-            <Menu>
-              <Menu.Item key="edit" icon={<FiEdit2 size={14} />} onClick={() => onEdit(record)}>Edit</Menu.Item>
-              <Menu.Item key="delete" danger icon={<FiTrash2 size={14} />} onClick={() => onDelete(record.id)}>Delete</Menu.Item>
-            </Menu>
-          }
-          trigger={["click"]}
-        >
-          <Button type="text" icon={<FiMoreVertical size={16} />} size="small" />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const items = getDropdownItems(record);
+        if (items.length === 0) return null;
+        return (
+          <Dropdown
+            overlay={<Menu>{items}</Menu>}
+            trigger={["click"]}
+          >
+            <Button type="text" icon={<FiMoreVertical size={16} />} size="small" />
+          </Dropdown>
+        );
+      },
     },
   ];
 

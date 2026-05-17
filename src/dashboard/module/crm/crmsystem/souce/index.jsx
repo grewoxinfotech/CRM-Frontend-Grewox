@@ -13,7 +13,7 @@ import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 
-const Source = ({ isModalOpen, setIsModalOpen }) => {
+const Source = ({ isModalOpen, setIsModalOpen, hasPermission }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedSource, setSelectedSource] = useState(null);
   const userdata = useSelector(selectCurrentUser);
@@ -41,6 +41,17 @@ const Source = ({ isModalOpen, setIsModalOpen }) => {
         }
       },
     });
+  };
+
+  const getDropdownItems = (record) => {
+    const items = [];
+    if (!hasPermission || hasPermission('update')) {
+      items.push({ key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => handleEdit(record) });
+    }
+    if (!hasPermission || hasPermission('delete')) {
+      items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) });
+    }
+    return items;
   };
 
   const columns = [
@@ -81,20 +92,19 @@ const Source = ({ isModalOpen, setIsModalOpen }) => {
       title: 'Actions',
       key: 'actions',
       width: 80,
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: [
-              { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => handleEdit(record) },
-              { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) }
-            ]
-          }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const items = getDropdownItems(record);
+        if (items.length === 0) return null;
+        return (
+          <Dropdown
+            menu={{ items }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+          </Dropdown>
+        );
+      },
     },
   ];
 

@@ -10,6 +10,9 @@ import TrainingList from './TrainingList';
 import ViewTraining from './ViewTraining';
 import { useGetTrainingsQuery, useDeleteTrainingMutation } from './services/trainingApi';
 import PageHeader from '../../../../components/PageHeader';
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../role/services/roleApi";
 
 const Training = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -27,6 +30,26 @@ const Training = () => {
         pageSize,
         search: searchText
     });
+
+    const loggedInUser = useSelector(selectCurrentUser);
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['extra-hrm-trainingSetup'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [loggedInUser, userPermissions]);
 
     const trainings = response?.data || [];
     const pagination = response?.pagination || { total: 0, current: 1, pageSize: 10 };
@@ -86,13 +109,13 @@ const Training = () => {
                 ]}
                 searchText={searchText}
                 onSearch={setSearchText}
-                onAdd={() => { setSelectedTraining(null); setIsEditing(false); setIsFormVisible(true); }}
+                onAdd={hasPermission('create') ? () => { setSelectedTraining(null); setIsEditing(false); setIsFormVisible(true); } : undefined}
                 addText="Create Training"
-                extraActions={[
+                extraActions={hasPermission('export') ? [
                     <Dropdown key="export" overlay={exportMenu} trigger={['click']}>
                         <Button icon={<FiDownload />}>Export</Button>
                     </Dropdown>
-                ]}
+                ] : []}
             />
 
             <div className="standard-content-card" style={{ marginTop: '12px' }}>
@@ -105,6 +128,7 @@ const Training = () => {
                     onDelete={handleDeleteConfirm}
                     onPageChange={setCurrentPage}
                     onPageSizeChange={setPageSize}
+                    hasPermission={hasPermission}
                 />
             </div>
 

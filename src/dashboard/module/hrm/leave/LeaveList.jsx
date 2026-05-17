@@ -17,7 +17,7 @@ import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
 
 const { Text } = Typography;
 
-const LeaveList = ({ onEdit, leaves = [], loading, pagination }) => {
+const LeaveList = ({ onEdit, leaves = [], loading, pagination, hasPermission }) => {
   const { data: employeesData } = useGetEmployeesQuery();
   const employees = employeesData?.data || [];
   const [deleteLeave] = useDeleteLeaveMutation();
@@ -44,6 +44,32 @@ const LeaveList = ({ onEdit, leaves = [], loading, pagination }) => {
     } catch (error) {
       message.error(`Failed to ${status} leave`);
     }
+  };
+
+  const getDropdownItems = (record) => {
+    const items = [];
+    if (!hasPermission || hasPermission('update')) {
+      items.push({ key: "edit", icon: <FiEdit2 />, label: "Edit", onClick: () => onEdit(record) });
+    }
+    if (!hasPermission || hasPermission('delete')) {
+      items.push({
+        key: "delete", icon: <FiTrash2 />, label: "Delete", danger: true, onClick: () => {
+          Modal.confirm({
+            title: 'Delete Leave Request',
+            content: 'Are you sure?',
+            onOk: async () => {
+              try {
+                await deleteLeave(record.id).unwrap();
+                message.success('Deleted successfully');
+              } catch (error) {
+                message.error('Failed to delete');
+              }
+            }
+          });
+        }
+      });
+    }
+    return items;
   };
 
   const columns = [
@@ -102,6 +128,8 @@ const LeaveList = ({ onEdit, leaves = [], loading, pagination }) => {
         const isStatusFinal = record.status?.toLowerCase() === "approved" || record.status?.toLowerCase() === "rejected";
         if (isStatusFinal) return <Text type="secondary" style={{ fontSize: '12px' }}>Processed</Text>;
         
+        if (hasPermission && !hasPermission('update')) return <Text type="secondary" style={{ fontSize: '12px' }}>Pending</Text>;
+
         return (
           <div style={{ display: "flex", gap: "6px" }}>
             <Button type="primary" size="small" onClick={() => handleLeaveAction(record.id, "approved", record.employeeId)} style={{ borderRadius: '4px', fontSize: '11px', height: '24px' }}>Accept</Button>
@@ -115,33 +143,19 @@ const LeaveList = ({ onEdit, leaves = [], loading, pagination }) => {
       key: "actions",
       width: 80,
       fixed: "right",
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: [
-              { key: "edit", icon: <FiEdit2 />, label: "Edit", onClick: () => onEdit(record) },
-              { key: "delete", icon: <FiTrash2 />, label: "Delete", danger: true, onClick: () => {
-                Modal.confirm({
-                    title: 'Delete Leave Request',
-                    content: 'Are you sure?',
-                    onOk: async () => {
-                        try {
-                            await deleteLeave(record.id).unwrap();
-                            message.success('Deleted successfully');
-                        } catch (error) {
-                            message.error('Failed to delete');
-                        }
-                    }
-                });
-              }}
-            ]
-          }}
-          trigger={["click"]}
-          placement="bottomRight"
-        >
-          <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const items = getDropdownItems(record);
+        if (items.length === 0) return null;
+        return (
+          <Dropdown
+            menu={{ items }}
+            trigger={["click"]}
+            placement="bottomRight"
+          >
+            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+          </Dropdown>
+        );
+      },
     },
   ];
 

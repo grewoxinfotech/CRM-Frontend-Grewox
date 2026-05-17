@@ -16,6 +16,8 @@ import { useSelector } from 'react-redux';
 import CreateTicket from './CreateTicket';
 import TicketList from './TicketList';
 import { useGetAllTicketsQuery, useDeleteTicketMutation } from './services/ticketApi';
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 
 const Tickets = ({ isSupport = false }) => {
     const filterState = useSelector(state => state.ticket) || {};
@@ -41,6 +43,27 @@ const Tickets = ({ isSupport = false }) => {
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [isSearchVisible, setIsSearchVisible] = useState(false);
+
+    const loggedInUser = useSelector(selectCurrentUser);
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const permKey = isSupport ? 'dashboards-support-help' : 'dashboards-support-ticket';
+        const perms = userPermissions[permKey];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [loggedInUser, userPermissions, isSupport]);
 
     const handleSearch = (value) => {
         setSearchText(value);
@@ -104,17 +127,17 @@ const Tickets = ({ isSupport = false }) => {
                 ]}
                 searchText={searchText}
                 onSearch={handleSearch}
-                onAdd={() => { setSelectedTicket(null); setIsEditing(false); setIsFormVisible(true); }}
+                onAdd={hasPermission('create') ? () => { setSelectedTicket(null); setIsEditing(false); setIsFormVisible(true); } : undefined}
                 addText="Create Ticket"
                 isSearchVisible={isSearchVisible}
                 onSearchVisibleChange={setIsSearchVisible}
-                exportMenu={{
+                exportMenu={hasPermission('export') ? {
                     items: [
                         { key: 'csv', label: 'Export CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
                         { key: 'excel', label: 'Export Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
                         { key: 'pdf', label: 'Export PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') },
                     ]
-                }}
+                } : undefined}
             />
 
             <Card className="standard-content-card">
@@ -135,6 +158,7 @@ const Tickets = ({ isSupport = false }) => {
                     loading={isLoading}
                     isSupport={isSupport}
                     searchText={searchText}
+                    hasPermission={hasPermission}
                 />
             </Card>
 

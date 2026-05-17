@@ -16,6 +16,8 @@ import {
   Badge,
   Drawer,
   Form,
+  Space,
+  Segmented,
 } from "antd";
 import {
   FiDownload,
@@ -29,14 +31,19 @@ import {
   FiTrash2,
   FiX,
   FiFilter,
+  FiList,
+  FiColumns,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { 
-  useGetGlobalFollowupsQuery, 
+  useGetGlobalFollowupsQuery,
   useDeleteFollowupMutation,
   useDeleteFollowupCallMutation,
   useDeleteFollowupMeetingMutation,
-  useDeleteFollowupTaskMutation
+  useDeleteFollowupTaskMutation,
+  useUpdateFollowupCallMutation,
+  useUpdateFollowupMeetingMutation,
+  useUpdateFollowupTaskMutation
 } from "../lead/services/LeadApi";
 import EditFollowupCall from "../lead/overview/followup/call/EditfollowupCall";
 import EditFollowupMeeting from "../lead/overview/followup/metting/EditfollowupMeeting";
@@ -114,6 +121,111 @@ const Followups = () => {
   const [dateRange, setDateRange] = useState(null);
   const [advancedFilters, setAdvancedFilters] = useState({});
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [viewMode, setViewMode] = useState("list");
+  
+  const [updateCall] = useUpdateFollowupCallMutation();
+  const [updateMeeting] = useUpdateFollowupMeetingMutation();
+  const [updateTask] = useUpdateFollowupTaskMutation();
+
+  const handleStatusChange = async (id, type, newStatus) => {
+    const item = followups.find(f => f.id === id && f.type === type);
+    if (!item) return;
+
+    try {
+      if (type === 'call') {
+        let call_status = 'not_started';
+        if (newStatus === 'completed') call_status = 'completed';
+        else if (newStatus === 'in_progress') call_status = 'in_progress';
+        
+        const allowedKeys = [
+          'subject', 'section', 'call_start_date', 'call_duration', 
+          'call_start_time', 'call_end_time', 'call_reminder', 
+          'assigned_to', 'call_notes', 'call_type', 'call_status', 'priority'
+        ];
+        const payload = {};
+        allowedKeys.forEach(k => {
+          if (item.rawData[k] !== undefined) payload[k] = item.rawData[k];
+        });
+        if (typeof payload.assigned_to === 'string') {
+          try {
+            payload.assigned_to = JSON.parse(payload.assigned_to);
+          } catch(e) {}
+        }
+        payload.call_status = call_status;
+
+        await updateCall({ id, data: payload }).unwrap();
+      } else if (type === 'meeting') {
+        let meeting_status = 'scheduled';
+        if (newStatus === 'completed') meeting_status = 'completed';
+        else if (newStatus === 'in_progress') meeting_status = 'in_progress';
+        
+        const allowedKeys = [
+          'title', 'meeting_type', 'section', 'venue', 'location', 
+          'meeting_link', 'from_date', 'from_time', 'to_date', 'to_time', 
+          'meeting_status', 'assigned_to', 'reminder', 'repeat', 
+          'participants_reminder', 'priority'
+        ];
+        const payload = {};
+        allowedKeys.forEach(k => {
+          if (item.rawData[k] !== undefined) payload[k] = item.rawData[k];
+        });
+        if (typeof payload.assigned_to === 'string') {
+          try {
+            payload.assigned_to = JSON.parse(payload.assigned_to);
+          } catch(e) {}
+        }
+        if (typeof payload.reminder === 'string') {
+          try {
+            payload.reminder = JSON.parse(payload.reminder);
+          } catch(e) {}
+        }
+        if (typeof payload.repeat === 'string') {
+          try {
+            payload.repeat = JSON.parse(payload.repeat);
+          } catch(e) {}
+        }
+        payload.meeting_status = meeting_status;
+
+        await updateMeeting({ id, data: payload }).unwrap();
+      } else if (type === 'task') {
+        let status = 'not_started';
+        if (newStatus === 'completed') status = 'completed';
+        else if (newStatus === 'in_progress') status = 'in_progress';
+        
+        const allowedKeys = [
+          'subject', 'section', 'due_date', 'priority', 'task_reporter', 
+          'assigned_to', 'status', 'reminder', 'repeat', 'description'
+        ];
+        const payload = {};
+        allowedKeys.forEach(k => {
+          if (item.rawData[k] !== undefined) payload[k] = item.rawData[k];
+        });
+        if (typeof payload.assigned_to === 'string') {
+          try {
+            payload.assigned_to = JSON.parse(payload.assigned_to);
+          } catch(e) {}
+        }
+        if (typeof payload.reminder === 'string') {
+          try {
+            payload.reminder = JSON.parse(payload.reminder);
+          } catch(e) {}
+        }
+        if (typeof payload.repeat === 'string') {
+          try {
+            payload.repeat = JSON.parse(payload.repeat);
+          } catch(e) {}
+        }
+        payload.status = status;
+
+        await updateTask({ id, data: payload }).unwrap();
+      }
+      message.success(`Status updated successfully`);
+      refetch();
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to update status");
+    }
+  };
   
   const { data: usersResponse } = useGetUsersQuery();
   const users = usersResponse?.data || [];
@@ -188,7 +300,7 @@ const Followups = () => {
       ),
     },
     {
-      title: "Type",
+      title: "Interaction Type",
       dataIndex: "type",
       key: "type",
       render: (type) => {
@@ -619,14 +731,36 @@ const Followups = () => {
           className="followup-tabs"
           style={{ marginBottom: '16px' }}
           tabBarExtraContent={
-            <Button
-              icon={<FiFilter />}
-              onClick={() => setIsFilterDrawerOpen(true)}
-              style={{ borderRadius: '8px', height: '32px', display: 'flex', alignItems: 'center', gap: '4px' }}
-              type={Object.keys(advancedFilters).some(k => advancedFilters[k]) ? "primary" : "default"}
-            >
-              Filter {Object.keys(advancedFilters).filter(k => advancedFilters[k]).length > 0 && `(${Object.keys(advancedFilters).filter(k => advancedFilters[k]).length})`}
-            </Button>
+            <Space size="middle">
+              <Select
+                allowClear
+                placeholder="Interaction Type"
+                value={advancedFilters.type}
+                onChange={(val) => setAdvancedFilters(prev => ({ ...prev, type: val }))}
+                style={{ width: '160px' }}
+              >
+                <Option value="call">Call</Option>
+                <Option value="meeting">Meeting</Option>
+                <Option value="task">Task</Option>
+              </Select>
+              <Segmented
+                value={viewMode}
+                onChange={setViewMode}
+                options={[
+                  { label: 'List', value: 'list', icon: <FiList /> },
+                  { label: 'Kanban', value: 'kanban', icon: <FiColumns /> }
+                ]}
+                style={{ borderRadius: '8px' }}
+              />
+              <Button
+                icon={<FiFilter />}
+                onClick={() => setIsFilterDrawerOpen(true)}
+                style={{ borderRadius: '8px', height: '32px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                type={Object.keys(advancedFilters).some(k => advancedFilters[k]) ? "primary" : "default"}
+              >
+                Filter {Object.keys(advancedFilters).filter(k => advancedFilters[k]).length > 0 && `(${Object.keys(advancedFilters).filter(k => advancedFilters[k]).length})`}
+              </Button>
+            </Space>
           }
           items={[
             {
@@ -667,17 +801,27 @@ const Followups = () => {
             },
           ]}
         />
-        <Table
-          loading={isLoading}
-          columns={columns}
-          dataSource={filteredData}
-          rowKey="id"
-          size="small"
-          pagination={{
-            pageSize: 10,
-            showTotal: (total) => `Total ${total} items`,
-          }}
-        />
+        {viewMode === 'list' ? (
+          <Table
+            loading={isLoading}
+            columns={columns}
+            dataSource={filteredData}
+            rowKey="id"
+            size="small"
+            pagination={{
+              pageSize: 10,
+              showTotal: (total) => `Total ${total} items`,
+            }}
+          />
+        ) : (
+          <KanbanBoard
+            data={filteredData}
+            users={users}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onStatusChange={handleStatusChange}
+          />
+        )}
       </Card>
       <Drawer
         title="Advanced Filters"
@@ -746,6 +890,281 @@ const Followups = () => {
           </Form.Item>
         </Form>
       </Drawer>
+    </div>
+  );
+};
+
+const KanbanCard = ({ item, users, onEdit, onDelete, onStatusChange }) => {
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData("text/plain", JSON.stringify({ id: item.id, type: item.type }));
+  };
+
+  let assignedIds = [];
+  try {
+    if (item.rawData?.assigned_to) {
+      const parsed = typeof item.rawData.assigned_to === 'string' 
+        ? JSON.parse(item.rawData.assigned_to) 
+        : item.rawData.assigned_to;
+      assignedIds = parsed?.assigned_to || [];
+    }
+  } catch (e) {
+    console.error("Error parsing assigned_to", e);
+  }
+
+  // Type-specific icon & color
+  let typeColor = "blue";
+  let typeIcon = <FiPhoneCall style={{ marginRight: '4px' }} />;
+  if (item.type === 'meeting') { typeColor = "purple"; typeIcon = <FiUsers style={{ marginRight: '4px' }} />; }
+  if (item.type === 'task') { typeColor = "orange"; typeIcon = <FiCheckSquare style={{ marginRight: '4px' }} />; }
+
+  // Priority color
+  const p = item.rawData?.priority?.toLowerCase() || 'medium';
+  let pColor = "default";
+  if (p === 'highest') pColor = "volcano";
+  else if (p === 'high') pColor = "orange";
+  else if (p === 'medium') pColor = "blue";
+  else if (p === 'low') pColor = "green";
+
+  return (
+    <div
+      className="kanban-card"
+      draggable
+      onDragStart={handleDragStart}
+    >
+      {/* Header Info */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          <Tag color={item.relatedType === 'Lead' ? 'cyan' : 'magenta'} style={{ fontSize: '9px', margin: 0, padding: '0 4px', borderRadius: '4px' }}>
+            {item.relatedType?.toUpperCase()}
+          </Tag>
+          <Link to={`/dashboard/crm/${item.relatedType?.toLowerCase()}s/${item.relatedId}`}>
+            <Text strong style={{ fontSize: '12px', color: '#1f2937' }}>{item.relatedName}</Text>
+          </Link>
+        </div>
+        <Dropdown
+          menu={{
+            items: [
+              { key: 'edit', label: 'Edit', icon: <FiEdit2 />, onClick: () => onEdit(item) },
+              { key: 'delete', label: 'Delete', icon: <FiTrash2 />, danger: true, onClick: () => onDelete(item) }
+            ]
+          }}
+          trigger={['click']}
+          placement="bottomRight"
+        >
+          <Button type="text" size="small" icon={<FiMoreVertical />} style={{ height: '20px', width: '20px', padding: 0 }} />
+        </Dropdown>
+      </div>
+
+      {/* Title */}
+      <div style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', marginTop: '4px' }}>
+        {item.name}
+      </div>
+
+      {/* Badges / Meta */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <Tag color={typeColor} icon={typeIcon} style={{ fontSize: '10px', margin: 0, borderRadius: '4px' }}>
+          {item.type?.toUpperCase()}
+        </Tag>
+        <Tag color={pColor} style={{ fontSize: '9px', margin: 0, borderRadius: '4px' }}>
+          {p.toUpperCase()}
+        </Tag>
+      </div>
+
+      {/* Date & Time */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+        <FiClock size={12} />
+        <span>{moment(item.date).format('DD MMM YYYY')} {item.time ? `at ${item.time}` : ''}</span>
+      </div>
+
+      {/* Footer (Assignees & Actions) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+        {/* Assignees */}
+        <div>
+          {assignedIds.length === 0 ? (
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>Unassigned</span>
+          ) : (
+            <Avatar.Group maxCount={3} size="small" maxStyle={{ color: '#f56a00', backgroundColor: '#fde3cf', fontSize: '10px' }}>
+              {assignedIds.map(id => {
+                const u = users.find(user => String(user.id) === String(id));
+                const name = u?.username || "Unknown";
+                const initials = name.charAt(0).toUpperCase();
+                return (
+                  <Tooltip title={name} key={id}>
+                    <Avatar src={u?.profilePic} style={{ backgroundColor: u?.profilePic ? 'transparent' : '#1890ff' }}>
+                      {!u?.profilePic && initials}
+                    </Avatar>
+                  </Tooltip>
+                );
+              })}
+            </Avatar.Group>
+          )}
+        </div>
+
+        {/* Quick Transition Select */}
+        <Select
+          size="small"
+          value={item.status === 'in_progress' ? 'in_progress' : item.status === 'completed' ? 'completed' : 'pending'}
+          onChange={(val) => onStatusChange(item.id, item.type, val)}
+          style={{ width: '100px', fontSize: '11px' }}
+          bordered={false}
+          dropdownStyle={{ fontSize: '11px' }}
+        >
+          <Option value="pending" style={{ fontSize: '11px' }}>Pending</Option>
+          <Option value="in_progress" style={{ fontSize: '11px' }}>In Progress</Option>
+          <Option value="completed" style={{ fontSize: '11px' }}>Completed</Option>
+        </Select>
+      </div>
+    </div>
+  );
+};
+
+const KanbanBoard = ({ data, users, onEdit, onDelete, onStatusChange }) => {
+  const columns = [
+    {
+      id: 'pending',
+      title: 'Pending / Scheduled',
+      color: '#1890ff',
+      bgColor: '#e6f7ff',
+      borderColor: '#91d5ff',
+      items: data.filter(i => i.status !== 'in_progress' && i.status !== 'completed')
+    },
+    {
+      id: 'in_progress',
+      title: 'In Progress',
+      color: '#fa8c16',
+      bgColor: '#fff7e6',
+      borderColor: '#ffd591',
+      items: data.filter(i => i.status === 'in_progress')
+    },
+    {
+      id: 'completed',
+      title: 'Completed',
+      color: '#52c41a',
+      bgColor: '#f6ffed',
+      borderColor: '#b7eb8f',
+      items: data.filter(i => i.status === 'completed')
+    }
+  ];
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, columnId) => {
+    e.preventDefault();
+    const raw = e.dataTransfer.getData("text/plain");
+    if (!raw) return;
+    try {
+      const { id, type } = JSON.parse(raw);
+      onStatusChange(id, type, columnId);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', minHeight: '500px' }}>
+      {/* Styles Injection */}
+      <style>{`
+        .kanban-column {
+          flex: 1;
+          min-width: 300px;
+          max-width: 400px;
+          background: #f8fafc;
+          border-radius: 12px;
+          padding: 16px;
+          border: 1px solid #e2e8f0;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          transition: all 0.2s ease;
+        }
+        .kanban-column.drag-over {
+          background: #f1f5f9;
+          border-color: #cbd5e1;
+        }
+        .kanban-card {
+          background: white;
+          border-radius: 10px;
+          padding: 14px;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+          cursor: grab;
+          transition: all 0.2s ease;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .kanban-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+          border-color: #cbd5e1;
+        }
+        .kanban-card:active {
+          cursor: grabbing;
+        }
+      `}</style>
+
+      {columns.map(col => {
+        const [isOver, setIsOver] = React.useState(false);
+
+        return (
+          <div
+            key={col.id}
+            className={`kanban-column ${isOver ? 'drag-over' : ''}`}
+            onDragOver={handleDragOver}
+            onDragEnter={() => setIsOver(true)}
+            onDragLeave={() => setIsOver(false)}
+            onDrop={(e) => {
+              setIsOver(false);
+              handleDrop(e, col.id);
+            }}
+          >
+            {/* Column Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: col.color
+                }} />
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '600', color: '#1f2937' }}>{col.title}</h3>
+              </div>
+              <Badge
+                count={col.items.length}
+                style={{
+                  backgroundColor: col.bgColor,
+                  color: col.color,
+                  border: `1px solid ${col.borderColor}`,
+                  boxShadow: 'none',
+                  fontWeight: '600'
+                }}
+              />
+            </div>
+
+            {/* Column Items */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto', maxHeight: '600px', padding: '2px' }}>
+              {col.items.length === 0 ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', height: '100px', border: '2px dashed #e2e8f0', borderRadius: '10px' }}>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>Drag items here</Text>
+                </div>
+              ) : (
+                col.items.map(item => (
+                  <KanbanCard
+                    key={item.id}
+                    item={item}
+                    users={users}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onStatusChange={onStatusChange}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

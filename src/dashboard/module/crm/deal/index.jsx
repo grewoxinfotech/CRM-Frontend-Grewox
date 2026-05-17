@@ -49,6 +49,7 @@ import {
   useGetSourcesQuery,
 } from "../crmsystem/souce/services/SourceApi";
 import { useGetUsersQuery } from "../../user-management/users/services/userApi";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -74,12 +75,38 @@ const Deal = () => {
 
   const loggedInUser = useSelector(selectCurrentUser);
   const navigate = useNavigate();
+
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) {
+      return null;
+    }
+  }, [userRoleData]);
+
+  const hasPermission = React.useCallback((action) => {
+    if (!loggedInUser) return false;
+    if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const dealPerms = userPermissions['dashboards-deal'];
+    if (!dealPerms || dealPerms.length === 0) return false;
+    const allowed = dealPerms[0]?.permissions || [];
+    return allowed.includes(action);
+  }, [loggedInUser, userPermissions]);
+
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: dealStages = [] } = useGetLeadStagesQuery();
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: usersResponse } = useGetUsersQuery();
   const [deleteDeal] = useDeleteDealMutation();
+
   const { data: deals, isLoading } = useGetDealsQuery({
     page: 1,
     pageSize: 1000,
@@ -305,7 +332,7 @@ const Deal = () => {
         searchPlaceholder="Search deals..."
         viewMode={viewMode}
         onViewChange={setViewMode}
-        onAdd={handleCreate}
+        onAdd={hasPermission('create') ? handleCreate : undefined}
         addText="Create Deal"
         mobileSearchContent={searchContent}
         isSearchVisible={isSearchVisible}
@@ -355,6 +382,7 @@ const Deal = () => {
             loading={isLoading}
             pagination={{ ...deals?.pagination, total: filteredDeals.length, current: pagination.current, pageSize: pagination.pageSize }}
             onTableChange={handleTableChange}
+            hasPermission={hasPermission}
           />
         ) : (
           <DealCard
@@ -366,6 +394,7 @@ const Deal = () => {
             loading={isLoading}
             pagination={{ ...deals?.pagination, total: filteredDeals.length, current: pagination.current, pageSize: pagination.pageSize }}
             onTableChange={handleTableChange}
+            hasPermission={hasPermission}
           />
         )}
       </Card>

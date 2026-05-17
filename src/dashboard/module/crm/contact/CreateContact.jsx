@@ -673,46 +673,6 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
 
           {showAdvanced && (
             <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="contact_owner"
-                  label={
-                    <span className="form-label">
-                      <FiUsers />
-                      Contact Owner
-                    </span>
-                  }
-                  initialValue={loggedInUser?.username}
-                >
-                  <Input
-                    size="large"
-                    className="form-input"
-                    disabled
-                  />
-                </Form.Item>
-              </Col>
-
-              <Col span={12}>
-                <Form.Item
-                  name="website"
-                  label={
-                    <span className="form-label">
-                      <FiLink />
-                      Website
-                    </span>
-                  }
-                  rules={[
-                    { type: "url", message: "Please enter a valid URL" }
-                  ]}
-                >
-                  <Input
-                    placeholder="Enter website URL"
-                    size="large"
-                    className="form-input"
-                  />
-                </Form.Item>
-              </Col>
-
               <Col span={24}>
                 <Form.Item
                   name="address"

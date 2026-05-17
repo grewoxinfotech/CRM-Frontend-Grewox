@@ -10,7 +10,7 @@ import { selectCurrentUser } from '../../../../auth/services/authSlice';
 
 const { Text } = Typography;
 
-const UserList = ({ users, onEdit, onDelete, loading }) => {
+const UserList = ({ users, onEdit, onDelete, loading, canUpdate, canDelete }) => {
     const navigate = useNavigate();
     const [adminLogin] = useAdminLoginMutation();
     const [resetPasswordModalVisible, setResetPasswordModalVisible] = useState(false);
@@ -98,19 +98,21 @@ const UserList = ({ users, onEdit, onDelete, loading }) => {
                             style={{ color: '#6366f1' }}
                         />
                     )}
-                    <Dropdown
-                        menu={{
-                            items: [
-                                { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
-                                { key: 'reset', icon: <FiLock />, label: 'Reset Password', onClick: () => { setSelectedUser(record); setResetPasswordModalVisible(true); } },
-                                { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, disabled: record.role_name === 'super-admin', onClick: () => onDelete(record) }
-                            ]
-                        }}
-                        trigger={['click']}
-                        placement="bottomRight"
-                    >
-                        <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-                    </Dropdown>
+                    {(canUpdate || canDelete) && (
+                        <Dropdown
+                            menu={{
+                                items: [
+                                    canUpdate && { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
+                                    canUpdate && { key: 'reset', icon: <FiLock />, label: 'Reset Password', onClick: () => { setSelectedUser(record); setResetPasswordModalVisible(true); } },
+                                    canDelete && { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, disabled: record.role_name === 'super-admin', onClick: () => onDelete(record) }
+                                ].filter(Boolean)
+                            }}
+                            trigger={['click']}
+                            placement="bottomRight"
+                        >
+                            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+                        </Dropdown>
+                    )}
                 </Space>
             ),
         },

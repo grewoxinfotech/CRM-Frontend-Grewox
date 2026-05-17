@@ -42,6 +42,26 @@ const Users = () => {
     const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
     const [deleteUser] = useDeleteUserMutation();
 
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) {
+            return null;
+        }
+    }, [userRoleData]);
+
+    const hasPermission = (action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const userPerms = userPermissions['extra-users-list'];
+        if (!userPerms || userPerms.length === 0) return false;
+        const allowed = userPerms[0]?.permissions || [];
+        return allowed.includes(action);
+    };
+
     useEffect(() => {
         if (usersData?.data) {
             const transformedData = usersData.data.map(user => ({
@@ -52,7 +72,7 @@ const Users = () => {
                 status: user.status || 'inactive',
                 created_at: user.createdAt || '-',
                 updated_at: user.updatedAt || null,
-                role_name: rolesData?.message?.data?.find(role => role.id === user.role_id)?.role_name || 'N/A',
+                role_name: rolesData?.message?.data?.find(role => role.id === user.role_id)?.role_name || user.Role?.role_name || 'N/A',
                 role_id: user.role_id,
                 created_by: user.created_by,
                 updated_by: user.updated_by,
@@ -89,15 +109,15 @@ const Users = () => {
                 searchText={searchText}
                 onSearch={setSearchText}
                 searchPlaceholder="Search users..."
-                onAdd={() => setIsCreateFormVisible(true)}
+                onAdd={hasPermission('create') ? () => setIsCreateFormVisible(true) : undefined}
                 addText="Add User"
-                exportMenu={{
+                exportMenu={hasPermission('export') ? {
                     items: [
                         { key: 'csv', label: 'Export CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
                         { key: 'excel', label: 'Export Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
                         { key: 'pdf', label: 'Export PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') },
                     ]
-                }}
+                } : undefined}
                 extraActions={[
                     <Space key="view-toggle" size={0} style={{ background: '#f1f5f9', padding: '2px', borderRadius: '8px' }}>
                         <Button
@@ -123,6 +143,8 @@ const Users = () => {
                     <UserList
                         users={filteredUsers}
                         loading={isLoadingUsers}
+                        canUpdate={hasPermission('update')}
+                        canDelete={hasPermission('delete')}
                         onEdit={(user) => { setSelectedUser(user); setIsEditFormVisible(true); }}
                         onDelete={async (record) => {
                             try {
@@ -139,6 +161,8 @@ const Users = () => {
                             <Col xs={24} sm={12} md={8} lg={6} key={user.id}>
                                 <UserCard
                                     user={user}
+                                    canUpdate={hasPermission('update')}
+                                    canDelete={hasPermission('delete')}
                                     onEdit={(u) => { setSelectedUser(u); setIsEditFormVisible(true); }}
                                     onDelete={async (record) => {
                                         try {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Card, Button, Tabs, Dropdown, Typography, Input, Popover } from 'antd';
 import { FiPlus, FiCheckSquare, FiUsers, FiPhoneCall, FiCalendar, FiClock, FiSearch, FiDownload } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
@@ -30,9 +30,24 @@ const LeadFollowup = ({ leadId }) => {
     const { data: usersResponse } = useGetUsersQuery();
     const { data: rolesData } = useGetRolesQuery({
         page: 1,
-    pageSize: -1,
-    search: ''
+        pageSize: -1,
+        search: ''
     });
+
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+    const userPermissions = useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    }, [userRoleData]);
+
+    const hasPermission = useCallback((action) => {
+        if (currentUser?.role_name === 'super-admin' || currentUser?.role_name === 'client') return true;
+        if (!userPermissions) return false;
+        const leadPerms = userPermissions['dashboards-lead'];
+        if (!leadPerms || leadPerms.length === 0) return false;
+        const allowed = leadPerms[0]?.permissions || [];
+        return allowed.includes(action);
+    }, [currentUser, userPermissions]);
 
     // Get subclient role ID to filter it out
     const subclientRoleId = rolesData?.message?.data?.find(role => role?.role_name === 'sub-client')?.id;
@@ -101,7 +116,7 @@ const LeadFollowup = ({ leadId }) => {
                     <FiPhoneCall /> Calls
                 </span>
             ),
-            children: <FollowupCallList leadId={id} users={users} />
+            children: <FollowupCallList leadId={id} users={users} hasPermission={hasPermission} />
         },
         {
             key: 'task',
@@ -110,7 +125,7 @@ const LeadFollowup = ({ leadId }) => {
                     <FiCheckSquare /> Tasks
                 </span>
             ),
-            children: <FollowupTaskList leadId={id} users={users} />
+            children: <FollowupTaskList leadId={id} users={users} hasPermission={hasPermission} />
         },
         {
             key: 'meeting',
@@ -119,7 +134,7 @@ const LeadFollowup = ({ leadId }) => {
                     <FiUsers /> Meetings
                 </span>
             ),
-            children: <FollowupMeetingList leadId={id} users={users} />
+            children: <FollowupMeetingList leadId={id} users={users} hasPermission={hasPermission} />
         }
        
     ];
@@ -160,15 +175,17 @@ const LeadFollowup = ({ leadId }) => {
                 <FiDownload /> Export <FiChevronDown />
                     </Button>
             </Dropdown> */}
-            <Dropdown 
-                            menu={{ items, onClick: handleMenuClick }}
-                            placement="bottomRight"
-                            trigger={['click']}
-                        >
-                            <Button style={{height: '40px'}} type="primary" icon={<FiPlus />}>
-                               <span className='create-new-btn'>Create New</span>
-                            </Button>
-                        </Dropdown>
+            {hasPermission('create') && (
+                <Dropdown 
+                    menu={{ items, onClick: handleMenuClick }}
+                    placement="bottomRight"
+                    trigger={['click']}
+                >
+                    <Button style={{height: '40px'}} type="primary" icon={<FiPlus />}>
+                        <span className='create-new-btn'>Create New</span>
+                    </Button>
+                </Dropdown>
+            )}
                     </div>
                 </div>
 

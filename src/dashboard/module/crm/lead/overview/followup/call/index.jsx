@@ -31,7 +31,7 @@ import {
 import EditFollowupCall from "./EditfollowupCall";
 import EditFollowupLog from "./EditfollowupLog";
 
-const FollowupCallList = ({ leadId, users, rtiId }) => {
+const FollowupCallList = ({ leadId, users, rtiId, hasPermission }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editLogModalVisible, setEditLogModalVisible] = useState(false);
   const [selectedCallId, setSelectedCallId] = useState(null);
@@ -264,57 +264,41 @@ const FollowupCallList = ({ leadId, users, rtiId }) => {
         return callType;
       },
     },
-    // {
-    //   title: "Created By",
-    //   dataIndex: "created_by",
-    //   key: "created_by",
-    //   render: (creator) => {
-    //     if (!creator) return "-";
-    //     return (
-    //       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-    //         <Avatar size="small" style={{ backgroundColor: "#1890ff" }}>
-    //           {creator[0]?.toUpperCase() || "?"}
-    //         </Avatar>
-    //         <span>{creator}</span>
-    //       </div>
-    //     );
-    //   },
-    // },
     {
       title: "Actions",
       key: "actions",
       width: 80,
       fixed: 'right',
-      render: (_, record) => (
-        <Space>
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: "edit",
-                  label: "Edit",
-                  icon: <FiEdit2 />,
-                  onClick: () => handleEdit(record.id),
-                },
-                {
-                  key: "delete",
-                  label: "Delete",
-                  icon: <FiTrash2 style={{ color: "#ff4d4f" }} />,
-                  danger: true,
-                  onClick: () => handleDelete(record.id),
-                },
-              ],
-            }}
-            trigger={["click"]}
-          >
-            <Button
-              type="text"
-              icon={<FiMoreVertical />}
-              className="action-btn"
-            />
-          </Dropdown>
-        </Space>
-      ),
+      render: (_, record) => {
+        const actionItems = [];
+        if (!hasPermission || hasPermission('update')) {
+          actionItems.push({
+            key: "edit",
+            label: "Edit",
+            icon: <FiEdit2 />,
+            onClick: () => handleEdit(record.id),
+          });
+        }
+        if (!hasPermission || hasPermission('delete')) {
+          actionItems.push({
+            key: "delete",
+            label: "Delete",
+            icon: <FiTrash2 style={{ color: "#ff4d4f" }} />,
+            danger: true,
+            onClick: () => handleDelete(record.id),
+          });
+        }
+
+        if (actionItems.length === 0) return null;
+
+        return (
+          <Space>
+            <Dropdown menu={{ items: actionItems }} trigger={["click"]}>
+              <Button type="text" icon={<FiMoreVertical />} className="action-btn" />
+            </Dropdown>
+          </Space>
+        );
+      },
     },
   ];
 

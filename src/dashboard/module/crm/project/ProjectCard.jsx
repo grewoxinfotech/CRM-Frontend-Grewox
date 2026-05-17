@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
-const ProjectCard = ({ projects = [], loading, onEdit, onDelete, onView, searchText }) => {
+const ProjectCard = ({ projects = [], loading, onEdit, onDelete, onView, searchText, hasPermission }) => {
     const navigate = useNavigate();
 
     const getStatusColor = (status) => {
@@ -36,29 +36,34 @@ const ProjectCard = ({ projects = [], loading, onEdit, onDelete, onView, searchT
         }
     };
 
-    const getDropdownItems = (project) => ({
-        items: [
+    const getDropdownItems = (project) => {
+        const items = [
             {
                 key: 'view',
                 icon: <FiEye />,
                 label: 'View Details',
                 onClick: () => onView(project),
             },
-            {
+        ];
+        if (!hasPermission || hasPermission('update')) {
+            items.push({
                 key: 'edit',
                 icon: <FiEdit2 />,
                 label: 'Edit',
                 onClick: () => onEdit(project),
-            },
-            {
+            });
+        }
+        if (!hasPermission || hasPermission('delete')) {
+            items.push({
                 key: 'delete',
                 icon: <FiTrash2 />,
                 label: 'Delete',
                 onClick: () => onDelete(project),
                 danger: true,
-            },
-        ],
-    });
+            });
+        }
+        return { items };
+    };
 
     const filteredProjects = projects?.filter(project =>
         project.project_name?.toLowerCase().includes(searchText.toLowerCase())

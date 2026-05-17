@@ -30,7 +30,8 @@ const ContactList = ({
   isLoading,
   companyAccountsResponse,
   onDelete,
-  pagination
+  pagination,
+  hasPermission
 }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const navigate = useNavigate();
@@ -159,49 +160,50 @@ const ContactList = ({
       key: "actions",
       fixed: 'right',
       width: 80,
-      render: (_, record) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <Dropdown
-            menu={{
-              items: [
-                { 
-                  key: 'view', 
-                  icon: <FiEye style={{ color: "#1890ff" }} />, 
-                  label: <Text style={{ color: "#1890ff", fontWeight: "500" }}>Overview</Text>, 
-                  onClick: () => navigate(`/dashboard/crm/contact/${record.id}`) 
-                },
-                { 
-                  key: 'edit', 
-                  icon: <FiEdit2 style={{ color: "#52c41a" }} />, 
-                  label: <Text style={{ color: "#52c41a", fontWeight: "500" }}>Edit Contact</Text>, 
-                  onClick: () => onEdit(record) 
-                },
-                { 
-                  key: 'delete', 
-                  icon: <FiTrash2 style={{ color: "#ff4d4f" }} />, 
-                  label: <Text style={{ color: "#ff4d4f", fontWeight: "500" }}>Delete Contact</Text>, 
-                  danger: true, 
-                  onClick: () => handleDelete(record.id) 
-                }
-              ]
-            }}
-            trigger={['click']}
-            placement="bottomRight"
-          >
-            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" onClick={(e) => e.stopPropagation()} />
-          </Dropdown>
-        </div>
-      )
+      render: (_, record) => {
+        const items = [
+          {
+            key: 'view',
+            icon: <FiEye style={{ color: "#1890ff" }} />,
+            label: <Text style={{ color: "#1890ff", fontWeight: "500" }}>Overview</Text>,
+            onClick: () => navigate(`/dashboard/crm/contact/${record.id}`)
+          },
+        ];
+        if (!hasPermission || hasPermission('update')) {
+          items.push({
+            key: 'edit',
+            icon: <FiEdit2 style={{ color: "#52c41a" }} />,
+            label: <Text style={{ color: "#52c41a", fontWeight: "500" }}>Edit Contact</Text>,
+            onClick: () => onEdit(record)
+          });
+        }
+        if (!hasPermission || hasPermission('delete')) {
+          items.push({
+            key: 'delete',
+            icon: <FiTrash2 style={{ color: "#ff4d4f" }} />,
+            label: <Text style={{ color: "#ff4d4f", fontWeight: "500" }}>Delete Contact</Text>,
+            danger: true,
+            onClick: () => handleDelete(record.id)
+          });
+        }
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+              <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" onClick={(e) => e.stopPropagation()} />
+            </Dropdown>
+          </div>
+        );
+      }
     },
   ];
 
   return (
     <div className="contact-list-container">
       <Table
-        rowSelection={{
+        rowSelection={(!hasPermission || hasPermission('delete')) ? {
           selectedRowKeys,
           onChange: setSelectedRowKeys,
-        }}
+        } : undefined}
         columns={columns}
         dataSource={enhancedContacts}
         loading={isLoading}

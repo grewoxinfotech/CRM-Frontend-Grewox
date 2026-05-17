@@ -42,6 +42,7 @@ import { useUpdateDealMutation } from "../services/DealApi";
 import { useSelector } from "react-redux";
 import { selectDealStageOrder } from "../services/DealStageSlice";
 import { selectCurrentUser } from "../../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../../hrm/role/services/roleApi";
 import {
   useGetSourcesQuery,
   useGetCategoriesQuery,
@@ -258,6 +259,24 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
   });
   const navigate = useNavigate();
   const loggedInUser = useSelector(selectCurrentUser);
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+      skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+      if (!userRoleData?.permissions) return null;
+      try {
+          return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+      } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+      if (!loggedInUser) return false;
+      if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+      if (!userPermissions) return false;
+      const perms = userPermissions['dashboards-deal'];
+      if (!perms || perms.length === 0) return false;
+      return (perms[0]?.permissions || []).includes(action);
+  }, [loggedInUser, userPermissions]);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: dealStages = [] } = useGetDealStagesQuery();
   const { data: pipelines = [] } = useGetPipelinesQuery();
@@ -365,6 +384,11 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
   }, [localDeal?.pipeline, dealStages, savedStageOrder]);
 
   const handleStageChange = async (stageId) => {
+    if (!hasPermission('update')) {
+      message.warning("You do not have permission to update deal stages.");
+      return;
+    }
+
     if (localDeal?.is_won !== null) {
       return;
     }
@@ -512,6 +536,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             <div className="profile-info">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <h2 className="company-name">{localDeal?.dealTitle}</h2>
+                {(!hasPermission || hasPermission('update')) && (
                 <Button
                   type="primary"
                   icon={<FiEdit2 />}
@@ -531,6 +556,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
                 >
                   Edit
                 </Button>
+                )}
               </div>
               <div className="contact-details">
                 {localDeal?.company_id &&

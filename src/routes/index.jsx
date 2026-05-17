@@ -85,6 +85,7 @@ import WhatsAppMessages from "../dashboard/module/whatsapp/WhatsAppMessages.jsx"
 import WhatsAppInbox from "../dashboard/module/whatsapp/WhatsAppInbox.jsx";
 import BroadcastList from "../dashboard/module/whatsapp/broadcast/BroadcastList.jsx";
 import Storage from "../superadmin/module/storage/index.jsx";
+import MaintenanceSettings from "../superadmin/module/settings/maintenance/index.jsx";
 import Project from "../dashboard/module/crm/project/index.jsx";
 import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail.jsx";
 import EmployeeOverview from "../dashboard/module/hrm/Employee/overview/index.jsx";
@@ -104,6 +105,8 @@ import {
 
 
 import CustomForms from "../dashboard/module/crm/custom-forms/index.jsx";
+import AdvancedReports from "../dashboard/module/crm/reports/AdvancedReports.jsx";
+import ReportsManager from "../dashboard/module/crm/reports/ReportsManager.jsx";
 
 const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
@@ -391,6 +394,14 @@ const routes = createBrowserRouter([
             path: "automation",
             element: <Automation />,
           },
+          {
+            path: "reports",
+            element: <ReportsManager />,
+          },
+          {
+            path: "analytics",
+            element: <AdvancedReports />,
+          },
         ],
       },
 
@@ -595,6 +606,10 @@ const routes = createBrowserRouter([
       {
         path: "settings/payment-gateway",
         element: <SuperAdminPaymentGateway />,
+      },
+      {
+        path: "settings/maintenance",
+        element: <MaintenanceSettings />,
       },
       {
         path: "settings/ai",

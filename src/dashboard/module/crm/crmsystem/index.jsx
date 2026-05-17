@@ -12,12 +12,35 @@ import ContractType from "./contractType";
 import PageHeader from "../../../../components/PageHeader";
 import { Link } from "react-router-dom";
 import { Card, Typography } from "antd";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 
 const { Title } = Typography;
 
 export default function Crmsystem() {
   const [activeSection, setActiveSection] = useState("Pipeline");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const currentUser = useSelector(selectCurrentUser);
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+      skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+      if (!userRoleData?.permissions) return null;
+      try {
+          return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+      } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+      if (!currentUser) return false;
+      if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+      if (!userPermissions) return false;
+      const perms = userPermissions['dashboards-systemsetup'];
+      if (!perms || perms.length === 0) return false;
+      return (perms[0]?.permissions || []).includes(action);
+  }, [currentUser, userPermissions]);
 
   const menuItems = [
     { title: "Pipeline", icon: <FiList /> },
@@ -32,13 +55,13 @@ export default function Crmsystem() {
 
   const renderContent = () => {
     switch (activeSection) {
-      case "Pipeline": return <Pipeline isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
-      case "Lead Stages": return <LeadStages isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
-      case "Deal Stages": return <DealStages isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
-      case "Sources": return <Source isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
-      case "Tags": return <Lable isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
-      case "Categories": return <Category isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
-      case "Contract Type": return <ContractType isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />;
+      case "Pipeline": return <Pipeline isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} hasPermission={hasPermission} />;
+      case "Lead Stages": return <LeadStages isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} hasPermission={hasPermission} />;
+      case "Deal Stages": return <DealStages isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} hasPermission={hasPermission} />;
+      case "Sources": return <Source isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} hasPermission={hasPermission} />;
+      case "Tags": return <Lable isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} hasPermission={hasPermission} />;
+      case "Categories": return <Category isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} hasPermission={hasPermission} />;
+      case "Contract Type": return <ContractType isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} hasPermission={hasPermission} />;
 
 
       default: return <div>Content for {activeSection} will be implemented soon.</div>;
@@ -54,7 +77,7 @@ export default function Crmsystem() {
             { title: <Link to="/dashboard"><FiHome style={{ marginRight: '4px' }} /> Home</Link> },
             { title: <span style={{ color: '#1f2937', fontWeight: 500 }}>CRM Setup</span> },
         ]}
-        onAdd={() => setIsModalOpen(true)}
+        onAdd={hasPermission('create') ? () => setIsModalOpen(true) : undefined}
         addText={`Add ${activeSection}`}
       />
 

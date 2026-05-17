@@ -76,7 +76,7 @@ const getInterestLevel = (level) => {
   return levels[level] || levels.medium;
 };
 
-const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isOverlay }) => {
+const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isOverlay, hasPermission }) => {
   const navigate = useNavigate();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: deal.id,
@@ -106,29 +106,37 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
     : { text: 'Active', color: '#1e40af', bg: '#dbeafe' };
 
   // Dropdown menu items
-  const getDropdownItems = (deal) => ({
-    items: [
+  const getDropdownItems = (deal) => {
+    const items = [
       {
         key: "view",
         icon: <FiEye />,
         label: "View Details",
         onClick: (e) => { e.stopPropagation(); onDealClick?.(deal); },
       },
-      {
+    ];
+
+    if (!hasPermission || hasPermission('update')) {
+      items.push({
         key: "edit",
         icon: <FiEdit2 />,
         label: "Edit",
         onClick: (e) => { e.stopPropagation(); onEdit?.(deal); },
-      },
-      {
+      });
+    }
+
+    if (!hasPermission || hasPermission('delete')) {
+      items.push({
         key: "delete",
         icon: <FiTrash2 />,
         label: "Delete",
         onClick: (e) => { e.stopPropagation(); onDelete?.(deal); },
         danger: true,
-      },
-    ],
-  });
+      });
+    }
+
+    return { items };
+  };
 
   const onDropdownClick = (e) => {
     e.stopPropagation();
@@ -376,7 +384,7 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
   );
 };
 
-const DroppableStage = ({ stage, children, deals, onEdit, onDelete, onView, onDealClick, isColumnDragging }) => {
+const DroppableStage = ({ stage, children, deals, onEdit, onDelete, onView, onDealClick, isColumnDragging, hasPermission }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
     data: {
@@ -417,6 +425,7 @@ const DroppableStage = ({ stage, children, deals, onEdit, onDelete, onView, onDe
               onDelete={onDelete}
               onView={onView}
               onDealClick={onDealClick}
+              hasPermission={hasPermission}
             />
           ))
         ) : (
@@ -595,7 +604,7 @@ const SortableColumn = ({ stage, dealsInStage, children, index }) => {
   );
 };
 
-const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
+const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick, hasPermission }) => {
   const [updateDeal] = useUpdateDealMutation();
   const [updateDealStage] = useUpdateDealStageMutation();
   const [updateLeadStage] = useUpdateLeadStageMutation();
@@ -965,6 +974,7 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
                       onView={onView}
                       onDealClick={onDealClick}
                       isColumnDragging={activeId === `column-${stage.id}`}
+                      hasPermission={hasPermission}
                     />
                   </SortableColumn>
                 </div>
@@ -972,37 +982,39 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
             </SortableContext>
 
             {/* Add Stage Button */}
-            <div style={{
-              width: '350px',
-              minWidth: '350px',
-              height: 'auto',
-              paddingTop: '0px'
-            }}>
-              <Button
-                type="dashed"
-                onClick={showStageModal}
-                style={{
-                  width: '100%',
-                  height: '45px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  color: '#4b5563',
-                  background: '#f9fafb',
-                  border: '1px dashed #d1d5db',
-                  borderRadius: '8px',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
-                  disabled: isLoadingStages
-                }}
-                disabled={isLoadingStages}
-              >
-                <FiPlus />
-                Add Stage
-              </Button>
-            </div>
+            {(!hasPermission || hasPermission('create')) && (
+              <div style={{
+                width: '350px',
+                minWidth: '350px',
+                height: 'auto',
+                paddingTop: '0px'
+              }}>
+                <Button
+                  type="dashed"
+                  onClick={showStageModal}
+                  style={{
+                    width: '100%',
+                    height: '45px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: '#4b5563',
+                    background: '#f9fafb',
+                    border: '1px dashed #d1d5db',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                    disabled: isLoadingStages
+                  }}
+                  disabled={isLoadingStages}
+                >
+                  <FiPlus />
+                  Add Stage
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </DndContext>

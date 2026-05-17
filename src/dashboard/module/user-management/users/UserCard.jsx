@@ -5,7 +5,7 @@ import moment from 'moment';
 import { useAdminLoginMutation } from '../../../../auth/services/authApi';
 import { useNavigate } from 'react-router-dom';
 
-const UserCard = ({ user, onEdit, onDelete, onView }) => {
+const UserCard = ({ user, onEdit, onDelete, onView, canUpdate, canDelete }) => {
     const navigate = useNavigate();
     const [adminLogin] = useAdminLoginMutation();
 
@@ -70,16 +70,22 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
             <Menu.Item key="view" icon={<FiEye />} onClick={() => onView(record)}>
                 View Details
             </Menu.Item>
-            <Menu.Item key="edit" icon={<FiEdit2 />} onClick={() => onEdit(record)}>
-                Edit User
-            </Menu.Item>
-            <Menu.Item key="resetPassword" icon={<FiLock />}>
-                Reset Password
-            </Menu.Item>
-            <Menu.Item key="status" icon={<FiUserCheck />}>
-                Change Status
-            </Menu.Item>
-            {user.role_name !== 'Super Admin' && (
+            {canUpdate && (
+                <Menu.Item key="edit" icon={<FiEdit2 />} onClick={() => onEdit(record)}>
+                    Edit User
+                </Menu.Item>
+            )}
+            {canUpdate && (
+                <Menu.Item key="resetPassword" icon={<FiLock />}>
+                    Reset Password
+                </Menu.Item>
+            )}
+            {canUpdate && (
+                <Menu.Item key="status" icon={<FiUserCheck />}>
+                    Change Status
+                </Menu.Item>
+            )}
+            {canDelete && user.role_name !== 'Super Admin' && (
                 <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => onDelete(record)}>
                     Delete User
                 </Menu.Item>

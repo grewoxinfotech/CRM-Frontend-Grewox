@@ -14,6 +14,7 @@ import 'jspdf-autotable';
 import { useSelector } from 'react-redux';
 import debounce from 'lodash/debounce';
 import PageHeader from '../../../../components/PageHeader';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
 
 const Role = () => {
     const [searchText, setSearchText] = useState('');
@@ -32,6 +33,23 @@ const Role = () => {
     const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
     const [updateRole, { isLoading: isUpdating }] = useUpdateRoleMutation();
     const [deleteRole, { isLoading: isDeleting }] = useDeleteRoleMutation();
+
+    const loggedInUser = useSelector(selectCurrentUser);
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['extra-hrm-role'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [loggedInUser, userPermissions]);
 
     const debouncedSearch = useCallback(
         debounce((value) => setSearchText(value), 500),
@@ -142,13 +160,13 @@ const Role = () => {
                 ]}
                 searchText={searchText}
                 onSearch={debouncedSearch}
-                onAdd={() => setIsCreateFormVisible(true)}
+                onAdd={hasPermission('create') ? () => setIsCreateFormVisible(true) : undefined}
                 addText="Add Role"
-                extraActions={[
+                extraActions={hasPermission('export') ? [
                     <Dropdown key="export" menu={{ items: exportMenuItems }} trigger={['click']}>
                         <Button icon={<FiDownload />}>Export</Button>
                     </Dropdown>
-                ]}
+                ] : []}
             />
 
             <div className="standard-content-card" style={{ marginTop: '12px' }}>
@@ -158,6 +176,7 @@ const Role = () => {
                     onEdit={handleEditRole}
                     onDelete={handleDeleteRole}
                     searchText={searchText}
+                    hasPermission={hasPermission}
                 />
             </div>
 

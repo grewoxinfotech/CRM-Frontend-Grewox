@@ -32,6 +32,7 @@ import { useGetAllTasksQuery, useDeleteTaskMutation } from "./services/taskApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetUsersQuery } from "../../../module/user-management/users/services/userApi";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import PageHeader from "../../../../components/PageHeader";
 
 const Task = () => {
@@ -47,6 +48,31 @@ const Task = () => {
 
   const user = useSelector(selectCurrentUser);
   const id = user?.id;
+
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !user || user.roleName === 'super-admin' || user.roleName === 'client'
+  });
+
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === user?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) {
+      return null;
+    }
+  }, [userRoleData]);
+
+  const hasPermission = React.useCallback((action) => {
+    if (!user) return false;
+    if (user.roleName === 'super-admin' || user.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const taskPerms = userPermissions['dashboards-task'];
+    if (!taskPerms || taskPerms.length === 0) return false;
+    const allowed = taskPerms[0]?.permissions || [];
+    return allowed.includes(action);
+  }, [user, userPermissions]);
+
   const [deleteTask] = useDeleteTaskMutation();
 
   const { data: tasksResponse = { data: [], pagination: {} }, isLoading: tasksLoading, refetch } = useGetAllTasksQuery({
@@ -121,7 +147,7 @@ const Task = () => {
         searchText={searchText}
         onSearch={setSearchText}
         searchPlaceholder="Search tasks..."
-        onAdd={() => { setSelectedTask(null); setIsCreateModalOpen(true); }}
+        onAdd={hasPermission('create') ? () => { setSelectedTask(null); setIsCreateModalOpen(true); } : undefined}
         addText="Create Task"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
@@ -209,6 +235,7 @@ const Task = () => {
           users={users}
           pagination={{ ...tasksResponse.pagination, total: filteredTasks.length }}
           onPaginationChange={(page, pageSize) => setPagination({ page, pageSize })}
+          hasPermission={hasPermission}
         />
       </Card>
 

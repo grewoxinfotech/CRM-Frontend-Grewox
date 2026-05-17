@@ -11,6 +11,7 @@ import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { Form } from 'antd';
 import { Link } from 'react-router-dom';
 import { FiHome } from 'react-icons/fi';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 
 // Components
 import PageHeader from '../../../../components/PageHeader';
@@ -60,6 +61,25 @@ const AutomationPage = () => {
     const { data: leadStagesResponse } = useGetLeadStagesQuery(currentUser?.client_id, { skip: !currentUser?.client_id });
     const { data: sourcesResponse } = useGetSourcesQuery(currentUser?.client_id, { skip: !currentUser?.client_id });
     const { data: usersResponse } = useGetUsersQuery();
+
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!currentUser) return false;
+        if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-automation'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [currentUser, userPermissions]);
 
     const onFinish = async (values) => {
         try {
@@ -237,7 +257,8 @@ const AutomationPage = () => {
                     onChange={() => toggleAutomation(record.id)} 
                     size="small"
                     checkedChildren="ON" 
-                    unCheckedChildren="OFF" 
+                    unCheckedChildren="OFF"
+                    disabled={!hasPermission('update')}
                 />
             )
         },
@@ -258,23 +279,27 @@ const AutomationPage = () => {
                             }}
                         />
                     </Tooltip>
-                    <Tooltip title="Edit Workflow">
-                        <Button 
-                            type="text"
-                            shape="circle"
-                            icon={<EditOutlined style={{ color: '#8c8c8c' }} />} 
-                            onClick={() => handleEdit(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title={record.isActive ? "Pause Automation" : "Start Automation"}>
-                        <Button 
-                            type="text"
-                            shape="circle"
-                            icon={record.isActive ? <PauseCircleOutlined style={{ color: '#faad14' }} /> : <PlayCircleOutlined style={{ color: '#52c41a' }} />} 
-                            onClick={() => toggleAutomation(record.id)}
-                        />
-                    </Tooltip>
-                    {!record.isDefault && (
+                    {(!hasPermission || hasPermission('update')) && (
+                        <Tooltip title="Edit Workflow">
+                            <Button 
+                                type="text"
+                                shape="circle"
+                                icon={<EditOutlined style={{ color: '#8c8c8c' }} />} 
+                                onClick={() => handleEdit(record)}
+                            />
+                        </Tooltip>
+                    )}
+                    {(!hasPermission || hasPermission('update')) && (
+                        <Tooltip title={record.isActive ? "Pause Automation" : "Start Automation"}>
+                            <Button 
+                                type="text"
+                                shape="circle"
+                                icon={record.isActive ? <PauseCircleOutlined style={{ color: '#faad14' }} /> : <PlayCircleOutlined style={{ color: '#52c41a' }} />} 
+                                onClick={() => toggleAutomation(record.id)}
+                            />
+                        </Tooltip>
+                    )}
+                    {!record.isDefault && (!hasPermission || hasPermission('delete')) && (
                         <Popconfirm
                             title="Delete this automation?"
                             description="This action cannot be undone."
@@ -476,22 +501,26 @@ const AutomationPage = () => {
                 title={<div style={{ fontWeight: '700' }}>Automation Workflows</div>} 
                 extra={
                     <Space>
-                        <Button 
-                            type="primary" 
-                            icon={<PlusOutlined />} 
-                            onClick={() => setIsModalVisible(true)}
-                            style={{ borderRadius: '6px' }}
-                        >
-                            New Workflow
-                        </Button>
-                        <Button 
-                            icon={<RocketOutlined />} 
-                            onClick={handleSeedDefaults}
-                            loading={isSeeding}
-                            style={{ borderRadius: '6px' }}
-                        >
-                            Generate Defaults
-                        </Button>
+                        {(!hasPermission || hasPermission('create')) && (
+                            <Button 
+                                type="primary" 
+                                icon={<PlusOutlined />} 
+                                onClick={() => setIsModalVisible(true)}
+                                style={{ borderRadius: '6px' }}
+                            >
+                                New Workflow
+                            </Button>
+                        )}
+                        {(!hasPermission || hasPermission('create')) && (
+                            <Button 
+                                icon={<RocketOutlined />} 
+                                onClick={handleSeedDefaults}
+                                loading={isSeeding}
+                                style={{ borderRadius: '6px' }}
+                            >
+                                Generate Defaults
+                            </Button>
+                        )}
                     </Space>
                 }
                 style={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}

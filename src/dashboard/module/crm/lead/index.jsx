@@ -32,6 +32,7 @@ import {
   FiHome,
   FiFilter,
   FiZap,
+  FiLock,
 } from "react-icons/fi";
 import "./Lead.scss";
 import CreateLead from "./CreateLead";
@@ -62,6 +63,7 @@ import moment from "moment";
 import { Switch } from "antd";
 import { useGetUsersQuery } from "../../user-management/users/services/userApi";
 import { useFeatureAccess } from "../../../../hooks/useFeatureAccess";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -84,6 +86,32 @@ const Lead = () => {
   const [activeTab, setActiveTab] = useState("all");
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteLead, { isLoading: isDeleteLoading }] = useDeleteLeadMutation();
+
+  // Fetch role and permissions
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) {
+      return null;
+    }
+  }, [userRoleData]);
+
+  const hasCreatePermission = React.useMemo(() => {
+    if (!loggedInUser) return false;
+    if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const leadPerms = userPermissions['dashboards-lead'];
+    if (!leadPerms || leadPerms.length === 0) return false;
+    const allowed = leadPerms[0]?.permissions || [];
+    return allowed.includes('create');
+  }, [loggedInUser, userPermissions]);
+
   const [dateRange, setDateRange] = useState(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({});
@@ -430,7 +458,7 @@ const Lead = () => {
         searchPlaceholder="Search leads..."
         viewMode={viewMode}
         onViewChange={setViewMode}
-        onAdd={handleCreate}
+        onAdd={hasCreatePermission ? handleCreate : undefined}
         addText="Create Lead"
         isQuickMode={isQuickMode}
         onQuickModeToggle={setIsQuickMode}
@@ -463,7 +491,7 @@ const Lead = () => {
         extraActions={
           <Space size={12}>
             <Button
-              icon={hasFeature('bulk_operations') ? <FiDownload style={{ transform: 'rotate(180deg)' }} /> : <span style={{ marginRight: '4px' }}>🔒</span>}
+              icon={hasFeature('bulk_operations') ? <FiDownload style={{ transform: 'rotate(180deg)' }} /> : <FiLock style={{ color: '#faad14' }} />}
               onClick={() => {
                 if (hasFeature('bulk_operations')) {
                   setIsImportModalOpen(true);
@@ -474,12 +502,24 @@ const Lead = () => {
               style={{ 
                 borderRadius: '8px', 
                 height: '30px',
-                opacity: hasFeature('bulk_operations') ? 1 : 0.7,
                 display: 'flex',
-                alignItems: 'center'
+                alignItems: 'center',
+                borderColor: hasFeature('bulk_operations') ? undefined : '#faad14',
+                color: hasFeature('bulk_operations') ? undefined : '#d48806',
+                background: hasFeature('bulk_operations') ? undefined : 'rgba(250, 173, 20, 0.05)',
+                fontWeight: hasFeature('bulk_operations') ? undefined : '500'
               }}
             >
-              Import
+              Import {!hasFeature('bulk_operations') && <span style={{ 
+                fontSize: '9px', 
+                background: '#faad14', 
+                color: '#fff', 
+                padding: '2px 4px', 
+                borderRadius: '4px',
+                marginLeft: '6px',
+                fontWeight: 'bold',
+                lineHeight: '1'
+              }}>PRO</span>}
             </Button>
           </Space>
         }

@@ -11,11 +11,19 @@ import {
 import { useLogout } from '../../hooks/useLogout';
 import '../../styles/sidebar-shared.scss';
 
-const Sidebar = ({ 
-    menuItems = [], 
-    brandName = "Grewox", 
+const isPathActive = (currentPath, targetPath) => {
+    if (!targetPath) return false;
+    if (targetPath === '/dashboard') {
+        return currentPath === '/dashboard';
+    }
+    return currentPath === targetPath || currentPath.startsWith(targetPath + '/');
+};
+
+const Sidebar = ({
+    menuItems = [],
+    brandName = "Grewox",
     profilePath = "/profile",
-    collapsed = false, 
+    collapsed = false,
     onCollapsedChange = () => { },
     isSidebarReady = true
 }) => {
@@ -36,7 +44,7 @@ const Sidebar = ({
         const newOpenDropdowns = {};
         menuItems.forEach(item => {
             if (item.isDropdown && item.subItems) {
-                const hasActiveChild = item.subItems.some(sub => location.pathname === sub.path);
+                const hasActiveChild = item.subItems.some(sub => isPathActive(location.pathname, sub.path));
                 if (hasActiveChild) {
                     newOpenDropdowns[item.title] = true;
                 }
@@ -102,12 +110,12 @@ const Sidebar = ({
 
         if (item.isDropdown) {
             const isOpen = openDropdowns[item.title];
-            const hasActiveChild = item.subItems.some(sub => location.pathname === sub.path);
+            const hasActiveChild = item.subItems.some(sub => isPathActive(location.pathname, sub.path));
 
             return (
                 <div key={item.title || index} className={`nav-dropdown ${isOpen ? 'open' : ''} ${hasActiveChild ? 'has-active-child' : ''} ${isLocked ? 'locked' : ''}`}>
-                    <div 
-                        className={`nav-item dropdown-trigger ${hasActiveChild ? 'parent-active' : ''}`} 
+                    <div
+                        className={`nav-item dropdown-trigger ${hasActiveChild ? 'parent-active' : ''}`}
                         onClick={(e) => isLocked ? handleItemClick(e) : toggleDropdown(e, item.title)}
                     >
                         <div className="nav-item-content">
@@ -116,16 +124,8 @@ const Sidebar = ({
                                 <>
                                     <span className="title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                         {item.title}
-                                        {isLocked && <span className="lock-tag" style={{ 
-                                            color: '#faad14', 
-                                            fontSize: '12px',
-                                            background: 'rgba(250, 173, 20, 0.1)',
-                                            padding: '2px 6px',
-                                            borderRadius: '4px',
-                                            marginLeft: '8px'
-                                        }}>🔒</span>}
                                     </span>
-                                    {isLocked ? (
+                                    {isLocked || item.badge === 'PRO' ? (
                                         <span className="nav-badge upgrade-badge" style={{
                                             fontSize: '10px',
                                             padding: '2px 6px',
@@ -137,7 +137,7 @@ const Sidebar = ({
                                             fontWeight: 'bold',
                                             boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
                                         }}>
-                                            UPGRADE
+                                            PRO
                                         </span>
                                     ) : item.badge && (
                                         <span className="nav-badge" style={{
@@ -160,17 +160,17 @@ const Sidebar = ({
                         </div>
                     </div>
                     {!isCollapsed && (
-                        <motion.div 
+                        <motion.div
                             className="dropdown-menu"
                             initial={false}
                             animate={isOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
                             transition={{ duration: 0.3, ease: "easeInOut" }}
                         >
                             {item.subItems.map((subItem, idx) => (
-                                <NavLink 
-                                    key={subItem.path || idx} 
+                                <NavLink
+                                    key={subItem.path || idx}
                                     to={subItem.path}
-                                    className={({ isActive }) => `sub-item ${isActive ? 'active' : ''} ${subItem.isLocked ? 'locked' : ''}`}
+                                    className={({ isActive }) => `sub-item ${isActive || isPathActive(location.pathname, subItem.path) ? 'active' : ''} ${subItem.isLocked ? 'locked' : ''}`}
                                     onClick={(e) => {
                                         if (subItem.isLocked) {
                                             e.preventDefault();
@@ -195,7 +195,7 @@ const Sidebar = ({
                                                     fontWeight: '700',
                                                     border: '1px solid rgba(250, 173, 20, 0.3)'
                                                 }}>
-                                                    UPGRADE
+                                                    PRO
                                                 </span>
                                             )}
                                         </span>
@@ -209,8 +209,8 @@ const Sidebar = ({
         }
 
         return (
-            <NavLink 
-                key={item.path || index} 
+            <NavLink
+                key={item.path || index}
                 to={isLocked ? '#' : item.path}
                 className={({ isActive }) => `nav-item ${!isLocked && isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
                 onClick={handleItemClick}
@@ -220,7 +220,7 @@ const Sidebar = ({
                     {!isCollapsed && (
                         <span className="title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                             {item.title}
-                            {isLocked && (
+                            {isLocked || item.badge === 'PRO' ? (
                                 <span className="nav-badge upgrade-badge" style={{
                                     fontSize: '10px',
                                     padding: '2px 6px',
@@ -231,7 +231,20 @@ const Sidebar = ({
                                     fontWeight: 'bold',
                                     boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)'
                                 }}>
-                                    UPGRADE
+                                    PRO
+                                </span>
+                            ) : item.badge && (
+                                <span className="nav-badge" style={{
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '10px',
+                                    background: 'linear-gradient(135deg, #ff4d4f 0%, #f5222d 100%)',
+                                    color: 'white',
+                                    marginLeft: 'auto',
+                                    fontWeight: 'bold',
+                                    boxShadow: '0 2px 4px rgba(255, 77, 79, 0.3)'
+                                }}>
+                                    {item.badge}
                                 </span>
                             )}
                         </span>

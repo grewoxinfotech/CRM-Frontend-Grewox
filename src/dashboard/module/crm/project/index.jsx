@@ -15,6 +15,9 @@ import { useGetAllProjectsQuery, useCreateProjectMutation } from './services/pro
 import CreateProjectModal from './CreateProjectModal';
 import ProjectCard from './ProjectCard';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import PageHeader from "../../../../components/PageHeader";
 
 const { Option } = Select;
@@ -29,6 +32,26 @@ const Project = () => {
 
     const { data: projects, isLoading } = useGetAllProjectsQuery();
     const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
+
+    const currentUser = useSelector(selectCurrentUser);
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!currentUser) return false;
+        if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-project-list'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [currentUser, userPermissions]);
 
     const handleCreateSubmit = async (values) => {
         try {
@@ -68,7 +91,7 @@ const Project = () => {
                 searchText={searchText}
                 onSearch={setSearchText}
                 searchPlaceholder="Search projects..."
-                onAdd={() => { setSelectedProject(null); setIsModalOpen(true); }}
+                onAdd={hasPermission('create') ? () => { setSelectedProject(null); setIsModalOpen(true); } : undefined}
                 addText="Add Project"
                 isSearchVisible={isSearchVisible}
                 onSearchVisibleChange={setIsSearchVisible}
@@ -108,6 +131,7 @@ const Project = () => {
                     }}
                     onView={setSelectedProject}
                     searchText={searchText}
+                    hasPermission={hasPermission}
                 />
             </Card>
 

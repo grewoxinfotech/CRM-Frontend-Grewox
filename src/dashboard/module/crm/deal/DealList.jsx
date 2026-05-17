@@ -66,6 +66,7 @@ const DealList = ({
   loading,
   pagination,
   onTableChange,
+  hasPermission,
 }) => {
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteDeal] = useDeleteDealMutation();
@@ -136,8 +137,8 @@ const DealList = ({
     };
   };
 
-  const getDropdownItems = (record) => ({
-    items: [
+  const getDropdownItems = (record) => {
+    const items = [
       {
         key: "overview",
         icon: <FiEye style={{ color: "#1890ff" }} />,
@@ -149,7 +150,10 @@ const DealList = ({
           onDealClick(record);
         },
       },
-      {
+    ];
+
+    if (!hasPermission || hasPermission('update')) {
+      items.push({
         key: "edit",
         icon: <FiEdit2 style={{ color: "#52c41a" }} />,
         label: (
@@ -159,8 +163,11 @@ const DealList = ({
           e.domEvent.stopPropagation();
           onEdit(record);
         },
-      },
-      {
+      });
+    }
+
+    if (!hasPermission || hasPermission('delete')) {
+      items.push({
         key: "delete",
         icon: <FiTrash2 style={{ color: "#ff4d4f" }} />,
         label: (
@@ -172,9 +179,11 @@ const DealList = ({
           e.domEvent.stopPropagation();
           onDelete(record);
         },
-      },
-    ],
-  });
+      });
+    }
+
+    return { items };
+  };
 
   const columns = [
     {
@@ -506,7 +515,7 @@ const DealList = ({
   };
 
   const BulkActions = () => {
-    if (selectedRowKeys.length === 0) return null;
+    if (selectedRowKeys.length === 0 || (hasPermission && !hasPermission('delete'))) return null;
     return (
       <div className="bulk-actions deal-bulk-actions">
         <Space>
@@ -540,11 +549,11 @@ const DealList = ({
             onClick: () => onDealClick(record),
             style: { cursor: "pointer" },
           })}
-          rowSelection={{
+          rowSelection={(!hasPermission || hasPermission('delete')) ? {
             type: 'checkbox',
             selectedRowKeys,
             onChange: (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys),
-          }}
+          } : undefined}
         />
       </div>
 

@@ -210,8 +210,10 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
 
     // Status filter options
     const statusFilters = [
-        { text: 'Active', value: true },
-        { text: 'Inactive', value: false }
+        { text: 'Active', value: 'active' },
+        { text: 'Inactive', value: 'inactive' },
+        { text: 'Suspended', value: 'suspended' },
+        { text: 'Blocked', value: 'blocked' }
     ];
 
     const columns = [
@@ -304,15 +306,50 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
             width: '120px',
             filters: statusFilters,
             filteredValue: filteredInfo.status || null,
-            onFilter: (value, record) => hasActiveSubscription(record.id) === value,
+            onFilter: (value, record) => (record.status || 'active').toLowerCase() === value.toLowerCase(),
             render: (_, record) => {
-                const isActive = hasActiveSubscription(record.id);
+                const hasSub = hasActiveSubscription(record.id);
+                const status = record.status || 'active';
+                
+                const styles = {
+                    active: {
+                        color: 'success',
+                        text: hasSub ? 'ACTIVE' : 'NO PLAN',
+                        icon: <FiCheck style={{ fontSize: '14px' }} />
+                    },
+                    inactive: {
+                        color: 'error',
+                        text: 'DEACTIVATED (BANDH)',
+                        icon: <FiXCircle style={{ fontSize: '14px' }} />
+                    },
+                    suspended: {
+                        color: 'warning',
+                        text: 'SUSPENDED',
+                        icon: <FiXCircle style={{ fontSize: '14px' }} />
+                    },
+                    blocked: {
+                        color: 'default',
+                        text: 'BLOCKED',
+                        icon: <FiXCircle style={{ fontSize: '14px' }} />
+                    }
+                };
+
+                const style = styles[status?.toLowerCase()] || styles.active;
+
                 return (
                     <Tag
-                        className={`status-tag ${isActive ? 'active' : 'inactive'}`}
-                        icon={isActive ? <FiCheck style={{ fontSize: '14px' }} /> : <FiXCircle style={{ fontSize: '14px' }} />}
+                        color={style.color}
+                        style={{
+                            borderRadius: '4px',
+                            fontWeight: '600',
+                            padding: '4px 10px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}
                     >
-                        {isActive ? 'ACTIVE' : 'INACTIVE'}
+                        {style.icon}
+                        <span>{style.text}</span>
                     </Tag>
                 );
             },

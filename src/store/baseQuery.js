@@ -58,6 +58,23 @@ export const baseQueryWithReauth = async (args, api, extraOptions) => {
         } else {
             // If refresh fails, logout user
             api.dispatch({ type: 'auth/logout' });
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+    }
+
+    // Handle cases where the active user was deleted from the database
+    if (result.error) {
+        const errMsg = result.error.data?.message;
+        if (
+            errMsg === 'User not found' ||
+            errMsg === 'Super admin not found' ||
+            errMsg === 'Logged in user not found' ||
+            errMsg === 'Invalid role'
+        ) {
+            api.dispatch({ type: 'auth/logout' });
+            localStorage.clear();
+            window.location.href = '/login';
         }
     }
 

@@ -32,7 +32,7 @@ import ResetPasswordModal from "../../../../superadmin/module/company/ResetPassw
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 
-const EmployeeList = ({ employees, onEdit, onViewOverview, onDelete, loading }) => {
+const EmployeeList = ({ employees, onEdit, onViewOverview, onDelete, loading, hasPermission }) => {
   const navigate = useNavigate();
   const [adminLogin] = useAdminLoginMutation();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -83,39 +83,49 @@ const EmployeeList = ({ employees, onEdit, onViewOverview, onDelete, loading }) 
     });
   };
 
-  const getActionMenuItems = (record) => [
-    {
-      key: "overview",
-      label: "View Overview",
-      icon: <FiEye style={{color: '#1890ff'}}/>,
-      onClick: () => navigate(`/dashboard/hrm/employee/${record.id}`)
-    },
-    {
-      key: "edit",
-      label: "Edit Employee",
-      icon: <FiEdit2 style={{color: '#52c41a'}}/>,
-      onClick: () => onEdit(record)
-    },
-    {
-      key: "login",
-      label: "Login as Employee",
-      icon: <FiLogIn style={{color: '#1890ff'}}/>,
-      onClick: () => handleEmployeeLogin(record)
-    },
-    {
-      key: "reset-password",
-      label: "Reset Password",
-      icon: <FiLock style={{color: '#faad14'}}/>,
-      onClick: () => { setSelectedEmployee(record); setResetPasswordModalVisible(true); }
-    },
-    {
-      key: "delete",
-      label: "Delete Employee",
-      icon: <FiTrash2 style={{color: '#ff4d4f'}}/>,
-      danger: true,
-      onClick: () => handleDelete(record.id)
+  const getActionMenuItems = (record) => {
+    const items = [
+      {
+        key: "overview",
+        label: "View Overview",
+        icon: <FiEye style={{color: '#1890ff'}}/>,
+        onClick: () => navigate(`/dashboard/hrm/employee/${record.id}`)
+      }
+    ];
+
+    if (!hasPermission || hasPermission('update')) {
+      items.push({
+        key: "edit",
+        label: "Edit Employee",
+        icon: <FiEdit2 style={{color: '#52c41a'}}/>,
+        onClick: () => onEdit(record)
+      });
+      items.push({
+        key: "login",
+        label: "Login as Employee",
+        icon: <FiLogIn style={{color: '#1890ff'}}/>,
+        onClick: () => handleEmployeeLogin(record)
+      });
+      items.push({
+        key: "reset-password",
+        label: "Reset Password",
+        icon: <FiLock style={{color: '#faad14'}}/>,
+        onClick: () => { setSelectedEmployee(record); setResetPasswordModalVisible(true); }
+      });
     }
-  ];
+
+    if (!hasPermission || hasPermission('delete')) {
+      items.push({
+        key: "delete",
+        label: "Delete Employee",
+        icon: <FiTrash2 style={{color: '#ff4d4f'}}/>,
+        danger: true,
+        onClick: () => handleDelete(record.id)
+      });
+    }
+
+    return items;
+  };
 
   const columns = [
     {

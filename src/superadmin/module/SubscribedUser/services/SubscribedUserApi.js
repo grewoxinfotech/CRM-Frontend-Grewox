@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from '../../../../store/baseQuery';
 export const subscribedUserApi = createApi({
     reducerPath: 'subscribedUserApi',
     baseQuery: baseQueryWithReauth,
-    tagTypes: ['SubscribedUsers'],
+    tagTypes: ['SubscribedUsers', 'Subscriptions'],
     endpoints: (builder) => ({
         getAllSubscribedUsers: builder.query({
             query: () => '/subscriptions/assign',

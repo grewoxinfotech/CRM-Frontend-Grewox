@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Card, Button, Table, Tag, Space, Typography, Empty, Modal, message, Switch, Tooltip, Dropdown } from 'antd';
 import { FiPlus, FiEdit, FiTrash2, FiCopy, FiLayers, FiShare2, FiList, FiMoreVertical, FiHome } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 
 import FormBuilder from './FormBuilder';
 import PageHeader from '../../../../components/PageHeader';
@@ -26,6 +29,26 @@ const CustomForms = () => {
   const [deleteForm] = useDeleteCustomFormMutation();
 
   const forms = formsData?.data || [];
+
+  const currentUser = useSelector(selectCurrentUser);
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+      skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+      if (!userRoleData?.permissions) return null;
+      try {
+          return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+      } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+      if (!currentUser) return false;
+      if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+      if (!userPermissions) return false;
+      const perms = userPermissions['dashboards-custom-form'];
+      if (!perms || perms.length === 0) return false;
+      return (perms[0]?.permissions || []).includes(action);
+  }, [currentUser, userPermissions]);
 
   const handleCreateNew = () => {
     setSelectedForm(null);
@@ -144,7 +167,7 @@ const CustomForms = () => {
           <Switch 
             size="small" 
             checked={status === 'active'} 
-            disabled={record.form_type === 'default'}
+            disabled={record.form_type === 'default' || !hasPermission('update')}
 
             onChange={async (checked) => {
               try {
@@ -168,27 +191,32 @@ const CustomForms = () => {
 
         const isDefault = record.form_type === 'default';
         
-        const actionMenuItems = [
-          {
+        const actionMenuItems = [];
+        if (!hasPermission || hasPermission('update')) {
+          actionMenuItems.push({
             key: 'edit',
             icon: <FiEdit style={{ color: "#52c41a" }} />,
             label: <Text style={{ color: "#52c41a", fontWeight: "500" }}>Edit Form</Text>,
             onClick: () => handleEdit(record)
-          },
-          ...(!isDefault && !record.is_template ? [{
+          });
+        }
+        if (!isDefault && !record.is_template) {
+          actionMenuItems.push({
             key: 'share',
             icon: <FiShare2 style={{ color: "#1890ff" }} />,
             label: <Text style={{ color: "#1890ff", fontWeight: "500" }}>Share Link</Text>,
             onClick: () => handleShare(record)
-          }] : []),
-          ...(!isDefault ? [{
+          });
+        }
+        if (!isDefault && (!hasPermission || hasPermission('delete'))) {
+          actionMenuItems.push({
             key: 'delete',
             icon: <FiTrash2 style={{ color: "#ff4d4f" }} />,
             label: <Text style={{ color: "#ff4d4f", fontWeight: "500" }}>Delete Form</Text>,
             danger: true,
             onClick: () => handleDelete(record.id)
-          }] : [])
-        ];
+          });
+        }
 
 
         return (
@@ -249,7 +277,7 @@ const CustomForms = () => {
           { title: 'CRM' },
           { title: 'Custom Forms' }
         ]}
-        onAdd={handleCreateNew}
+        onAdd={hasPermission('create') ? handleCreateNew : undefined}
         addText="Create New Form"
         onSearch={() => {}} // Placeholder for search if needed
       />
@@ -263,7 +291,7 @@ const CustomForms = () => {
           pagination={{ pageSize: 10 }}
           locale={{ emptyText: <Empty description="No custom forms created yet" /> }}
           onRow={(record) => ({
-            onClick: () => handleEdit(record),
+            onClick: () => { if (!hasPermission || hasPermission('update')) handleEdit(record); },
             style: { cursor: 'pointer' }
           })}
         />

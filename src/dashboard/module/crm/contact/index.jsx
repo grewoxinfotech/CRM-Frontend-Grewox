@@ -17,6 +17,7 @@ import { useGetContactsQuery, useDeleteContactMutation } from "./services/contac
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import PageHeader from "../../../../components/PageHeader";
 
 const Contact = () => {
@@ -37,6 +38,25 @@ const Contact = () => {
   const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
   const [deleteContact] = useDeleteContactMutation();
   const loggedInUser = useSelector(selectCurrentUser);
+
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+    if (!loggedInUser) return false;
+    if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const perms = userPermissions['dashboards-crm-contact'];
+    if (!perms || perms.length === 0) return false;
+    return (perms[0]?.permissions || []).includes(action);
+  }, [loggedInUser, userPermissions]);
 
   const handleSearch = (value) => {
     setSearchText(value);
@@ -60,7 +80,7 @@ const Contact = () => {
         searchText={searchText}
         onSearch={handleSearch}
         searchPlaceholder="Search contacts..."
-        onAdd={() => { setSelectedContact(null); setIsCreateModalOpen(true); }}
+        onAdd={hasPermission('create') ? () => { setSelectedContact(null); setIsCreateModalOpen(true); } : undefined}
         addText="Create Contact"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
@@ -99,6 +119,7 @@ const Contact = () => {
             total: contactsResponse?.pagination?.total || 0,
             onChange: (page, size) => { setCurrentPage(page); setPageSize(size); }
           }}
+          hasPermission={hasPermission}
         />
       </Card>
 

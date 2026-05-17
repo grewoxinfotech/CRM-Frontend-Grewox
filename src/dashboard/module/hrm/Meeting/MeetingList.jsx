@@ -23,7 +23,8 @@ const MeetingList = ({
     onDelete,
     onPageChange,
     onPageSizeChange,
-    departmentMap = {}
+    departmentMap = {},
+    hasPermission
 }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
@@ -48,7 +49,7 @@ const MeetingList = ({
     // Bulk actions component
     const BulkActions = () => (
         <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
-            {selectedRowKeys.length > 0 && (
+            {selectedRowKeys.length > 0 && (!hasPermission || hasPermission('delete')) && (
                 <Button
                     type="primary"
                     danger
@@ -176,30 +177,36 @@ const MeetingList = ({
             key: 'actions',
             width: 100,
             fixed: 'right',
-            render: (_, record) => (
-                <Dropdown
-                    overlay={
-                        <Menu>
-                            {/* <Menu.Item key="view" onClick={() => onView?.(record)}>
-                                <FiEye /> View
-                            </Menu.Item> */}
-                            <Menu.Item key="edit" onClick={() => onEdit?.(record)}>
-                                <FiEdit2 /> Edit
-                            </Menu.Item>
-                            <Menu.Item key="delete" danger onClick={() => handleBulkDelete([record.id])}>
-                                <FiTrash2 /> Delete
-                            </Menu.Item>
-                        </Menu>
-                    }
-                    trigger={["click"]}
-                >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical />}
-                        className="action-button"
-                    />
-                </Dropdown>
-            ),
+            render: (_, record) => {
+                const menuItems = [];
+                if (!hasPermission || hasPermission('update')) {
+                    menuItems.push(
+                        <Menu.Item key="edit" onClick={() => onEdit?.(record)}>
+                            <FiEdit2 /> Edit
+                        </Menu.Item>
+                    );
+                }
+                if (!hasPermission || hasPermission('delete')) {
+                    menuItems.push(
+                        <Menu.Item key="delete" danger onClick={() => handleBulkDelete([record.id])}>
+                            <FiTrash2 /> Delete
+                        </Menu.Item>
+                    );
+                }
+                if (menuItems.length === 0) return null;
+                return (
+                    <Dropdown
+                        overlay={<Menu>{menuItems}</Menu>}
+                        trigger={["click"]}
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical />}
+                            className="action-button"
+                        />
+                    </Dropdown>
+                );
+            },
         },
     ];
 

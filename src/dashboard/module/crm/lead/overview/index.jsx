@@ -41,6 +41,7 @@ import {
   FiGlobe,
   FiEdit2,
   FiCpu,
+  FiLock,
 } from "react-icons/fi";
 import { FaWhatsapp, FaFacebook } from "react-icons/fa";
 import { useGetLeadQuery, useGetLeadsQuery, useUpdateLeadMutation, useGetLeadAiSuggestionsQuery } from "../services/LeadApi";
@@ -57,6 +58,7 @@ import { useGetLeadStagesQuery } from "../../crmsystem/leadstage/services/leadSt
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
 import { selectStageOrder } from "../../crmsystem/leadstage/services/leadStageSlice";
+import { useGetRolesQuery } from "../../../hrm/role/services/roleApi";
 import dayjs from "dayjs";
 import {
   useGetSourcesQuery,
@@ -308,12 +310,14 @@ const LeadOverviewContent = ({
   onStageUpdate,
   isUpdating,
   setIsEditModalOpen,
-  pipelines
+  pipelines,
+  hasPermission
 }) => { 
 
 console.log("leaddata", initialLeadData)
   
   const loggedInUser = useSelector(selectCurrentUser);
+  const { hasFeature } = useFeatureAccess();
 
   const [localLeadData, setLocalLeadData] = useState(initialLeadData);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
@@ -426,24 +430,26 @@ console.log("leaddata", initialLeadData)
             <div className="profile-info">
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
               <h2 className="company-names">{localLeadData?.leadTitle}</h2>
+              {(!hasPermission || hasPermission('update')) && (
                <Button
-              type="primary"
-              icon={<FiEdit2 />}
-              onClick={() => setIsEditModalOpen(true)}
-              style={{
-                background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                border: "none",
-                height: "44px",
-                padding: "0 24px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                borderRadius: "10px",
-                fontWeight: "500",
-              }}
-            >
-              Edit
-            </Button>
+                type="primary"
+                icon={<FiEdit2 />}
+                onClick={() => setIsEditModalOpen(true)}
+                style={{
+                  background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  border: "none",
+                  height: "44px",
+                  padding: "0 24px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  borderRadius: "10px",
+                  fontWeight: "500",
+                }}
+              >
+                Edit
+              </Button>
+              )}
             </div>
               <div className="contact-details">
                 {localLeadData?.company_id &&
@@ -1192,9 +1198,16 @@ console.log("leaddata", initialLeadData)
                 <div className="detail-info">
                   <div className="detail-label">Lead Score</div>
                   <div className="detail-value">
-                    {localLeadData?.lead_score !== null && localLeadData?.lead_score !== undefined
-                      ? localLeadData.lead_score
-                      : "-"}
+                    {!hasFeature('ai_features') ? (
+                      <span style={{ fontSize: '13px', fontWeight: '600', color: '#d48806', display: 'flex', alignItems: 'center' }}>
+                        <FiLock style={{ marginRight: '4px', color: '#faad14' }} /> Locked 
+                        <span style={{ fontSize: '8px', background: '#faad14', color: '#fff', padding: '1px 3px', borderRadius: '4px', marginLeft: '4px', fontWeight: 'bold' }}>PRO</span>
+                      </span>
+                    ) : (
+                      localLeadData?.lead_score !== null && localLeadData?.lead_score !== undefined
+                        ? localLeadData.lead_score
+                        : "-"
+                    )}
                   </div>
                 </div>
                 <div className="detail-indicator" />
@@ -1210,6 +1223,7 @@ console.log("leaddata", initialLeadData)
 const LeadOverview = () => {
   const { leadId } = useParams();
   const navigate = useNavigate();
+  const { hasFeature } = useFeatureAccess();
   const { data: lead, isLoading: isLoadingLead } = useGetLeadQuery(leadId,{
     page: 1,
     pageSize: -1,
@@ -1222,6 +1236,34 @@ const LeadOverview = () => {
     useGetLeadStagesQuery();
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
   const currentUser = useSelector(selectCurrentUser);
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+      skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+      if (!userRoleData?.permissions) return null;
+      try {
+          return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+      } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+      if (!currentUser) return false;
+      if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+      if (!userPermissions) return false;
+      const perms = userPermissions['dashboards-lead'];
+      if (!perms || perms.length === 0) return false;
+      return (perms[0]?.permissions || []).includes(action);
+  }, [currentUser, userPermissions]);
+  
+  const hasDealPermission = React.useCallback((action) => {
+      if (!currentUser) return false;
+      if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+      if (!userPermissions) return false;
+      const perms = userPermissions['dashboards-deal'];
+      if (!perms || perms.length === 0) return false;
+      return (perms[0]?.permissions || []).includes(action);
+  }, [currentUser, userPermissions]);
+
   const [isCreateDealModalOpen, setIsCreateDealModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [localLeadData, setLocalLeadData] = useState(lead?.data);
@@ -1234,7 +1276,7 @@ const LeadOverview = () => {
   
   // TRIGGER BACKGROUND AI ANALYSIS: This ensures score is updated even if user doesn't click AI tab
   const { data: aiSuggestionsData, isFetching: isAiAnalyzing } = useGetLeadAiSuggestionsQuery(leadId, {
-    skip: !leadId,
+    skip: !leadId || !hasFeature('ai_features'),
   });
 
   const { data: associatedContact } = useGetContactByIdQuery(localLeadData?.contact_id, { 
@@ -1347,6 +1389,11 @@ const LeadOverview = () => {
   };
 
   const handleStageUpdate = async (newStageId) => {
+    if (!hasPermission || !hasPermission('update')) {
+      message.warning("You do not have permission to update lead stages.");
+      return;
+    }
+
     if (newStageId === localLeadData?.leadStage) {
       return;
     }
@@ -1378,8 +1425,6 @@ const LeadOverview = () => {
     }
   };
 
-  const { hasFeature } = useFeatureAccess();
-
   const items = useMemo(() => {
     const allItems = [
       {
@@ -1397,6 +1442,7 @@ const LeadOverview = () => {
             isUpdating={isUpdatingLead}
             setIsEditModalOpen={setIsEditModalOpen}
             pipelines={pipelines}
+            hasPermission={hasPermission}
           />
         ),
       },
@@ -1451,7 +1497,12 @@ const LeadOverview = () => {
           <span style={{ display: 'flex', alignItems: 'center' }}>
             <FiCpu style={{ marginRight: '8px' }} /> 
             AI Assistant
-            {!hasFeature('ai_features') ? <span style={{ marginLeft: '4px' }}>🔒</span> : (
+            {!hasFeature('ai_features') ? (
+              <span style={{ display: 'flex', alignItems: 'center', marginLeft: '4px' }}>
+                <FiLock style={{ color: '#faad14', marginLeft: '4px' }} />
+                <span style={{ fontSize: '9px', background: 'linear-gradient(135deg, #faad14 0%, #d48806 100%)', color: '#fff', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px', fontWeight: 'bold', lineHeight: '1', boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)' }}>PRO</span>
+              </span>
+            ) : (
               <Tag 
                 color="purple" 
                 style={{ 
@@ -1496,7 +1547,12 @@ const LeadOverview = () => {
         label: (
           <span>
             <FaWhatsapp style={{ color: '#25D366', marginRight: '6px' }} /> WhatsApp
-            {!hasFeature('whatsapp') && <span style={{ marginLeft: '4px' }}>🔒</span>}
+            {!hasFeature('whatsapp') && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '4px' }}>
+                <FiLock style={{ color: '#faad14', marginLeft: '4px' }} />
+                <span style={{ fontSize: '9px', background: 'linear-gradient(135deg, #faad14 0%, #d48806 100%)', color: '#fff', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px', fontWeight: 'bold', lineHeight: '1', boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)' }}>PRO</span>
+              </span>
+            )}
           </span>
         ),
         children: hasFeature('whatsapp') ? (
@@ -1594,15 +1650,17 @@ const LeadOverview = () => {
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  background: '#f1f5f9',
+                  background: 'rgba(250, 173, 20, 0.05)',
                   padding: '2px 10px',
                   borderRadius: '20px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #faad14',
                   gap: '8px',
-                  opacity: 0.8,
                   cursor: 'help'
                 }}>
-                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>AI SCORE LOCKED 🔒</span>
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#d48806', display: 'flex', alignItems: 'center' }}>
+                    AI SCORE LOCKED <FiLock style={{ marginLeft: '6px', fontSize: '14px' }} />
+                    <span style={{ fontSize: '9px', background: '#faad14', color: '#fff', padding: '2px 4px', borderRadius: '4px', marginLeft: '6px', fontWeight: 'bold', lineHeight: '1' }}>PRO</span>
+                  </span>
                 </div>
               </Tooltip>
             )}
@@ -1653,7 +1711,7 @@ const LeadOverview = () => {
             >
               Back
             </Button>
-            {!localLeadData?.is_converted && (
+            {(!localLeadData?.is_converted && (!hasDealPermission || hasDealPermission('create'))) && (
               <Button
                 type="primary"
                 onClick={handleConvertToDeal}

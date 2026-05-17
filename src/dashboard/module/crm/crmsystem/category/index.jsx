@@ -30,7 +30,7 @@ import "./category.scss";
 
 const { Text } = Typography;
 
-const Categories = ({ isModalOpen, setIsModalOpen }) => {
+const Categories = ({ isModalOpen, setIsModalOpen, hasPermission }) => {
   const [searchText, setSearchText] = useState("");
   const [editModalVisible, setEditModalVisible] = useState(false);
 
@@ -72,23 +72,27 @@ const Categories = ({ isModalOpen, setIsModalOpen }) => {
     );
   }, [categoriesData, searchText]);
 
-  const getDropdownItems = (record) => ({
-    items: [
-      {
+  const getDropdownItems = (record) => {
+    const items = [];
+    if (!hasPermission || hasPermission('update')) {
+      items.push({
         key: "edit",
         icon: <FiEdit2 />,
         label: "Edit",
         onClick: () => handleEdit(record),
-      },
-      {
+      });
+    }
+    if (!hasPermission || hasPermission('delete')) {
+      items.push({
         key: "delete",
         icon: <FiTrash2 />,
         label: "Delete",
         onClick: () => handleDelete(record),
         danger: true,
-      },
-    ],
-  });
+      });
+    }
+    return { items };
+  };
 
   const columns = [
     {
@@ -129,19 +133,23 @@ const Categories = ({ isModalOpen, setIsModalOpen }) => {
       key: "action",
       width: 100,
       align: "center",
-      render: (_, record) => (
-        <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={["click"]}
-          placement="bottomRight"
-        >
-          <Button
-            type="text"
-            icon={<FiMoreVertical />}
-            className="action-button"
-          />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const { items } = getDropdownItems(record);
+        if (items.length === 0) return null;
+        return (
+          <Dropdown
+            menu={{ items }}
+            trigger={["click"]}
+            placement="bottomRight"
+          >
+            <Button
+              type="text"
+              icon={<FiMoreVertical />}
+              className="action-button"
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 

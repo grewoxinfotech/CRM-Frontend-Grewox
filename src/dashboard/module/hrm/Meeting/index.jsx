@@ -24,6 +24,9 @@ import EditMeeting from './EditMeeting';
 import PageHeader from '../../../../components/PageHeader';
 import './meeting.scss';
 import dayjs from 'dayjs';
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../role/services/roleApi";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -47,6 +50,27 @@ const Meeting = () => {
         pageSize: -1,
         search: ''
       });
+
+    const loggedInUser = useSelector(selectCurrentUser);
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['extra-hrm-meeting'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [loggedInUser, userPermissions]);
+
     const [updateMeeting] = useUpdateMeetingMutation();
     const [deleteMeeting] = useDeleteMeetingMutation();
     // Create department map for easy lookup
@@ -179,14 +203,14 @@ const Meeting = () => {
                 searchText={searchText}
                 onSearch={handleSearch}
                 searchPlaceholder="Search meetings..."
-                exportMenu={{
+                exportMenu={hasPermission('export') ? {
                     items: [
                         { key: 'csv', label: 'Export as CSV', icon: <FiDownload />, onClick: () => handleExport('csv') },
                         { key: 'excel', label: 'Export as Excel', icon: <FiDownload />, onClick: () => handleExport('excel') },
                         { key: 'pdf', label: 'Export as PDF', icon: <FiDownload />, onClick: () => handleExport('pdf') }
                     ]
-                }}
-                onAdd={() => setIsCreateModalOpen(true)}
+                } : undefined}
+                onAdd={hasPermission('create') ? () => setIsCreateModalOpen(true) : undefined}
                 addText="Add Meeting"
                 mobileSearchContent={searchContent}
                 isSearchVisible={isSearchVisible}
@@ -207,6 +231,7 @@ const Meeting = () => {
                     onDelete={handleDelete}
                     onPageChange={handlePageChange}
                     onPageSizeChange={handlePageSizeChange}
+                    hasPermission={hasPermission}
                 />
             </div>
             <CreateMeeting

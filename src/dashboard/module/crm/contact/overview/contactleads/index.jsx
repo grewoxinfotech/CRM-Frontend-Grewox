@@ -78,9 +78,9 @@ const ContactLeadsList = () => {
   });
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: countries = [] } = useGetAllCountriesQuery();
-  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
-  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
+  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.client_id || loggedInUser?.id);
+  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.client_id || loggedInUser?.id);
+  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.client_id || loggedInUser?.id);
   const { data: stagesData } = useGetLeadStagesQuery();
   const [initialFormData, setInitialFormData] = useState(null);
 

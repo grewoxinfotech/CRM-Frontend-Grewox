@@ -345,7 +345,11 @@ const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
                     name="fields"
                     initialValue={[
                         { name: 'Full Name', type: 'text', required: true },
-                        { name: 'Phone Number', type: 'phone', required: true }
+                        { name: 'Phone Number', type: 'phone', required: true },
+                        { name: 'Location / Address', type: 'text', required: false },
+                        { name: 'City', type: 'text', required: false },
+                        { name: 'State', type: 'text', required: false },
+                        { name: 'Country', type: 'text', required: false }
                     ]}
                 >
                     {(fields, { add, remove }) => (

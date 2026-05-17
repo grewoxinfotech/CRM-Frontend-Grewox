@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Card, Button, Tabs, Dropdown, Typography } from 'antd';
 import { FiPlus, FiCheckSquare, FiUsers, FiPhoneCall, FiCalendar, FiClock } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
@@ -33,6 +33,21 @@ const DealFollowup = ({ deal }) => {
         pagesize: -1,
         search: '',
     });
+
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+    const userPermissions = useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    }, [userRoleData]);
+
+    const hasPermission = useCallback((action) => {
+        if (currentUser?.role_name === 'super-admin' || currentUser?.role_name === 'client') return true;
+        if (!userPermissions) return false;
+        const dealPerms = userPermissions['dashboards-deal'];
+        if (!dealPerms || dealPerms.length === 0) return false;
+        const allowed = dealPerms[0]?.permissions || [];
+        return allowed.includes(action);
+    }, [currentUser, userPermissions]);
 
     // Get subclient role ID to filter it out
     const subclientRoleId = rolesData?.message?.data?.find(role => role?.role_name === 'sub-client')?.id;
@@ -101,7 +116,7 @@ const DealFollowup = ({ deal }) => {
                     <FiPhoneCall /> Calls
                 </span>
             ),
-            children: <FollowupCallList dealId={id} users={users} />
+            children: <FollowupCallList dealId={id} users={users} hasPermission={hasPermission} />
         },
         {
             key: 'task',
@@ -110,7 +125,7 @@ const DealFollowup = ({ deal }) => {
                     <FiCheckSquare /> Tasks
                 </span>
             ),
-            children: <FollowupTaskList dealId={id} users={users} />
+            children: <FollowupTaskList dealId={id} users={users} hasPermission={hasPermission} />
         },
         {
             key: 'meeting',
@@ -119,7 +134,7 @@ const DealFollowup = ({ deal }) => {
                     <FiUsers /> Meetings
                 </span>
             ),
-            children: <FollowupMeetingList dealId={id} users={users} />
+            children: <FollowupMeetingList dealId={id} users={users} hasPermission={hasPermission} />
         }
         
     ];
@@ -160,15 +175,17 @@ const DealFollowup = ({ deal }) => {
                 <FiDownload /> Export <FiChevronDown />
               </Button>
             </Dropdown> */}
-            <Dropdown 
-                menu={{ items, onClick: handleMenuClick }}
-                placement="bottomRight"
-                trigger={['click']}
-            >
-                <Button style={{height: '40px'}} type="primary" icon={<FiPlus />}>
-                    <span className='create-new-btn'>Create New</span>
-                </Button>
-            </Dropdown>
+            {hasPermission('create') && (
+                <Dropdown 
+                    menu={{ items, onClick: handleMenuClick }}
+                    placement="bottomRight"
+                    trigger={['click']}
+                >
+                    <Button style={{height: '40px'}} type="primary" icon={<FiPlus />}>
+                        <span className='create-new-btn'>Create New</span>
+                    </Button>
+                </Dropdown>
+            )}
           </div>
         </div>
 

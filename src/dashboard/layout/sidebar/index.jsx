@@ -81,6 +81,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
 
   const shouldShowMenuItem = (item) => {
     if (isSubscriptionExpired) return ['Dashboard', 'Setting'].includes(item.title);
+    if (item.subItems && item.subItems.length === 0) return false;
     if (['Setting', 'Communication', 'Support', 'Integrations'].includes(item.title)) return true;
     if (userRole?.toLowerCase() === 'client') return true;
     if (!item.permission) return true;
@@ -143,7 +144,8 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       isDropdown: true,
       permission: 'extra-users',
       subItems: [
-        { title: "Users", icon: <FiUser />, path: "/dashboard/user-management/users", permission: "extra-users-list" }
+        { title: "Users", icon: <FiUser />, path: "/dashboard/user-management/users", permission: "extra-users-list" },
+        { title: "Role", icon: <FiShield />, path: "/dashboard/hrm/role", permission: "extra-hrm-role" }
       ].filter(item => !item.permission || checkPermission(item.permission))
     },
     {
@@ -173,14 +175,14 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       isDropdown: true,
       badge: "NEW",
       subItems: [
-        { title: "Justdial", icon: <FiGlobe />, path: "/dashboard/integrations/justdial" },
-        { title: "Indiamart", icon: <FiShoppingCart />, path: "/dashboard/integrations/indiamart" },
-        { title: "Google Meet", icon: <FiVideo />, path: "/dashboard/integrations/google-meet" },
-        { title: "Zoom Meet", icon: <FiVideo />, path: "/dashboard/integrations/zoom-meet" },
-        { title: "Meta Ads", icon: <FiTarget />, path: "/dashboard/integrations/meta-ads" },
-        { title: "WhatsApp API", icon: <FiPhone />, path: "/dashboard/settings/whatsapp" },
-        { title: "Website Webhooks", icon: <FiLink />, path: "/dashboard/integrations/webhooks" }
-      ]
+        { title: "Justdial", icon: <FiGlobe />, path: "/dashboard/integrations/justdial", permission: "dashboards-integrations-justdial" },
+        { title: "Indiamart", icon: <FiShoppingCart />, path: "/dashboard/integrations/indiamart", permission: "dashboards-integrations-indiamart" },
+        { title: "Google Meet", icon: <FiVideo />, path: "/dashboard/integrations/google-meet", permission: "dashboards-integrations-googlemeet" },
+        { title: "Zoom Meet", icon: <FiVideo />, path: "/dashboard/integrations/zoom-meet", permission: "dashboards-integrations-zoommeet" },
+        { title: "Meta Ads", icon: <FiTarget />, path: "/dashboard/integrations/meta-ads", permission: "dashboards-integrations-metaads" },
+        { title: "WhatsApp API", icon: <FiPhone />, path: "/dashboard/settings/whatsapp", permission: "dashboards-integrations-whatsapp" },
+        { title: "Website Webhooks", icon: <FiLink />, path: "/dashboard/integrations/webhooks", permission: "dashboards-integrations-webhooks" }
+      ].filter(item => !item.permission || checkPermission(item.permission))
     },
     {
       title: "Workflows",
@@ -197,7 +199,6 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       subItems: [
         { title: "Employee", icon: <FiUsers />, path: "/dashboard/hrm/employee", permission: "extra-hrm-employee" },
         { title: "PayRoll", icon: <FiDollarSign />, path: "/dashboard/hrm/payroll", permission: "extra-hrm-payroll" },
-        { title: "Role", icon: <FiShield />, path: "/dashboard/hrm/role", permission: "extra-hrm-role" },
         { title: "Branch", icon: <FiMapPin />, path: "/dashboard/hrm/branch", permission: "extra-hrm-branch" },
         { title: "Designation", icon: <FiTag />, path: "/dashboard/hrm/designation", permission: "extra-hrm-designation" },
         { title: "Department", icon: <FiGrid />, path: "/dashboard/hrm/department", permission: "extra-hrm-department" },
@@ -244,9 +245,9 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       icon: <FiHelpCircle />,
       isDropdown: true,
       subItems: [
-        { title: "Ticket", icon: <FiMessageSquare />, path: "/dashboard/support/ticket" },
-        { title: "Help Support", icon: <FiHelpCircle />, path: "/dashboard/support/help-support" }
-      ]
+        { title: "Ticket", icon: <FiMessageSquare />, path: "/dashboard/support/ticket", permission: "dashboards-support-ticket" },
+        { title: "Help Support", icon: <FiHelpCircle />, path: "/dashboard/support/help-support", permission: "dashboards-support-help" }
+      ].filter(item => !item.permission || checkPermission(item.permission))
     }
   ];
 

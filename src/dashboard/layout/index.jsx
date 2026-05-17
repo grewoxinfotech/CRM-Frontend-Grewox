@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { FiSettings } from 'react-icons/fi';
 import Header from './header';
 import Footer from './footer';
 import Sidebar from '../../components/Sidebar/Sidebar';
@@ -13,15 +14,20 @@ import { BASE_URL } from '../../config/config';
 import { leadApi } from '../module/crm/lead/services/LeadApi';
 import { settingsApi } from '../../superadmin/module/settings/services/settingsApi';
 import { useGetsubcriptionByIdQuery } from '../../superadmin/module/SubscribedUser/services/SubscribedUserApi';
+import { useGetMaintenanceQuery } from '../../superadmin/module/settings/services/maintenanceApi';
 import BrandConfig from '../../utils/brandName';
 import moment from 'moment';
 
 import FloatingAIBtn from '../../components/AISupport/FloatingAIBtn';
 import { useFirebaseNotifications } from '../../utils/useFirebaseNotifications';
 import LimitReachedModal from '../../components/LimitReachedModal';
+import AccountStatusModal from '../../components/AccountStatusModal';
+import { useLogout } from '../../hooks/useLogout';
 
 const DashboardLayout = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const location = useLocation();
     const inboxSocketRef = useRef(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1024);
@@ -170,6 +176,41 @@ const DashboardLayout = () => {
         return !!features[featureKey];
     };
 
+    // Global subscription route gate/protection
+    useEffect(() => {
+        if (isSubscriptionLoading || !subscriptionData) return;
+        if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return;
+
+        const path = location.pathname.toLowerCase();
+
+        // If subscription is expired, force redirect to settings plan page
+        if (isSubscriptionExpired && path !== '/dashboard/settings/plan') {
+            navigate('/dashboard/settings/plan');
+            return;
+        }
+        
+        // Define path-to-feature maps
+        const featureRoutes = [
+            { path: '/dashboard/crm/automation', feature: 'workflows', name: 'Automated Workflows' },
+            { path: '/dashboard/sales/revenue', feature: 'reports', name: 'Revenue Reports' },
+            { path: '/dashboard/whatsapp-chat', feature: 'whatsapp', name: 'WhatsApp Chat' },
+            { path: '/dashboard/whatsapp/broadcast', feature: 'whatsapp', name: 'WhatsApp Broadcast' },
+            { path: '/dashboard/whatsapp/messages', feature: 'whatsapp', name: 'WhatsApp Message Log' },
+            { path: '/dashboard/settings/whatsapp', feature: 'whatsapp', name: 'WhatsApp API Settings' }
+        ];
+
+        // Find match
+        const matched = featureRoutes.find(r => path.startsWith(r.path.toLowerCase()));
+        if (matched) {
+            const hasAccess = checkFeature(matched.feature);
+            if (!hasAccess) {
+                setLockedFeatureName(matched.name);
+                setUpgradeModalVisible(true);
+                navigate('/dashboard');
+            }
+        }
+    }, [location.pathname, subscriptionData, isSubscriptionLoading, userRole, isSuperAdminCompanyLogin]);
+
     const checkPermission = (moduleKey) => {
         if (['settings', 'communication', 'support'].includes(moduleKey?.toLowerCase())) return true;
         if (userRole?.toLowerCase() === 'client') return true;
@@ -180,6 +221,7 @@ const DashboardLayout = () => {
 
     const shouldShowMenuItem = (item) => {
         if (isSubscriptionExpired) return ['Dashboard', 'Setting'].includes(item.title);
+        if (item.subItems && item.subItems.length === 0) return false;
         if (['Setting', 'Communication', 'Support'].includes(item.title)) return true;
         if (userRole?.toLowerCase() === 'client') return true;
         if (!item.permission) return true;
@@ -189,11 +231,38 @@ const DashboardLayout = () => {
 
     const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
     const [lockedFeatureName, setLockedFeatureName] = useState('');
+    const handleLogout = useLogout();
+
+    const isAccountRestricted = Boolean(
+        loggedInUser?.status &&
+        ['inactive', 'suspended', 'blocked'].includes(loggedInUser.status.toLowerCase()) &&
+        userRole !== 'super-admin' &&
+        !isSuperAdminCompanyLogin
+    );
 
     const handleLockedClick = (item) => {
         setLockedFeatureName(item.title);
         setUpgradeModalVisible(true);
     };
+
+    const { data: maintenanceData, isLoading: isMaintenanceLoading } = useGetMaintenanceQuery(undefined, {
+        pollingInterval: 60000 // Check every minute
+    });
+
+    const isMaintenanceActive = React.useMemo(() => {
+        if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return false;
+        const maintenance = maintenanceData?.data;
+        if (!maintenance?.isOn) return false;
+        
+        if (maintenance.status === 'active') return true;
+        if (maintenance.status === 'scheduled' && maintenance.startDate && maintenance.endDate) {
+            const now = moment();
+            if (now.isAfter(moment(maintenance.startDate)) && now.isBefore(moment(maintenance.endDate))) {
+                return true;
+            }
+        }
+        return false;
+    }, [maintenanceData, userRole, isSuperAdminCompanyLogin]);
 
     const menuItems = React.useMemo(() => {
         const rawItems = getDashboardMenuItems(checkPermission, isSubscriptionExpired, checkFeature, userRole);
@@ -223,6 +292,99 @@ const DashboardLayout = () => {
         });
     }, [userPermissions, userRole, isSubscriptionExpired, subscriptionData, isSuperAdminCompanyLogin]);
 
+    if (isMaintenanceLoading) {
+        return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
+    }
+
+    if (isMaintenanceActive) {
+        return (
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                backgroundColor: '#f0f2f5',
+                textAlign: 'center',
+                padding: '24px'
+            }}>
+                <div style={{
+                    background: 'white',
+                    padding: '40px',
+                    borderRadius: '16px',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                    maxWidth: '600px',
+                    width: '100%'
+                }}>
+                    <div style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
+                        background: '#e6f7ff',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        margin: '0 auto 24px',
+                        animation: 'pulse 2s infinite'
+                    }}>
+                        <FiSettings size={40} color="#1890ff" style={{ animation: 'spin 4s linear infinite' }} />
+                    </div>
+                    <h1 style={{ fontSize: '32px', marginBottom: '16px', color: '#1f2937', fontWeight: 'bold' }}>
+                        {maintenanceData?.data?.title || 'System Maintenance'}
+                    </h1>
+                    <p style={{ fontSize: '18px', color: '#6b7280', lineHeight: '1.6', marginBottom: '32px' }}>
+                        {maintenanceData?.data?.message || 'The platform is currently undergoing improvements and regular maintenance. Please check back later or contact support if you need immediate assistance.'}
+                    </p>
+                    <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', alignItems: 'center' }}>
+                        <a
+                            href="mailto:support@grewox.com"
+                            style={{
+                                background: '#f3f4f6',
+                                color: '#374151',
+                                border: '1px solid #e5e7eb',
+                                padding: '12px 32px',
+                                borderRadius: '8px',
+                                fontSize: '16px',
+                                cursor: 'pointer',
+                                fontWeight: '500',
+                                textDecoration: 'none',
+                                transition: 'all 0.3s'
+                            }}
+                            onMouseOver={(e) => { e.target.style.background = '#e5e7eb'; e.target.style.color = '#111827'; }}
+                            onMouseOut={(e) => { e.target.style.background = '#f3f4f6'; e.target.style.color = '#374151'; }}
+                        >
+                            Contact Support
+                        </a>
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                background: '#1890ff',
+                                color: 'white',
+                                border: 'none',
+                                padding: '12px 32px',
+                                borderRadius: '8px',
+                                fontSize: '16px',
+                                cursor: 'pointer',
+                                fontWeight: '500',
+                                transition: 'background 0.3s'
+                            }}
+                            onMouseOver={(e) => e.target.style.background = '#096dd9'}
+                            onMouseOut={(e) => e.target.style.background = '#1890ff'}
+                        >
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+                <style>
+                    {`
+                        @keyframes spin { 100% { transform: rotate(360deg); } }
+                        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(24, 144, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(24, 144, 255, 0); } }
+                    `}
+                </style>
+            </div>
+        );
+    }
+
     return (
         <div className={`dashboard-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
             <Sidebar
@@ -250,6 +412,13 @@ const DashboardLayout = () => {
                 onCancel={() => setUpgradeModalVisible(false)}
                 title={`${lockedFeatureName} Locked`}
                 message={`The ${lockedFeatureName} feature is not included in your current plan. Upgrade now to unlock automated messaging and advanced features!`}
+            />
+
+            <AccountStatusModal
+                visible={isAccountRestricted}
+                status={loggedInUser?.status}
+                userRole={userRole}
+                onLogout={handleLogout}
             />
         </div>
     );

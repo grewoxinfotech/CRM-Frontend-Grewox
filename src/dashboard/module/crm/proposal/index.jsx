@@ -15,6 +15,8 @@ import CreateProposal from './CreateProposal';
 import ProposalList from './ProposalList';
 import { useGetAllProposalsQuery, useDeleteProposalMutation } from './services/proposalApi';
 import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import PageHeader from "../../../../components/PageHeader";
 
 const Proposal = () => {
@@ -34,6 +36,26 @@ const Proposal = () => {
     const [searchText, setSearchText] = useState('');
     const [isSearchVisible, setIsSearchVisible] = useState(false);
 
+    const currentUser = useSelector(selectCurrentUser);
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!currentUser) return false;
+        if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-proposal'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [currentUser, userPermissions]);
+
     const handleExport = async (type) => {
         message.info(`Exporting as ${type.toUpperCase()}...`);
     };
@@ -51,7 +73,7 @@ const Proposal = () => {
                 searchText={searchText}
                 onSearch={setSearchText}
                 searchPlaceholder="Search proposals..."
-                onAdd={() => { setSelectedProposal(null); setIsEditing(false); setIsCreateModalVisible(true); }}
+                onAdd={hasPermission('create') ? () => { setSelectedProposal(null); setIsEditing(false); setIsCreateModalVisible(true); } : undefined}
                 addText="Create Proposal"
                 isSearchVisible={isSearchVisible}
                 onSearchVisibleChange={setIsSearchVisible}
@@ -81,12 +103,13 @@ const Proposal = () => {
                     }}
                     onView={(p) => console.log('View proposal:', p)}
                     searchText={searchText}
+                    hasPermission={hasPermission}
                 />
             </Card>
 
             <CreateProposal
                 open={isCreateModalVisible}
-                onCancel={() => { setIsCreateModalOpen(false); setSelectedProposal(null); }}
+                onCancel={() => { setIsCreateModalVisible(false); setSelectedProposal(null); }}
                 initialValues={selectedProposal}
                 isEditing={isEditing}
             />

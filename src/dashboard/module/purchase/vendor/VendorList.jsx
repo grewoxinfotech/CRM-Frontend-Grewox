@@ -11,7 +11,8 @@ const VendorList = ({
     loading,
     data,
     pagination,
-    onChange
+    onChange,
+    hasPermission
 }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
@@ -78,31 +79,32 @@ const VendorList = ({
             key: "actions",
             width: 80,
             fixed: 'right',
-            render: (_, record) => (
-                <Dropdown
-                    menu={{
-                        items: [
-                            { key: 'view', icon: <FiEye />, label: 'View', onClick: () => {} },
-                            { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
-                            { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) }
-                        ]
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                >
-                    <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-                </Dropdown>
-            ),
+            render: (_, record) => {
+                const items = [
+                    { key: 'view', icon: <FiEye />, label: 'View', onClick: () => {} },
+                ];
+                if (!hasPermission || hasPermission('update')) {
+                    items.push({ key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) });
+                }
+                if (!hasPermission || hasPermission('delete')) {
+                    items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) });
+                }
+                return (
+                    <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+                        <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+                    </Dropdown>
+                );
+            },
         },
     ];
 
     return (
         <div className="vendor-list-container">
             <Table
-                rowSelection={{
+                rowSelection={(!hasPermission || hasPermission('delete')) ? {
                     selectedRowKeys,
                     onChange: setSelectedRowKeys,
-                }}
+                } : undefined}
                 columns={columns}
                 dataSource={data?.data || []}
                 rowKey="id"

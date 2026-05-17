@@ -12,7 +12,8 @@ const TrainingList = ({
     onView,
     onDelete,
     onPageChange,
-    onPageSizeChange
+    onPageSizeChange,
+    hasPermission
 }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
@@ -38,6 +39,18 @@ const TrainingList = ({
                 </Space>
             );
         } catch (e) { return '-'; }
+    };
+
+    const getDropdownItems = (record) => {
+        const items = [];
+        items.push(<Menu.Item key="view" icon={<FiEye size={14} />} onClick={() => onView?.(record)}>View</Menu.Item>);
+        if (!hasPermission || hasPermission('update')) {
+            items.push(<Menu.Item key="edit" icon={<FiEdit2 size={14} />} onClick={() => onEdit?.(record)}>Edit</Menu.Item>);
+        }
+        if (!hasPermission || hasPermission('delete')) {
+            items.push(<Menu.Item key="delete" danger icon={<FiTrash2 size={14} />} onClick={() => onDelete?.(record.id)}>Delete</Menu.Item>);
+        }
+        return items;
     };
 
     const columns = [
@@ -80,20 +93,17 @@ const TrainingList = ({
             width: 60,
             fixed: 'right',
             align: 'center',
-            render: (_, record) => (
-                <Dropdown
-                    overlay={
-                        <Menu>
-                            <Menu.Item key="view" icon={<FiEye size={14} />} onClick={() => onView?.(record)}>View</Menu.Item>
-                            <Menu.Item key="edit" icon={<FiEdit2 size={14} />} onClick={() => onEdit?.(record)}>Edit</Menu.Item>
-                            <Menu.Item key="delete" danger icon={<FiTrash2 size={14} />} onClick={() => onDelete?.(record.id)}>Delete</Menu.Item>
-                        </Menu>
-                    }
-                    trigger={['click']}
-                >
-                    <Button type="text" icon={<FiMoreVertical size={16} />} size="small" />
-                </Dropdown>
-            ),
+            render: (_, record) => {
+                const items = getDropdownItems(record);
+                return (
+                    <Dropdown
+                        overlay={<Menu>{items}</Menu>}
+                        trigger={['click']}
+                    >
+                        <Button type="text" icon={<FiMoreVertical size={16} />} size="small" />
+                    </Dropdown>
+                );
+            },
         },
     ];
 

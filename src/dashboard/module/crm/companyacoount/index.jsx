@@ -18,6 +18,7 @@ import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 import { useGetCategoriesQuery } from "../crmsystem/souce/services/SourceApi";
 import { useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import PageHeader from "../../../../components/PageHeader";
 
 const CompanyAccount = () => {
@@ -30,6 +31,25 @@ const CompanyAccount = () => {
 
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteCompanyAccount] = useDeleteCompanyAccountMutation();
+
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+    if (!loggedInUser) return false;
+    if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const perms = userPermissions['dashboards-crm-company-account'];
+    if (!perms || perms.length === 0) return false;
+    return (perms[0]?.permissions || []).includes(action);
+  }, [loggedInUser, userPermissions]);
 
   const { data: companyAccountsResponse = { data: [], pagination: {} }, isLoading: isCompanyAccountsLoading } =
     useGetCompanyAccountsQuery({
@@ -63,7 +83,7 @@ const CompanyAccount = () => {
         searchText={searchText}
         onSearch={handleSearchChange}
         searchPlaceholder="Search companies..."
-        onAdd={() => { setSelectedCompany(null); setIsCreateModalOpen(true); }}
+        onAdd={hasPermission('create') ? () => { setSelectedCompany(null); setIsCreateModalOpen(true); } : undefined}
         addText="Create Company"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
@@ -97,6 +117,7 @@ const CompanyAccount = () => {
           countries={countries}
           onSearchChange={handleSearchChange}
           onPaginationChange={(page, pageSize) => setPagination({ page, pageSize })}
+          hasPermission={hasPermission}
         />
       </Card>
 

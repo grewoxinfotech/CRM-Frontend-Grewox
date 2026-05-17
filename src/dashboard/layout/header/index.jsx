@@ -1,18 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Badge, Dropdown, Avatar, Tooltip, Space, List, Typography } from 'antd';
+import { Input, Badge, Dropdown, Avatar, Tooltip, Space, List, Typography, Button } from 'antd';
 import {
     FiBell,
     FiSearch,
     FiUser,
     FiLogOut,
     FiArrowRight,
-    FiMenu
+    FiMenu,
+    FiZap
 } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../auth/services/authSlice';
+import { selectCurrentUser, selectUserRole } from '../../../auth/services/authSlice';
 import { useLogout } from '../../../hooks/useLogout';
 import { useNavigate } from 'react-router-dom';
 import Notifications from '../../../common/notifacations';
+import moment from 'moment';
+import { useGetsubcriptionByIdQuery } from '../../../superadmin/module/SubscribedUser/services/SubscribedUserApi';
 import './header.scss';
 
 const { Text } = Typography;
@@ -28,8 +31,35 @@ const Header = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [showResults, setShowResults] = useState(false);
     const user = useSelector(selectCurrentUser);
+    const userRole = useSelector(selectUserRole);
     const handleLogout = useLogout();
     const navigate = useNavigate();
+
+    const isSuperAdminCompanyLogin = localStorage.getItem('isSuperAdminCompanyLogin') === 'true';
+    const showUpgradeBtn = userRole !== 'super-admin' && !isSuperAdminCompanyLogin;
+
+    const subscriptionId = user?.client_plan_id;
+    const shouldFetchSubscription = subscriptionId && userRole !== 'super-admin' && !isSuperAdminCompanyLogin;
+    
+    const { data: subscriptionData } = useGetsubcriptionByIdQuery(subscriptionId, {
+      skip: !shouldFetchSubscription
+    });
+
+    const subscriptionDaysLeft = React.useMemo(() => {
+      if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return null;
+      if (!subscriptionData?.data?.end_date) return null;
+      
+      const end = moment(subscriptionData.data.end_date).startOf('day');
+      const now = moment().startOf('day');
+      const days = end.diff(now, 'days');
+      return days >= 0 ? days : null;
+    }, [subscriptionData, userRole, isSuperAdminCompanyLogin]);
+
+    const isSubscriptionExpired = React.useMemo(() => {
+      if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return false;
+      if (!subscriptionData?.data?.end_date) return false;
+      return moment(subscriptionData.data.end_date).isBefore(moment());
+    }, [subscriptionData, userRole, isSuperAdminCompanyLogin]);
 
     // Define searchable items
     const searchableItems = [
@@ -173,8 +203,58 @@ const Header = () => {
 
     return (
         <header className="dashboard-header">
-            <div className="header-left">
+            <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <h1>Dashboard</h1>
+                {userRole !== 'super-admin' && !isSuperAdminCompanyLogin && (isSubscriptionExpired || (subscriptionDaysLeft !== null && subscriptionDaysLeft <= 7)) && (
+                    <div className="subscription-header-banner" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '4px 12px',
+                        background: isSubscriptionExpired 
+                            ? 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)' 
+                            : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                        border: isSubscriptionExpired 
+                            ? '1px solid #fecdd3' 
+                            : '1px solid #fde68a',
+                        borderRadius: '20px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                    }}>
+                        <span style={{ fontSize: '14px', display: 'flex', alignItems: 'center' }}>
+                            {isSubscriptionExpired ? '🚨' : '⚠️'}
+                        </span>
+                        <Text strong style={{ 
+                            fontSize: '11px', 
+                            color: isSubscriptionExpired ? '#be123c' : '#b45309',
+                            margin: 0
+                        }}>
+                            {isSubscriptionExpired 
+                                ? 'Your plan has expired!' 
+                                : subscriptionDaysLeft === 0 
+                                    ? 'Your plan expires today!' 
+                                    : `Your plan expires in ${subscriptionDaysLeft} days!`}
+                        </Text>
+                        <Button 
+                            type="primary" 
+                            size="small" 
+                            onClick={() => navigate('/dashboard/settings/plan')}
+                            style={{
+                                background: isSubscriptionExpired ? '#e11d48' : '#d97706',
+                                borderColor: isSubscriptionExpired ? '#e11d48' : '#d97706',
+                                borderRadius: '12px',
+                                fontSize: '10px',
+                                height: '20px',
+                                padding: '0 8px',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                lineHeight: 1
+                            }}
+                        >
+                            Upgrade Now
+                        </Button>
+                    </div>
+                )}
             </div>
 
             <div className="header-center">
@@ -225,6 +305,31 @@ const Header = () => {
 
             <div className="header-right">
                 <div className="header-actions">
+                    {showUpgradeBtn && (
+                        <Button
+                            type="primary"
+                            icon={<FiZap style={{ color: '#fff', fontSize: '14px' }} />}
+                            onClick={() => navigate('/dashboard/settings/plan')}
+                            style={{
+                                background: 'linear-gradient(135deg, #faad14 0%, #d48806 100%)',
+                                border: 'none',
+                                borderRadius: '20px',
+                                fontWeight: '600',
+                                fontSize: '13px',
+                                color: '#fff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                height: '32px',
+                                padding: '0 16px',
+                                boxShadow: '0 2px 8px rgba(250, 173, 20, 0.4)',
+                                transition: 'all 0.3s ease',
+                            }}
+                            className="upgrade-btn-header"
+                        >
+                            <span className="upgrade-text">Upgrade</span>
+                        </Button>
+                    )}
                     <Notifications />
                     <div className="header-divider" />
                     <Dropdown

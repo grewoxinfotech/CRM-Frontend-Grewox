@@ -19,6 +19,8 @@ import {
   useDeleteDebitNoteMutation,
 } from "./services/debitnoteApi";
 import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import PageHeader from "../../../../components/PageHeader";
 
 const getCompanyId = (state) => {
@@ -28,6 +30,25 @@ const getCompanyId = (state) => {
 
 const DebitNote = () => {
   const companyId = useSelector(getCompanyId);
+  const currentUser = useSelector(selectCurrentUser);
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+  });
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) { return null; }
+  }, [userRoleData]);
+  const hasPermission = React.useCallback((action) => {
+    if (!currentUser) return false;
+    if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const perms = userPermissions['dashboards-purchase-debit-note'];
+    if (!perms || perms.length === 0) return false;
+    return (perms[0]?.permissions || []).includes(action);
+  }, [currentUser, userPermissions]);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
@@ -66,7 +87,7 @@ const DebitNote = () => {
         searchText={searchText}
         onSearch={setSearchText}
         searchPlaceholder="Search debit notes..."
-        onAdd={() => setIsCreateModalVisible(true)}
+        onAdd={hasPermission('create') ? () => setIsCreateModalVisible(true) : undefined}
         addText="Add Debit Note"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
@@ -109,6 +130,7 @@ const DebitNote = () => {
           loading={isLoading}
           pagination={pagination}
           onChange={(newPagination) => setPagination(prev => ({ ...prev, current: newPagination.current, pageSize: newPagination.pageSize }))}
+          hasPermission={hasPermission}
         />
       </Card>
 

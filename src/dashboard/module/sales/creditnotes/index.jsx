@@ -19,6 +19,9 @@ import {
   useCreateCreditNoteMutation,
   useUpdateCreditNoteMutation,
 } from "./services/creditNoteApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import PageHeader from "../../../../components/PageHeader";
 
 const CreditNotes = () => {
@@ -29,6 +32,31 @@ const CreditNotes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(false);
+
+  const currentUser = useSelector(selectCurrentUser);
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+  });
+
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) {
+      return null;
+    }
+  }, [userRoleData]);
+
+  const hasPermission = React.useCallback((action) => {
+    if (!currentUser) return false;
+    if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const modulePerms = userPermissions['dashboards-sales-credit-notes'];
+    if (!modulePerms || modulePerms.length === 0) return false;
+    const allowed = modulePerms[0]?.permissions || [];
+    return allowed.includes(action);
+  }, [currentUser, userPermissions]);
 
   const { data: creditNotesData, isLoading } = useGetCreditNotesQuery({
     page: currentPage,
@@ -84,7 +112,7 @@ const CreditNotes = () => {
         searchText={searchText}
         onSearch={(val) => { setSearchText(val); setCurrentPage(1); }}
         searchPlaceholder="Search credit notes..."
-        onAdd={() => setIsCreateModalOpen(true)}
+        onAdd={hasPermission('create') ? () => setIsCreateModalOpen(true) : undefined}
         addText="Add Credit Note"
         exportMenu={{
           items: [
@@ -114,6 +142,7 @@ const CreditNotes = () => {
             onChange: (page) => setCurrentPage(page),
             onSizeChange: (size) => { setPageSize(size); setCurrentPage(1); }
           }}
+          hasPermission={hasPermission}
         />
       </Card>
 

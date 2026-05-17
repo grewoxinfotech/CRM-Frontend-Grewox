@@ -31,7 +31,8 @@ const InvoiceList = ({
   onEdit,
   onView,
   searchText = "",
-  pagination = {}
+  pagination = {},
+  hasPermission
 }) => {
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -119,30 +120,51 @@ const InvoiceList = ({
       key: "actions",
       fixed: 'right',
       width: 80,
-      render: (_, record) => (
-        <Dropdown
-          overlay={
-            <Menu>
-              <Menu.Item key="view" icon={<FiEye />} onClick={() => onView(record)}>View Details</Menu.Item>
-              <Menu.Item key="edit" icon={<FiEdit2 />} onClick={() => onEdit(record)}>Edit</Menu.Item>
-              <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => handleDelete(record.id)}>Delete</Menu.Item>
-            </Menu>
-          }
-          trigger={['click']}
-        >
-          <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const items = [
+          {
+            key: "view",
+            icon: <FiEye />,
+            label: "View Details",
+            onClick: () => onView(record),
+          },
+        ];
+
+        if (!hasPermission || hasPermission('update')) {
+          items.push({
+            key: "edit",
+            icon: <FiEdit2 />,
+            label: "Edit",
+            onClick: () => onEdit(record),
+          });
+        }
+
+        if (!hasPermission || hasPermission('delete')) {
+          items.push({
+            key: "delete",
+            icon: <FiTrash2 />,
+            label: "Delete",
+            danger: true,
+            onClick: () => handleDelete(record.id),
+          });
+        }
+
+        return (
+          <Dropdown menu={{ items }} trigger={['click']}>
+            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+          </Dropdown>
+        );
+      },
     },
   ];
 
   return (
     <div className="invoice-list-container">
       <Table
-        rowSelection={{
+        rowSelection={(!hasPermission || hasPermission('delete')) ? {
           selectedRowKeys,
           onChange: setSelectedRowKeys,
-        }}
+        } : undefined}
         columns={columns}
         dataSource={filteredInvoices}
         loading={loading}

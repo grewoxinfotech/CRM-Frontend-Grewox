@@ -24,6 +24,7 @@ import {
 } from '../settings/services/settingsApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser, selectCurrentToken } from '../../../auth/services/authSlice';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { FiMoreVertical } from 'react-icons/fi';
 
 import { io } from 'socket.io-client';
@@ -53,6 +54,25 @@ export default function WhatsAppInbox() {
     const messagesEndRef = useRef(null);
     const currentUser = useSelector(selectCurrentUser);
     const socketRef = useRef(null);
+
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!currentUser) return false;
+        if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-communication'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [currentUser, userPermissions]);
 
     const formatRelativeTime = (dateString) => {
         if (!dateString) return '';
@@ -539,12 +559,14 @@ export default function WhatsAppInbox() {
                                     value={q}
                                     onChange={(e) => setQ(e.target.value)}
                                 />
-                                <PlusOutlined
-                                    className="plus-icon"
-                                    title="Start New Chat"
-                                    style={{ cursor: 'pointer', marginLeft: '10px', color: '#1890ff', fontSize: '18px' }}
-                                    onClick={() => setIsNewChatModalOpen(true)}
-                                />
+                                {hasPermission('create') && (
+                                    <PlusOutlined
+                                        className="plus-icon"
+                                        title="Start New Chat"
+                                        style={{ cursor: 'pointer', marginLeft: '10px', color: '#1890ff', fontSize: '18px' }}
+                                        onClick={() => setIsNewChatModalOpen(true)}
+                                    />
+                                )}
                                 <TeamOutlined
                                     className="team-icon"
                                     title="Create New Group"
@@ -565,14 +587,16 @@ export default function WhatsAppInbox() {
                                     >
                                         Broadcast
                                     </Button>
-                                    <Button 
-                                        size="small"
-                                        type="primary" 
-                                        icon={<PlusOutlined />} 
-                                        onClick={() => setIsNewChatModalVisible(true)}
-                                    >
-                                        New Chat
-                                    </Button>
+                                    {hasPermission('create') && (
+                                        <Button 
+                                            size="small"
+                                            type="primary" 
+                                            icon={<PlusOutlined />} 
+                                            onClick={() => setIsNewChatModalOpen(true)}
+                                        >
+                                            New Chat
+                                        </Button>
+                                    )}
                                 </Space>
                             }
                         >
@@ -725,41 +749,44 @@ export default function WhatsAppInbox() {
 
                             <div className="chat-footer">
                                 <div className="chat-input-wrapper">
-                                    <div className="input-actions">
-                                        <Button
-                                            type="text"
-                                            icon={<FileTextOutlined />}
-                                            className="action-icon"
-                                            title="Send Template"
-                                            onClick={() => setIsTemplateModalOpen(true)}
-                                        />
-                                        <div className="media-upload-wrapper" style={{ display: 'inline-block' }}>
-                                            <input
-                                                type="file"
-                                                id="whatsapp-media-upload"
-                                                style={{ display: 'none' }}
-                                                onChange={(e) => {
-                                                    if (e.target.files?.[0]) {
-                                                        handleMediaUpload(e.target.files[0]);
-                                                        e.target.value = ''; // Reset for same file selection
-                                                    }
-                                                }}
+                                    {hasPermission('create') && (
+                                        <div className="input-actions">
+                                            <Button
+                                                type="text"
+                                                icon={<FileTextOutlined />}
+                                                className="action-icon"
+                                                title="Send Template"
+                                                onClick={() => setIsTemplateModalOpen(true)}
                                             />
-                                            <Tooltip title="Upload Media (Images: 5MB, Video: 16MB, Docs: 25MB)">
-                                                <Button
-                                                    type="text"
-                                                    icon={<PaperClipOutlined />}
-                                                    className="action-icon"
-                                                    onClick={() => document.getElementById('whatsapp-media-upload').click()}
+                                            <div className="media-upload-wrapper" style={{ display: 'inline-block' }}>
+                                                <input
+                                                    type="file"
+                                                    id="whatsapp-media-upload"
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => {
+                                                        if (e.target.files?.[0]) {
+                                                            handleMediaUpload(e.target.files[0]);
+                                                            e.target.value = ''; // Reset for same file selection
+                                                        }
+                                                    }}
                                                 />
-                                            </Tooltip>
+                                                <Tooltip title="Upload Media (Images: 5MB, Video: 16MB, Docs: 25MB)">
+                                                    <Button
+                                                        type="text"
+                                                        icon={<PaperClipOutlined />}
+                                                        className="action-icon"
+                                                        onClick={() => document.getElementById('whatsapp-media-upload').click()}
+                                                    />
+                                                </Tooltip>
+                                            </div>
+                                            <Button type="text" icon={<ReloadOutlined />} className="action-icon" onClick={() => refetchMsgs()} />
                                         </div>
-                                        <Button type="text" icon={<ReloadOutlined />} className="action-icon" onClick={() => refetchMsgs()} />
-                                    </div>
+                                    )}
                                     <Input.TextArea
                                         autoSize={{ minRows: 1, maxRows: 4 }}
                                         placeholder="Type a message"
                                         className="message-input"
+                                        disabled={!hasPermission('create')}
                                         value={draft}
                                         onChange={(e) => setDraft(e.target.value)}
                                         onPressEnter={(e) => {
@@ -773,7 +800,7 @@ export default function WhatsAppInbox() {
                                         type="primary"
                                         shape="circle"
                                         icon={<SendOutlined />}
-                                        disabled={!canSend}
+                                        disabled={!canSend || !hasPermission('create')}
                                         loading={isSending}
                                         onClick={handleSendMessage}
                                         className="send-button"

@@ -23,6 +23,7 @@ import { useGetDealsQuery } from '../../deal/services/DealApi';
 import { useGetSourcesQuery, useGetCategoriesQuery } from '../../crmsystem/souce/services/SourceApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
+import { useGetRolesQuery } from "../../../hrm/role/services/roleApi";
 import './companyoverview.scss';
 import EditCompanyAccount from '../EditCompanyAccount';
 
@@ -34,24 +35,41 @@ const CompanyDetails = () => {
     const { data: lead } = useGetLeadsQuery();
     const { data: deal } = useGetDealsQuery();
     const loggedInUser = useSelector(selectCurrentUser);
-    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.client_id || loggedInUser?.id);
     const [editModalVisible, setEditModalVisible] = useState(false);
 
-
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-crm-company-account'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [loggedInUser, userPermissions]);
     const company = companyAccountsResponse;
 
     const sources = sourcesData?.data || [];
 
-    const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
+    const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.client_id || loggedInUser?.id);
     const categories = categoriesData?.data || [];
 
     const getCategoryName = (categoryId) => {
         const category = categories.find((c) => c.id === categoryId);
-        return category?.name || "N/A";
+        return category?.name || categoryId || "N/A";
     };
 
     const leadsData = lead?.data || [];
-    const dealsData = deal || [];
+    const dealsData = deal?.data || [];
 
     // Get all leads and separate converted/non-converted
     const allLeads = leadsData?.filter(lead => lead.company_id === accountId) || [];
@@ -70,7 +88,7 @@ const CompanyDetails = () => {
 
     const getSourceName = (sourceId) => {
         const source = sources.find((s) => s.id === sourceId);
-        return source?.name || "N/A";
+        return source?.name || sourceId || "N/A";
     };
 
     if (!company) return <div>Company not found</div>;
@@ -86,6 +104,7 @@ const CompanyDetails = () => {
                         <div className="profile-info">
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 <h2 className="company-name">{company?.company_name || 'Company Name'}</h2>
+                                {(!hasPermission || hasPermission('update')) && (
                                 <Button
                                     type="primary"
                                     icon={<FiEdit2 />}
@@ -105,6 +124,7 @@ const CompanyDetails = () => {
                                 >
                                     Edit
                                 </Button>
+                                )}
                             </div>
                             <div className="contact-name">
                                 <FiMail className="icon" />

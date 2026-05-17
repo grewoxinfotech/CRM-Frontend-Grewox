@@ -14,7 +14,7 @@ import { useGetLeadsQuery } from "../../lead/services/LeadApi";
 
 const { Text } = Typography;
 
-const LeadStages = ({ isModalOpen, setIsModalOpen }) => {
+const LeadStages = ({ isModalOpen, setIsModalOpen, hasPermission }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState(null);
 
@@ -59,6 +59,17 @@ const LeadStages = ({ isModalOpen, setIsModalOpen }) => {
         }
       },
     });
+  };
+
+  const getDropdownItems = (record) => {
+    const items = [];
+    if (!hasPermission || hasPermission('update')) {
+      items.push({ key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => handleEdit(record) });
+    }
+    if (!hasPermission || hasPermission('delete')) {
+      items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record) });
+    }
+    return items;
   };
 
   const columns = [
@@ -112,20 +123,19 @@ const LeadStages = ({ isModalOpen, setIsModalOpen }) => {
       key: 'actions',
       width: 80,
       fixed: 'right',
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: [
-              { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => handleEdit(record) },
-              { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record) }
-            ]
-          }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const items = getDropdownItems(record);
+        if (items.length === 0) return null;
+        return (
+          <Dropdown
+            menu={{ items }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+          </Dropdown>
+        );
+      },
     },
   ];
 

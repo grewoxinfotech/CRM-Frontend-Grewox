@@ -9,6 +9,9 @@ import { useDeleteInterviewMutation, useGetAllInterviewsQuery } from './services
 import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
 import { useGetAllJobsQuery } from '../jobs/services/jobApi';
 import PageHeader from '../../../../components/PageHeader';
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../role/services/roleApi";
 
 const { Title, Text } = Typography;
 
@@ -22,6 +25,26 @@ const Interviews = () => {
     const { data: jobApplications } = useGetAllJobApplicationsQuery();
     const [deleteInterview] = useDeleteInterviewMutation();
     const { data: jobsData } = useGetAllJobsQuery();
+
+    const loggedInUser = useSelector(selectCurrentUser);
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['extra-hrm-jobs-interview'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [loggedInUser, userPermissions]);
 
     const handleDateSelect = (date) => {
         setSelectedDate(date);
@@ -127,7 +150,7 @@ const Interviews = () => {
                     { title: "Job" },
                     { title: "Interviews" },
                 ]}
-                onAdd={() => setIsModalVisible(true)}
+                onAdd={hasPermission('create') ? () => setIsModalVisible(true) : undefined}
                 addText="Schedule Interview"
             />
 
@@ -172,13 +195,15 @@ const Interviews = () => {
                                                         </Tag>
                                                     </div>
                                                 </div>
-                                                <Button
-                                                    type="text"
-                                                    danger
-                                                    icon={<FiTrash2 size={14} />}
-                                                    onClick={() => handleDelete(interview.id)}
-                                                    className="delete-button"
-                                                />
+                                                {(!hasPermission || hasPermission('delete')) && (
+                                                    <Button
+                                                        type="text"
+                                                        danger
+                                                        icon={<FiTrash2 size={14} />}
+                                                        onClick={() => handleDelete(interview.id)}
+                                                        className="delete-button"
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     );

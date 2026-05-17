@@ -7,6 +7,9 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import './taskcalender.scss';
 import CreateTaskCalendar from './CreateTaskCalender';
 import { useGetAllTaskCalendarEventsQuery, useDeleteTaskCalendarEventMutation } from './services/taskCalender';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import PageHeader from '../../../../components/PageHeader';
 
 dayjs.extend(isSameOrAfter);
@@ -38,6 +41,26 @@ const TaskCalendarPage = () => {
 
     const { data: calendarTasks, isLoading } = useGetAllTaskCalendarEventsQuery();
     const [deleteTaskCalendarEvent] = useDeleteTaskCalendarEventMutation();
+
+    const currentUser = useSelector(selectCurrentUser);
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!currentUser) return false;
+        if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-TaskCalendar'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [currentUser, userPermissions]);
 
     useEffect(() => {
         if (calendarTasks) {
@@ -130,7 +153,7 @@ const TaskCalendarPage = () => {
                     { title: "CRM" },
                     { title: "Task Calendar" },
                 ]}
-                onAdd={() => setIsModalVisible(true)}
+                onAdd={hasPermission('create') ? () => setIsModalVisible(true) : undefined}
                 addText="Create Task"
             />
 
@@ -168,13 +191,15 @@ const TaskCalendarPage = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <Button
-                                                type="text"
-                                                danger
-                                                icon={<FiTrash2 size={14} />}
-                                                onClick={() => handleDeleteTask(task.id)}
-                                                className="delete-button"
-                                            />
+                                            {(!hasPermission || hasPermission('delete')) && (
+                                                <Button
+                                                    type="text"
+                                                    danger
+                                                    icon={<FiTrash2 size={14} />}
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                                                    className="delete-button"
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 ))}

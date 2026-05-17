@@ -74,6 +74,7 @@ import { storageApi } from "../superadmin/module/storage/services/storageApi";
 import { paymentGatewayApi } from "../superadmin/module/settings/payment-gateway/services/paymentGatewayApi";
 import { supportAiApi } from "../components/AISupport/services/supportAiApi";
 import { automationApi } from "../dashboard/module/crm/automation/services/automationApi";
+import { maintenanceApi } from "../superadmin/module/settings/services/maintenanceApi";
 
 import { RESET_STATE, RESET_API_STATE } from './actions';
 
@@ -198,6 +199,7 @@ const rootReducer = (state, action) => {
     [paymentGatewayApi.reducerPath]: paymentGatewayApi.reducer,
     [supportAiApi.reducerPath]: supportAiApi.reducer,
     [automationApi.reducerPath]: automationApi.reducer,
+    [maintenanceApi.reducerPath]: maintenanceApi.reducer,
 
   })(state, action);
 };
@@ -285,7 +287,8 @@ export const store = configureStore({
       .concat(storageApi.middleware)
       .concat(paymentGatewayApi.middleware)
       .concat(supportAiApi.middleware)
-      .concat(automationApi.middleware),
+      .concat(automationApi.middleware)
+      .concat(maintenanceApi.middleware),
 
 });
 

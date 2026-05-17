@@ -34,6 +34,7 @@ import {
   useUpdateInvoiceMutation,
 } from "./services/invoiceApi";
 import { useGetDealsQuery } from "../../crm/deal/services/DealApi";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import PageHeader from "../../../../components/PageHeader";
 
 const Invoice = () => {
@@ -47,6 +48,30 @@ const Invoice = () => {
   const [pageSize, setPageSize] = useState(10);
   const loggedInUser = useSelector(selectCurrentUser);
   const id = loggedInUser?.id;
+
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) {
+      return null;
+    }
+  }, [userRoleData]);
+
+  const hasPermission = React.useCallback((action) => {
+    if (!loggedInUser) return false;
+    if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const modulePerms = userPermissions['dashboards-sales-invoice'];
+    if (!modulePerms || modulePerms.length === 0) return false;
+    const allowed = modulePerms[0]?.permissions || [];
+    return allowed.includes(action);
+  }, [loggedInUser, userPermissions]);
 
   const { data: deals } = useGetDealsQuery({ page: 1, pageSize: -1, search: '' });
   const { data: invoicesData, isLoading: isInvoiceLoading } = useGetInvoicesQuery({
@@ -125,7 +150,7 @@ const Invoice = () => {
         searchText={searchText}
         onSearch={setSearchText}
         searchPlaceholder="Search invoices..."
-        onAdd={() => setIsCreateModalOpen(true)}
+        onAdd={hasPermission('create') ? () => setIsCreateModalOpen(true) : undefined}
         addText="Create Invoice"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
@@ -159,6 +184,7 @@ const Invoice = () => {
             onChange: setCurrentPage,
             onSizeChange: setPageSize
           }}
+          hasPermission={hasPermission}
         />
       </Card>
 

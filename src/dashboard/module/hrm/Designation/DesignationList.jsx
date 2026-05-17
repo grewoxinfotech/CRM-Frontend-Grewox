@@ -15,7 +15,7 @@ import dayjs from 'dayjs';
 
 const { Text } = Typography;
 
-const DesignationList = ({ onEdit, searchText, loading: parentLoading }) => {
+const DesignationList = ({ onEdit, searchText, loading: parentLoading, hasPermission }) => {
     const { data: response = {}, isLoading: localLoading } = useGetAllDesignationsQuery({
         search: searchText
     });
@@ -49,6 +49,17 @@ const DesignationList = ({ onEdit, searchText, loading: parentLoading }) => {
         });
     };
 
+    const getDropdownItems = (record) => {
+        const items = [];
+        if (!hasPermission || hasPermission('update')) {
+            items.push({ key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) });
+        }
+        if (!hasPermission || hasPermission('delete')) {
+            items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) });
+        }
+        return items;
+    };
+
     const columns = [
         {
             title: 'Designation Name',
@@ -80,20 +91,19 @@ const DesignationList = ({ onEdit, searchText, loading: parentLoading }) => {
             key: 'actions',
             width: 80,
             fixed: 'right',
-            render: (_, record) => (
-                <Dropdown
-                    menu={{
-                        items: [
-                            { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
-                            { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) }
-                        ]
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                >
-                    <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-                </Dropdown>
-            ),
+            render: (_, record) => {
+                const items = getDropdownItems(record);
+                if (items.length === 0) return null;
+                return (
+                    <Dropdown
+                        menu={{ items }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+                    </Dropdown>
+                );
+            },
         },
     ];
 

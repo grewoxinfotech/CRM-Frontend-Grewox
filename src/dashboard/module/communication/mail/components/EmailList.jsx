@@ -42,6 +42,7 @@ const EmailList = ({
   handleImportant,
   handleDelete,
   handleRestore,
+  hasPermission,
 }) => {
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -56,7 +57,7 @@ const EmailList = ({
   }, []);
 
   const renderEmailActions = (email) => {
-    // Desktop and Mobile view will now be same
+    const canDelete = !hasPermission || hasPermission('delete');
     if (email.type === "trash") {
       return (
         <Space>
@@ -70,16 +71,18 @@ const EmailList = ({
               }}
             />
           </Tooltip>
-          <Tooltip title="Delete permanently">
-            <Button
-              danger
-              icon={<FiTrash2 />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(email);
-              }}
-            />
-          </Tooltip>
+          {canDelete && (
+            <Tooltip title="Delete permanently">
+              <Button
+                danger
+                icon={<FiTrash2 />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(email);
+                }}
+              />
+            </Tooltip>
+          )}
         </Space>
       );
     }
@@ -106,15 +109,17 @@ const EmailList = ({
             }}
           />
         </Tooltip>
-        <Tooltip title="Delete">
-          <Button
-            icon={<FiTrash2 />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(email);
-            }}
-          />
-        </Tooltip>
+        {canDelete && (
+          <Tooltip title="Delete">
+            <Button
+              icon={<FiTrash2 />}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(email);
+              }}
+            />
+          </Tooltip>
+        )}
       </Space>
     );
   };

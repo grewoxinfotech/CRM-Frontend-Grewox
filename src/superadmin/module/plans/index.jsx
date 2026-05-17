@@ -102,7 +102,8 @@ const Plans = () => {
             max_vendors: plan.max_vendors?.toString(),
             max_customers: plan.max_customers?.toString(),
             is_default: plan.is_default,
-            status: plan.status
+            status: plan.status,
+            features: typeof plan.features === 'string' ? JSON.parse(plan.features) : (plan.features || {})
         };
         console.log('Edit data being set:', editData);
         setIdd(plan.id);
@@ -173,7 +174,8 @@ const Plans = () => {
                 max_clients: currentPlan.max_clients?.toString(),
                 max_vendors: currentPlan.max_vendors?.toString(),
                 max_customers: currentPlan.max_customers?.toString(),
-                status: newStatus
+                status: newStatus,
+                features: typeof currentPlan.features === 'string' ? JSON.parse(currentPlan.features) : (currentPlan.features || {})
             };
 
             await updatePlan({ idd: id, updateData }).unwrap();

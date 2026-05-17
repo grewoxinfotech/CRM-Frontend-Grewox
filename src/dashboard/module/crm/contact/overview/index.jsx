@@ -24,12 +24,14 @@ import { useGetLeadsQuery } from '../../../crm/lead/services/LeadApi';
 import { useGetDealsQuery } from '../../../crm/deal/services/DealApi';
 import { useGetCompanyAccountsQuery } from '../../companyacoount/services/companyAccountApi';
 import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
+import { useGetAllCurrenciesQuery } from '../../../../module/settings/services/settingsApi';
 import './contactoverview.scss';
 import {
     useGetSourcesQuery
 } from "../../crmsystem/souce/services/SourceApi.js";
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
+import { useGetRolesQuery } from "../../../hrm/role/services/roleApi";
 import EditContact from '../EditContact';
 
 const { Title, Text } = Typography;
@@ -43,13 +45,33 @@ const ContactDetails = () => {
     const { data: deal } = useGetDealsQuery();
     const { data: companyAccounts } = useGetCompanyAccountsQuery();
     const { data: usersData } = useGetUsersQuery();
-    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.client_id || loggedInUser?.id);
+    const { data: currencies } = useGetAllCurrenciesQuery();
     const [updateContact] = useUpdateContactMutation();
     const [editModalVisible, setEditModalVisible] = useState(false);
 
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+    });
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+    const userPermissions = React.useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+    const hasPermission = React.useCallback((action) => {
+        if (!loggedInUser) return false;
+        if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-crm-contact'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [loggedInUser, userPermissions]);
+
     const leadsData = lead?.data || [];
     const sources = sourcesData?.data || [];
-    const dealsData = deal || [];
+    const dealsData = deal?.data || [];
 
     if (isContactLoading) return <div>Loading...</div>;
     if (!contact) return <div>Contact not found</div>;
@@ -59,6 +81,8 @@ const ContactDetails = () => {
     const convertedLeads = allLeads.filter(lead => lead.is_converted);
     const activeLeads = allLeads.filter(lead => !lead.is_converted);
     const deals = dealsData?.filter(deal => deal.contact_id === contactId) || [];
+
+    const latestLead = activeLeads[0] || allLeads[0] || null;
 
     const totalLeadValue = activeLeads.reduce((sum, lead) => sum + (Number(lead.leadValue) || 0), 0);
     const totalDealValue = deals.reduce((sum, deal) => sum + (Number(deal.value) || 0), 0);
@@ -76,7 +100,22 @@ const ContactDetails = () => {
 
     const getSourceName = (sourceId) => {
         const source = sources.find((s) => s.id === sourceId);
-        return source?.name || "N/A";
+        return source?.name || sourceId || "N/A";
+    };
+
+    const formatCurrencyValue = (value, currencyId) => {
+        const currencyDetails = currencies?.find(
+            (c) => c.id === currencyId || c.currencyCode === currencyId
+        );
+        if (!currencyDetails) return `${value}`;
+
+        return new Intl.NumberFormat("en-US", {
+            style: "decimal",
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        })
+        .format(value)
+        .replace(/^/, currencyDetails.currencyIcon + " ");
     };
 
     return (
@@ -93,6 +132,7 @@ const ContactDetails = () => {
                                 <h2 className="company-name">
                                     {contact?.first_name} {contact?.last_name}
                                 </h2>
+                                {(!hasPermission || hasPermission('update')) && (
                                 <Button
                                     type="primary"
                                     icon={<FiEdit2 />}
@@ -112,6 +152,7 @@ const ContactDetails = () => {
                                 >
                                     Edit
                                 </Button>
+                                )}
                             </div>
                             <div className="contact-name">
                                 <FiUser className="icon" />
@@ -175,108 +216,10 @@ const ContactDetails = () => {
             </Card>
 
             <Row gutter={[16, 16]} className="metrics-row">
+                {/* LEAD VALUE CARD */}
                 <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                     <Card
-                        className="Metric-card leads-card"
-                        style={{
-                            background: 'linear-gradient(135deg, #fff1f2 0%, #fff 100%)',
-                            borderRadius: '12px',
-                            border: 'none',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
-                        }}
-                        bodyStyle={{
-                            padding: '20px',
-                            position: 'relative',
-                            zIndex: 1
-                        }}
-                    >
-                        <div style={{
-                            position: 'absolute',
-                            top: '-15px',
-                            right: '-15px',
-                            width: '80px',
-                            height: '80px',
-                            background: 'linear-gradient(135deg, #fecdd3 0%, #fecdd3 100%)',
-                            borderRadius: '50%',
-                            opacity: '0.15'
-                        }} />
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '-25px',
-                            left: '-25px',
-                            width: '100px',
-                            height: '100px',
-                            background: 'linear-gradient(135deg, #fecdd3 0%, #fecdd3 100%)',
-                            borderRadius: '50%',
-                            opacity: '0.1'
-                        }} />
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            marginBottom: '12px'
-                        }}>
-                            <div style={{
-                                background: 'linear-gradient(135deg, #ff4d6d 0%, #ff758f 100%)',
-                                borderRadius: '10px',
-                                padding: '10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: '0 3px 10px rgba(255, 77, 109, 0.15)'
-                            }}>
-                                <FiTarget style={{ fontSize: '28px', color: 'white' }} />
-                            </div>
-                        </div>
-                        <div style={{
-                            fontSize: '14px',
-                            color: '#e11d48',
-                            marginBottom: '6px',
-                            fontWeight: '600',
-                            letterSpacing: '0.5px'
-                        }}>
-                            LEADS
-                        </div>
-                        <div style={{
-                            fontSize: '28px',
-                            fontWeight: '800',
-                            color: '#ff4d6d',
-                            marginBottom: '6px',
-                            lineHeight: '1.2'
-                        }}>
-                            {activeLeads?.length || 0}
-                        </div>
-                        <div style={{
-                            fontSize: '13px',
-                            fontWeight: 'bold',
-                            color: 'rgba(244, 63, 94, 0.75)',
-                            marginBottom: '4px'
-                        }}>
-                            ₹{totalLeadValue.toLocaleString()} Total Value
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            fontSize: '11px',
-                            color: '#ff4d6d',
-                            marginTop: '6px',
-                            padding: '3px 6px',
-                            background: 'rgba(255, 77, 109, 0.08)',
-                            borderRadius: '4px',
-                            width: 'fit-content'
-                        }}>
-                            <span>{convertedLeads.length} Converted</span>
-                            <span>•</span>
-                            <span>{allLeads.length} Total</span>
-                        </div>
-                    </Card>
-                </Col>
-
-                <Col xs={24} sm={12} md={12} lg={12} xl={6}>
-                    <Card
-                        className="Metric-card deals-card"
+                        className="Metric-card lead-value-card"
                         style={{
                             background: 'linear-gradient(135deg, #f0fdf4 0%, #fff 100%)',
                             borderRadius: '12px',
@@ -302,16 +245,6 @@ const ContactDetails = () => {
                             opacity: '0.15'
                         }} />
                         <div style={{
-                            position: 'absolute',
-                            bottom: '-25px',
-                            left: '-25px',
-                            width: '100px',
-                            height: '100px',
-                            background: 'linear-gradient(135deg, #bbf7d0 0%, #bbf7d0 100%)',
-                            borderRadius: '50%',
-                            opacity: '0.1'
-                        }} />
-                        <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             marginBottom: '12px'
@@ -325,7 +258,7 @@ const ContactDetails = () => {
                                 justifyContent: 'center',
                                 boxShadow: '0 3px 10px rgba(34, 197, 94, 0.15)'
                             }}>
-                                <FiBriefcase style={{ fontSize: '28px', color: 'white' }} />
+                                <FiDollarSign style={{ fontSize: '28px', color: 'white' }} />
                             </div>
                         </div>
                         <div style={{
@@ -335,7 +268,7 @@ const ContactDetails = () => {
                             fontWeight: '600',
                             letterSpacing: '0.5px'
                         }}>
-                            DEALS
+                            Lead Value
                         </div>
                         <div style={{
                             fontSize: '28px',
@@ -344,24 +277,38 @@ const ContactDetails = () => {
                             marginBottom: '6px',
                             lineHeight: '1.2'
                         }}>
-                            {deals.length || 0}
+                            {allLeads.length > 0
+                                ? formatCurrencyValue(totalLeadValue, latestLead?.currency || 'INR')
+                                : "-"}
                         </div>
-                        <div style={{
-                            fontSize: '13px',
-                            fontWeight: 'bold',
-                            color: 'rgba(34, 197, 94, 0.75)',
-                            marginBottom: '4px'
-                        }}>
-                            ₹{totalDealValue.toLocaleString()} Total Value
-                        </div>
+                        {allLeads.length > 0 && (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '11px',
+                                color: '#16a34a',
+                                marginTop: '8px',
+                                padding: '3px 8px',
+                                background: 'rgba(34, 197, 94, 0.08)',
+                                borderRadius: '4px',
+                                width: 'fit-content',
+                                fontWeight: '600'
+                            }}>
+                                <span>{activeLeads.length} Active</span>
+                                <span>•</span>
+                                <span>{allLeads.length} Total Leads</span>
+                            </div>
+                        )}
                     </Card>
                 </Col>
 
+                {/* INTEREST LEVEL CARD */}
                 <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                     <Card
-                        className="Metric-card revenue-card"
+                        className="Metric-card interest-level-card"
                         style={{
-                            background: 'linear-gradient(135deg, #f5f3ff 0%, #fff 100%)',
+                            background: 'linear-gradient(135deg, #fffbeb 0%, #fff 100%)',
                             borderRadius: '12px',
                             border: 'none',
                             position: 'relative',
@@ -380,19 +327,9 @@ const ContactDetails = () => {
                             right: '-15px',
                             width: '80px',
                             height: '80px',
-                            background: 'linear-gradient(135deg, #ddd6fe 0%, #ddd6fe 100%)',
+                            background: 'linear-gradient(135deg, #fef08a 0%, #fef08a 100%)',
                             borderRadius: '50%',
                             opacity: '0.15'
-                        }} />
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '-25px',
-                            left: '-25px',
-                            width: '100px',
-                            height: '100px',
-                            background: 'linear-gradient(135deg, #ddd6fe 0%, #ddd6fe 100%)',
-                            borderRadius: '50%',
-                            opacity: '0.1'
                         }} />
                         <div style={{
                             display: 'flex',
@@ -400,51 +337,50 @@ const ContactDetails = () => {
                             marginBottom: '12px'
                         }}>
                             <div style={{
-                                background: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)',
+                                background: 'linear-gradient(135deg, #eab308 0%, #fde047 100%)',
                                 borderRadius: '10px',
                                 padding: '10px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: '0 3px 10px rgba(139, 92, 246, 0.15)'
+                                boxShadow: '0 3px 10px rgba(234, 179, 8, 0.15)'
                             }}>
-                                <FiDollarSign style={{ fontSize: '28px', color: 'white' }} />
+                                <FiTarget style={{ fontSize: '28px', color: 'white' }} />
                             </div>
                         </div>
                         <div style={{
                             fontSize: '14px',
-                            color: '#7c3aed',
+                            color: '#ca8a04',
                             marginBottom: '6px',
                             fontWeight: '600',
                             letterSpacing: '0.5px'
                         }}>
-                            TOTAL REVENUE
+                            Interest Level
                         </div>
                         <div style={{
-                            fontSize: '28px',
+                            fontSize: '24px',
                             fontWeight: '800',
-                            color: '#8b5cf6',
+                            color: '#eab308',
                             marginBottom: '6px',
                             lineHeight: '1.2'
                         }}>
-                            ₹{totalRevenue.toLocaleString()}
-                        </div>
-                        <div style={{
-                            fontSize: '13px',
-                            fontWeight: 'bold',
-                            color: 'rgba(139, 92, 246, 0.75)',
-                            marginBottom: '4px'
-                        }}>
-                            {allLeads.length + deals.length} Total Activities
+                            {latestLead?.interest_level === "high" ? (
+                                <span style={{ color: '#22c55e' }}>High Interest</span>
+                            ) : latestLead?.interest_level === "low" ? (
+                                <span style={{ color: '#ef4444' }}>Low Interest</span>
+                            ) : latestLead?.interest_level === "medium" ? (
+                                <span style={{ color: '#f59e0b' }}>Medium Interest</span>
+                            ) : "-"}
                         </div>
                     </Card>
                 </Col>
 
+                {/* CREATED DATE CARD */}
                 <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                     <Card
                         className="Metric-card created-card"
                         style={{
-                            background: 'linear-gradient(135deg, #fff7ed 0%, #fff 100%)',
+                            background: 'linear-gradient(135deg, #eff6ff 0%, #fff 100%)',
                             borderRadius: '12px',
                             border: 'none',
                             position: 'relative',
@@ -463,19 +399,9 @@ const ContactDetails = () => {
                             right: '-15px',
                             width: '80px',
                             height: '80px',
-                            background: 'linear-gradient(135deg, #fed7aa 0%, #fed7aa 100%)',
+                            background: 'linear-gradient(135deg, #bfdbfe 0%, #bfdbfe 100%)',
                             borderRadius: '50%',
                             opacity: '0.15'
-                        }} />
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '-25px',
-                            left: '-25px',
-                            width: '100px',
-                            height: '100px',
-                            background: 'linear-gradient(135deg, #fed7aa 0%, #fed7aa 100%)',
-                            borderRadius: '50%',
-                            opacity: '0.1'
                         }} />
                         <div style={{
                             display: 'flex',
@@ -483,42 +409,112 @@ const ContactDetails = () => {
                             marginBottom: '12px'
                         }}>
                             <div style={{
-                                background: 'linear-gradient(135deg, #f97316 0%, #fb923c 100%)',
+                                background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
                                 borderRadius: '10px',
                                 padding: '10px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: '0 3px 10px rgba(249, 115, 22, 0.15)'
+                                boxShadow: '0 3px 10px rgba(59, 130, 246, 0.15)'
                             }}>
                                 <FiCalendar style={{ fontSize: '28px', color: 'white' }} />
                             </div>
                         </div>
                         <div style={{
                             fontSize: '14px',
-                            color: '#ea580c',
+                            color: '#2563eb',
                             marginBottom: '6px',
                             fontWeight: '600',
                             letterSpacing: '0.5px'
                         }}>
-                            CREATED
+                            Created
                         </div>
                         <div style={{
                             fontSize: '28px',
                             fontWeight: '800',
-                            color: '#f97316',
+                            color: '#3b82f6',
                             marginBottom: '6px',
                             lineHeight: '1.2'
                         }}>
-                            {contact?.createdAt ? dayjs(contact.createdAt).format('MMM DD, YYYY') : '-'}
+                            {latestLead?.createdAt 
+                                ? dayjs(latestLead.createdAt).format('MM/DD/YYYY') 
+                                : (contact?.createdAt ? dayjs(contact.createdAt).format('MM/DD/YYYY') : "-")}
+                        </div>
+                    </Card>
+                </Col>
+
+                {/* LEAD MEMBERS CARD */}
+                <Col xs={24} sm={12} md={12} lg={12} xl={6}>
+                    <Card
+                        className="Metric-card members-card"
+                        style={{
+                            background: 'linear-gradient(135deg, #faf5ff 0%, #fff 100%)',
+                            borderRadius: '12px',
+                            border: 'none',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
+                        }}
+                        bodyStyle={{
+                            padding: '20px',
+                            position: 'relative',
+                            zIndex: 1
+                        }}
+                    >
+                        <div style={{
+                            position: 'absolute',
+                            top: '-15px',
+                            right: '-15px',
+                            width: '80px',
+                            height: '80px',
+                            background: 'linear-gradient(135deg, #e9d5ff 0%, #e9d5ff 100%)',
+                            borderRadius: '50%',
+                            opacity: '0.15'
+                        }} />
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            marginBottom: '12px'
+                        }}>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #a855f7 0%, #c084fc 100%)',
+                                borderRadius: '10px',
+                                padding: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 3px 10px rgba(168, 85, 247, 0.15)'
+                            }}>
+                                <FiUsers style={{ fontSize: '28px', color: 'white' }} />
+                            </div>
                         </div>
                         <div style={{
-                            fontSize: '13px',
-                            fontWeight: 'bold',
-                            color: 'rgba(249, 115, 22, 0.75)',
-                            marginBottom: '4px'
+                            fontSize: '14px',
+                            color: '#7e22ce',
+                            marginBottom: '6px',
+                            fontWeight: '600',
+                            letterSpacing: '0.5px'
                         }}>
-                            {contact?.updatedAt ? `Updated ${dayjs(contact.updatedAt).format('MMM DD, YYYY')}` : '-'}
+                            Lead Members
+                        </div>
+                        <div style={{
+                            fontSize: '28px',
+                            fontWeight: '800',
+                            color: '#a855f7',
+                            marginBottom: '6px',
+                            lineHeight: '1.2'
+                        }}>
+                            {(() => {
+                                try {
+                                    if (!latestLead?.lead_members) return "0";
+                                    const parsed = typeof latestLead.lead_members === 'string'
+                                        ? JSON.parse(latestLead.lead_members)
+                                        : latestLead.lead_members;
+                                    return parsed?.lead_members?.length || "0";
+                                } catch {
+                                    return "0";
+                                }
+                            })()}
                         </div>
                     </Card>
                 </Col>

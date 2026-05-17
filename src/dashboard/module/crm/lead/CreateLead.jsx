@@ -243,6 +243,9 @@ const CreateLead = ({
           email: contact.email || '',
           telephone: displayPhone,
           address: contact.address || '',
+          city: contact.city || '',
+          state: contact.state || '',
+          country: contact.country || '',
           company_id: contact.company_name || undefined,
           contact_id: contact.id,
           phoneCode: contact.phone_code || form.getFieldValue('phoneCode')
@@ -254,6 +257,9 @@ const CreateLead = ({
         company_id: company.id,
         telephone: company.phone_number || '',
         address: company.billing_address || '',
+        city: company.billing_city || '',
+        state: company.billing_state || '',
+        country: company.billing_country || '',
         email: company.email || '',
         // Clear contact fields as we found a company match
         contact_id: undefined,
@@ -335,6 +341,9 @@ const CreateLead = ({
       email: selectedContact.email || '',
       telephone: stripCode(selectedContact.phone, selectedContact.phone_code || defaultPhoneCode),
       address: selectedContact.address || '',
+      city: selectedContact.city || '',
+      state: selectedContact.state || '',
+      country: selectedContact.country || '',
       company_id: selectedContact.company_name || undefined
     });
   }, [selectedContactId, contactsResponse?.data, form]);
@@ -399,6 +408,10 @@ const CreateLead = ({
         created_via: isQuick ? 'quick' : 'normal',
         custom_fields: custom_fields,
         form_id: activeCustomForm?.id || null,
+        address: values.address || null,
+        city: values.city || null,
+        state: values.state || null,
+        country: values.country || null,
         // Auto-contact fields
         phone: values.telephone ? stripCode(values.telephone, values.phoneCode || defaultPhoneCode) : null,
         first_name: values.firstName || null,
@@ -538,6 +551,9 @@ const CreateLead = ({
         email: undefined,
         telephone: undefined,
         address: undefined,
+        city: undefined,
+        state: undefined,
+        country: undefined,
       });
       return;
     }
@@ -552,6 +568,9 @@ const CreateLead = ({
         email: selectedContact.email || '',
         telephone: selectedContact.phone || '',
         address: selectedContact.address || '',
+        city: selectedContact.city || '',
+        state: selectedContact.state || '',
+        country: selectedContact.country || '',
         company_id: selectedContact.company_name // Set company_id from contact's company_name
       });
     }
@@ -574,6 +593,9 @@ const CreateLead = ({
         email: undefined,
         telephone: undefined,
         address: undefined,
+        city: undefined,
+        state: undefined,
+        country: undefined,
       });
       setSelectedContact(null);
     }
@@ -587,6 +609,9 @@ const CreateLead = ({
       email: undefined,
       telephone: undefined,
       address: undefined,
+      city: undefined,
+      state: undefined,
+      country: undefined,
     });
     setSelectedContact(null);
   };
@@ -598,6 +623,9 @@ const CreateLead = ({
       email: undefined,
       telephone: undefined,
       address: undefined,
+      city: undefined,
+      state: undefined,
+      country: undefined,
     });
     setSelectedContact(null);
   };
@@ -911,6 +939,48 @@ const CreateLead = ({
                         style={{ gridColumn: 'span 2', marginBottom: '0px' }}
                       >
                         <Input.TextArea placeholder={field.placeholder} rows={2} style={{ borderRadius: '10px' }} />
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'city') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="city"
+                        label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                        rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                      >
+                        <Input placeholder={field.placeholder || "Enter city"} style={inputStyle} />
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'state') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="state"
+                        label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                        rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                      >
+                        <Input placeholder={field.placeholder || "Enter state"} style={inputStyle} />
+                      </Form.Item>
+                    );
+                  }
+
+                  if (field.key === 'country') {
+                    return (
+                      <Form.Item
+                        key={field.id}
+                        name="country"
+                        label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                        style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                        rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                      >
+                        <Input placeholder={field.placeholder || "Enter country"} style={inputStyle} />
                       </Form.Item>
                     );
                   }

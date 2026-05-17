@@ -121,6 +121,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         email: contact.email || '',
         telephone: displayPhone,
         address: contact.address || '',
+        city: contact.city || '',
+        state: contact.state || '',
+        country: contact.country || '',
         company_id: normalizeCompanyId(contact.company_name) || undefined,
         contact_id: contact.id,
         phoneCode: contact.phone_code || form.getFieldValue('phoneCode')
@@ -344,6 +347,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         status: statusId,
         source: sourceId,
         category: categoryId,
+        city: existingContact?.city || initialValues.city || '',
+        state: existingContact?.state || initialValues.state || '',
+        country: existingContact?.country || initialValues.country || '',
         company_id: company_id,
         contact_id: initialValues.contact_id
       });
@@ -462,6 +468,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         company_id: company_id,
         contact_id: contactId || null,
         address: values.address || '',
+        city: values.city || '',
+        state: values.state || '',
+        country: values.country || '',
         leadValue: leadValue,
         currency: selectedCurrency?.currencyCode || defaultCurrency,
         lead_members: leadMembers,
@@ -500,6 +509,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             phone_code: values.phoneCode || defaultPhoneCode,
             phone: values.telephone ? values.telephone.toString() : "",
             address: values.address || "",
+            city: values.city || "",
+            state: values.state || "",
+            country: values.country || "",
             company_name: company_id || ""
           };
           await updateContact({ id: contactId, data: contactUpdateData }).unwrap();
@@ -517,7 +529,10 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             email: values.email || "",
             phone_code: values.phoneCode || defaultPhoneCode,
             phone_number: values.telephone ? values.telephone.toString() : "",
-            billing_address: values.address || ""
+            billing_address: values.address || "",
+            billing_city: values.city || "",
+            billing_state: values.state || "",
+            billing_country: values.country || ""
           };
           await updateCompanyAccount({ id: company_id, data: companyUpdateData }).unwrap();
         } catch (companyError) {
@@ -587,6 +602,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         email: '',
         telephone: '',
         address: '',
+        city: '',
+        state: '',
+        country: '',
         company_id: undefined
       });
       return;
@@ -603,6 +621,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         email: contact.email || '',
         telephone: contact.phone ? contact.phone.replace(/^\+\d+\s/, '') : '',
         address: contact.address || '',
+        city: contact.city || '',
+        state: contact.state || '',
+        country: contact.country || '',
         company_id: normalizeCompanyId(contact.company_name) || undefined
       });
     }
@@ -633,6 +654,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         if (company) {
           form.setFieldsValue({
             address: company.billing_address || '',
+            city: company.billing_city || '',
+            state: company.billing_state || '',
+            country: company.billing_country || '',
             email: company.email || '',
             telephone: company.phone_number || '',
             phoneCode: company.phone_code || form.getFieldValue('phoneCode')
@@ -649,7 +673,12 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           }
         }
       } else {
-        form.setFieldsValue({ address: '' });
+        form.setFieldsValue({
+          address: '',
+          city: '',
+          state: '',
+          country: '',
+        });
       }
     }
   };
@@ -679,6 +708,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         email: currentValues.email || watchedContact.email || '',
         telephone: currentValues.telephone || (watchedContact.phone ? watchedContact.phone.replace(/^\+\d+\s/, '') : ''),
         address: currentValues.address || watchedContact.address || '',
+        city: currentValues.city || watchedContact.city || '',
+        state: currentValues.state || watchedContact.state || '',
+        country: currentValues.country || watchedContact.country || '',
         company_id: currentValues.company_id || normalizeCompanyId(watchedContact.company_name) || undefined
       });
     }
@@ -693,6 +725,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       if (!currentValues.contact_id) {
         form.setFieldsValue({
           address: currentValues.address || watchedCompany.billing_address || '',
+          city: currentValues.city || watchedCompany.billing_city || '',
+          state: currentValues.state || watchedCompany.billing_state || '',
+          country: currentValues.country || watchedCompany.billing_country || '',
           email: currentValues.email || watchedCompany.email || '',
           telephone: currentValues.telephone || watchedCompany.phone_number || '',
           phoneCode: currentValues.phoneCode || watchedCompany.phone_code || defaultPhoneCode
@@ -1268,6 +1303,48 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                     style={{ gridColumn: 'span 2', marginBottom: '0px' }}
                   >
                     <Input.TextArea placeholder={field.placeholder} rows={2} style={{ borderRadius: '10px' }} />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'city') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="city"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                  >
+                    <Input placeholder={field.placeholder || "Enter city"} style={inputStyle} />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'state') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="state"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                  >
+                    <Input placeholder={field.placeholder || "Enter state"} style={inputStyle} />
+                  </Form.Item>
+                );
+              }
+
+              if (field.key === 'country') {
+                return (
+                  <Form.Item
+                    key={field.id}
+                    name="country"
+                    label={<span style={formItemStyle}>{field.label.replace(/\s*\(Optional\)$/i, '')} {field.required ? <span style={{ color: "#ff4d4f" }}>*</span> : <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}> (Optional)</span>}</span>}
+                    style={{ gridColumn: 'span 1', marginBottom: '0px' }}
+                    rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
+                  >
+                    <Input placeholder={field.placeholder || "Enter country"} style={inputStyle} />
                   </Form.Item>
                 );
               }

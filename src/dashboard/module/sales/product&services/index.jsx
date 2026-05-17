@@ -19,6 +19,7 @@ import {
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import PageHeader from "../../../../components/PageHeader";
 
 const ProductServices = () => {
@@ -30,6 +31,30 @@ const ProductServices = () => {
   const [loading, setLoading] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !currentUser || currentUser.roleName === 'super-admin' || currentUser.roleName === 'client'
+  });
+
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === currentUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) {
+      return null;
+    }
+  }, [userRoleData]);
+
+  const hasPermission = React.useCallback((action) => {
+    if (!currentUser) return false;
+    if (currentUser.roleName === 'super-admin' || currentUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const modulePerms = userPermissions['dashboards-sales-product-services'];
+    if (!modulePerms || modulePerms.length === 0) return false;
+    const allowed = modulePerms[0]?.permissions || [];
+    return allowed.includes(action);
+  }, [currentUser, userPermissions]);
 
   const {
     data: productsData = [],
@@ -77,7 +102,7 @@ const ProductServices = () => {
         searchText={searchText}
         onSearch={setSearchText}
         searchPlaceholder="Search products..."
-        onAdd={() => setIsCreateModalOpen(true)}
+        onAdd={hasPermission('create') ? () => setIsCreateModalOpen(true) : undefined}
         addText="Add Product"
         exportMenu={{
           items: [
@@ -98,6 +123,7 @@ const ProductServices = () => {
           searchText={searchText}
           pagination={pagination}
           onChange={(newPagination) => setPagination(prev => ({ ...prev, current: newPagination.current, pageSize: newPagination.pageSize }))}
+          hasPermission={hasPermission}
         />
       </Card>
 

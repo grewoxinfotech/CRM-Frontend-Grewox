@@ -3,7 +3,7 @@ import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown } from 'an
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye, FiShield, FiCheck } from 'react-icons/fi';
 import { useGetAllRolesQuery, useDeleteRoleMutation } from './services/roleApi';
 
-const RoleList = ({ onEdit, searchText }) => {
+const RoleList = ({ onEdit, searchText, hasPermission }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [viewPermissionsModal, setViewPermissionsModal] = useState(false);
@@ -31,6 +31,17 @@ const RoleList = ({ onEdit, searchText }) => {
                 }
             },
         });
+    };
+
+    const getDropdownItems = (record) => {
+        const items = [];
+        if (!hasPermission || hasPermission('update')) {
+            items.push({ key: 'edit', icon: <FiEdit2 size={14} />, label: 'Edit', onClick: () => onEdit(record) });
+        }
+        if (!hasPermission || hasPermission('delete')) {
+            items.push({ key: 'delete', icon: <FiTrash2 size={14} />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) });
+        }
+        return items;
     };
 
     const columns = [
@@ -65,19 +76,18 @@ const RoleList = ({ onEdit, searchText }) => {
             width: '60px',
             fixed: 'right',
             align: 'center',
-            render: (_, record) => (
-                <Dropdown
-                    menu={{
-                        items: [
-                            { key: 'edit', icon: <FiEdit2 size={14} />, label: 'Edit', onClick: () => onEdit(record) },
-                            { key: 'delete', icon: <FiTrash2 size={14} />, label: 'Delete', danger: true, onClick: () => handleDelete(record.id) }
-                        ]
-                    }}
-                    trigger={['click']}
-                >
-                    <Button type="text" icon={<FiMoreVertical size={16} />} size="small" />
-                </Dropdown>
-            ),
+            render: (_, record) => {
+                const items = getDropdownItems(record);
+                if (items.length === 0) return null;
+                return (
+                    <Dropdown
+                        menu={{ items }}
+                        trigger={['click']}
+                    >
+                        <Button type="text" icon={<FiMoreVertical size={16} />} size="small" />
+                    </Dropdown>
+                );
+            },
         },
     ];
 

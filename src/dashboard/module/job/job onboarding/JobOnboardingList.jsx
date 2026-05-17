@@ -11,7 +11,18 @@ import dayjs from 'dayjs';
 
 const { Text } = Typography;
 
-const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagination }) => {
+const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagination, hasPermission }) => {
+    const getDropdownItems = (record) => {
+        const items = [];
+        if (!hasPermission || hasPermission('update')) {
+            items.push({ key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) });
+        }
+        if (!hasPermission || hasPermission('delete')) {
+            items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record.id) });
+        }
+        return items;
+    };
+
     const columns = [
         {
             title: 'Employee',
@@ -71,20 +82,19 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
             key: 'actions',
             fixed: 'right',
             width: 80,
-            render: (_, record) => (
-                <Dropdown
-                    menu={{
-                        items: [
-                            { key: 'edit', icon: <FiEdit2 />, label: 'Edit', onClick: () => onEdit(record) },
-                            { key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record.id) }
-                        ]
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                >
-                    <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-                </Dropdown>
-            )
+            render: (_, record) => {
+                const items = getDropdownItems(record);
+                if (items.length === 0) return null;
+                return (
+                    <Dropdown
+                        menu={{ items }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
+                    </Dropdown>
+                );
+            }
         }
     ];
 

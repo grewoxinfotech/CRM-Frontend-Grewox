@@ -42,6 +42,7 @@ import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 import moment from "moment";
 import { formatCurrency } from "../../../utils/currencyUtils";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 
 const { Text } = Typography;
 const { Search } = Input;
@@ -88,6 +89,31 @@ const LeadList = ({
   const loggedInUser = useSelector(selectCurrentUser);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Fetch role and permissions
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) {
+      return null;
+    }
+  }, [userRoleData]);
+
+  const hasPermission = (action) => {
+    if (!loggedInUser) return false;
+    if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const leadPerms = userPermissions['dashboards-lead'];
+    if (!leadPerms || leadPerms.length === 0) return false;
+    const allowed = leadPerms[0]?.permissions || [];
+    return allowed.includes(action);
+  };
 
   // Fetch all required data
   const { data: stagesData } = useGetLeadStagesQuery();
@@ -236,7 +262,7 @@ const LeadList = ({
             onLeadClick(record);
           },
         },
-        shouldShowEditDelete && {
+        shouldShowEditDelete && hasPermission('update') && {
           key: "edit",
           icon: <FiEdit2 style={{ color: "#52c41a" }} />,
           label: (
@@ -249,7 +275,7 @@ const LeadList = ({
             onEdit(record);
           },
         },
-        shouldShowEditDelete && {
+        shouldShowEditDelete && hasPermission('delete') && {
           key: "delete",
           icon: <FiTrash2 style={{ color: "#ff4d4f" }} />,
           label: (
@@ -452,15 +478,28 @@ const LeadList = ({
         value: source.id,
       })),
       onFilter: (value, record) => record.source === value,
-      render: (leadSource) => {
-        const color = getSourceColor(leadSource?.name);
+      render: (leadSource, record) => {
+        // Resolve source ID from either record.source directly (for optimistic UI) or the leadSource object
+        const sourceId = typeof leadSource === 'string' ? leadSource : (leadSource?.id || record.source);
+        
+        // Find the full source object from the globally fetched `sources` array
+        const resolvedSource = sources.find((s) => s.id === sourceId) || (typeof leadSource === 'object' ? leadSource : null);
+        
+        // Get the name, or fallback to the ID string if truly unknown
+        let sourceName = resolvedSource?.name || sourceId;
+
+        // Auto-correct if the API mistakenly saved the ID as the name (the exact bug for newly created clients)
+        if (sourceName && sourceName === sourceId) {
+            const possibleMatch = sources.find(s => s.id === sourceName);
+            if (possibleMatch) sourceName = possibleMatch.name;
+        }
+
+        const color = getSourceColor(sourceName);
         return (
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <FiLink style={{ color: color }} />
-            <Text
-              style={{ color: color, fontWeight: "500" }}
-            >
-              {leadSource?.name || "Unknown"}
+            <Text style={{ color: color, fontWeight: "500" }}>
+              {sourceName !== sourceId && sourceName ? sourceName : "Unknown"}
             </Text>
           </div>
         );
@@ -731,11 +770,11 @@ const LeadList = ({
           onClick: () => onLeadClick(record),
           style: { cursor: "pointer" },
         })}
-        rowSelection={{
+        rowSelection={hasPermission('delete') ? {
           type: 'checkbox',
           selectedRowKeys,
           onChange: (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys),
-        }}
+        } : undefined}
       />
     </div>
   );

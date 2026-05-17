@@ -11,18 +11,22 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
     const [selectedPermissions, setSelectedPermissions] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const modules = ['CRM', 'Sales', 'Purchase', 'User Management', 'HRM', 'Job'];
+    const modules = ['CRM', 'Sales', 'Purchase', 'User Management', 'Communication', 'HRM', 'Job', 'Support', 'Integrations'];
 
     const subModules = {
         CRM: [
             { key: 'dashboards-project-list', title: 'Project' },
-            { key: 'dashboards-lead', title: 'Leads' },
+            { key: 'dashboards-lead', title: 'Leads & Follow-up' },
             { key: 'dashboards-deal', title: 'Deals' },
             { key: 'dashboards-crm-contact', title: 'Contact' },
             { key: 'dashboards-crm-company-account', title: 'Company' },
             { key: 'dashboards-proposal', title: 'Proposal' },
             { key: 'dashboards-task', title: 'Task' },
             { key: 'dashboards-TaskCalendar', title: 'Task Calendar' },
+            { key: 'dashboards-automation', title: 'Automation' },
+            { key: 'dashboards-custom-form', title: 'Custom Form' },
+            { key: 'dashboards-reports', title: 'Reports' },
+            { key: 'dashboards-analytics', title: 'Analytics' },
             { key: 'dashboards-systemsetup', title: 'CRM System Setup' }
         ],
         Sales: [
@@ -41,11 +45,9 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
             { key: 'extra-users-list', title: 'Users' },
             { key: 'extra-users-client-list', title: 'Clients' }
         ],
-        // Communication: [
-        //     { key: 'dashboards-mail', title: 'Mail' },
-        //     { key: 'dashboards-chat', title: 'Chat' },
-        //     { key: 'dashboards-calendar', title: 'Calendar' }
-        // ],
+        Communication: [
+            { key: 'dashboards-communication', title: 'Mail, Chat & WhatsApp' }
+        ],
         HRM: [
             { key: 'extra-hrm-employee', title: 'Employee' },
             { key: 'extra-hrm-payroll', title: 'PayRoll' },
@@ -69,6 +71,19 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
             { key: 'extra-hrm-jobs-jobapplication', title: 'Job Applications' },
             { key: 'extra-hrm-jobs-jobofferletter', title: 'Offer Letters' },
             { key: 'extra-hrm-jobs-interview', title: 'Interviews' }
+        ],
+        Support: [
+            { key: 'dashboards-support-ticket', title: 'Ticket' },
+            { key: 'dashboards-support-help', title: 'Help Support' }
+        ],
+        Integrations: [
+            { key: 'dashboards-integrations-justdial', title: 'Justdial' },
+            { key: 'dashboards-integrations-indiamart', title: 'Indiamart' },
+            { key: 'dashboards-integrations-googlemeet', title: 'Google Meet' },
+            { key: 'dashboards-integrations-zoommeet', title: 'Zoom Meet' },
+            { key: 'dashboards-integrations-metaads', title: 'Meta Ads' },
+            { key: 'dashboards-integrations-whatsapp', title: 'WhatsApp API' },
+            { key: 'dashboards-integrations-webhooks', title: 'Website Webhooks' }
         ]
     };
 
@@ -306,6 +321,17 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
         }
 
         newValues.permissions[subModuleKey][permission] = checked;
+
+        if (checked && (permission === 'create' || permission === 'update' || permission === 'delete')) {
+            // Automatically check 'view' if create, update, or delete is checked
+            newValues.permissions[subModuleKey]['view'] = true;
+        } else if (!checked && permission === 'view') {
+            // Automatically uncheck create, update, and delete if view is unchecked
+            newValues.permissions[subModuleKey]['create'] = false;
+            newValues.permissions[subModuleKey]['update'] = false;
+            newValues.permissions[subModuleKey]['delete'] = false;
+        }
+
         form.setFieldsValue(newValues);
         handlePermissionChange();
     };
@@ -348,7 +374,7 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
             open={visible}
             onCancel={handleCancel}
             footer={null}
-            width={720}
+            width={1000}
             destroyOnClose={true}
             centered
             closeIcon={null}

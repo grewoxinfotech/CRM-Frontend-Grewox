@@ -17,6 +17,9 @@ import "./customer.scss";
 import {
   useGetCustomersQuery,
 } from "./services/custApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import PageHeader from "../../../../components/PageHeader";
 
 const Customer = () => {
@@ -26,6 +29,31 @@ const Customer = () => {
   const [searchText, setSearchText] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+
+  const loggedInUser = useSelector(selectCurrentUser);
+  const { data: rolesData } = useGetRolesQuery(undefined, {
+    skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+  });
+
+  const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
+  const userPermissions = React.useMemo(() => {
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) {
+      return null;
+    }
+  }, [userRoleData]);
+
+  const hasPermission = React.useCallback((action) => {
+    if (!loggedInUser) return false;
+    if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const modulePerms = userPermissions['dashboards-sales-customer'];
+    if (!modulePerms || modulePerms.length === 0) return false;
+    const allowed = modulePerms[0]?.permissions || [];
+    return allowed.includes(action);
+  }, [loggedInUser, userPermissions]);
 
   const { data: custdata, isLoading } = useGetCustomersQuery({
     page: pagination.current,
@@ -51,7 +79,7 @@ const Customer = () => {
         searchText={searchText}
         onSearch={setSearchText}
         searchPlaceholder="Search customers..."
-        onAdd={() => setIsCreateModalOpen(true)}
+        onAdd={hasPermission('create') ? () => setIsCreateModalOpen(true) : undefined}
         addText="Add Customer"
         isSearchVisible={isSearchVisible}
         onSearchVisibleChange={setIsSearchVisible}
@@ -80,6 +108,7 @@ const Customer = () => {
           searchText={searchText}
           pagination={pagination}
           onChange={(newPagination) => setPagination(prev => ({ ...prev, current: newPagination.current, pageSize: newPagination.pageSize }))}
+          hasPermission={hasPermission}
         />
       </Card>
 
