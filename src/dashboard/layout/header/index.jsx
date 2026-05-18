@@ -45,6 +45,8 @@ const Header = () => {
       skip: !shouldFetchSubscription
     });
 
+    const headerAiLimit = subscriptionData?.data?.ai_credits_limit || subscriptionData?.data?.Plan?.ai_credits || 0;
+
     const subscriptionDaysLeft = React.useMemo(() => {
       if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return null;
       if (!subscriptionData?.data?.end_date) return null;
@@ -329,6 +331,39 @@ const Header = () => {
                         >
                             <span className="upgrade-text">Upgrade</span>
                         </Button>
+                    )}
+                    {shouldFetchSubscription && subscriptionData?.data && (
+                        <Tooltip title={`AI Credits: ${subscriptionData.data.ai_credits_used || 0} used of ${headerAiLimit}`}>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #f5f3ff 0%, #e0e7ff 100%)',
+                                border: '1px solid #c7d2fe',
+                                color: '#4f46e5',
+                                padding: '0 12px',
+                                borderRadius: '20px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                cursor: 'pointer',
+                                height: '32px',
+                                boxShadow: '0 2px 4px rgba(79, 70, 229, 0.05)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onClick={() => navigate('/dashboard/settings/plan')}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                                e.currentTarget.style.boxShadow = '0 4px 6px rgba(79, 70, 229, 0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 2px 4px rgba(79, 70, 229, 0.05)';
+                            }}
+                            >
+                                <FiZap style={{ display: 'flex', alignItems: 'center', color: '#4f46e5', fontSize: '13px' }} />
+                                <span style={{ whiteSpace: 'nowrap' }}>AI Credits: {Math.max(0, headerAiLimit - (subscriptionData.data.ai_credits_used || 0))}</span>
+                            </div>
+                        </Tooltip>
                     )}
                     <Notifications />
                     <div className="header-divider" />

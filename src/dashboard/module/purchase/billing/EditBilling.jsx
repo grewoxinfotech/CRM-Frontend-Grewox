@@ -144,7 +144,8 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
         });
 
         // Set currency details
-        const selectedCurrency = currenciesData.find(
+        const currencies = currenciesData?.data || currenciesData || [];
+        const selectedCurrency = currencies.find(
           (c) => c.id === initialData.currency
         );
         if (selectedCurrency) {
@@ -176,7 +177,8 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
 
   // Handle currency change
   const handleCurrencyChange = (value, option) => {
-    const currency = currenciesData?.find((c) => c.id === value);
+    const currencies = currenciesData?.data || currenciesData || [];
+    const currency = currencies.find((c) => c.id === value);
     if (currency) {
       setSelectedCurrency(currency.currencyIcon);
       setSelectedCurrencyId(value);
@@ -199,7 +201,8 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
       setLoading(true);
 
       // Find selected currency details
-      const selectedCurrencyData = currenciesData?.find(
+      const currencies = currenciesData?.data || currenciesData || [];
+      const selectedCurrencyData = currencies.find(
         (curr) => curr.id === values.currency
       );
 
@@ -1017,7 +1020,7 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
                 }}
                 optionLabelProp="label"
               >
-                {currenciesData?.map((currency) => (
+                {(currenciesData?.data || currenciesData || [])?.map((currency) => (
                   <Option
                     key={currency.id}
                     value={currency.id}
@@ -1146,8 +1149,9 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
                                       );
                                     if (selectedProduct) {
                                       // Get the product's currency from currencies list
+                                      const currencies = currenciesData?.data || currenciesData || [];
                                       const productCurrency =
-                                        currenciesData?.find(
+                                        currencies.find(
                                           (c) =>
                                             c.id === selectedProduct.currency
                                         );

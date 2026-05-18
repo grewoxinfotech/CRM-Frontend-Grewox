@@ -19,7 +19,7 @@ import { selectCurrentToken } from '../../../auth/services/authSlice';
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null, modalTitle = 'Create Upgrade Plan', buttonText = 'Create Upgrade Plan', initialStartDate = null, initialStatus = null, initialPaymentStatus = null }) => {
+const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null, preselectedPlan = null, modalTitle = 'Create Upgrade Plan', buttonText = 'Create Upgrade Plan', initialStartDate = null, initialStatus = null, initialPaymentStatus = null }) => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const token = useSelector(selectCurrentToken);
@@ -38,14 +38,26 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
 
     // Extract plans from the API response
     const plans = React.useMemo(() => {
-        if (!plansData?.data) return [];
-        return plansData.data.map(plan => ({
-            id: plan.id,
-            name: plan.name,
-            price: plan.price,
-            duration: plan.duration
-        }));
-    }, [plansData]);
+        let list = [];
+        if (plansData?.data) {
+            list = plansData.data.map(plan => ({
+                id: plan.id,
+                name: plan.name,
+                price: plan.price,
+                duration: plan.duration
+            }));
+        }
+        // Safely push preselected plan if it's not already in the list
+        if (preselectedPlan && !list.some(p => p.id === preselectedPlan.id)) {
+            list.push({
+                id: preselectedPlan.id,
+                name: preselectedPlan.name,
+                price: preselectedPlan.price,
+                duration: preselectedPlan.duration
+            });
+        }
+        return list;
+    }, [plansData, preselectedPlan]);
 
     // Calculate end date function (needed before useEffect)
     const calculateEndDate = (startDate, duration) => {
@@ -82,23 +94,25 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
     
     // Set initial values when modal opens with preselected plan
     useEffect(() => {
-        if (open && preselectedPlanId && plans.length > 0) {
+        if (open) {
+            const activePlanId = preselectedPlanId || preselectedPlan?.id;
             form.setFieldsValue({
-                plan: preselectedPlanId,
+                plan: activePlanId,
                 startDate: initialStartDate || moment(),
                 status: initialStatus || 'active',
                 paymentStatus: initialPaymentStatus || 'unpaid'
             });
             
             // Auto-calculate end date for preselected plan
-            const selectedPlan = plans.find(p => p.id === preselectedPlanId);
+            const activePlanList = plans.length > 0 ? plans : (preselectedPlan ? [preselectedPlan] : []);
+            const selectedPlan = activePlanList.find(p => p.id === activePlanId);
             if (selectedPlan) {
                 const startDate = initialStartDate || moment();
                 const endDate = calculateEndDate(startDate, selectedPlan.duration);
                 form.setFieldValue('endDate', endDate);
             }
         }
-    }, [open, preselectedPlanId, plans, initialStartDate, initialStatus, initialPaymentStatus, form]);
+    }, [open, preselectedPlanId, preselectedPlan, plans, initialStartDate, initialStatus, initialPaymentStatus, form]);
 
     // Handle modal close
     const handleCancel = () => {
@@ -338,7 +352,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
             }}
         >
             <div className="modal-header" style={{
-                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                 padding: '24px',
                 color: '#ffffff',
                 position: 'relative'
@@ -442,7 +456,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                             padding: '8px',
                             borderRadius: '10px',
                         }}
-                        prefix={<FiPackage style={{ color: '#1890ff', fontSize: '16px' }} />}
+                        prefix={<FiPackage style={{ color: '#2563eb', fontSize: '16px' }} />}
                     >
                         {plans.map(plan => (
                             <Option key={plan.id} value={plan.id}>
@@ -478,7 +492,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                         }}
                         format="DD-MM-YYYY"
                         placeholder="dd-mm-yyyy"
-                        suffixIcon={<FiCalendar style={{ color: '#1890ff', fontSize: '16px' }} />}
+                        suffixIcon={<FiCalendar style={{ color: '#2563eb', fontSize: '16px' }} />}
                         onChange={handleStartDateChange}
                         disabled={isBuyPlanModal}
                     />
@@ -508,7 +522,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                         }}
                         format="DD-MM-YYYY"
                         placeholder="dd-mm-yyyy"
-                        suffixIcon={<FiCalendar style={{ color: '#1890ff', fontSize: '16px' }} />}
+                        suffixIcon={<FiCalendar style={{ color: '#2563eb', fontSize: '16px' }} />}
                         disabled={true}
                     />
                 </Form.Item>
@@ -563,7 +577,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                             width: '100%',
                             height: '48px',
                         }}
-                        suffixIcon={<FiDollarSign style={{ color: '#1890ff', fontSize: '16px' }} />}
+                        suffixIcon={<FiDollarSign style={{ color: '#2563eb', fontSize: '16px' }} />}
                         disabled={isBuyPlanModal}
                     >
                         {paymentStatusOptions.map(option => (
@@ -607,9 +621,9 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                             height: '44px',
                             borderRadius: '10px',
                             fontWeight: '500',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                             border: 'none',
-                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
+                            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.15)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -634,13 +648,13 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                             display: 'block'
                         }}>
                             By purchasing a plan, you agree to my{' '}
-                            <a href="/terms-and-conditions" target="_blank" style={{ color: '#1890ff', textDecoration: 'none' }}>
+                            <a href="/terms-and-conditions" target="_blank" style={{ color: '#2563eb', textDecoration: 'none' }}>
                                 Terms & Conditions
                             </a>,{' '}
-                            <a href="/privacy-policy" target="_blank" style={{ color: '#1890ff', textDecoration: 'none' }}>
+                            <a href="/privacy-policy" target="_blank" style={{ color: '#2563eb', textDecoration: 'none' }}>
                                 Privacy Policy
                             </a>, and{' '}
-                            <a href="/refund-policy" target="_blank" style={{ color: '#1890ff', textDecoration: 'none' }}>
+                            <a href="/refund-policy" target="_blank" style={{ color: '#2563eb', textDecoration: 'none' }}>
                                 Refund Policy
                             </a>.
                         </Text>

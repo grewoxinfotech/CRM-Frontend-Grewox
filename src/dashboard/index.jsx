@@ -13,7 +13,7 @@ import "./dashboard.scss";
 import { motion } from "framer-motion";
 import { useGetAllCurrenciesQuery } from "./module/settings/services/settingsApi";
 import { useGetAllTasksQuery } from "./module/crm/task/services/taskApi";
-import { useGetLeadsQuery } from "./module/crm/lead/services/LeadApi";
+import { useGetLeadsQuery, useGetGlobalFollowupsQuery } from "./module/crm/lead/services/LeadApi";
 import { useGetDealsQuery } from "./module/crm/deal/services/DealApi.js";
 import { useGetStatusesQuery } from "./module/crm/crmsystem/souce/services/SourceApi";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +29,8 @@ import TasksTable from "./DashboardComponents/TasksTable";
 import MeetingsTable from "./DashboardComponents/MeetingsTable";
 import ContactsTable from "./DashboardComponents/ContactsTable";
 import CompanyTable from "./DashboardComponents/CompanyTable";
-import Analytics from "./DashboardComponents/Analytics/index.jsx";
+import FollowupRemindersTable from "./DashboardComponents/FollowupRemindersTable";
+import PendingTasksTable from "./DashboardComponents/PendingTasksTable";
 import { useGetRevenueQuery } from "./module/sales/revenue/services/revenueApi";
 import BrandConfig from "../utils/brandName.js";
 
@@ -76,7 +77,9 @@ export default function Dashboard() {
   const [dealsDateFilter, setDealsDateFilter] = useState("all");
   const [tasksDateFilter, setTasksDateFilter] = useState("all");
   const [meetingsDateFilter, setMeetingsDateFilter] = useState("all");
-  const [showAnalytics, setShowAnalytics] = useState(false);
+  const { data: followupsResponse, isLoading: followupsLoading } = useGetGlobalFollowupsQuery();
+  const [followupsDateFilter, setFollowupsDateFilter] = useState("all");
+  const [pendingTasksDateFilter, setPendingTasksDateFilter] = useState("all");
 
   const { data: revenueData } = useGetRevenueQuery({
     page: 1,
@@ -194,24 +197,11 @@ export default function Dashboard() {
           <WelcomeSection
             user={user}
             companyName={companyName}
-            showAnalytics={showAnalytics}
-            setShowAnalytics={setShowAnalytics}
           />
         </Col>
 
         <StatsCards stats={stats} />
 
-        {showAnalytics ? (
-          <Col span={24}>
-            <Analytics
-              deals={dealsData}
-              leads={leadsData?.data}
-              tasks={tasksData?.data}
-              meetings={meetings?.data}
-            />
-          </Col>
-        ) : (
-          <>
             <Col xs={24} lg={12}>
               <LeadsTable
                 leads={leadsData?.data}
@@ -232,6 +222,26 @@ export default function Dashboard() {
                 stagesData={stagesData}
                 dateFilter={dealsDateFilter}
                 setDateFilter={setDealsDateFilter}
+                navigate={navigate}
+              />
+            </Col>
+
+            <Col span={24}>
+              <FollowupRemindersTable
+                followups={followupsResponse?.data}
+                loading={followupsLoading}
+                dateFilter={followupsDateFilter}
+                setDateFilter={setFollowupsDateFilter}
+                navigate={navigate}
+              />
+            </Col>
+
+            <Col span={24}>
+              <PendingTasksTable
+                tasks={tasksData?.data}
+                loading={tasksLoading}
+                dateFilter={pendingTasksDateFilter}
+                setDateFilter={setPendingTasksDateFilter}
                 navigate={navigate}
               />
             </Col>
@@ -277,8 +287,6 @@ export default function Dashboard() {
                 navigate={navigate}
               />
             </Col>
-          </>
-        )}
       </Row>
     </motion.div>
   );

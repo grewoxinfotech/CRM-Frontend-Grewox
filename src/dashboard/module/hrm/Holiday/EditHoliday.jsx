@@ -45,8 +45,8 @@ const EditHoliday = ({ open, onCancel, onSubmit, initialValues }) => {
             // Format dates before sending to API
             const formattedValues = {
                 ...values,
-                start_date: values.start_date ? values.start_date.format('DD-MM-YYYY') : null,
-                end_date: values.end_date ? values.end_date.format('DD-MM-YYYY') : null
+                start_date: values.start_date ? values.start_date.toISOString() : null,
+                end_date: values.end_date ? values.end_date.toISOString() : null
             };
 
             const response = await updateHoliday({

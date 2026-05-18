@@ -16,8 +16,23 @@ const EditUser = ({ visible, onCancel, initialValues }) => {
     const currentUser = useSelector(state => state.auth.user);
 
     const filteredRoles = rolesData?.message?.data?.filter(role =>
-        role.created_by === currentUser?.username
+        role.role_name !== 'super-admin' && role.role_name !== 'client'
     ) || [];
+
+    const selectOptions = React.useMemo(() => {
+        const opts = filteredRoles.map(role => ({
+            label: role.role_name,
+            value: role.id
+        }));
+
+        if (initialValues?.role_id && !opts.some(opt => opt.value === initialValues.role_id)) {
+            opts.push({
+                label: initialValues.role_name || 'Selected Role',
+                value: initialValues.role_id
+            });
+        }
+        return opts;
+    }, [filteredRoles, initialValues]);
 
     const handleSubmit = async (values) => {
         console.log("values", values);
@@ -223,10 +238,7 @@ const EditUser = ({ visible, onCancel, initialValues }) => {
                     >
                         <Select
                             placeholder="Select role"
-                            options={filteredRoles.map(role => ({
-                                label: role.role_name,
-                                value: role.id
-                            })) || []}
+                            options={selectOptions}
                             style={{
                                 width: "100%",
                                 height: "40px",

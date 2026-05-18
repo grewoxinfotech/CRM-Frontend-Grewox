@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Button, Typography, Divider, message } from 'antd';
-import { FiUser, FiMail, FiLock, FiBriefcase, FiX } from 'react-icons/fi';
+import { Modal, Form, Input, Button, Typography, Divider, message, Row, Col, Select } from 'antd';
+import { FiUser, FiMail, FiLock, FiBriefcase, FiX, FiPhone, FiMapPin } from 'react-icons/fi';
 import { useCreateCompanyMutation, useUpdateCompanyMutation, useVerifySignupMutation, useResendSignupOtpMutation } from './services/companyApi';
+import indianStatesAndCities from '../../../utils/Indian_Cities_In_States_JSON.json';
+import industriesData from '../../../utils/industries.json';
 
 const { Text } = Typography;
 
@@ -15,6 +17,13 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
     const [verifySignup] = useVerifySignupMutation();
     const [resendSignupOtp] = useResendSignupOtpMutation();
     const [companyFormData, setCompanyFormData] = useState(null);
+
+    const selectedState = Form.useWatch('state', form);
+
+    const availableCities = React.useMemo(() => {
+        if (!selectedState) return [];
+        return indianStatesAndCities[selectedState] || [];
+    }, [selectedState]);
 
     const handleSubmit = async (values) => {
         try {
@@ -267,7 +276,7 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                 open={open}
                 onCancel={onCancel}
                 footer={null}
-                width={520}
+                width={680}
                 destroyOnClose={true}
                 centered
                 closeIcon={null}
@@ -471,6 +480,206 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                                 border: '1px solid #e6e8eb',
                                 transition: 'all 0.3s ease',
                             }}
+                        />
+                    </Form.Item>
+
+                    <Divider orientation="left" style={{ margin: '30px 0 16px 0', fontSize: '14px', fontWeight: 600, color: '#1890ff' }}>
+                        Company Corporate Profile Details (Optional)
+                    </Divider>
+
+                    {/* Hidden input to default phoneCode to +91 */}
+                    <Form.Item name="phoneCode" initialValue="+91" noStyle>
+                        <input type="hidden" />
+                    </Form.Item>
+
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="firstName"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>Authorized First Name</span>}
+                            >
+                                <Input
+                                    prefix={<FiUser style={{ color: '#1890ff', fontSize: '15px' }} />}
+                                    placeholder="Enter first name"
+                                    size="large"
+                                    style={{ borderRadius: '10px', height: '44px', backgroundColor: '#f8fafc', border: '1px solid #e6e8eb' }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="lastName"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>Authorized Last Name</span>}
+                            >
+                                <Input
+                                    prefix={<FiUser style={{ color: '#1890ff', fontSize: '15px' }} />}
+                                    placeholder="Enter last name"
+                                    size="large"
+                                    style={{ borderRadius: '10px', height: '44px', backgroundColor: '#f8fafc', border: '1px solid #e6e8eb' }}
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={16} style={{ marginTop: '12px' }}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="phone"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>Phone Number</span>}
+                                rules={[
+                                    { pattern: /^[0-9]+$/, message: 'Please enter a valid numeric phone number' }
+                                ]}
+                            >
+                                <Input
+                                    prefix={<FiPhone style={{ color: '#1890ff', fontSize: '15px' }} />}
+                                    placeholder="Enter contact number"
+                                    size="large"
+                                    style={{ borderRadius: '10px', height: '44px', backgroundColor: '#f8fafc', border: '1px solid #e6e8eb' }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="gstIn"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>GSTIN Number</span>}
+                            >
+                                <Input
+                                    prefix={<FiBriefcase style={{ color: '#1890ff', fontSize: '15px' }} />}
+                                    placeholder="Enter GSTIN (e.g. 24ABCDE1234F1Z5)"
+                                    size="large"
+                                    style={{ borderRadius: '10px', height: '44px', backgroundColor: '#f8fafc', border: '1px solid #e6e8eb' }}
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={16} style={{ marginTop: '12px' }}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="state"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>State</span>}
+                            >
+                                <Select
+                                    showSearch
+                                    placeholder="Select state"
+                                    size="large"
+                                    style={{
+                                        borderRadius: '10px',
+                                        height: '44px',
+                                    }}
+                                    onChange={() => {
+                                        form.setFieldValue('city', undefined);
+                                        form.setFieldValue('country', 'India');
+                                    }}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                    options={Object.keys(indianStatesAndCities).map(stateName => ({
+                                        label: stateName,
+                                        value: stateName
+                                    }))}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="city"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>City</span>}
+                            >
+                                <Select
+                                    showSearch
+                                    placeholder="Select city"
+                                    size="large"
+                                    style={{
+                                        borderRadius: '10px',
+                                        height: '44px',
+                                    }}
+                                    disabled={!selectedState}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                    options={availableCities.map(cityName => ({
+                                        label: cityName,
+                                        value: cityName
+                                    }))}
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={16} style={{ marginTop: '12px' }}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="zipcode"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>Zipcode / Pincode</span>}
+                            >
+                                <Input
+                                    placeholder="Enter zipcode"
+                                    size="large"
+                                    style={{ borderRadius: '10px', height: '44px', backgroundColor: '#f8fafc', border: '1px solid #e6e8eb' }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="country"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>Country</span>}
+                            >
+                                <Input
+                                    placeholder="Enter country"
+                                    size="large"
+                                    style={{ borderRadius: '10px', height: '44px', backgroundColor: '#f8fafc', border: '1px solid #e6e8eb' }}
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={16} style={{ marginTop: '12px' }}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="industry"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>Business Industry</span>}
+                            >
+                                <Select
+                                    showSearch
+                                    placeholder="Select business industry"
+                                    size="large"
+                                    style={{ borderRadius: '10px', height: '44px' }}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                    options={industriesData.industries.map(industryName => ({
+                                        label: industryName,
+                                        value: industryName
+                                    }))}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="website"
+                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>Website / Domain</span>}
+                                rules={[{ type: 'url', message: 'Please enter a valid URL (e.g. https://example.com)' }]}
+                            >
+                                <Input
+                                    placeholder="Enter website (e.g. https://...)"
+                                    size="large"
+                                    style={{ borderRadius: '10px', height: '44px', backgroundColor: '#f8fafc', border: '1px solid #e6e8eb' }}
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Form.Item
+                        name="address"
+                        label={<span style={{ fontSize: '13px', fontWeight: '500' }}>Office Street Address</span>}
+                        style={{ marginTop: "12px" }}
+                    >
+                        <Input.TextArea
+                            placeholder="Enter street address, building, floor etc."
+                            size="large"
+                            rows={2}
+                            style={{ borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e6e8eb', padding: '10px' }}
                         />
                     </Form.Item>
 

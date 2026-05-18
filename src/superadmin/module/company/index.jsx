@@ -34,6 +34,7 @@ import CompanyList from './CompanyList';
 import { useGetAllCompaniesQuery, useDeleteCompanyMutation } from './services/companyApi';
 import { Link } from 'react-router-dom';
 import EditCompany from './EditCompany';
+import CompanyOverview from './CompanyOverview';
 
 const { Title, Text } = Typography;
 
@@ -49,6 +50,8 @@ const Company = () => {
     const [viewMode, setViewMode] = useState('table');
     const [currentPage, setCurrentPage] = useState(1);
     const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [isOverviewVisible, setIsOverviewVisible] = useState(false);
+    const [overviewCompany, setOverviewCompany] = useState(null);
 
     const { data: companiesData, isLoading: isLoadingCompanies, refetch } = useGetAllCompaniesQuery();
     const [deleteCompany, { isLoading: isDeleting }] = useDeleteCompanyMutation();
@@ -113,6 +116,11 @@ const Company = () => {
     const handleEditCompany = (company) => {
         setSelectedCompany(company);
         setIsEditModalVisible(true);
+    };
+
+    const handleViewCompany = (company) => {
+        setOverviewCompany(company);
+        setIsOverviewVisible(true);
     };
 
     const handleDelete = (record) => {
@@ -300,6 +308,7 @@ const Company = () => {
                     <CompanyList
                         companies={filteredCompanies}
                         loading={isLoadingCompanies || isDeleting}
+                        onView={handleViewCompany}
                         onEdit={handleEditCompany}
                         onDelete={handleDelete}
                     />
@@ -311,6 +320,7 @@ const Company = () => {
                                 <Col xs={24} sm={12} md={8} lg={6} key={company.id}>
                                     <CompanyCard
                                         company={company}
+                                        onView={handleViewCompany}
                                         onEdit={handleEditCompany}
                                         onDelete={handleDelete}
                                     />
@@ -332,22 +342,35 @@ const Company = () => {
                 )}
             </Card>
 
-            <CreateCompany
-                open={isFormVisible}
-                onCancel={() => setIsFormVisible(false)}
-                onSubmit={handleFormSubmit}
-                initialValues={selectedCompany}
-                loading={isLoadingCompanies || isDeleting}
-            />
+            {isFormVisible && (
+                <CreateCompany
+                    open={isFormVisible}
+                    onCancel={() => setIsFormVisible(false)}
+                    onSubmit={handleFormSubmit}
+                    initialValues={selectedCompany}
+                    loading={isLoadingCompanies || isDeleting}
+                />
+            )}
 
-            <EditCompany
-                visible={isEditModalVisible}
-                onCancel={() => {
-                    setIsEditModalVisible(false);
-                    setSelectedCompany(null);
+            {isEditModalVisible && (
+                <EditCompany
+                    visible={isEditModalVisible}
+                    onCancel={() => {
+                        setIsEditModalVisible(false);
+                        setSelectedCompany(null);
+                    }}
+                    initialValues={selectedCompany}
+                    loading={isLoadingCompanies}
+                />
+            )}
+
+            <CompanyOverview
+                visible={isOverviewVisible}
+                onClose={() => {
+                    setIsOverviewVisible(false);
+                    setOverviewCompany(null);
                 }}
-                initialValues={selectedCompany}
-                loading={isLoadingCompanies}
+                company={overviewCompany}
             />
         </div>
     );

@@ -51,6 +51,7 @@ import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
 import AddStatusModal from "../crmsystem/souce/AddStatusModal";
 import { useGetCustomFormsQuery } from '../generate-link/services/customFormApi';
+import indianStatesAndCities from "../../../../utils/Indian_Cities_In_States_JSON.json";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -70,6 +71,12 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const selectedCompanyId = Form.useWatch('company_id', form);
   const selectedContactId = Form.useWatch('contact_id', form);
   const selectedPipelineId = Form.useWatch('pipeline', form);
+  const selectedState = Form.useWatch('state', form);
+
+  const availableCities = React.useMemo(() => {
+    if (!selectedState) return [];
+    return indianStatesAndCities[selectedState] || [];
+  }, [selectedState]);
   const pendingLeadStageIdRef = useRef(null);
 
   // Fetch Active Custom Form for Lead
@@ -1316,7 +1323,19 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                     style={{ gridColumn: 'span 1', marginBottom: '0px' }}
                     rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
                   >
-                    <Input placeholder={field.placeholder || "Enter city"} style={inputStyle} />
+                    <Select
+                      showSearch
+                      placeholder={field.placeholder || "Select city"}
+                      style={selectStyle}
+                      disabled={!selectedState}
+                      filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
+                      options={availableCities.map(cityName => ({
+                        label: cityName,
+                        value: cityName
+                      }))}
+                    />
                   </Form.Item>
                 );
               }
@@ -1330,7 +1349,22 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                     style={{ gridColumn: 'span 1', marginBottom: '0px' }}
                     rules={[{ required: field.required, message: `Please enter ${field.label.toLowerCase()}` }]}
                   >
-                    <Input placeholder={field.placeholder || "Enter state"} style={inputStyle} />
+                    <Select
+                      showSearch
+                      placeholder={field.placeholder || "Select state"}
+                      style={selectStyle}
+                      onChange={() => {
+                        form.setFieldValue('city', undefined);
+                        form.setFieldValue('country', 'India');
+                      }}
+                      filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
+                      options={Object.keys(indianStatesAndCities).map(stateName => ({
+                        label: stateName,
+                        value: stateName
+                      }))}
+                    />
                   </Form.Item>
                 );
               }

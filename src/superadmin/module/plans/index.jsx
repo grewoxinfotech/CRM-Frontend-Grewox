@@ -98,9 +98,9 @@ const Plans = () => {
             trial_period: plan.trial_period?.toString(),
             storage_limit: plan.storage_limit?.toString(),
             max_users: plan.max_users?.toString(),
-            max_clients: plan.max_clients?.toString(),
             max_vendors: plan.max_vendors?.toString(),
             max_customers: plan.max_customers?.toString(),
+            ai_credits: plan.ai_credits,
             is_default: plan.is_default,
             status: plan.status,
             features: typeof plan.features === 'string' ? JSON.parse(plan.features) : (plan.features || {})
@@ -171,9 +171,9 @@ const Plans = () => {
                 trial_period: currentPlan.trial_period?.toString(),
                 storage_limit: currentPlan.storage_limit?.toString(),
                 max_users: currentPlan.max_users?.toString(),
-                max_clients: currentPlan.max_clients?.toString(),
                 max_vendors: currentPlan.max_vendors?.toString(),
                 max_customers: currentPlan.max_customers?.toString(),
+                ai_credits: currentPlan.ai_credits,
                 status: newStatus,
                 features: typeof currentPlan.features === 'string' ? JSON.parse(currentPlan.features) : (currentPlan.features || {})
             };
@@ -228,7 +228,6 @@ const Plans = () => {
                 'Trial Period': `${plan.trial_period || 0} Days`,
                 'Storage Limit': `${plan.storage_limit || 0} GB`,
                 'Max Users': plan.max_users || 0,
-                'Max Clients': plan.max_clients || 0,
                 'Max Vendors': plan.max_vendors || 0,
                 'Max Customers': plan.max_customers || 0,
                 'Status': plan.status?.charAt(0).toUpperCase() + plan.status?.slice(1) || 'Inactive',

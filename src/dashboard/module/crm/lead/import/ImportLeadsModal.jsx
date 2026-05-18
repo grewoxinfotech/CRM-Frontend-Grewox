@@ -61,9 +61,8 @@ const ImportLeadsModal = ({ open, onCancel }) => {
         resetModal();
       } else {
         setResult({
-          successCount: importResult.summary.success,
-          duplicateCount: importResult.summary.duplicates_found,
-          errors: importResult.errorDetails
+          summary: importResult.summary,
+          errorDetails: importResult.errorDetails
         });
       }
     } catch (error) {
@@ -82,12 +81,37 @@ const ImportLeadsModal = ({ open, onCancel }) => {
     },
     beforeUpload: (file) => {
       const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-                      file.type === 'application/vnd.ms-excel';
+                      file.type === 'application/vnd.ms-excel' ||
+                      file.name.endsWith('.xlsx') ||
+                      file.name.endsWith('.xls');
       if (!isExcel) {
         message.error(`${file.name} is not an excel file`);
         return Upload.LIST_IGNORE;
       }
-      setFileList([file]);
+
+      // Read client-side to validate row limit instantly
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(worksheet);
+          
+          if (rows.length > 500) {
+            message.error(`This file has ${rows.length} rows. Maximum import limit is 500 rows.`);
+            setFileList([]); // Clear selected file
+          } else {
+            setFileList([file]);
+          }
+        } catch (err) {
+          console.error("Client-side excel validation failed:", err);
+          // Fallback to let the backend handle it
+          setFileList([file]);
+        }
+      };
+      reader.readAsArrayBuffer(file);
       return false;
     },
     fileList,
@@ -213,7 +237,7 @@ const ImportLeadsModal = ({ open, onCancel }) => {
                 <ul style={{ paddingLeft: '20px', margin: 0 }}>
                   <li>Download the template to see the required format.</li>
                   <li>Phone number and Lead Title (or First Name) are mandatory.</li>
-                  <li>Maximum 500 leads can be imported at once.</li>
+                  <li>Maximum <strong>500 leads</strong> can be imported at once.</li>
                 </ul>
               }
               type="info"

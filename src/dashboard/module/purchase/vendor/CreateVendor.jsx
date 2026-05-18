@@ -6,6 +6,7 @@ import './vendor.scss';
 import { useCreateVendorMutation } from './services/vendorApi';
 import { useGetAllCountriesQuery, useGetAllCurrenciesQuery } from '../../settings/services/settingsApi';
 import LimitReachedModal from '../../../../components/LimitReachedModal';
+import indianStatesAndCities from '../../../../utils/Indian_Cities_In_States_JSON.json';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -19,6 +20,13 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
     const { data: currencies = [] } = useGetAllCurrenciesQuery();
     const [isLimitModalVisible, setIsLimitModalVisible] = useState(false);
     const [limitErrorMessage, setLimitErrorMessage] = useState('');
+
+    const selectedState = Form.useWatch('state', form);
+
+    const availableCities = React.useMemo(() => {
+        if (!selectedState) return [];
+        return indianStatesAndCities[selectedState] || [];
+    }, [selectedState]);
 
     useEffect(() => {
         if (open) {
@@ -344,14 +352,22 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                             label="City"
                             style={{ marginTop: '12px' }}
                         >
-                            <Input
-                                placeholder="Enter city (optional)"
+                            <Select
+                                showSearch
+                                placeholder="Select city (optional)"
                                 size="large"
                                 style={{
                                     borderRadius: '10px',
                                     height: '48px',
-                                    backgroundColor: '#f8fafc',
                                 }}
+                                disabled={!selectedState}
+                                filterOption={(input, option) =>
+                                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                }
+                                options={availableCities.map(cityName => ({
+                                    label: cityName,
+                                    value: cityName
+                                }))}
                             />
                         </Form.Item>
                     </Col>
@@ -361,14 +377,25 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                             label="State"
                             style={{ marginTop: '12px' }}
                         >
-                            <Input
-                                placeholder="Enter state (optional)"
+                            <Select
+                                showSearch
+                                placeholder="Select state (optional)"
                                 size="large"
                                 style={{
                                     borderRadius: '10px',
                                     height: '48px',
-                                    backgroundColor: '#f8fafc',
                                 }}
+                                onChange={() => {
+                                    form.setFieldValue('city', undefined);
+                                    form.setFieldValue('country', 'India');
+                                }}
+                                filterOption={(input, option) =>
+                                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                }
+                                options={Object.keys(indianStatesAndCities).map(stateName => ({
+                                    label: stateName,
+                                    value: stateName
+                                }))}
                             />
                         </Form.Item>
                     </Col>

@@ -26,12 +26,21 @@ import {
     FiCreditCard
 } from 'react-icons/fi';
 
+import indianStatesAndCities from '../../../utils/Indian_Cities_In_States_JSON.json';
+
 const { Text } = Typography;
 const { Option } = Select;
 
 const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading, userRole }) => {
     const [form] = Form.useForm();
     const [fileList, setFileList] = useState([]);
+
+    const selectedState = Form.useWatch('state', form);
+
+    const availableCities = React.useMemo(() => {
+        if (!selectedState) return [];
+        return indianStatesAndCities[selectedState] || [];
+    }, [selectedState]);
 
     // Reset form when modal opens or closes
     useEffect(() => {
@@ -357,12 +366,37 @@ const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading,
                         </Col>
                         <Col span={12}>
                             <Form.Item name="city" label="City">
-                                <Input prefix={<FiHome />} placeholder="City" />
+                                <Select
+                                    showSearch
+                                    placeholder="City"
+                                    disabled={!selectedState}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                    options={availableCities.map(cityName => ({
+                                        label: cityName,
+                                        value: cityName
+                                    }))}
+                                />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
                             <Form.Item name="state" label="State">
-                                <Input prefix={<FiMap />} placeholder="State" />
+                                <Select
+                                    showSearch
+                                    placeholder="State"
+                                    onChange={() => {
+                                        form.setFieldValue('city', undefined);
+                                        form.setFieldValue('country', 'India');
+                                    }}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                    options={Object.keys(indianStatesAndCities).map(stateName => ({
+                                        label: stateName,
+                                        value: stateName
+                                    }))}
+                                />
                             </Form.Item>
                         </Col>
                         <Col span={12}>

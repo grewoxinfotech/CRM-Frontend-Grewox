@@ -20,40 +20,40 @@ const { Title } = Typography;
 
 // Theme colors matching the module
 const COLORS = {
-    primary: {
-        main: '#1890ff',
-        light: '#40a9ff',
-        dark: '#096dd9',
-        gradient: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)'
+  primary: {
+    main: '#4f46e5', // Deep indigo
+    light: '#818cf8',
+    dark: '#3730a3',
+    gradient: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)'
+  },
+  secondary: {
+    main: '#8b5cf6', // Violet purple
+    light: '#a78bfa',
+    dark: '#6d28d9',
+    gradient: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)'
+  },
+  text: {
+    primary: '#4f46e5',
+    secondary: '#64748b', // Elegant slate grey
+    light: '#94a3b8'
+  },
+  chart: {
+    leadCount: {
+      main: '#4f46e5',
+      light: '#818cf8',
+      gradient: 'url(#colorLeads)',
+      hover: '#3730a3'
     },
-    secondary: {
-        main: '#595959',
-        light: '#8c8c8c',
-        dark: '#434343',
-        gradient: 'linear-gradient(135deg, #8c8c8c 0%, #595959 100%)'
+    leadValue: {
+      main: '#10b981', // Emerald green for lead values
+      light: '#34d399',
+      gradient: 'url(#colorValue)',
+      hover: '#059669'
     },
-    text: {
-        primary: '#1890ff',
-        secondary: '#595959',
-        light: '#8c8c8c'
-    },
-    chart: {
-        leadCount: {
-            main: '#1890ff',
-            light: '#40a9ff',
-            gradient: 'url(#colorLeads)',
-            hover: '#096dd9'
-        },
-        leadValue: {
-            main: '#595959',
-            light: '#8c8c8c',
-            gradient: 'url(#colorValue)',
-            hover: '#434343'
-        },
-        pie: ['#1890ff', '#595959', '#40a9ff', '#8c8c8c', '#096dd9', '#434343']
-    },
-    border: '#e6e8eb',
-    background: '#f8fafc'
+    pie: ['#4f46e5', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#3b82f6']
+  },
+  border: '#e2e8f0',
+  background: '#f8fafc'
 };
 
 const TIME_FILTERS = {
@@ -66,14 +66,14 @@ const TIME_FILTERS = {
 const chartTitleStyle = {
     fontSize: '20px',
     fontWeight: '700',
-    color: '#1890ff',
+    color: '#4f46e5',
     marginBottom: '24px'
 };
 
 const chartLabelStyle = {
     fontSize: '15px',
     fontWeight: '600',
-    fill: '#1890ff'
+    fill: '#4f46e5'
 };
 
 // Add responsive styles for filter controls
@@ -323,12 +323,12 @@ const LeadsAnalytics = ({ leads }) => {
 
     const chartCardStyle = {
         borderRadius: '15px',
-        boxShadow: '0 4px 20px rgba(24, 144, 255, 0.1)',
-        background: 'linear-gradient(145deg, #ffffff, #f0f7ff)',
+        boxShadow: '0 4px 20px rgba(79, 70, 229, 0.1)',
+        background: 'linear-gradient(145deg, #ffffff, #f5f3ff)',
         border: 'none',
         padding: '24px',
-        width: '80%',
-        margin: '0 auto'
+        width: '100%',
+        margin: '0',
     };
 
     const CustomTooltip = ({ active, payload, label }) => {
@@ -337,12 +337,12 @@ const LeadsAnalytics = ({ leads }) => {
                 <div style={{
                     background: 'rgba(255, 255, 255, 0.95)',
                     padding: '12px 16px',
-                    border: '1px solid #40a9ff',
+                    border: '1px solid #818cf8',
                     borderRadius: '12px',
                     boxShadow: '0 4px 25px rgba(0,0,0,0.1)',
                     backdropFilter: 'blur(6px)',
                     transition: 'all 0.3s ease',
-                    color: '#1890ff'
+                    color: '#4f46e5'
                 }}>
                     <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#333', fontSize: '14px' }}>{label}</p>
                     {payload.map((entry, index) => (
@@ -432,9 +432,9 @@ const LeadsAnalytics = ({ leads }) => {
             <style>
                 {`
                     .filter-select .ant-select-selector {
-                        background-color: #f0f7ff !important;
+                        background-color: #f5f3ff !important;
                         border-radius: 6px !important;
-                        border: 1px solid #91caff !important;
+                        border: 1px solid #c7d2fe !important;
                         padding: 0 8px !important;
                         height: 32px !important;
                         box-shadow: none !important;
@@ -442,17 +442,17 @@ const LeadsAnalytics = ({ leads }) => {
                     .filter-select .ant-select-selection-item {
                         line-height: 30px !important;
                         font-weight: 500 !important;
-                        color: #1890ff !important;
+                        color: #4f46e5 !important;
                     }
                     .filter-select .ant-select-arrow {
-                        color: #1890ff !important;
+                        color: #4f46e5 !important;
                     }
                     .filter-select:hover .ant-select-selector {
-                        border-color: #40a9ff !important;
+                        border-color: #818cf8 !important;
                     }
                     .filter-select.ant-select-focused .ant-select-selector {
-                        border-color: #1890ff !important;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+                        border-color: #4f46e5 !important;
+                        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1) !important;
                     }
                     @media (max-width: 576px) {
                         .filter-select .ant-select-selector {
@@ -470,14 +470,14 @@ const LeadsAnalytics = ({ leads }) => {
             <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
                 <Col xs={24} sm={12} lg={6}>
                     <Card bordered={false} style={{
-                        background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
+                        background: 'linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%)',
                         borderRadius: '12px',
-                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.1)',
+                        boxShadow: '0 4px 12px rgba(79, 70, 229, 0.1)',
                         transition: 'all 0.3s ease',
                         cursor: 'pointer',
                         '&:hover': {
                             transform: 'translateY(-2px)',
-                            boxShadow: '0 6px 16px rgba(24, 144, 255, 0.15)'
+                            boxShadow: '0 6px 16px rgba(79, 70, 229, 0.15)'
                         }
                     }}>
                         <div style={{
@@ -487,7 +487,7 @@ const LeadsAnalytics = ({ leads }) => {
                             padding: '4px'
                         }}>
                             <div style={{
-                                background: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)',
+                                background: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)',
                                 borderRadius: '10px',
                                 padding: '12px',
                                 display: 'flex',
@@ -498,7 +498,7 @@ const LeadsAnalytics = ({ leads }) => {
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{
-                                    color: '#1890ff',
+                                    color: '#4f46e5',
                                     fontSize: '16px',
                                     fontWeight: 'bold',
                                     marginBottom: '4px',
@@ -507,7 +507,7 @@ const LeadsAnalytics = ({ leads }) => {
                                     Total Value
                                 </div>
                                 <div style={{
-                                    color: '#595959',
+                                    color: '#10b981',
                                     fontSize: '28px',
                                     fontWeight: 'bold',
                                     letterSpacing: '-0.5px'
@@ -520,9 +520,9 @@ const LeadsAnalytics = ({ leads }) => {
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
                     <Card bordered={false} style={{
-                        background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
+                        background: 'linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%)',
                         borderRadius: '12px',
-                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.1)',
+                        boxShadow: '0 4px 12px rgba(79, 70, 229, 0.1)',
                         transition: 'all 0.3s ease',
                         cursor: 'pointer'
                     }}>
@@ -533,7 +533,7 @@ const LeadsAnalytics = ({ leads }) => {
                             padding: '4px'
                         }}>
                             <div style={{
-                                background: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)',
+                                background: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)',
                                 borderRadius: '10px',
                                 padding: '12px',
                                 display: 'flex',
@@ -544,7 +544,7 @@ const LeadsAnalytics = ({ leads }) => {
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{
-                                    color: '#1890ff',
+                                    color: '#4f46e5',
                                     fontSize: '16px',
                                     fontWeight: 'bold',
                                     marginBottom: '4px',
@@ -553,7 +553,7 @@ const LeadsAnalytics = ({ leads }) => {
                                     Total Leads
                                 </div>
                                 <div style={{
-                                    color: '#595959',
+                                    color: '#10b981',
                                     fontSize: '28px',
                                     fontWeight: 'bold',
                                     letterSpacing: '-0.5px'
@@ -566,9 +566,9 @@ const LeadsAnalytics = ({ leads }) => {
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
                     <Card bordered={false} style={{
-                        background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
+                        background: 'linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%)',
                         borderRadius: '12px',
-                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.1)',
+                        boxShadow: '0 4px 12px rgba(79, 70, 229, 0.1)',
                         transition: 'all 0.3s ease',
                         cursor: 'pointer'
                     }}>
@@ -579,7 +579,7 @@ const LeadsAnalytics = ({ leads }) => {
                             padding: '4px'
                         }}>
                             <div style={{
-                                background: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)',
+                                background: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)',
                                 borderRadius: '10px',
                                 padding: '12px',
                                 display: 'flex',
@@ -590,7 +590,7 @@ const LeadsAnalytics = ({ leads }) => {
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{
-                                    color: '#1890ff',
+                                    color: '#4f46e5',
                                     fontSize: '16px',
                                     fontWeight: 'bold',
                                     marginBottom: '4px',
@@ -599,7 +599,7 @@ const LeadsAnalytics = ({ leads }) => {
                                     Converted
                                 </div>
                                 <div style={{
-                                    color: '#595959',
+                                    color: '#10b981',
                                     fontSize: '28px',
                                     fontWeight: 'bold',
                                     letterSpacing: '-0.5px'
@@ -612,9 +612,9 @@ const LeadsAnalytics = ({ leads }) => {
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
                     <Card bordered={false} style={{
-                        background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
+                        background: 'linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%)',
                         borderRadius: '12px',
-                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.1)',
+                        boxShadow: '0 4px 12px rgba(79, 70, 229, 0.1)',
                         transition: 'all 0.3s ease',
                         cursor: 'pointer'
                     }}>
@@ -625,7 +625,7 @@ const LeadsAnalytics = ({ leads }) => {
                             padding: '4px'
                         }}>
                             <div style={{
-                                background: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)',
+                                background: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)',
                                 borderRadius: '10px',
                                 padding: '12px',
                                 display: 'flex',
@@ -636,7 +636,7 @@ const LeadsAnalytics = ({ leads }) => {
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{
-                                    color: '#1890ff',
+                                    color: '#4f46e5',
                                     fontSize: '16px',
                                     fontWeight: 'bold',
                                     marginBottom: '4px',
@@ -645,7 +645,7 @@ const LeadsAnalytics = ({ leads }) => {
                                     Conversion Rate
                                 </div>
                                 <div style={{
-                                    color: '#595959',
+                                    color: '#10b981',
                                     fontSize: '28px',
                                     fontWeight: 'bold',
                                     letterSpacing: '-0.5px'
@@ -702,9 +702,9 @@ const LeadsAnalytics = ({ leads }) => {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                 <XAxis
                                     dataKey="name"
-                                    stroke="#1890ff"
+                                    stroke="#4f46e5"
                                     tick={{ 
-                                        fill: '#1890ff', 
+                                        fill: '#4f46e5', 
                                         fontSize: window.innerWidth < 576 ? 10 : 12, 
                                         fontWeight: 500,
                                         angle: window.innerWidth < 576 ? -45 : 0
@@ -727,7 +727,7 @@ const LeadsAnalytics = ({ leads }) => {
                                     orientation="right"
                                     tickFormatter={formatCurrency}
                                     tick={{ 
-                                        fill: '#595959', 
+                                        fill: '#10b981', 
                                         fontSize: window.innerWidth < 576 ? 10 : 12, 
                                         fontWeight: 500 
                                     }}
@@ -741,7 +741,7 @@ const LeadsAnalytics = ({ leads }) => {
                                 <Legend
                                     formatter={(value, entry) => (
                                         <span style={{
-                                            color: entry.color === COLORS.chart.leadCount.main ? '#1890ff' : '#595959',
+                                            color: entry.color === COLORS.chart.leadCount.main ? '#4f46e5' : '#10b981',
                                             fontWeight: 'bold',
                                             fontSize: window.innerWidth < 576 ? '12px' : '14px'
                                         }}>
@@ -833,7 +833,7 @@ const LeadsAnalytics = ({ leads }) => {
                                     type="number"
                                     tickFormatter={formatNumber}
                                     tick={{ 
-                                        fill: '#1890ff', 
+                                        fill: '#4f46e5', 
                                         fontSize: window.innerWidth < 576 ? 10 : 12, 
                                         fontWeight: 500 
                                     }}
@@ -842,7 +842,7 @@ const LeadsAnalytics = ({ leads }) => {
                                     dataKey="name"
                                     type="category"
                                     tick={{ 
-                                        fill: '#1890ff', 
+                                        fill: '#4f46e5', 
                                         fontSize: window.innerWidth < 576 ? 10 : 12, 
                                         fontWeight: 500 
                                     }}
@@ -856,7 +856,7 @@ const LeadsAnalytics = ({ leads }) => {
                                 <Legend
                                     formatter={(value, entry) => (
                                         <span style={{
-                                            color: entry.color === COLORS.chart.leadCount.main ? '#1890ff' : '#595959',
+                                            color: entry.color === COLORS.chart.leadCount.main ? '#4f46e5' : '#10b981',
                                             fontWeight: 500,
                                             fontSize: window.innerWidth < 576 ? '12px' : '14px'
                                         }}>
@@ -976,7 +976,7 @@ const LeadsAnalytics = ({ leads }) => {
                             }}>
                                 <Typography.Text style={{
                                     fontSize: window.innerWidth < 576 ? '16px' : '18px',
-                                    color: '#8c8c8c',
+                                    color: '#34d399',
                                     fontWeight: 500
                                 }}>
                                     Data Not Found
@@ -1096,7 +1096,7 @@ const LeadsAnalytics = ({ leads }) => {
                                     height={window.innerWidth < 576 ? 30 : 36}
                                     formatter={(value, entry) => (
                                         <span style={{
-                                            color: entry.color === COLORS.chart.leadCount.main ? '#1890ff' : '#595959',
+                                            color: entry.color === COLORS.chart.leadCount.main ? '#4f46e5' : '#10b981',
                                             fontWeight: window.innerWidth < 576 ? 500 : 600,
                                             fontSize: window.innerWidth < 576 ? '12px' : '14px'
                                         }}>
@@ -1237,7 +1237,7 @@ const LeadsAnalytics = ({ leads }) => {
                                 <Legend
                                     formatter={(value, entry) => (
                                         <span style={{
-                                            color: entry.color === COLORS.chart.leadCount.main ? '#1890ff' : '#595959',
+                                            color: entry.color === COLORS.chart.leadCount.main ? '#4f46e5' : '#10b981',
                                             fontWeight: 600,
                                             fontSize: '14px'
                                         }}>

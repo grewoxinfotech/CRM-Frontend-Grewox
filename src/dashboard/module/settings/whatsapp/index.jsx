@@ -4,13 +4,14 @@ import {
     SaveOutlined, ReloadOutlined, WhatsAppOutlined, CheckCircleOutlined, 
     InfoCircleOutlined, LayoutOutlined, EditOutlined, LockOutlined, 
     CopyOutlined, LinkOutlined, SettingOutlined, SendOutlined,
-    SyncOutlined, ClockCircleOutlined, CloseCircleOutlined
+    SyncOutlined, ClockCircleOutlined, CloseCircleOutlined, PlusOutlined
 } from '@ant-design/icons';
 import { FiHome } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { UnorderedListOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useGetsubcriptionByIdQuery } from '../../../../superadmin/module/SubscribedUser/services/SubscribedUserApi';
 import { 
     useGetWhatsappSettingsQuery, 
     useSaveWhatsappSettingsMutation, 
@@ -26,6 +27,20 @@ const { Title, Text } = Typography;
 const WhatsappSettings = () => {
     const [form] = Form.useForm();
     const currentUser = useSelector(selectCurrentUser);
+
+    const clientPlanId = currentUser?.client_plan_id;
+    const { data: subscriptionData } = useGetsubcriptionByIdQuery(clientPlanId, { skip: !clientPlanId });
+
+    const hasAiFeature = React.useMemo(() => {
+        if (!currentUser) return false;
+        if (currentUser.roleName === 'super-admin') return true;
+        
+        const plan = subscriptionData?.data?.Plan;
+        if (!plan) return false;
+        
+        const features = typeof plan.features === 'string' ? JSON.parse(plan.features) : (plan.features || {});
+        return !!(features?.ai_features || features?.ai || Number(plan.ai_credits) > 0);
+    }, [currentUser, subscriptionData]);
     
     const { data: settings, isLoading: isSettingsLoading } = useGetWhatsappSettingsQuery();
     const { data: metaTemplates, isLoading: isMetaTemplatesLoading, refetch: refetchTemplates } = useGetWhatsappTemplatesQuery(undefined, {
@@ -35,6 +50,8 @@ const WhatsappSettings = () => {
     const [saveSettings, { isLoading: isSaving }] = useSaveWhatsappSettingsMutation();
     const [embeddedSignup, { isLoading: isConnecting }] = useWhatsappEmbeddedSignupMutation();
     const [syncTemplates, { isLoading: isSyncing }] = useSyncWhatsappTemplatesMutation();
+    
+
     
     const [isEditing, setIsEditing] = useState(false);
 
@@ -114,14 +131,14 @@ const WhatsappSettings = () => {
                 access_token: settings.access_token,
                 verify_token: settings.verify_token || uniqueToken,
                 is_active: settings.is_active,
-                ai_auto_reply: settings.ai_auto_reply !== false,
+                ai_auto_reply: hasAiFeature && settings.ai_auto_reply !== false,
             });
             setIsEditing(false);
         } else {
             form.setFieldValue('verify_token', uniqueToken);
             setIsEditing(true);
         }
-    }, [settings, form, currentUser]);
+    }, [settings, form, currentUser, hasAiFeature]);
 
     const handleSave = async (values) => {
         try {
@@ -257,8 +274,29 @@ const WhatsappSettings = () => {
                                         </Form.Item>
                                     </Col>
                                     <Col span={6}>
-                                        <Form.Item label="AI Auto-Reply" name="ai_auto_reply" valuePropName="checked">
-                                            <Switch checkedChildren="On" unCheckedChildren="Off" />
+                                        <Form.Item 
+                                            label={
+                                                <Space>
+                                                    <span>AI Auto-Reply</span>
+                                                    {!hasAiFeature && (
+                                                        <Tag color="error" style={{ border: 'none', borderRadius: '4px', fontSize: '9px', padding: '0 6px', margin: 0 }}>
+                                                            LOCKED
+                                                        </Tag>
+                                                    )}
+                                                </Space>
+                                            } 
+                                            name="ai_auto_reply" 
+                                            valuePropName="checked"
+                                        >
+                                            {hasAiFeature ? (
+                                                <Switch checkedChildren="On" unCheckedChildren="Off" disabled={isLocked} />
+                                            ) : (
+                                                <Tooltip title="AI Auto-Reply is a Premium feature. Upgrade your plan to unlock it.">
+                                                    <div style={{ display: 'inline-block' }}>
+                                                        <Switch checkedChildren="On" unCheckedChildren="Off" disabled checked={false} />
+                                                    </div>
+                                                </Tooltip>
+                                            )}
                                         </Form.Item>
                                     </Col>
                                 </Row>
@@ -375,9 +413,11 @@ const WhatsappSettings = () => {
                         </Col>
                     </Row>
                 </Form>
-            </div>
         </div>
-    );
+
+
+    </div>
+);
 };
 
 export default WhatsappSettings;

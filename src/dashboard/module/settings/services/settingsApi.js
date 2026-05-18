@@ -12,6 +12,7 @@ export {
     useWhatsappEmbeddedSignupMutation,
     useSyncWhatsappTemplatesMutation,
     useGetWhatsappTemplatesQuery,
+    useCreateWhatsappTemplateMutation,
     useSendWhatsAppMessageMutation,
     useGetWhatsappBroadcastsQuery,
     useCreateWhatsappBroadcastMutation,

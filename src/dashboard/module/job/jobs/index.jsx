@@ -16,7 +16,7 @@ import { useGetAllJobsQuery, useDeleteJobMutation } from './services/jobApi';
 import PageHeader from '../../../../components/PageHeader';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
-import { useGetRolesQuery } from "../../role/services/roleApi";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 
 const Job = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);

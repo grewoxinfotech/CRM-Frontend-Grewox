@@ -27,6 +27,8 @@ import {
 } from 'react-icons/fi';
 import { useUpdateCompanyMutation } from './services/companyApi';
 import { useGetAllCountriesQuery } from '../settings/services/settingsApi';
+import indianStatesAndCities from '../../../utils/Indian_Cities_In_States_JSON.json';
+import industriesData from '../../../utils/industries.json';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -36,6 +38,13 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
     const [fileList, setFileList] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [updateCompany] = useUpdateCompanyMutation();
+
+    const selectedState = Form.useWatch('state', form);
+
+    const availableCities = React.useMemo(() => {
+        if (!selectedState) return [];
+        return indianStatesAndCities[selectedState] || [];
+    }, [selectedState]);
 
     // Fetch countries for phone codes
     const { data: countries, isLoading: countriesLoading } = useGetAllCountriesQuery({
@@ -60,6 +69,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
                 city: initialValues?.city || '',
                 state: initialValues?.state || '',
                 website: initialValues?.website || '',
+                industry: initialValues?.industry || '',
                 accounttype: initialValues?.accounttype || '',
                 country: initialValues?.country || '',
                 zipcode: initialValues?.zipcode || '',
@@ -580,6 +590,36 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
                     </Form.Item>
 
                     <Form.Item
+                        name="industry"
+                        label={
+                            <span style={{
+                                fontSize: '14px',
+                                fontWeight: '500',
+                            }}>
+                                Business Industry
+                            </span>
+                        }
+                    >
+                        <Select
+                            showSearch
+                            placeholder="Select business industry"
+                            size="large"
+                            filterOption={(input, option) =>
+                                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                            }
+                            options={industriesData.industries.map(industryName => ({
+                                label: industryName,
+                                value: industryName
+                            }))}
+                            style={{
+                                width: '100%',
+                                borderRadius: '10px',
+                                height: '48px',
+                            }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
                         name="gstIn"
                         label={
                             <span style={{
@@ -649,18 +689,22 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
                             </span>
                         }
                     >
-                        <Input
-                            prefix={<FiMapPin style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            placeholder="Enter city"
+                        <Select
+                            showSearch
+                            placeholder="Select city"
                             size="large"
                             style={{
                                 borderRadius: '10px',
-                                padding: '8px 16px',
                                 height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                                transition: 'all 0.3s ease',
                             }}
+                            disabled={!selectedState}
+                            filterOption={(input, option) =>
+                                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                            }
+                            options={availableCities.map(cityName => ({
+                                label: cityName,
+                                value: cityName
+                            }))}
                         />
                     </Form.Item>
 
@@ -675,18 +719,25 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
                             </span>
                         }
                     >
-                        <Input
-                            prefix={<FiMapPin style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            placeholder="Enter state"
+                        <Select
+                            showSearch
+                            placeholder="Select state"
                             size="large"
                             style={{
                                 borderRadius: '10px',
-                                padding: '8px 16px',
                                 height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                                transition: 'all 0.3s ease',
                             }}
+                            onChange={() => {
+                                form.setFieldValue('city', undefined);
+                                form.setFieldValue('country', 'India');
+                            }}
+                            filterOption={(input, option) =>
+                                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                            }
+                            options={Object.keys(indianStatesAndCities).map(stateName => ({
+                                label: stateName,
+                                value: stateName
+                            }))}
                         />
                     </Form.Item>
 

@@ -9,7 +9,7 @@ import { useGetAllDesignationsQuery } from './services/designationApi';
 import PageHeader from '../../../../components/PageHeader';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
-import { useGetRolesQuery } from "../../role/services/roleApi";
+import { useGetRolesQuery } from "../role/services/roleApi";
 
 const Designation = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);

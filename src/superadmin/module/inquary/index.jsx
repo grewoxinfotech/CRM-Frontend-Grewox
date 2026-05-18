@@ -27,6 +27,9 @@ const formatDateTime = (date) => moment(date).format('MMM DD, YYYY HH:mm');
 
 const Inquiry = () => {
     const [searchText, setSearchText] = useState('');
+    const handleSearch = (value) => {
+        setSearchText(value);
+    };
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedInquiry, setSelectedInquiry] = useState(null);

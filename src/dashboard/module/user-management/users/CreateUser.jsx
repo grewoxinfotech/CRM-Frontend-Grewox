@@ -99,7 +99,7 @@ const CreateUser = ({ visible, onCancel }) => {
     };
 
     const filteredRoles = rolesData?.message?.data?.filter(role =>
-        role.created_by === currentUser?.username
+        role.role_name !== 'super-admin' && role.role_name !== 'client'
     ) || [];
 
     const handleCreateSubmit = async (formData) => {

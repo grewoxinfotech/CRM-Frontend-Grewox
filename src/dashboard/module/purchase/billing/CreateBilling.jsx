@@ -33,6 +33,7 @@ import {
   useGetVendorsQuery,
   useCreateVendorMutation,
 } from "../vendor/services/vendorApi";
+import { useCreateBillingMutation } from "./services/billingApi";
 import { useGetProductsQuery } from "../../sales/product&services/services/productApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import { useGetAllTaxesQuery } from "../../settings/tax/services/taxApi";
@@ -43,16 +44,17 @@ import { useGetAllCountriesQuery } from "../../settings/services/settingsApi";
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendorsLoading }) => {
+const CreateBilling = ({ open, onCancel, billings, vendorsData, vendorsLoading }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState("₹");
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
-  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true);
+  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
   const [isTaxEnabled, setIsTaxEnabled] = useState(true);
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
   const [vendorForm] = Form.useForm();
   const [createVendor] = useCreateVendorMutation();
+  const [createBilling] = useCreateBillingMutation();
   const loggedInUser = useSelector(selectCurrentUser);
   const [selectedCountry, setSelectedCountry] = useState(null);
 
@@ -81,10 +83,11 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
     useGetAllCountriesQuery();
 
   useEffect(() => {
-    if (currenciesData?.data?.length > 0) {
+    const currencies = currenciesData?.data || currenciesData || [];
+    if (currencies.length > 0) {
       const defaultCurrency =
-        currenciesData.find((c) => c.currencyCode === "INR") ||
-        currenciesData.data[0];
+        currencies.find((c) => c.currencyCode === "INR") ||
+        currencies[0];
       form.setFieldValue("currency", defaultCurrency.id);
     }
   }, [currenciesData, form]);
@@ -111,7 +114,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
   }, [isTaxEnabled]);
 
   const handleCurrencyChange = (value, option) => {
-    const currency = currenciesData?.find((c) => c.id === value);
+    const currencies = currenciesData?.data || currenciesData || [];
+    const currency = currencies.find((c) => c.id === value);
     if (currency) {
       setSelectedCurrency(currency.currencyIcon);
       setSelectedCurrencyId(value);
@@ -135,13 +139,14 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
     );
     if (selectedProduct) {
       // Get the product's currency from currencies list
-      const productCurrency = currenciesData?.find(
+      const currencies = currenciesData?.data || currenciesData || [];
+      const productCurrency = currencies.find(
         (c) => c.id === selectedProduct.currency
       );
       if (productCurrency) {
         setSelectedCurrency(productCurrency.currencyIcon);
         setSelectedCurrencyId(productCurrency.id);
-        setIsCurrencyDisabled(true);
+        setIsCurrencyDisabled(false);
 
         // Update the form with the product's currency
         form.setFieldsValue({
@@ -233,7 +238,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
       setLoading(true);
 
       // Find selected currency details
-      const selectedCurrencyData = currenciesData?.find(
+      const currencies = currenciesData?.data || currenciesData || [];
+      const selectedCurrencyData = currencies.find(
         (curr) => curr.id === values.currency
       );
 
@@ -325,7 +331,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
         isTaxEnabled: isTaxEnabled, // Add the tax enabled flag
       };
 
-      const response = await onSubmit(formattedData);
+      const companyId = loggedInUser?.companyId || loggedInUser?.company_id || loggedInUser?.id;
+      const response = await createBilling({ id: companyId, data: formattedData }).unwrap();
 
       form.resetFields();
       onCancel();
@@ -995,7 +1002,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendors
               }}
               optionLabelProp="label"
             >
-              {currenciesData?.map((currency) => (
+              {(currenciesData?.data || currenciesData || [])?.map((currency) => (
                 <Option
                   key={currency.id}
                   value={currency.id}

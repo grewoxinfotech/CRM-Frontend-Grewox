@@ -71,20 +71,17 @@ const DealMember = ({ deal }) => {
     (role) => role?.role_name === "sub-client"
   )?.id;
 
-  // Filter users to get team members (excluding subclients)
+  // Filter users to get team members of the same company (excluding subclients)
   const users = (() => {
     try {
+      const tenantClientId = loggedInUser?.roleName === 'client' ? loggedInUser?.id : loggedInUser?.client_id;
+      if (!tenantClientId) return [];
+
       return usersResponse?.data?.filter(
         (user) => {
           try {
-            // Make sure user data and created_by are valid
             return user && 
-              ((typeof user.created_by === 'string' ? 
-                user.created_by === loggedInUser?.username : 
-                false) || 
-              (typeof user.username === 'string' ?
-                user.username === loggedInUser?.username :
-                false)) &&
+              (user.client_id === tenantClientId || user.id === tenantClientId) &&
               user?.role_id !== subclientRoleId;
           } catch (error) {
             console.error("Error parsing user data:", error);
@@ -194,7 +191,7 @@ const DealMember = ({ deal }) => {
       key: "role",
       render: (_, record) => {
         const user = users.find((u) => u.id === record) || {};
-        const userRole = rolesData?.data?.find(
+        const userRole = user.Role || rolesData?.data?.find(
           (role) => role.id === user.role_id
         );
         const roleStyle = getRoleColor(userRole?.role_name);
@@ -563,7 +560,7 @@ const DealMember = ({ deal }) => {
               >
                 {Array.isArray(users) &&
                   users.map((user) => {
-                    const userRole = rolesData?.data?.find(
+                    const userRole = user.Role || rolesData?.data?.find(
                       (role) => role.id === user.role_id
                     );
                     const roleStyle = getRoleColor(userRole?.role_name);

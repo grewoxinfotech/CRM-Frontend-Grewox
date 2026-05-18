@@ -1,17 +1,57 @@
-import React from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Card, Avatar, Button, Typography, Tag, Row, Col, Space } from "antd";
-import { FiBarChart2, FiCalendar, FiBriefcase, FiUser, FiActivity } from "react-icons/fi";
+import { FiBarChart2, FiCalendar, FiBriefcase, FiUser, FiActivity, FiLock } from "react-icons/fi";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useFeatureAccess } from "../../hooks/useFeatureAccess";
+import { useGetRolesQuery } from "../module/hrm/role/services/roleApi";
+import LimitReachedModal from "../../components/LimitReachedModal";
 import "./WelcomeSection.scss";
 
 const { Text, Title } = Typography;
 
-const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) => {
+const WelcomeSection = ({ user, companyName }) => {
+    const navigate = useNavigate();
+    const { hasFeature } = useFeatureAccess();
+    const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
+
+    // Fetch user role permissions dynamically
+    const { data: rolesData } = useGetRolesQuery(undefined, {
+        skip: !user || user.roleName === 'super-admin' || user.roleName === 'client'
+    });
+    
+    const userRoleData = rolesData?.message?.data?.find(role => role.id === user?.role_id);
+    const userPermissions = useMemo(() => {
+        if (!userRoleData?.permissions) return null;
+        try {
+            return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+        } catch (e) { return null; }
+    }, [userRoleData]);
+
+    const hasPermission = useCallback((action) => {
+        if (!user) return false;
+        const userRole = user.roleName || user.Role?.roleName || '';
+        const isSuperAdminCompanyLogin = localStorage.getItem('isSuperAdminCompanyLogin') === 'true';
+        if (userRole === 'super-admin' || isSuperAdminCompanyLogin || userRole === 'client') return true;
+        if (!userPermissions) return false;
+        const perms = userPermissions['dashboards-analytics'];
+        if (!perms || perms.length === 0) return false;
+        return (perms[0]?.permissions || []).includes(action);
+    }, [user, userPermissions]);
+
     const getGreeting = () => {
         const hour = new Date().getHours();
         if (hour < 12) return "Good Morning";
         if (hour < 17) return "Good Afternoon";
         return "Good Evening";
+    };
+
+    const handleAnalyticsClick = () => {
+        if (hasFeature('reports')) {
+            navigate('/dashboard/crm/analytics');
+        } else {
+            setUpgradeModalVisible(true);
+        }
     };
 
     const displayName = user?.firstName || user?.username || "User";
@@ -56,29 +96,47 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
           </Col>
 
           <Col xs={24} lg={8}>
-            <div className="analytics-cta-container">
-               <div className="profile-mini-preview">
-                  <Avatar size={44} src={user?.profilePic} style={{ border: '2px solid #fff', boxShadow: '0 4px 10px rgba(0,0,0,0.08)', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>
-                     {!user?.profilePic && (user?.firstName?.[0] || "U")}
-                  </Avatar>
-                  <div className="profile-info-mini">
-                     <Text strong style={{ fontSize: '14px', display: 'block', lineHeight: 1.2, color: '#1e293b' }}>{displayName}</Text>
-                     <Text type="secondary" style={{ fontSize: '12px', color: '#64748b' }}>{user?.email || 'no-email'}</Text>
-                  </div>
-               </div>
-               <Button
-                type="primary"
-                icon={showAnalytics ? <FiActivity /> : <FiBarChart2 />}
-                onClick={() => setShowAnalytics(!showAnalytics)}
-                className="premium-action-btn"
-                style={{ height: '38px', borderRadius: '8px', fontWeight: 600, fontSize: '13px', padding: '0 16px' }}
-              >
-                {showAnalytics ? "Dashboard" : "Analytics"}
-              </Button>
-            </div>
+             <div className="analytics-cta-container">
+                <div className="profile-mini-preview">
+                   <Avatar size={44} src={user?.profilePic} style={{ border: '2px solid #fff', boxShadow: '0 4px 10px rgba(0,0,0,0.08)', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>
+                      {!user?.profilePic && (user?.firstName?.[0] || "U")}
+                   </Avatar>
+                   <div className="profile-info-mini">
+                      <Text strong style={{ fontSize: '14px', display: 'block', lineHeight: 1.2, color: '#1e293b' }}>{displayName}</Text>
+                      <Text type="secondary" style={{ fontSize: '12px', color: '#64748b' }}>{user?.email || 'no-email'}</Text>
+                   </div>
+                </div>
+                {hasPermission('view') && (
+                  <Button
+                    type="primary"
+                    icon={hasFeature('reports') ? <FiBarChart2 /> : <FiLock />}
+                    onClick={handleAnalyticsClick}
+                    className="premium-action-btn"
+                    style={{
+                      height: '38px',
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      padding: '0 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    Analytics
+                  </Button>
+                )}
+             </div>
           </Col>
         </Row>
       </Card>
+
+      <LimitReachedModal
+        visible={upgradeModalVisible}
+        onCancel={() => setUpgradeModalVisible(false)}
+        title="Analytics Locked"
+        message="The Advanced Reports & Analytics feature is not included in your current plan. Upgrade now to unlock real-time CRM analytics, custom sales pipelines, and premium reports!"
+      />
     </motion.div>
   );
 };

@@ -69,7 +69,7 @@ const Role = () => {
                 updatedAt: role.updatedAt
             }));
             const filteredData = transformedData.filter(role =>
-                role.created_by === currentUser?.username
+                role.role_name !== 'super-admin' && role.role_name !== 'client'
             );
             setRoles(filteredData);
             setFilteredRoles(filteredData);

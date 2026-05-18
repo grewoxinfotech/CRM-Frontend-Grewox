@@ -126,6 +126,14 @@ export const settingsApi = createApi({
             transformResponse: (response) => response.data,
             providesTags: ['WhatsappSettings'],
         }),
+        createWhatsappTemplate: builder.mutation({
+            query: (data) => ({
+                url: '/whatsapp/templates',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['WhatsappSettings'],
+        }),
         getWhatsappMessages: builder.query({
             query: (params) => ({
                 url: '/whatsapp/messages',
@@ -227,6 +235,7 @@ export const {
     useWhatsappEmbeddedSignupMutation,
     useSyncWhatsappTemplatesMutation,
     useGetWhatsappTemplatesQuery,
+    useCreateWhatsappTemplateMutation,
     useGetAiSettingsQuery,
     useUpdateAiSettingsMutation,
     useGetAiUsageStatsQuery,

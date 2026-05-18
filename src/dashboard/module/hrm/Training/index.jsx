@@ -12,7 +12,7 @@ import { useGetTrainingsQuery, useDeleteTrainingMutation } from './services/trai
 import PageHeader from '../../../../components/PageHeader';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
-import { useGetRolesQuery } from "../../role/services/roleApi";
+import { useGetRolesQuery } from "../role/services/roleApi";
 
 const Training = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);

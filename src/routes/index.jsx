@@ -6,6 +6,7 @@ import DashboardLayout from "../dashboard/layout";
 import Dashboard from "../dashboard";
 import SuperAdminLayout from "../superadmin/layout";
 import SuperAdminDashboard from "../superadmin/module/dashboard";
+import SuperAdminAnalytics from "../superadmin/module/analytics";
 import Company from "../superadmin/module/company";
 import Policy from "../superadmin/module/policy";
 import Profile from "../superadmin/module/profile/index.jsx";
@@ -35,6 +36,7 @@ import Announcement from "../dashboard/module/hrm/Announcement";
 import Role from "../dashboard/module/hrm/role";
 import Users from "../dashboard/module/user-management/users/index.jsx";
 import Employee from "../dashboard/module/hrm/Employee/index.jsx";
+import HrmAnalytics from "../dashboard/module/hrm/analytics/HrmAnalytics.jsx";
 import Job from "../dashboard/module/job/jobs/index.jsx";
 import JobCandidates from "../dashboard/module/job/job candidates/index.jsx";
 import JobOnboarding from "../dashboard/module/job/job onboarding/index.jsx";
@@ -84,8 +86,11 @@ import WhatsappSettings from "../dashboard/module/settings/whatsapp/index.jsx";
 import WhatsAppMessages from "../dashboard/module/whatsapp/WhatsAppMessages.jsx";
 import WhatsAppInbox from "../dashboard/module/whatsapp/WhatsAppInbox.jsx";
 import BroadcastList from "../dashboard/module/whatsapp/broadcast/BroadcastList.jsx";
+import WhatsAppTemplates from "../dashboard/module/whatsapp/WhatsAppTemplates.jsx";
+import WhatsAppCreateTemplate from "../dashboard/module/whatsapp/WhatsAppCreateTemplate.jsx";
 import Storage from "../superadmin/module/storage/index.jsx";
 import MaintenanceSettings from "../superadmin/module/settings/maintenance/index.jsx";
+import SystemLogs from "../superadmin/module/systemLogs/index.jsx";
 import Project from "../dashboard/module/crm/project/index.jsx";
 import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail.jsx";
 import EmployeeOverview from "../dashboard/module/hrm/Employee/overview/index.jsx";
@@ -253,6 +258,10 @@ const routes = createBrowserRouter([
           {
             path: "holiday",
             element: <Holiday />
+          },
+          {
+            path: "analytics",
+            element: <HrmAnalytics />
           },
           {
             path: "calendar",
@@ -520,6 +529,14 @@ const routes = createBrowserRouter([
         element: <BroadcastList />,
       },
       {
+        path: "whatsapp/templates",
+        element: <WhatsAppTemplates />,
+      },
+      {
+        path: "whatsapp/templates/create",
+        element: <WhatsAppCreateTemplate />,
+      },
+      {
         path: "settings/tax",
         element: <Tax />,
       },
@@ -562,6 +579,10 @@ const routes = createBrowserRouter([
       {
         path: "dashboard",
         element: <SuperAdminDashboard />,
+      },
+      {
+        path: "analytics",
+        element: <SuperAdminAnalytics />,
       },
       {
         path: "company",
@@ -610,6 +631,10 @@ const routes = createBrowserRouter([
       {
         path: "settings/maintenance",
         element: <MaintenanceSettings />,
+      },
+      {
+        path: "system-logs",
+        element: <SystemLogs />,
       },
       {
         path: "settings/ai",

@@ -45,39 +45,55 @@ const { Title } = Typography;
 // Theme colors matching the module
 const COLORS = {
   primary: {
-    main: "#1890ff",
-    light: "#40a9ff",
-    dark: "#096dd9",
-    gradient: "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)",
+    main: '#4f46e5', // Deep indigo
+    light: '#818cf8',
+    dark: '#3730a3',
+    gradient: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)'
   },
   secondary: {
-    main: "#595959",
-    light: "#8c8c8c",
-    dark: "#434343",
-    gradient: "linear-gradient(135deg, #8c8c8c 0%, #595959 100%)",
+    main: '#8b5cf6', // Violet purple
+    light: '#a78bfa',
+    dark: '#6d28d9',
+    gradient: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)'
   },
   text: {
-    primary: "#1890ff",
-    secondary: "#595959",
-    light: "#8c8c8c",
+    primary: '#4f46e5',
+    secondary: '#64748b', // Elegant slate grey
+    light: '#94a3b8'
   },
   chart: {
     dealCount: {
-      main: "#1890ff",
-      light: "#40a9ff",
-      gradient: "url(#colorDeals)",
-      hover: "#096dd9",
+      main: '#4f46e5',
+      light: '#818cf8',
+      gradient: 'url(#colorLeads)',
+      hover: '#3730a3'
     },
     dealValue: {
-      main: "#595959",
-      light: "#8c8c8c",
-      gradient: "url(#colorValue)",
-      hover: "#434343",
+      main: '#10b981', // Emerald green for deal values
+      light: '#34d399',
+      gradient: 'url(#colorValue)',
+      hover: '#059669'
     },
-    pie: ["#1890ff", "#595959", "#40a9ff", "#8c8c8c", "#096dd9", "#434343"],
+    pie: ['#4f46e5', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#3b82f6']
   },
-  border: "#e6e8eb",
-  background: "#f8fafc",
+  border: '#e2e8f0',
+  background: '#f8fafc'
+};
+
+const cleanSourceName = (name) => {
+  if (!name || typeof name !== 'string') return 'Manual';
+  const trimmed = name.trim();
+  if (trimmed.toLowerCase().startsWith('manual')) {
+    return 'Manual';
+  }
+  const parts = trimmed.split(/\s+/);
+  if (parts.length > 1 && /^[a-zA-Z0-9]{15,}$/.test(parts[parts.length - 1])) {
+    return parts.slice(0, -1).join(' ');
+  }
+  if (/^[a-zA-Z0-9]{15,}$/.test(trimmed)) {
+    return 'Manual';
+  }
+  return trimmed;
 };
 
 const TIME_FILTERS = {
@@ -90,14 +106,14 @@ const TIME_FILTERS = {
 const chartTitleStyle = {
   fontSize: "20px",
   fontWeight: "700",
-  color: "#1890ff",
+  color: "#4f46e5",
   marginBottom: "24px",
 };
 
 const chartLabelStyle = {
   fontSize: "15px",
   fontWeight: "600",
-  fill: "#1890ff",
+  fill: "#4f46e5",
 };
 
 // Add responsive styles for filter controls
@@ -291,8 +307,9 @@ const DealsAnalytics = ({ deals = [] }) => {
 
     const sourceData = filteredDeals.reduce((acc, deal) => {
       if (!deal) return acc;
-      const source =
+      const rawSource =
         sources.find((s) => s?.id === deal?.source)?.name || "Unknown";
+      const source = cleanSourceName(rawSource);
       const value = parseFloat(deal.value) || 0;
       if (!acc[source]) acc[source] = { count: 0, value: 0 };
       acc[source].count++;
@@ -391,8 +408,8 @@ const DealsAnalytics = ({ deals = [] }) => {
 
   const chartCardStyle = {
     borderRadius: "15px",
-    boxShadow: "0 4px 20px rgba(24, 144, 255, 0.1)",
-    background: "linear-gradient(145deg, #ffffff, #f0f7ff)",
+    boxShadow: "0 4px 20px rgba(79, 70, 229, 0.1)",
+    background: "linear-gradient(145deg, #ffffff, #f5f3ff)",
     border: "none",
     padding: "24px",
   };
@@ -404,12 +421,12 @@ const DealsAnalytics = ({ deals = [] }) => {
           style={{
             background: "rgba(255, 255, 255, 0.95)",
             padding: "12px 16px",
-            border: "1px solid #40a9ff",
+            border: "1px solid #818cf8",
             borderRadius: "12px",
             boxShadow: "0 4px 25px rgba(0,0,0,0.1)",
             backdropFilter: "blur(6px)",
             transition: "all 0.3s ease",
-            color: "#1890ff",
+            color: "#4f46e5",
           }}
         >
           <p
@@ -564,9 +581,9 @@ const DealsAnalytics = ({ deals = [] }) => {
       <style>
         {`
                     .filter-select .ant-select-selector {
-                        background-color: #f0f7ff !important;
+                        background-color: #f5f3ff !important;
                         border-radius: 6px !important;
-                        border: 1px solid #91caff !important;
+                        border: 1px solid #c7d2fe !important;
                         padding: 0 8px !important;
                         height: 32px !important;
                         box-shadow: none !important;
@@ -574,17 +591,17 @@ const DealsAnalytics = ({ deals = [] }) => {
                     .filter-select .ant-select-selection-item {
                         line-height: 30px !important;
                         font-weight: 500 !important;
-                        color: #1890ff !important;
+                        color: #4f46e5 !important;
                     }
                     .filter-select .ant-select-arrow {
-                        color: #1890ff !important;
+                        color: #4f46e5 !important;
                     }
                     .filter-select:hover .ant-select-selector {
-                        border-color: #40a9ff !important;
+                        border-color: #818cf8 !important;
                     }
                     .filter-select.ant-select-focused .ant-select-selector {
-                        border-color: #1890ff !important;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+                        border-color: #4f46e5 !important;
+                        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1) !important;
                     }
                     @media (max-width: 576px) {
                         .filter-select .ant-select-selector {
@@ -604,14 +621,14 @@ const DealsAnalytics = ({ deals = [] }) => {
           <Card
             bordered={false}
             style={{
-              background: "linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)",
+              background: "linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%)",
               borderRadius: "12px",
-              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.1)",
+              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.1)",
               transition: "all 0.3s ease",
               cursor: "pointer",
               "&:hover": {
                 transform: "translateY(-2px)",
-                boxShadow: "0 6px 16px rgba(24, 144, 255, 0.15)",
+                boxShadow: "0 6px 16px rgba(79, 70, 229, 0.15)",
               },
             }}
           >
@@ -626,7 +643,7 @@ const DealsAnalytics = ({ deals = [] }) => {
               <div
                 style={{
                   background:
-                    "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)",
+                    "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)",
                   borderRadius: "10px",
                   padding: "12px",
                   display: "flex",
@@ -641,7 +658,7 @@ const DealsAnalytics = ({ deals = [] }) => {
               <div style={{ flex: 1 }}>
                 <div
                   style={{
-                    color: "#1890ff",
+                    color: "#4f46e5",
                     fontSize: "16px",
                     fontWeight: "600",
                     marginBottom: "4px",
@@ -652,7 +669,7 @@ const DealsAnalytics = ({ deals = [] }) => {
                 </div>
                 <div
                   style={{
-                    color: "#595959",
+                    color: "#10b981",
                     fontSize: "28px",
                     fontWeight: "700",
                     letterSpacing: "-0.5px",
@@ -668,14 +685,14 @@ const DealsAnalytics = ({ deals = [] }) => {
           <Card
             bordered={false}
             style={{
-              background: "linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)",
+              background: "linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%)",
               borderRadius: "12px",
-              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.1)",
+              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.1)",
               transition: "all 0.3s ease",
               cursor: "pointer",
               "&:hover": {
                 transform: "translateY(-2px)",
-                boxShadow: "0 6px 16px rgba(24, 144, 255, 0.15)",
+                boxShadow: "0 6px 16px rgba(79, 70, 229, 0.15)",
               },
             }}
           >
@@ -690,7 +707,7 @@ const DealsAnalytics = ({ deals = [] }) => {
               <div
                 style={{
                   background:
-                    "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)",
+                    "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)",
                   borderRadius: "10px",
                   padding: "12px",
                   display: "flex",
@@ -703,7 +720,7 @@ const DealsAnalytics = ({ deals = [] }) => {
               <div style={{ flex: 1 }}>
                 <div
                   style={{
-                    color: "#1890ff",
+                    color: "#4f46e5",
                     fontSize: "14px",
                     fontWeight: "600",
                     marginBottom: "4px",
@@ -714,7 +731,7 @@ const DealsAnalytics = ({ deals = [] }) => {
                 </div>
                 <div
                   style={{
-                    color: "#595959",
+                    color: "#10b981",
                     fontSize: "24px",
                     fontWeight: "700",
                     letterSpacing: "-0.5px",
@@ -730,14 +747,14 @@ const DealsAnalytics = ({ deals = [] }) => {
           <Card
             bordered={false}
             style={{
-              background: "linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)",
+              background: "linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%)",
               borderRadius: "12px",
-              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.1)",
+              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.1)",
               transition: "all 0.3s ease",
               cursor: "pointer",
               "&:hover": {
                 transform: "translateY(-2px)",
-                boxShadow: "0 6px 16px rgba(24, 144, 255, 0.15)",
+                boxShadow: "0 6px 16px rgba(79, 70, 229, 0.15)",
               },
             }}
           >
@@ -752,7 +769,7 @@ const DealsAnalytics = ({ deals = [] }) => {
               <div
                 style={{
                   background:
-                    "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)",
+                    "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)",
                   borderRadius: "10px",
                   padding: "12px",
                   display: "flex",
@@ -767,7 +784,7 @@ const DealsAnalytics = ({ deals = [] }) => {
               <div style={{ flex: 1 }}>
                 <div
                   style={{
-                    color: "#1890ff",
+                    color: "#4f46e5",
                     fontSize: "14px",
                     fontWeight: "600",
                     marginBottom: "4px",
@@ -778,7 +795,7 @@ const DealsAnalytics = ({ deals = [] }) => {
                 </div>
                 <div
                   style={{
-                    color: "#595959",
+                    color: "#10b981",
                     fontSize: "24px",
                     fontWeight: "700",
                     letterSpacing: "-0.5px",
@@ -794,14 +811,14 @@ const DealsAnalytics = ({ deals = [] }) => {
           <Card
             bordered={false}
             style={{
-              background: "linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)",
+              background: "linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%)",
               borderRadius: "12px",
-              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.1)",
+              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.1)",
               transition: "all 0.3s ease",
               cursor: "pointer",
               "&:hover": {
                 transform: "translateY(-2px)",
-                boxShadow: "0 6px 16px rgba(24, 144, 255, 0.15)",
+                boxShadow: "0 6px 16px rgba(79, 70, 229, 0.15)",
               },
             }}
           >
@@ -816,7 +833,7 @@ const DealsAnalytics = ({ deals = [] }) => {
               <div
                 style={{
                   background:
-                    "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)",
+                    "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)",
                   borderRadius: "10px",
                   padding: "12px",
                   display: "flex",
@@ -829,7 +846,7 @@ const DealsAnalytics = ({ deals = [] }) => {
               <div style={{ flex: 1 }}>
                 <div
                   style={{
-                    color: "#1890ff",
+                    color: "#4f46e5",
                     fontSize: "14px",
                     fontWeight: "600",
                     marginBottom: "4px",
@@ -840,7 +857,7 @@ const DealsAnalytics = ({ deals = [] }) => {
                 </div>
                 <div
                   style={{
-                    color: "#595959",
+                    color: "#10b981",
                     fontSize: "24px",
                     fontWeight: "700",
                     letterSpacing: "-0.5px",
@@ -939,9 +956,9 @@ const DealsAnalytics = ({ deals = [] }) => {
                   />
                   <XAxis
                     dataKey="name"
-                    stroke="#1890ff"
+                    stroke="#4f46e5"
                     tick={{
-                      fill: "#1890ff",
+                      fill: "#4f46e5",
                       fontSize: 12,
                       fontWeight: 500,
                       angle: -45,
@@ -951,12 +968,12 @@ const DealsAnalytics = ({ deals = [] }) => {
                   />
                   <YAxis
                     yAxisId="left"
-                    stroke="#1890ff"
+                    stroke="#4f46e5"
                     tickFormatter={formatCountTick}
                     interval={0}
                     allowDecimals={false}
                     tick={{
-                      fill: "#1890ff",
+                      fill: "#4f46e5",
                       fontSize: 12,
                       fontWeight: 500,
                     }}
@@ -965,10 +982,10 @@ const DealsAnalytics = ({ deals = [] }) => {
                   <YAxis
                     yAxisId="right"
                     orientation="right"
-                    stroke="#595959"
+                    stroke="#10b981"
                     tickFormatter={formatValueTick}
                     tick={{
-                      fill: "#595959",
+                      fill: "#10b981",
                       fontSize: 12,
                       fontWeight: 500,
                     }}
@@ -986,8 +1003,8 @@ const DealsAnalytics = ({ deals = [] }) => {
                         style={{
                           color:
                             entry.color === COLORS.chart.dealCount.main
-                              ? "#1890ff"
-                              : "#595959",
+                              ? "#4f46e5"
+                              : "#10b981",
                           fontWeight: 500,
                           fontSize: "13px",
                         }}
@@ -1050,12 +1067,12 @@ const DealsAnalytics = ({ deals = [] }) => {
                   type="number"
                   tickFormatter={formatCountTick}
                   allowDecimals={false}
-                  tick={{ fill: "#1890ff", fontSize: 12, fontWeight: 500 }}
+                  tick={{ fill: "#4f46e5", fontSize: 12, fontWeight: 500 }}
                 />
                 <YAxis
                   dataKey="name"
                   type="category"
-                  tick={{ fill: "#1890ff", fontSize: 12, fontWeight: 500 }}
+                  tick={{ fill: "#4f46e5", fontSize: 12, fontWeight: 500 }}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
@@ -1064,8 +1081,8 @@ const DealsAnalytics = ({ deals = [] }) => {
                       style={{
                         color:
                           entry.color === COLORS.chart.dealCount.main
-                            ? "#1890ff"
-                            : "#595959",
+                            ? "#4f46e5"
+                            : "#10b981",
                         fontWeight: 500,
                       }}
                     >
@@ -1581,8 +1598,8 @@ const DealsAnalytics = ({ deals = [] }) => {
                       style={{
                         color:
                           entry.color === COLORS.chart.dealCount.main
-                            ? "#1890ff"
-                            : "#595959",
+                            ? "#4f46e5"
+                            : "#10b981",
                         fontWeight: 500,
                         fontSize: "12px",
                         "@media (min-width: 576px)": {

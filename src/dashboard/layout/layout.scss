@@ -40,13 +40,15 @@ $desktop: 1024px;
             overflow-y: auto;
             margin-top: 70px;
             margin-bottom: 40px;
-            height: calc(100vh - 70px - 40px);
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
 
             @media (max-width: $desktop) {
                 padding: 16px;
                 margin-top: 0;
                 margin-bottom: 40px;
-                height: calc(100vh - 60px - 40px);
+                min-height: 0;
+                -webkit-overflow-scrolling: touch;
             }
         }
     }

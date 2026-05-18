@@ -1148,3 +1148,12 @@
         font-size: 11px;
     }
 }
+
+// Smooth vertical scrolling fix: prevents tables from trapping vertical mouse wheel scroll events
+.dashboard-container {
+    .ant-table-container,
+    .ant-table-content,
+    .ant-table-body {
+        overflow-y: visible !important;
+    }
+}

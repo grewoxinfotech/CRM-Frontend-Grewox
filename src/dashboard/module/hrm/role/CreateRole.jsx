@@ -49,6 +49,7 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             { key: 'dashboards-communication', title: 'Mail, Chat & WhatsApp' }
         ],
         HRM: [
+            { key: 'extra-hrm-analytics', title: 'HRM Analytics' },
             { key: 'extra-hrm-employee', title: 'Employee' },
             { key: 'extra-hrm-payroll', title: 'PayRoll' },
             // { key: 'extra-hrm-performance-indicator', title: 'Performance' },
@@ -140,14 +141,22 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
         }
     };
 
-    // Reset form when modal becomes invisible
+    // Reset form when modal visibility changes
     useEffect(() => {
         if (!visible) {
             form.resetFields();
             setSelectedPermissions({});
             setActiveTab('CRM');
+        } else {
+            if (initialValues) {
+                form.setFieldsValue(initialValues);
+                setSelectedPermissions(initialValues.permissions || {});
+            } else {
+                form.resetFields();
+                setSelectedPermissions({});
+            }
         }
-    }, [visible, form]);
+    }, [visible, initialValues, form]);
 
     const handleModuleSelectAll = (module, checked) => {
         const newValues = { ...form.getFieldsValue() };
@@ -166,7 +175,7 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
     };
 
     const isModuleFullySelected = (module) => {
-        const values = form.getFieldsValue().permissions || {};
+        const values = selectedPermissions || {};
         return subModules[module]?.every(subModule =>
             permissions.every(permission =>
                 values[subModule.key]?.[permission] === true
@@ -175,7 +184,7 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
     };
 
     const isModuleIndeterminate = (module) => {
-        const values = form.getFieldsValue().permissions || {};
+        const values = selectedPermissions || {};
         const hasSelected = subModules[module]?.some(subModule =>
             permissions.some(permission =>
                 values[subModule.key]?.[permission] === true
@@ -204,13 +213,13 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
     };
 
     const isRowFullySelected = (subModuleKey) => {
-        const values = form.getFieldsValue().permissions || {};
+        const values = selectedPermissions || {};
         return values[subModuleKey] &&
             permissions.every(perm => values[subModuleKey][perm] === true);
     };
 
     const isRowIndeterminate = (subModuleKey) => {
-        const values = form.getFieldsValue().permissions || {};
+        const values = selectedPermissions || {};
         if (!values[subModuleKey]) return false;
 
         const hasSelected = permissions.some(perm => values[subModuleKey][perm] === true);

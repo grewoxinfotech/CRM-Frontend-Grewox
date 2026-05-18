@@ -163,6 +163,11 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                             Default Plan
                         </Tag>
                     )}
+                    {plan.features?.is_recommended && (
+                        <Tag color="orange" className="recommended-tag" style={{ background: 'rgba(255, 120, 0, 0.1)', color: '#ff7800', border: 'none', fontWeight: '500' }}>
+                            Recommended
+                        </Tag>
+                    )}
                 </div>
                 <div className="price-section">
                     <div className="price-amount">
@@ -187,10 +192,6 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                         </li>
                         <li>
                             <FiCheck className="check-icon" />
-                            <span><strong>{plan.max_clients}</strong> Clients</span>
-                        </li>
-                        <li>
-                            <FiCheck className="check-icon" />
                             <span><strong>{plan.max_vendors}</strong> Vendors</span>
                         </li>
                         <li>
@@ -211,6 +212,10 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                         </li>
                         <li>
                             <FiCheck className="check-icon" />
+                            <span><strong>{plan.ai_credits || 0}</strong> AI Credits</span>
+                        </li>
+                        <li>
+                            <FiCheck className="check-icon" />
                             <span><strong>{plan.trial_period} Days</strong> Free Trial</span>
                         </li>
                         <li>
@@ -219,6 +224,22 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                         </li>
                     </ul>
                 </div>
+
+                {plan.features?.custom_features && plan.features.custom_features.length > 0 && (
+                    <div className="features-group">
+                        <Title level={5} className="features-title">
+                            <FiList className="section-icon" /> Custom Features
+                        </Title>
+                        <ul className="features-list">
+                            {plan.features.custom_features.map((feat, idx) => (
+                                <li key={idx}>
+                                    <FiCheck className="check-icon" />
+                                    <span>{feat}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
 
             <style jsx>{`

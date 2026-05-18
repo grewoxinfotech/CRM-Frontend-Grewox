@@ -24,7 +24,7 @@ import {
 } from '../settings/services/settingsApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser, selectCurrentToken } from '../../../auth/services/authSlice';
-import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
+import { useGetRolesQuery } from '../hrm/role/services/roleApi';
 import { FiMoreVertical } from 'react-icons/fi';
 
 import { io } from 'socket.io-client';
@@ -917,6 +917,8 @@ export default function WhatsAppInbox() {
                     </div>
                 </Form>
             </Modal>
+
+
         </div>
     );
 }

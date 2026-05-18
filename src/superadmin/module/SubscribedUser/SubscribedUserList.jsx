@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Table, Button, Tag, message, Switch, Popconfirm, Input, Space } from 'antd';
+import { Table, Button, Tag, message, Switch, Popconfirm, Input, Space, Progress } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
 import { useGetAllSubscribedUsersQuery } from './services/SubscribedUserApi';
 import moment from 'moment'; // Import moment for date formatting
@@ -145,6 +145,38 @@ const SubscribedUserList = ({ data, loading }) => {
                         total={total}
                         percentage={percentage}
                     />
+                );
+            }
+        },
+        {
+            title: 'AI Credits Usage',
+            key: 'ai_credits',
+            width: "20%",
+            sorter: (a, b) => {
+                const aUsed = a.ai_credits_used || 0;
+                const bUsed = b.ai_credits_used || 0;
+                return aUsed - bUsed;
+            },
+            render: (_, record) => {
+                const used = record.ai_credits_used || 0;
+                const limit = record.ai_credits_limit || record.Plan?.ai_credits || 0;
+                const percent = Math.min(100, Math.round((used / (limit || 1)) * 100));
+                
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '150px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                            <span style={{ fontWeight: '600', color: '#16a34a' }}>{used} Used</span>
+                            <span style={{ color: '#64748b' }}>/ {limit} limit</span>
+                        </div>
+                        <Progress 
+                            percent={percent} 
+                            size="small" 
+                            showInfo={false}
+                            strokeColor={percent > 90 ? '#ff4d4f' : '#16a34a'}
+                            trailColor={percent > 90 ? '#fee2e2' : '#dcfce7'}
+                            style={{ margin: 0 }}
+                        />
+                    </div>
                 );
             }
         },

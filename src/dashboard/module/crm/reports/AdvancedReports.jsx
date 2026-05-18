@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Row, Col, Select, DatePicker, Space, Button, Avatar, Tooltip as AntdTooltip, Segmented, Statistic, Empty } from 'antd';
+import { Card, Row, Col, Select, DatePicker, Space, Button, Avatar, Tooltip as AntdTooltip, Segmented, Statistic, Empty, message } from 'antd';
 import {
   FiArrowUpRight,
   FiTrendingUp,
@@ -45,6 +45,7 @@ import {
   Radar
 } from 'recharts';
 import moment from 'moment';
+import * as XLSX from 'xlsx';
 import PageHeader from '../../../../components/PageHeader';
 import { useGetLeadsQuery, useGetGlobalFollowupsQuery } from '../lead/services/LeadApi';
 import { useGetRevenueQuery } from '../../sales/revenue/services/revenueApi';
@@ -54,6 +55,48 @@ import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
+import DealsAnalytics from '../../../DashboardComponents/Analytics/DealsAnalytics';
+import LeadsAnalytics from '../../../DashboardComponents/Analytics/LeadsAnalytics';
+import indianStatesAndCities from '../../../../utils/Indian_Cities_In_States_JSON.json';
+
+const STATE_TO_REGION = {
+  "Delhi": "North India",
+  "Haryana": "North India",
+  "Himachal Pradesh": "North India",
+  "Jammu and Kashmir": "North India",
+  "Punjab": "North India",
+  "Rajasthan": "North India",
+  "Uttar Pradesh": "North India",
+  "Uttarakhand": "North India",
+  "Chandigarh": "North India",
+  "Ladakh": "North India",
+  "Andhra Pradesh": "South India",
+  "Karnataka": "South India",
+  "Kerala": "South India",
+  "Tamil Nadu": "South India",
+  "Telangana": "South India",
+  "Puducherry": "South India",
+  "Lakshadweep": "South India",
+  "Andaman and Nicobar Islands": "South India",
+  "Goa": "West India",
+  "Gujarat": "West India",
+  "Maharashtra": "West India",
+  "Dadra and Nagar Haveli and Daman and Diu": "West India",
+  "Bihar": "East India",
+  "Jharkhand": "East India",
+  "Odisha": "East India",
+  "West Bengal": "East India",
+  "Madhya Pradesh": "Central India",
+  "Chhattisgarh": "Central India",
+  "Arunachal Pradesh": "Northeast India",
+  "Assam": "Northeast India",
+  "Manipur": "Northeast India",
+  "Meghalaya": "Northeast India",
+  "Mizoram": "Northeast India",
+  "Nagaland": "Northeast India",
+  "Sikkim": "Northeast India",
+  "Tripura": "Northeast India"
+};
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -69,7 +112,24 @@ const COLORS = {
   chartColors: ['#4f46e5', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#3b82f6']
 };
 
+const cleanSourceName = (name) => {
+  if (!name || typeof name !== 'string') return 'Manual';
+  const trimmed = name.trim();
+  if (trimmed.toLowerCase().startsWith('manual')) {
+    return 'Manual';
+  }
+  const parts = trimmed.split(/\s+/);
+  if (parts.length > 1 && /^[a-zA-Z0-9]{15,}$/.test(parts[parts.length - 1])) {
+    return parts.slice(0, -1).join(' ');
+  }
+  if (/^[a-zA-Z0-9]{15,}$/.test(trimmed)) {
+    return 'Manual';
+  }
+  return trimmed;
+};
+
 const AdvancedReports = () => {
+  const [activeView, setActiveView] = useState('overview'); // 'overview' | 'lead_deep' | 'deal_deep'
   const [activeType, setActiveType] = useState('lead'); // 'lead' | 'deal'
   const [timeRange, setTimeRange] = useState('30days');
   const [dateRange, setDateRange] = useState(null);
@@ -77,22 +137,22 @@ const AdvancedReports = () => {
   const loggedInUser = useSelector(selectCurrentUser);
 
   const { data: rolesData } = useGetRolesQuery(undefined, {
-      skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
+    skip: !loggedInUser || loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client'
   });
   const userRoleData = rolesData?.message?.data?.find(role => role.id === loggedInUser?.role_id);
   const userPermissions = React.useMemo(() => {
-      if (!userRoleData?.permissions) return null;
-      try {
-          return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
-      } catch (e) { return null; }
+    if (!userRoleData?.permissions) return null;
+    try {
+      return typeof userRoleData.permissions === 'object' ? userRoleData.permissions : JSON.parse(userRoleData.permissions);
+    } catch (e) { return null; }
   }, [userRoleData]);
   const hasPermission = React.useCallback((action) => {
-      if (!loggedInUser) return false;
-      if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
-      if (!userPermissions) return false;
-      const perms = userPermissions['dashboards-analytics'];
-      if (!perms || perms.length === 0) return false;
-      return (perms[0]?.permissions || []).includes(action);
+    if (!loggedInUser) return false;
+    if (loggedInUser.roleName === 'super-admin' || loggedInUser.roleName === 'client') return true;
+    if (!userPermissions) return false;
+    const perms = userPermissions['dashboards-analytics'];
+    if (!perms || perms.length === 0) return false;
+    return (perms[0]?.permissions || []).includes(action);
   }, [loggedInUser, userPermissions]);
 
   // Fetch real data from RTK Query hooks
@@ -107,6 +167,27 @@ const AdvancedReports = () => {
   const realDeals = dealsResponse?.data || [];
   const realRevenue = revenueResponse?.data || [];
   const realFollowups = followupsResponse?.data || [];
+
+  // Dynamic currency detection from real leads / deals
+  const currencySymbol = useMemo(() => {
+    const leadWithCurrency = realLeads.find(l => l.currency && l.currency.length < 10);
+    let code = 'INR';
+    if (leadWithCurrency) {
+      code = leadWithCurrency.currency;
+    } else {
+      const dealWithCurrency = realDeals.find(d => d.currency && d.currency.length < 10);
+      if (dealWithCurrency) code = dealWithCurrency.currency;
+    }
+    
+    // Map standard currency codes to symbols
+    const symbolMap = {
+      'INR': '₹',
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£'
+    };
+    return symbolMap[code.toUpperCase()] || code;
+  }, [realLeads, realDeals]);
 
   // Create stage ID to Stage Name map
   const stageMap = useMemo(() => {
@@ -169,10 +250,60 @@ const AdvancedReports = () => {
 
   // Deals by Region fallbacks + real mapping
   const dealsByRegionData = useMemo(() => {
-    // Generate regional distribution dynamically or fallback
-    const regions = { 'North Region': 35, 'South Region': 25, 'West Region': 20, 'East Region': 12, 'International': 8 };
-    return Object.keys(regions).map(k => ({ name: k, value: regions[k] }));
-  }, []);
+    const counts = {};
+    let totalRealCount = 0;
+
+    const resolveRegion = (stateName, cityName) => {
+      let resolvedState = stateName ? stateName.trim() : null;
+      
+      if (!resolvedState && cityName) {
+        const cleanCity = cityName.trim().toLowerCase();
+        const foundState = Object.keys(indianStatesAndCities).find(state => {
+          const cities = indianStatesAndCities[state] || [];
+          return cities.some(c => c.toLowerCase() === cleanCity);
+        });
+        if (foundState) resolvedState = foundState;
+      }
+      
+      if (!resolvedState) return null;
+      
+      const cleanState = resolvedState.toLowerCase();
+      const matchedKey = Object.keys(STATE_TO_REGION).find(
+        key => key.toLowerCase() === cleanState
+      );
+      
+      return matchedKey ? STATE_TO_REGION[matchedKey] : 'Other Regions';
+    };
+
+    // Calculate region distribution from leads that are converted (representing Deals)
+    const convertedLeads = realLeads.filter(l => {
+      const rawStage = l.leadStage || '';
+      const stage = (stageMap[rawStage] || rawStage).toLowerCase();
+      return l.is_converted === true || stage.includes('won');
+    });
+
+    convertedLeads.forEach(l => {
+      const reg = resolveRegion(l.state, l.city);
+      if (reg) {
+        counts[reg] = (counts[reg] || 0) + 1;
+        totalRealCount++;
+      }
+    });
+
+    if (totalRealCount > 0) {
+      return Object.keys(counts).map(k => ({
+        name: k,
+        value: Math.round((counts[k] / totalRealCount) * 100)
+      }));
+    }
+
+    return [
+      { name: 'North India', value: 40 },
+      { name: 'West India', value: 30 },
+      { name: 'South India', value: 20 },
+      { name: 'East India', value: 10 }
+    ];
+  }, [realLeads, stageMap]);
 
   // Deals by Product / Service (Average deal size by category)
   const averageDealByProductData = useMemo(() => {
@@ -211,7 +342,7 @@ const AdvancedReports = () => {
       const stg = stageMap[rawStg] || rawStg;
       stages[stg] = (stages[stg] || 0) + (Number(d.value) || 0);
     });
-    return Object.keys(stages).map(k => ({ stage: k, 'Total Value ($)': stages[k] }));
+    return Object.keys(stages).map(k => ({ stage: k, 'Total Value': stages[k] }));
   }, [dealMetrics, stageMap]);
 
 
@@ -260,22 +391,25 @@ const AdvancedReports = () => {
     let totalRealCount = 0;
 
     const resolveRegion = (stateName, cityName) => {
-      if (!stateName && !cityName) return null;
-      const searchStr = ((stateName || '') + ' ' + (cityName || '')).toLowerCase();
+      let resolvedState = stateName ? stateName.trim() : null;
       
-      if (searchStr.includes('gujarat') || searchStr.includes('maharashtra') || searchStr.includes('goa') || searchStr.includes('mumbai') || searchStr.includes('pune') || searchStr.includes('ahmedabad') || searchStr.includes('surat') || searchStr.includes('madhya pradesh')) {
-        return 'West India';
+      if (!resolvedState && cityName) {
+        const cleanCity = cityName.trim().toLowerCase();
+        const foundState = Object.keys(indianStatesAndCities).find(state => {
+          const cities = indianStatesAndCities[state] || [];
+          return cities.some(c => c.toLowerCase() === cleanCity);
+        });
+        if (foundState) resolvedState = foundState;
       }
-      if (searchStr.includes('delhi') || searchStr.includes('punjab') || searchStr.includes('haryana') || searchStr.includes('rajasthan') || searchStr.includes('jaipur') || searchStr.includes('uttar pradesh') || searchStr.includes('noida') || searchStr.includes('lucknow')) {
-        return 'North India';
-      }
-      if (searchStr.includes('bangalore') || searchStr.includes('karnataka') || searchStr.includes('tamil nadu') || searchStr.includes('chennai') || searchStr.includes('hyderabad') || searchStr.includes('andhra') || searchStr.includes('telangana') || searchStr.includes('kerala')) {
-        return 'South India';
-      }
-      if (searchStr.includes('bengal') || searchStr.includes('kolkata') || searchStr.includes('bihar') || searchStr.includes('patna') || searchStr.includes('jharkhand') || searchStr.includes('odisha') || searchStr.includes('assam')) {
-        return 'East India';
-      }
-      return 'Other Regions';
+      
+      if (!resolvedState) return null;
+      
+      const cleanState = resolvedState.toLowerCase();
+      const matchedKey = Object.keys(STATE_TO_REGION).find(
+        key => key.toLowerCase() === cleanState
+      );
+      
+      return matchedKey ? STATE_TO_REGION[matchedKey] : 'Other Regions';
     };
 
     realLeads.forEach(l => {
@@ -306,7 +440,7 @@ const AdvancedReports = () => {
     const sources = {};
     leadMetrics.leads.forEach(l => {
       const rawSrc = l.source || 'Website';
-      const src = sourceMap[rawSrc] || rawSrc;
+      const src = cleanSourceName(sourceMap[rawSrc] || rawSrc);
       sources[src] = (sources[src] || 0) + 1;
     });
     return Object.keys(sources).map(k => ({ name: k, Leads: sources[k] }));
@@ -334,8 +468,8 @@ const AdvancedReports = () => {
     if (hasRealLeads) {
       realLeads.forEach(l => {
         const rawSrc = l.source || 'Website';
-        const src = sourceMap[rawSrc] || rawSrc;
-        
+        const src = cleanSourceName(sourceMap[rawSrc] || rawSrc);
+
         channelCounts[src] = (channelCounts[src] || 0) + 1;
         const isWon = l.is_converted === true || (l.leadStage && (stageMap[l.leadStage] || l.leadStage).toLowerCase().includes('won'));
         if (isWon) {
@@ -368,10 +502,63 @@ const AdvancedReports = () => {
     ];
   }, [realLeads, leadMetrics, sourceMap, stageMap]);
 
-  // Export diagnostic report
-  const handleExport = (format) => {
-    message.success(`Analytics report downloaded successfully as ${format.toUpperCase()}!`);
+  // Build flat export rows from leads + deals
+  const buildExportData = () => {
+    const leadsRows = realLeads.map(l => ({
+      Type: 'Lead',
+      Title: l.leadTitle || 'N/A',
+      Status: l.LeadStatus?.name || l.status || 'N/A',
+      Stage: stageMap[l.leadStage] || l.leadStage || 'N/A',
+      Source: l.LeadSource?.name || l.source || 'Manual',
+      'Interest Level': l.interest_level || 'N/A',
+      Value: l.leadValue ? `${l.currency || ''} ${Number(l.leadValue).toLocaleString()}` : 'N/A',
+      Contact: l.Contact ? `${l.Contact.first_name || ''} ${l.Contact.last_name || ''}`.trim() : 'N/A',
+      Company: l.Company?.company_name || 'N/A',
+      City: l.city || 'N/A',
+      State: l.state || 'N/A',
+      Country: l.country || 'N/A',
+      'Created At': l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-IN') : 'N/A',
+      'Is Converted': l.is_converted ? 'Yes' : 'No',
+    }));
+
+    const dealsRows = realDeals.map(d => ({
+      Type: 'Deal',
+      Title: d.dealTitle || d.title || 'N/A',
+      Status: d.status || 'N/A',
+      Stage: stageMap[d.leadStage] || d.leadStage || 'N/A',
+      Source: d.source || 'N/A',
+      'Interest Level': 'N/A',
+      Value: d.value ? `${d.currency || ''} ${Number(d.value).toLocaleString()}` : 'N/A',
+      Contact: 'N/A',
+      Company: d.company || 'N/A',
+      City: d.city || 'N/A',
+      State: d.state || 'N/A',
+      Country: d.country || 'N/A',
+      'Created At': d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-IN') : 'N/A',
+      'Is Converted': 'N/A',
+    }));
+
+    return [...leadsRows, ...dealsRows];
   };
+
+  const handleExportCSV = () => {
+    const data = buildExportData();
+    if (!data.length) { message.warning('No data available to export.'); return; }
+    const ws = XLSX.utils.json_to_sheet(data);
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `CRM_Analytics_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    message.success(`Exported ${data.length} records as CSV!`);
+  };
+
+  // Excel export logic removed as requested
 
   return (
     <div className="reports-analytics-page standard-page-container" style={{ background: '#f8fafc', minHeight: '100vh' }}>
@@ -468,7 +655,7 @@ const AdvancedReports = () => {
             <Button
               type="primary"
               icon={<FiDownload />}
-              onClick={() => handleExport('pdf')}
+              onClick={handleExportCSV}
               disabled={!hasPermission('export')}
               style={{ borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: COLORS.primary, borderColor: COLORS.primary }}
             >
@@ -478,411 +665,466 @@ const AdvancedReports = () => {
         }
       />
 
-      {/* Modern Custom Segmented Control for Leads vs Deals Switch */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0 24px 0' }}>
+      {/* Modern Custom Segmented Control for Executive Overview vs Leads Deep-Dive vs Deals Deep-Dive */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '12px 0 24px 0' }}>
         <Segmented
           options={[
             {
               label: (
                 <div style={{ padding: '6px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FiUsers style={{ fontSize: '16px' }} />
-                  <span style={{ fontWeight: '600' }}>Lead Analytics</span>
+                  <FiActivity style={{ fontSize: '16px' }} />
+                  <span style={{ fontWeight: '600' }}>Executive Overview</span>
                 </div>
               ),
-              value: 'lead'
+              value: 'overview'
+            },
+            {
+              label: (
+                <div style={{ padding: '6px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FiUsers style={{ fontSize: '16px' }} />
+                  <span style={{ fontWeight: '600' }}>Leads Deep-Dive</span>
+                </div>
+              ),
+              value: 'lead_deep'
             },
             {
               label: (
                 <div style={{ padding: '6px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <FiBriefcase style={{ fontSize: '16px' }} />
-                  <span style={{ fontWeight: '600' }}>Deal Analytics</span>
+                  <span style={{ fontWeight: '600' }}>Deals Deep-Dive</span>
                 </div>
               ),
-              value: 'deal'
+              value: 'deal_deep'
             }
           ]}
-          value={activeType}
-          onChange={setActiveType}
+          value={activeView}
+          onChange={setActiveView}
           size="large"
           style={{
-            background: '#e2e8f0',
+            background: '#f1f5f9',
             borderRadius: '12px',
             padding: '4px',
-            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)'
+            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
           }}
         />
       </div>
 
-      {/* ========================================================================= */}
-      {/* 1. DEAL ANALYTICS VIEW */}
-      {/* ========================================================================= */}
-      {activeType === 'deal' && (
+      {activeView === 'overview' && (
         <>
-          {/* KPI Stat Cards */}
-          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Deals Count</span>
-                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{dealMetrics.totalDeals}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.success }}>
-                      <FiArrowUpRight />
-                      <span style={{ fontWeight: '600' }}>+12.5%</span>
-                      <span style={{ color: '#94a3b8' }}>vs last week</span>
+          {/* Modern Custom Segmented Control for Leads vs Deals Switch */}
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '12px 0 24px 0' }}>
+            <Segmented
+              options={[
+                {
+                  label: (
+                    <div style={{ padding: '6px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FiUsers style={{ fontSize: '16px' }} />
+                      <span style={{ fontWeight: '600' }}>Lead Overview</span>
                     </div>
-                  </div>
-                  <Avatar style={{ backgroundColor: '#ede9fe', color: COLORS.purple, borderRadius: '12px' }} size={46} icon={<FiBriefcase />} />
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Revenue</span>
-                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>${dealMetrics.totalRevenue.toLocaleString()}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.success }}>
-                      <FiArrowUpRight />
-                      <span style={{ fontWeight: '600' }}>+18.4%</span>
-                      <span style={{ color: '#94a3b8' }}>deals closed</span>
+                  ),
+                  value: 'lead'
+                },
+                {
+                  label: (
+                    <div style={{ padding: '6px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FiBriefcase style={{ fontSize: '16px' }} />
+                      <span style={{ fontWeight: '600' }}>Deal Overview</span>
                     </div>
-                  </div>
-                  <Avatar style={{ backgroundColor: '#d1fae5', color: COLORS.success, borderRadius: '12px' }} size={46} icon={<FiDollarSign />} />
-                </div>
-              </Card>
-            </Col>
+                  ),
+                  value: 'deal'
+                }
+              ]}
+              value={activeType}
+              onChange={setActiveType}
+              size="large"
+              style={{
+                background: '#f1f5f9',
+                borderRadius: '12px',
+                padding: '4px',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
+              }}
+            />
+          </div>
 
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Open Pipeline Revenue</span>
-                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>${dealMetrics.openPipelineRevenue.toLocaleString()}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.warning }}>
-                      <FiClock />
-                      <span style={{ fontWeight: '600' }}>Active</span>
-                      <span style={{ color: '#94a3b8' }}>in pipeline</span>
+          {activeType === 'deal' && (
+            <>
+              {/* KPI Stat Cards */}
+              <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+                <Col xs={24} sm={12} lg={6}>
+                  <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Deals Count</span>
+                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{dealMetrics.totalDeals}</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.success }}>
+                          <FiArrowUpRight />
+                          <span style={{ fontWeight: '600' }}>+12.5%</span>
+                          <span style={{ color: '#94a3b8' }}>vs last week</span>
+                        </div>
+                      </div>
+                      <Avatar style={{ backgroundColor: '#ede9fe', color: COLORS.purple, borderRadius: '12px' }} size={46} icon={<FiBriefcase />} />
                     </div>
-                  </div>
-                  <Avatar style={{ backgroundColor: '#fef3c7', color: COLORS.warning, borderRadius: '12px' }} size={46} icon={<FiActivity />} />
-                </div>
-              </Card>
-            </Col>
+                  </Card>
+                </Col>
 
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Average Deal Size</span>
-                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>${dealMetrics.averageDealSize.toLocaleString()}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.primary }}>
-                      <FiTrendingUp />
-                      <span style={{ fontWeight: '600' }}>Efficient</span>
-                      <span style={{ color: '#94a3b8' }}>per account</span>
+                <Col xs={24} sm={12} lg={6}>
+                  <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Revenue</span>
+                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{currencySymbol} {dealMetrics.totalRevenue.toLocaleString()}</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.success }}>
+                          <FiArrowUpRight />
+                          <span style={{ fontWeight: '600' }}>+18.4%</span>
+                          <span style={{ color: '#94a3b8' }}>deals closed</span>
+                        </div>
+                      </div>
+                      <Avatar style={{ backgroundColor: '#d1fae5', color: COLORS.success, borderRadius: '12px' }} size={46} icon={<FiDollarSign />} />
                     </div>
-                  </div>
-                  <Avatar style={{ backgroundColor: '#e0f2fe', color: COLORS.primary, borderRadius: '12px' }} size={46} icon={<FiBarChart2 />} />
-                </div>
-              </Card>
-            </Col>
-          </Row>
+                  </Card>
+                </Col>
 
-          {/* Interactive Chart Grid */}
-          <Row gutter={[20, 20]} style={{ marginBottom: '24px' }}>
-            {/* Deals by Stage (Pie) & Amount by Stage (Bar) */}
-            <Col xs={24} lg={12}>
-              <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiPieChart style={{ marginRight: '8px' }} />Deals Distributed by Stage</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '100%', height: 300 }}>
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie
-                        data={dealsByStageData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={4}
-                        dataKey="value"
-                      >
-                        {dealsByStageData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '10px' }}>
-                  {dealsByStageData.map((item, idx) => (
-                    <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: COLORS.chartColors[idx % COLORS.chartColors.length] }} />
-                      <span style={{ fontSize: '12px', color: '#64748b' }}>{item.name} ({item.value})</span>
+                <Col xs={24} sm={12} lg={6}>
+                  <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Open Pipeline Revenue</span>
+                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{currencySymbol} {dealMetrics.openPipelineRevenue.toLocaleString()}</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.warning }}>
+                          <FiClock />
+                          <span style={{ fontWeight: '600' }}>Active</span>
+                          <span style={{ color: '#94a3b8' }}>in pipeline</span>
+                        </div>
+                      </div>
+                      <Avatar style={{ backgroundColor: '#fef3c7', color: COLORS.warning, borderRadius: '12px' }} size={46} icon={<FiActivity />} />
                     </div>
-                  ))}
-                </div>
-              </Card>
-            </Col>
+                  </Card>
+                </Col>
 
-            <Col xs={24} lg={12}>
-              <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiBarChart2 style={{ marginRight: '8px' }} />Monetary Amount by Stage</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '100%', height: 320 }}>
-                  <ResponsiveContainer>
-                    <BarChart data={amountByStageData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                      <XAxis dataKey="stage" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <Tooltip formatter={(val) => [`$${val.toLocaleString()}`, 'Amount']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                      <Bar dataKey="Total Value ($)" fill={COLORS.primary} radius={[6, 6, 0, 0]}>
-                        {amountByStageData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </Col>
-
-            {/* Deal by Region & Avg Deal by Product */}
-            <Col xs={24} lg={12}>
-              <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiMapPin style={{ marginRight: '8px' }} />Deal Value Distribution by Region</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '100%', height: 300 }}>
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie
-                        data={dealsByRegionData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={0}
-                        outerRadius={95}
-                        dataKey="value"
-                      >
-                        {dealsByRegionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(val) => [`${val}%`, 'Weight']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '10px' }}>
-                  {dealsByRegionData.map((item, idx) => (
-                    <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: COLORS.chartColors[idx % COLORS.chartColors.length] }} />
-                      <span style={{ fontSize: '12px', color: '#64748b' }}>{item.name} ({item.value}%)</span>
+                <Col xs={24} sm={12} lg={6}>
+                  <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Average Deal Size</span>
+                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{currencySymbol} {dealMetrics.averageDealSize.toLocaleString()}</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.primary }}>
+                          <FiTrendingUp />
+                          <span style={{ fontWeight: '600' }}>Efficient</span>
+                          <span style={{ color: '#94a3b8' }}>per account</span>
+                        </div>
+                      </div>
+                      <Avatar style={{ backgroundColor: '#e0f2fe', color: COLORS.primary, borderRadius: '12px' }} size={46} icon={<FiBarChart2 />} />
                     </div>
-                  ))}
-                </div>
-              </Card>
-            </Col>
+                  </Card>
+                </Col>
+              </Row>
 
-            <Col xs={24} lg={12}>
-              <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiBox style={{ marginRight: '8px' }} />Average Deal Size by Product Category</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '100%', height: 320 }}>
-                  <ResponsiveContainer>
-                    <BarChart data={averageDealByProductData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                      <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <Tooltip formatter={(val) => [`$${val.toLocaleString()}`, 'Avg Size']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                      <Bar dataKey="Avg Deal Value" fill={COLORS.success} radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </Col>
-          </Row>
+              {/* Interactive Chart Grid */}
+              <Row gutter={[20, 20]} style={{ marginBottom: '24px' }}>
+                {/* Deals by Stage (Pie) & Amount by Stage (Bar) */}
+                <Col xs={24} lg={12}>
+                  <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiPieChart style={{ marginRight: '8px' }} />Deals Distributed by Stage</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '100%', height: 300 }}>
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie
+                            data={dealsByStageData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={90}
+                            paddingAngle={4}
+                            dataKey="value"
+                          >
+                            {dealsByStageData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: 'none' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '10px' }}>
+                      {dealsByStageData.map((item, idx) => (
+                        <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: COLORS.chartColors[idx % COLORS.chartColors.length] }} />
+                          <span style={{ fontSize: '12px', color: '#64748b' }}>{item.name} ({item.value})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </Col>
+
+                <Col xs={24} lg={12}>
+                  <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiBarChart2 style={{ marginRight: '8px' }} />Monetary Amount by Stage</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '100%', height: 320 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={amountByStageData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                          <XAxis dataKey="stage" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                          <Tooltip formatter={(val) => [`${currencySymbol} ${val.toLocaleString()}`, 'Amount']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
+                          <Bar dataKey="Total Value" fill={COLORS.primary} radius={[6, 6, 0, 0]}>
+                            {amountByStageData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                </Col>
+
+                {/* Deal by Region & Avg Deal by Product */}
+                <Col xs={24} lg={12}>
+                  <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiMapPin style={{ marginRight: '8px' }} />Deal Value Distribution by Region</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '100%', height: 300 }}>
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie
+                            data={dealsByRegionData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={0}
+                            outerRadius={95}
+                            dataKey="value"
+                          >
+                            {dealsByRegionData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(val) => [`${val}%`, 'Weight']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '10px' }}>
+                      {dealsByRegionData.map((item, idx) => (
+                        <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: COLORS.chartColors[idx % COLORS.chartColors.length] }} />
+                          <span style={{ fontSize: '12px', color: '#64748b' }}>{item.name} ({item.value}%)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </Col>
+
+                <Col xs={24} lg={12}>
+                  <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiBox style={{ marginRight: '8px' }} />Average Deal Size by Product Category</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '100%', height: 320 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={averageDealByProductData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                          <Tooltip formatter={(val) => [`${currencySymbol} ${val.toLocaleString()}`, 'Avg Size']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
+                          <Bar dataKey="Avg Deal Value" fill={COLORS.success} radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+            </>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 2. LEAD ANALYTICS VIEW */}
+          {/* ========================================================================= */}
+          {activeType === 'lead' && (
+            <>
+              {/* KPI Stat Cards */}
+              <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+                <Col xs={24} sm={12} lg={6}>
+                  <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Leads Count</span>
+                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{leadMetrics.totalLeads}</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.success }}>
+                          <FiArrowUpRight />
+                          <span style={{ fontWeight: '600' }}>+15.2%</span>
+                          <span style={{ color: '#94a3b8' }}>lead acquisition</span>
+                        </div>
+                      </div>
+                      <Avatar style={{ backgroundColor: '#ede9fe', color: COLORS.purple, borderRadius: '12px' }} size={46} icon={<FiUsers />} />
+                    </div>
+                  </Card>
+                </Col>
+
+                <Col xs={24} sm={12} lg={6}>
+                  <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Open Pipeline Leads</span>
+                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{leadMetrics.openPipelineLeads}</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.warning }}>
+                          <FiClock />
+                          <span style={{ fontWeight: '600' }}>Active</span>
+                          <span style={{ color: '#94a3b8' }}>excluding won/converted</span>
+                        </div>
+                      </div>
+                      <Avatar style={{ backgroundColor: '#fef3c7', color: COLORS.warning, borderRadius: '12px' }} size={46} icon={<FiClock />} />
+                    </div>
+                  </Card>
+                </Col>
+
+                <Col xs={24} sm={12} lg={6}>
+                  <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Conversion Rate</span>
+                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{leadMetrics.conversionRate}%</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.success }}>
+                          <FiArrowUpRight />
+                          <span style={{ fontWeight: '600' }}>Efficient</span>
+                          <span style={{ color: '#94a3b8' }}>lead to deal ratio</span>
+                        </div>
+                      </div>
+                      <Avatar style={{ backgroundColor: '#d1fae5', color: COLORS.success, borderRadius: '12px' }} size={46} icon={<FiTrendingUp />} />
+                    </div>
+                  </Card>
+                </Col>
+
+                <Col xs={24} sm={12} lg={6}>
+                  <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Avg Opportunity Value</span>
+                        <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{currencySymbol} {leadMetrics.averageLeadValue.toLocaleString()}</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.primary }}>
+                          <FiDollarSign />
+                          <span style={{ fontWeight: '600' }}>Active</span>
+                          <span style={{ color: '#94a3b8' }}>per new lead</span>
+                        </div>
+                      </div>
+                      <Avatar style={{ backgroundColor: '#e0f2fe', color: COLORS.primary, borderRadius: '12px' }} size={46} icon={<FiBriefcase />} />
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+
+              {/* Interactive Lead Chart Grid */}
+              <Row gutter={[20, 20]} style={{ marginBottom: '24px' }}>
+                {/* Leads by Stage & Source */}
+                <Col xs={24} lg={12}>
+                  <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiPieChart style={{ marginRight: '8px' }} />Leads Distribution by Stage</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '100%', height: 300 }}>
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie
+                            data={leadsByStageData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={90}
+                            paddingAngle={4}
+                            dataKey="value"
+                          >
+                            {leadsByStageData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: 'none' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '10px' }}>
+                      {leadsByStageData.map((item, idx) => (
+                        <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: COLORS.chartColors[idx % COLORS.chartColors.length] }} />
+                          <span style={{ fontSize: '12px', color: '#64748b' }}>{item.name} ({item.value})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </Col>
+
+                <Col xs={24} lg={12}>
+                  <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiBarChart2 style={{ marginRight: '8px' }} />Leads Volume by Source / Channel</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '100%', height: 320 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={leadsBySourceData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: 'none' }} />
+                          <Bar dataKey="Leads" fill={COLORS.primary} radius={[6, 6, 0, 0]}>
+                            {leadsBySourceData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                </Col>
+
+                {/* Lead Region Distribution & Lead Conversion rate by source */}
+                <Col xs={24} lg={12}>
+                  <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiMapPin style={{ marginRight: '8px' }} />Lead Distribution by Region</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '100%', height: 300 }}>
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie
+                            data={leadsByRegionData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={0}
+                            outerRadius={95}
+                            dataKey="value"
+                          >
+                            {leadsByRegionData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(val) => [`${val}%`, 'Ratio']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '10px' }}>
+                      {leadsByRegionData.map((item, idx) => (
+                        <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: COLORS.chartColors[idx % COLORS.chartColors.length] }} />
+                          <span style={{ fontSize: '12px', color: '#64748b' }}>{item.name} ({item.value}%)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </Col>
+
+                <Col xs={24} lg={12}>
+                  <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiTrendingUp style={{ marginRight: '8px' }} />Conversion Efficiency by Channel</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '100%', height: 320 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={conversionRateByChannelData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                          <XAxis dataKey="channel" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                          <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                          <Tooltip formatter={(val) => [`${val}%`, 'Conversion Rate']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
+                          <Bar dataKey="Conversion %" fill={COLORS.success} radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+            </>
+          )}
         </>
       )}
+      {activeView === 'lead_deep' && (
+            <div style={{ marginTop: '12px' }}>
+              <LeadsAnalytics leads={realLeads} />
+            </div>
+          )}
+          {activeView === 'deal_deep' && (
+            <div style={{ marginTop: '12px' }}>
+              <DealsAnalytics deals={realDeals} />
+            </div>
+          )}
 
-      {/* ========================================================================= */}
-      {/* 2. LEAD ANALYTICS VIEW */}
-      {/* ========================================================================= */}
-      {activeType === 'lead' && (
-        <>
-          {/* KPI Stat Cards */}
-          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Leads Count</span>
-                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{leadMetrics.totalLeads}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.success }}>
-                      <FiArrowUpRight />
-                      <span style={{ fontWeight: '600' }}>+15.2%</span>
-                      <span style={{ color: '#94a3b8' }}>lead acquisition</span>
-                    </div>
-                  </div>
-                  <Avatar style={{ backgroundColor: '#ede9fe', color: COLORS.purple, borderRadius: '12px' }} size={46} icon={<FiUsers />} />
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Open Pipeline Leads</span>
-                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{leadMetrics.openPipelineLeads}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.warning }}>
-                      <FiClock />
-                      <span style={{ fontWeight: '600' }}>Active</span>
-                      <span style={{ color: '#94a3b8' }}>excluding won/converted</span>
-                    </div>
-                  </div>
-                  <Avatar style={{ backgroundColor: '#fef3c7', color: COLORS.warning, borderRadius: '12px' }} size={46} icon={<FiClock />} />
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Conversion Rate</span>
-                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>{leadMetrics.conversionRate}%</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.success }}>
-                      <FiArrowUpRight />
-                      <span style={{ fontWeight: '600' }}>Efficient</span>
-                      <span style={{ color: '#94a3b8' }}>lead to deal ratio</span>
-                    </div>
-                  </div>
-                  <Avatar style={{ backgroundColor: '#d1fae5', color: COLORS.success, borderRadius: '12px' }} size={46} icon={<FiTrendingUp />} />
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Avg Opportunity Value</span>
-                    <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '4px 0' }}>${leadMetrics.averageLeadValue.toLocaleString()}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: COLORS.primary }}>
-                      <FiDollarSign />
-                      <span style={{ fontWeight: '600' }}>Active</span>
-                      <span style={{ color: '#94a3b8' }}>per new lead</span>
-                    </div>
-                  </div>
-                  <Avatar style={{ backgroundColor: '#e0f2fe', color: COLORS.primary, borderRadius: '12px' }} size={46} icon={<FiBriefcase />} />
-                </div>
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Interactive Lead Chart Grid */}
-          <Row gutter={[20, 20]} style={{ marginBottom: '24px' }}>
-            {/* Leads by Stage & Source */}
-            <Col xs={24} lg={12}>
-              <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiPieChart style={{ marginRight: '8px' }} />Leads Distribution by Stage</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '100%', height: 300 }}>
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie
-                        data={leadsByStageData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={4}
-                        dataKey="value"
-                      >
-                        {leadsByStageData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '10px' }}>
-                  {leadsByStageData.map((item, idx) => (
-                    <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: COLORS.chartColors[idx % COLORS.chartColors.length] }} />
-                      <span style={{ fontSize: '12px', color: '#64748b' }}>{item.name} ({item.value})</span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} lg={12}>
-              <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiBarChart2 style={{ marginRight: '8px' }} />Leads Volume by Source / Channel</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '100%', height: 320 }}>
-                  <ResponsiveContainer>
-                    <BarChart data={leadsBySourceData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                      <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <Tooltip contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                      <Bar dataKey="Leads" fill={COLORS.primary} radius={[6, 6, 0, 0]}>
-                        {leadsBySourceData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </Col>
-
-            {/* Lead Region Distribution & Lead Conversion rate by source */}
-            <Col xs={24} lg={12}>
-              <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiMapPin style={{ marginRight: '8px' }} />Lead Distribution by Region</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '100%', height: 300 }}>
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie
-                        data={leadsByRegionData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={0}
-                        outerRadius={95}
-                        dataKey="value"
-                      >
-                        {leadsByRegionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(val) => [`${val}%`, 'Ratio']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '10px' }}>
-                  {leadsByRegionData.map((item, idx) => (
-                    <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: COLORS.chartColors[idx % COLORS.chartColors.length] }} />
-                      <span style={{ fontSize: '12px', color: '#64748b' }}>{item.name} ({item.value}%)</span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} lg={12}>
-              <Card title={<span style={{ fontWeight: '600', color: '#334155' }}><FiTrendingUp style={{ marginRight: '8px' }} />Conversion Efficiency by Channel</span>} bordered={false} style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '100%', height: 320 }}>
-                  <ResponsiveContainer>
-                    <BarChart data={conversionRateByChannelData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                      <XAxis dataKey="channel" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <Tooltip formatter={(val) => [`${val}%`, 'Conversion Rate']} contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                      <Bar dataKey="Conversion %" fill={COLORS.success} radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </Col>
-          </Row>
-        </>
-      )}
-
-    </div>
-  );
+        </div>
+      );
 };
 
-export default AdvancedReports;
+      export default AdvancedReports;

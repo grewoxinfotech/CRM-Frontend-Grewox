@@ -14,7 +14,8 @@ import {
     FiBox,
     FiHardDrive,
     FiHelpCircle,
-    FiCpu
+    FiCpu,
+    FiActivity
 } from 'react-icons/fi';
 import CommonSidebar from '../../../components/Sidebar/Sidebar';
 
@@ -86,6 +87,11 @@ const SuperAdminSidebar = ({ collapsed, onCollapsedChange }) => {
             title: 'AI Management',
             icon: <FiCpu />,
             path: '/superadmin/settings/ai'
+        },
+        {
+            title: 'System Logs',
+            icon: <FiActivity />,
+            path: '/superadmin/system-logs'
         },
         {
             title: 'Inquiry',

@@ -399,15 +399,45 @@
                 left: 0;
                 right: 0;
                 height: 4px;
-                background: linear-gradient(90deg, #1890ff, #52c41a);
+                background: linear-gradient(135deg, #4096ff, #1677ff);
                 opacity: 0;
                 transition: opacity 0.3s ease;
             }
 
+            &.recommended-plan-card {
+                border-color: $primary-color !important;
+                box-shadow: 0 8px 24px rgba($primary-color, 0.15);
+
+                &::before {
+                    background: $primary-color !important;
+                    opacity: 1;
+                }
+                
+                &:hover {
+                    border-color: darken-color($primary-color) !important;
+                    box-shadow: 0 16px 40px rgba($primary-color, 0.25);
+                }
+            }
+
+            &.current-plan-card {
+                border-color: $success-color !important;
+                box-shadow: 0 8px 24px rgba($success-color, 0.12);
+
+                &::before {
+                    background: $success-color !important;
+                    opacity: 1;
+                }
+                
+                &:hover {
+                    border-color: darken-color($success-color) !important;
+                    box-shadow: 0 16px 40px rgba($success-color, 0.22);
+                }
+            }
+
             &:hover {
                 transform: translateY(-8px);
-                box-shadow: 0 12px 32px rgba($primary-color, 0.2);
-                border-color: rgba($primary-color, 0.3);
+                box-shadow: 0 12px 32px rgba(22, 119, 255, 0.18);
+                border-color: #1677ff !important;
 
                 &::before {
                     opacity: 1;

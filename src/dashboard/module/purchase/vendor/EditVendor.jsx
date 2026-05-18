@@ -30,6 +30,7 @@ import dayjs from "dayjs";
 import "./vendor.scss";
 import { useUpdateVendorMutation } from "./services/vendorApi";
 import { useGetAllCountriesQuery } from "../../settings/services/settingsApi";
+import indianStatesAndCities from "../../../../utils/Indian_Cities_In_States_JSON.json";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -41,6 +42,13 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
   const [fileList, setFileList] = useState([]);
   const { data: countries = [], isLoading: countriesLoading } =
     useGetAllCountriesQuery();
+
+  const selectedState = Form.useWatch('state', form);
+
+  const availableCities = React.useMemo(() => {
+    if (!selectedState) return [];
+    return indianStatesAndCities[selectedState] || [];
+  }, [selectedState]);
 
   useEffect(() => {
     if (open && initialValues) {
@@ -436,27 +444,46 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
         <Row gutter={16}>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item name="city" label="City">
-              <Input
-                placeholder="Enter city (optional)"
+              <Select
+                showSearch
+                placeholder="Select city (optional)"
                 size="large"
                 style={{
                   borderRadius: "10px",
                   height: "48px",
-                  backgroundColor: "#f8fafc",
                 }}
+                disabled={!selectedState}
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={availableCities.map(cityName => ({
+                  label: cityName,
+                  value: cityName
+                }))}
               />
             </Form.Item>
           </Col>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item name="state" label="State">
-              <Input
-                placeholder="Enter state (optional)"
+              <Select
+                showSearch
+                placeholder="Select state (optional)"
                 size="large"
                 style={{
                   borderRadius: "10px",
                   height: "48px",
-                  backgroundColor: "#f8fafc",
                 }}
+                onChange={() => {
+                  form.setFieldValue('city', undefined);
+                  form.setFieldValue('country', 'India');
+                }}
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={Object.keys(indianStatesAndCities).map(stateName => ({
+                  label: stateName,
+                  value: stateName
+                }))}
               />
             </Form.Item>
           </Col>

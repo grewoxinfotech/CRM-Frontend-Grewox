@@ -45,6 +45,7 @@ import {
 } from "../crmsystem/souce/services/SourceApi";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
+import indianStatesAndCities from "../../../../utils/Indian_Cities_In_States_JSON.json";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -63,6 +64,19 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
   const [copyBillingToShipping, setCopyBillingToShipping] = useState(false);
   const { data: usersData } = useGetUsersQuery();
   const [updateCompanyAccount, { isLoading }] = useUpdateCompanyAccountMutation();
+
+  const selectedBillingState = Form.useWatch('billing_state', form);
+  const selectedShippingState = Form.useWatch('shipping_state', form);
+
+  const availableBillingCities = React.useMemo(() => {
+    if (!selectedBillingState) return [];
+    return indianStatesAndCities[selectedBillingState] || [];
+  }, [selectedBillingState]);
+
+  const availableShippingCities = React.useMemo(() => {
+    if (!selectedShippingState) return [];
+    return indianStatesAndCities[selectedShippingState] || [];
+  }, [selectedShippingState]);
 
   // Get countries data
   const { data: countries = [] } = useGetAllCountriesQuery();
@@ -757,10 +771,19 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                 }
                 style={{ marginTop: "22px" }}
               >
-                <Input
-                  placeholder="Enter city"
+                <Select
+                  showSearch
+                  placeholder="Select city"
                   size="large"
                   className="form-input"
+                  disabled={!selectedBillingState}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={availableBillingCities.map(cityName => ({
+                    label: cityName,
+                    value: cityName
+                  }))}
                 />
               </Form.Item>
             </Col>
@@ -775,10 +798,22 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                 }
                 style={{ marginTop: "22px" }}
               >
-                <Input
-                  placeholder="Enter state"
+                <Select
+                  showSearch
+                  placeholder="Select state"
                   size="large"
                   className="form-input"
+                  onChange={() => {
+                    form.setFieldValue('billing_city', undefined);
+                    form.setFieldValue('billing_country', 'India');
+                  }}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={Object.keys(indianStatesAndCities).map(stateName => ({
+                    label: stateName,
+                    value: stateName
+                  }))}
                 />
               </Form.Item>
             </Col>
@@ -867,10 +902,19 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                 }
                 style={{ marginTop: "22px" }}
               >
-                <Input
-                  placeholder="Enter city"
+                <Select
+                  showSearch
+                  placeholder="Select city"
                   size="large"
                   className="form-input"
+                  disabled={!selectedShippingState}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={availableShippingCities.map(cityName => ({
+                    label: cityName,
+                    value: cityName
+                  }))}
                 />
               </Form.Item>
             </Col>
@@ -885,10 +929,22 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                 }
                 style={{ marginTop: "22px" }}
               >
-                <Input
-                  placeholder="Enter state"
+                <Select
+                  showSearch
+                  placeholder="Select state"
                   size="large"
                   className="form-input"
+                  onChange={() => {
+                    form.setFieldValue('shipping_city', undefined);
+                    form.setFieldValue('shipping_country', 'India');
+                  }}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={Object.keys(indianStatesAndCities).map(stateName => ({
+                    label: stateName,
+                    value: stateName
+                  }))}
                 />
               </Form.Item>
             </Col>

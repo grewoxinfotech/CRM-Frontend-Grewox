@@ -49,6 +49,7 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
             { key: 'dashboards-communication', title: 'Mail, Chat & WhatsApp' }
         ],
         HRM: [
+            { key: 'extra-hrm-analytics', title: 'HRM Analytics' },
             { key: 'extra-hrm-employee', title: 'Employee' },
             { key: 'extra-hrm-payroll', title: 'PayRoll' },
             { key: 'extra-hrm-role', title: 'Role' },
@@ -247,7 +248,7 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
     };
 
     const isModuleFullySelected = (module) => {
-        const values = form.getFieldsValue().permissions || {};
+        const values = selectedPermissions || {};
         const moduleSubModules = subModules[module] || [];
 
         return moduleSubModules.every(subModule =>
@@ -258,7 +259,7 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
     };
 
     const isModuleIndeterminate = (module) => {
-        const values = form.getFieldsValue().permissions || {};
+        const values = selectedPermissions || {};
         const moduleSubModules = subModules[module] || [];
 
         const hasSelected = moduleSubModules.some(subModule =>
@@ -293,13 +294,13 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
     };
 
     const isRowFullySelected = (subModuleKey) => {
-        const values = form.getFieldsValue().permissions || {};
+        const values = selectedPermissions || {};
         return values[subModuleKey] &&
             permissions.every(perm => values[subModuleKey][perm] === true);
     };
 
     const isRowIndeterminate = (subModuleKey) => {
-        const values = form.getFieldsValue().permissions || {};
+        const values = selectedPermissions || {};
         if (!values[subModuleKey]) return false;
 
         const hasSelected = permissions.some(perm => values[subModuleKey][perm] === true);

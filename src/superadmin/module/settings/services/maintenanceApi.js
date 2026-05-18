@@ -1,9 +1,9 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import baseQuery from "../../../../../store/baseQuery";
+import { baseQueryWithReauth } from "../../../../store/baseQuery";
 
 export const maintenanceApi = createApi({
   reducerPath: "maintenanceApi",
-  baseQuery,
+  baseQuery: baseQueryWithReauth,
   tagTypes: ["Maintenance"],
   endpoints: (builder) => ({
     getMaintenance: builder.query({

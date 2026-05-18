@@ -193,7 +193,11 @@ const DashboardLayout = () => {
         const featureRoutes = [
             { path: '/dashboard/crm/automation', feature: 'workflows', name: 'Automated Workflows' },
             { path: '/dashboard/sales/revenue', feature: 'reports', name: 'Revenue Reports' },
+            { path: '/dashboard/crm/reports', feature: 'reports', name: 'Advanced Reports' },
+            { path: '/dashboard/crm/analytics', feature: 'reports', name: 'Advanced Analytics' },
+            { path: '/dashboard/hrm/analytics', feature: 'reports', name: 'HRM Analytics' },
             { path: '/dashboard/whatsapp-chat', feature: 'whatsapp', name: 'WhatsApp Chat' },
+            { path: '/dashboard/whatsapp/templates', feature: 'whatsapp', name: 'WhatsApp Message Templates' },
             { path: '/dashboard/whatsapp/broadcast', feature: 'whatsapp', name: 'WhatsApp Broadcast' },
             { path: '/dashboard/whatsapp/messages', feature: 'whatsapp', name: 'WhatsApp Message Log' },
             { path: '/dashboard/settings/whatsapp', feature: 'whatsapp', name: 'WhatsApp API Settings' }
@@ -212,6 +216,7 @@ const DashboardLayout = () => {
     }, [location.pathname, subscriptionData, isSubscriptionLoading, userRole, isSuperAdminCompanyLogin]);
 
     const checkPermission = (moduleKey) => {
+        if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return true;
         if (['settings', 'communication', 'support'].includes(moduleKey?.toLowerCase())) return true;
         if (userRole?.toLowerCase() === 'client') return true;
         if (!userPermissions) return false;
@@ -220,9 +225,10 @@ const DashboardLayout = () => {
     };
 
     const shouldShowMenuItem = (item) => {
-        if (isSubscriptionExpired) return ['Dashboard', 'Setting'].includes(item.title);
+        if (item.hidden) return false;
+        if (isSubscriptionExpired) return ['Dashboard', 'Setting', 'Subscription'].includes(item.title);
         if (item.subItems && item.subItems.length === 0) return false;
-        if (['Setting', 'Communication', 'Support'].includes(item.title)) return true;
+        if (['Setting', 'Communication', 'Support', 'Subscription'].includes(item.title)) return true;
         if (userRole?.toLowerCase() === 'client') return true;
         if (!item.permission) return true;
         if (item.subItems?.length > 0) return item.subItems.some(sub => !sub.permission || checkPermission(sub.permission));

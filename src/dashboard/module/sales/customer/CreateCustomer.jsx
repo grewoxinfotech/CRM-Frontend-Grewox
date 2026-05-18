@@ -407,7 +407,6 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                           }}
                           showSearch
                           optionFilterProp="children"
-                          defaultValue="+91"
                       >
                           {countries?.map(country => (
                               <Option 

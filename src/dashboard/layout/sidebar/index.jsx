@@ -41,6 +41,8 @@ import {
   FiHelpCircle,
   FiLink,
   FiZap,
+  FiLayout,
+  FiPlusSquare,
 } from "react-icons/fi";
 import BrandConfig from "../../../utils/brandName";
 import CommonSidebar from "../../../components/Sidebar/Sidebar";
@@ -80,9 +82,10 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
   };
 
   const shouldShowMenuItem = (item) => {
-    if (isSubscriptionExpired) return ['Dashboard', 'Setting'].includes(item.title);
+    if (item.hidden) return false;
+    if (isSubscriptionExpired) return ['Dashboard', 'Setting', 'Subscription'].includes(item.title);
     if (item.subItems && item.subItems.length === 0) return false;
-    if (['Setting', 'Communication', 'Support', 'Integrations'].includes(item.title)) return true;
+    if (['Setting', 'Communication', 'Support', 'Integrations', 'Subscription'].includes(item.title)) return true;
     if (userRole?.toLowerCase() === 'client') return true;
     if (!item.permission) return true;
     if (item.subItems?.length > 0) return item.subItems.some(sub => !sub.permission || checkPermission(sub.permission));
@@ -104,8 +107,31 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
         { title: "Contact", icon: <FiFileText />, path: "/dashboard/crm/contact", permission: "dashboards-crm-contact" },
         { title: "Custom Form", icon: <FiFileText />, path: "/dashboard/crm/custom-form", permission: "dashboards-custom-form" },
         { title: "Task", icon: <FiCheckSquare />, path: "/dashboard/crm/tasks", permission: "dashboards-task" },
+        { 
+          title: "Reports", 
+          icon: <FiFileText />, 
+          path: "/dashboard/crm/reports", 
+          permission: "dashboards-reports",
+          isLocked: !hasFeature('reports'),
+          onLockedClick: handleLockedClick
+        },
+        { 
+          title: "Analytics", 
+          icon: <FiTrendingUp />, 
+          path: "/dashboard/crm/analytics", 
+          permission: "dashboards-analytics",
+          isLocked: !hasFeature('reports'),
+          onLockedClick: handleLockedClick
+        },
         { title: "CRM System Setup", icon: <FiSettings />, path: "/dashboard/crm-setup", permission: "dashboards-systemsetup" }
-      ].filter(item => !item.permission || checkPermission(item.permission))
+      ].map(item => {
+        const isLocked = item.isLocked !== undefined ? item.isLocked : false;
+        return {
+          ...item,
+          isLocked,
+          badge: isLocked ? "PRO" : item.badge
+        };
+      }).filter(item => !item.permission || checkPermission(item.permission))
     },
     {
       title: "Sales",
@@ -124,8 +150,31 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
           permission: "dashboards-sales-revenue",
           isLocked: !hasFeature('reports'),
           onLockedClick: handleLockedClick
+        },
+        { 
+          title: "Reports", 
+          icon: <FiFileText />, 
+          path: "/dashboard/crm/reports", 
+          permission: "dashboards-reports",
+          isLocked: !hasFeature('reports'),
+          onLockedClick: handleLockedClick
+        },
+        { 
+          title: "Analytics", 
+          icon: <FiTrendingUp />, 
+          path: "/dashboard/crm/analytics", 
+          permission: "dashboards-analytics",
+          isLocked: !hasFeature('reports'),
+          onLockedClick: handleLockedClick
         }
-      ].filter(item => !item.permission || checkPermission(item.permission))
+      ].map(item => {
+        const isLocked = item.isLocked !== undefined ? item.isLocked : false;
+        return {
+          ...item,
+          isLocked,
+          badge: isLocked ? "PRO" : item.badge
+        };
+      }).filter(item => !item.permission || checkPermission(item.permission))
     },
     {
       title: "Purchase",
@@ -165,9 +214,15 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       isLocked: !hasFeature('whatsapp'),
       onLockedClick: handleLockedClick,
       subItems: [
-        { title: "Inbox", icon: <FiMessageSquare />, path: "/dashboard/whatsapp/inbox", permission: "dashboards-communication" },
+        { title: "WhatsApp Chat", icon: <FiMessageSquare />, path: "/dashboard/whatsapp-chat", permission: "dashboards-communication" },
+        { title: "Message Templates", icon: <FiLayout />, path: "/dashboard/whatsapp/templates", permission: "dashboards-communication" },
+        { title: "Broadcast", icon: <FiZap />, path: "/dashboard/whatsapp/broadcast", permission: "dashboards-communication" },
         { title: "Message log", icon: <FiList />, path: "/dashboard/whatsapp/messages", permission: "dashboards-communication" }
-      ]
+      ].map(sub => ({
+        ...sub,
+        isLocked: !hasFeature('whatsapp'),
+        onLockedClick: handleLockedClick
+      }))
     },
     {
       title: "Integrations",
@@ -197,6 +252,14 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       isDropdown: true,
       permission: 'extra-hrm',
       subItems: [
+        { 
+          title: "HRM Analytics", 
+          icon: <FiTrendingUp />, 
+          path: "/dashboard/hrm/analytics", 
+          permission: "extra-hrm-analytics",
+          isLocked: !hasFeature('reports'),
+          onLockedClick: handleLockedClick
+        },
         { title: "Employee", icon: <FiUsers />, path: "/dashboard/hrm/employee", permission: "extra-hrm-employee" },
         { title: "PayRoll", icon: <FiDollarSign />, path: "/dashboard/hrm/payroll", permission: "extra-hrm-payroll" },
         { title: "Branch", icon: <FiMapPin />, path: "/dashboard/hrm/branch", permission: "extra-hrm-branch" },
@@ -210,7 +273,14 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
         { title: "Announcement", icon: <FiBell />, path: "/dashboard/hrm/announcement", permission: "extra-hrm-announcement" },
         { title: "Document", icon: <FiFile />, path: "/dashboard/hrm/document", permission: "extra-hrm-document" },
         { title: "Training Setup", icon: <FiBookOpen />, path: "/dashboard/hrm/training", permission: "extra-hrm-trainingSetup" }
-      ].filter(item => !item.permission || checkPermission(item.permission))
+      ].map(item => {
+        const isLocked = item.isLocked !== undefined ? item.isLocked : false;
+        return {
+          ...item,
+          isLocked,
+          badge: isLocked ? "PRO" : item.badge
+        };
+      }).filter(item => !item.permission || checkPermission(item.permission))
     },
     {
       title: "Job",
@@ -232,13 +302,18 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, loggedInUse
       isDropdown: true,
       subItems: [
         { title: 'General', icon: <FiSliders />, path: '/dashboard/settings/general' },
-        { title: 'Plan', icon: <FiBookOpen />, path: '/dashboard/settings/plan' },
         { title: 'Payment', icon: <FiDollarSign />, path: '/dashboard/settings/payment' },
         { title: 'Countries', icon: <FiGlobe />, path: '/dashboard/settings/countries' },
         { title: 'Currencies', icon: <FiCreditCard />, path: '/dashboard/settings/currencies' },
         { title: 'Tax', icon: <FiPercent />, path: '/dashboard/settings/tax' },
         { title: 'ESignature', icon: <FiEdit3 />, path: '/dashboard/settings/esignature' }
-      ].filter(sub => isSubscriptionExpired ? sub.title === 'Plan' : true)
+      ].filter(sub => true)
+    },
+    {
+      title: "Subscription",
+      icon: <FiCreditCard />,
+      path: "/dashboard/settings/plan",
+      hidden: userRole?.toLowerCase() === 'employee'
     },
     {
       title: "Support",

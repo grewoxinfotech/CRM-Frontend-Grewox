@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Dropdown, Avatar, Typography, Modal, Descriptions, message, Tag } from 'antd';
+import { Card, Button, Dropdown, Avatar, Typography, Modal, Descriptions, message, Tag, Progress } from 'antd';
 import {
     FiEye,
     FiEdit2,
@@ -43,6 +43,11 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
             sub => sub.client_id === company.id && sub.status !== 'cancelled'
         );
     }, [assignedPlans, company.id]);
+
+    const activeSubscriptionLimit = React.useMemo(() => {
+        if (!activeSubscription) return 0;
+        return activeSubscription.ai_credits_limit || activeSubscription.Plan?.ai_credits || 0;
+    }, [activeSubscription]);
 
     // Update the status configuration
     const getStatusStyles = (status, hasActiveSub) => {
@@ -138,7 +143,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
             key: 'view',
             icon: <FiEye />,
             label: 'View Details',
-            onClick: () => setDetailsModalVisible(true)
+            onClick: () => onView ? onView(company) : setDetailsModalVisible(true)
         },
         {
             key: 'edit',
@@ -381,6 +386,36 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                         ))}
                     </div>
 
+                    {activeSubscription && (
+                        <div style={{
+                            background: '#F0FDF4',
+                            border: '1px solid #BBF7D0',
+                            borderRadius: '12px',
+                            padding: '10px 12px',
+                            marginBottom: '16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <PiRocketBold /> AI Credits Used
+                                </span>
+                                <span style={{ fontSize: '12px', fontWeight: '700', color: '#15803d' }}>
+                                    {activeSubscription.ai_credits_used || 0} / {activeSubscriptionLimit}
+                                </span>
+                            </div>
+                            <Progress 
+                                percent={Math.min(100, Math.round(((activeSubscription.ai_credits_used || 0) / (activeSubscriptionLimit || 1)) * 100))} 
+                                size="small"
+                                showInfo={false}
+                                strokeColor="#16a34a"
+                                trailColor="#dcfce7"
+                                style={{ margin: 0 }}
+                            />
+                        </div>
+                    )}
+
                     <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
                         <Button
                             type="primary"
@@ -475,7 +510,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
 
                             <Button
                                 icon={<FiEye style={{ fontSize: '16px' }} />}
-                                onClick={() => setDetailsModalVisible(true)}
+                                onClick={() => onView ? onView(company) : setDetailsModalVisible(true)}
                                 style={{
                                     height: '38px',
                                     borderRadius: '10px',
@@ -688,6 +723,13 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                             {company.city}, {company.state}<br />
                             {company.country} - {company.zipcode}
                         </Descriptions.Item>
+                        {activeSubscription && (
+                            <Descriptions.Item label="AI Credits Used">
+                                <span style={{ fontWeight: '600', color: '#16a34a' }}>
+                                    {activeSubscription.ai_credits_used || 0}
+                                </span> / {activeSubscriptionLimit} ({Math.min(100, Math.round(((activeSubscription.ai_credits_used || 0) / (activeSubscriptionLimit || 1)) * 100))}% used)
+                            </Descriptions.Item>
+                        )}
                         <Descriptions.Item label="Created">
                             {moment(company.created_at).format('MMM DD, YYYY')}
                         </Descriptions.Item>

@@ -26,7 +26,7 @@ import './meeting.scss';
 import dayjs from 'dayjs';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
-import { useGetRolesQuery } from "../../role/services/roleApi";
+import { useGetRolesQuery } from "../role/services/roleApi";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';

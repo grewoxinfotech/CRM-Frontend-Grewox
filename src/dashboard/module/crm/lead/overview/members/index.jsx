@@ -42,20 +42,17 @@ const LeadMembers = ({ leadId }) => {
     // Get subclient role ID to filter it out
     const subclientRoleId = rolesData?.message?.data?.find(role => role?.role_name === 'sub-client')?.id;
 
-    // Filter users to get team members (excluding subclients)
+    // Filter users to get team members of the same company (excluding subclients)
     const users = (() => {
         try {
+          const tenantClientId = loggedInUser?.roleName === 'client' ? loggedInUser?.id : loggedInUser?.client_id;
+          if (!tenantClientId) return [];
+
           return usersResponse?.data?.filter(
             (user) => {
               try {
-                // Make sure user data and created_by are valid
                 return user && 
-                  ((typeof user.created_by === 'string' ? 
-                    user.created_by === loggedInUser?.username : 
-                    false) || 
-                  (typeof user.username === 'string' ?
-                    user.username === loggedInUser?.username :
-                    false)) &&
+                  (user.client_id === tenantClientId || user.id === tenantClientId) &&
                   user?.role_id !== subclientRoleId;
               } catch (error) {
                 console.error("Error parsing user data:", error);
@@ -214,7 +211,7 @@ const LeadMembers = ({ leadId }) => {
             key: 'role',
             render: (_, record) => {
                 const user = resolveUser(record) || {};
-                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+                const userRole = user.Role || rolesData?.data?.find(role => role.id === user.role_id);
                 const roleStyle = getRoleColor(userRole?.role_name);
 
                 return (
@@ -326,128 +323,141 @@ const LeadMembers = ({ leadId }) => {
                     form.resetFields();
                 }}
                 footer={null}
-                width={600}
-                className="custom-modal"
+                width={520}
+                destroyOnClose={true}
+                centered
                 closeIcon={null}
+                className="pro-modal custom-modal"
+                getContainer={() => document.querySelector('.lead-members') || document.body}
                 styles={{
                     body: {
                         padding: 0,
+                        overflow: "hidden",
+                        borderRadius: "8px",
                     },
                     mask: {
-                        background: 'rgba(0, 0, 0, 0.45)',
-                    },
-                    content: {
-                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                        background: 'rgba(15, 23, 42, 0.3)',
+                        backdropFilter: 'blur(4px)',
                     }
                 }}
             >
                 <div
                     className="modal-header"
                     style={{
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        padding: '24px',
-                        color: '#ffffff',
-                        position: 'relative',
+                        background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                        padding: "24px",
+                        color: "#ffffff",
+                        position: "relative",
+                        borderTopLeftRadius: "8px",
+                        borderTopRightRadius: "8px",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
                     }}
                 >
                     <Button
                         type="text"
-                        icon={<FiX />}
                         onClick={() => {
                             setIsModalVisible(false);
                             form.resetFields();
                         }}
                         style={{
-                            color: '#ffffff',
-                            position: 'absolute',
-                            right: '24px',
-                            top: '24px',
+                            position: "absolute",
+                            top: "16px",
+                            right: "16px",
+                            color: "#ffffff",
+                            width: "32px",
+                            height: "32px",
+                            padding: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "rgba(255, 255, 255, 0.2)",
+                            borderRadius: "8px",
+                            border: "none",
+                            cursor: "pointer",
+                            transition: "all 0.3s ease",
+                            backdropFilter: "blur(8px)",
                         }}
-                    />
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '16px',
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
                         }}
                     >
+                        <FiX style={{ fontSize: "20px" }} />
+                    </Button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                         <div
                             style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '12px',
-                                background: 'rgba(255, 255, 255, 0.2)',
-                                backdropFilter: 'blur(8px)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                width: "48px",
+                                height: "48px",
+                                borderRadius: "12px",
+                                background: "rgba(255, 255, 255, 0.2)",
+                                backdropFilter: "blur(8px)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
                             }}
                         >
-                            <FiUserPlus style={{ fontSize: '24px', color: '#ffffff' }} />
+                            <FiUserPlus style={{ fontSize: "24px", color: "#ffffff" }} />
                         </div>
                         <div>
                             <h2
                                 style={{
-                                    margin: '0',
-                                    fontSize: '24px',
-                                    fontWeight: '600',
-                                    color: '#ffffff',
+                                    margin: "0",
+                                    fontSize: "24px",
+                                    fontWeight: "600",
+                                    color: "#ffffff",
+                                    textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
                                 }}
                             >
                                 Update Team Members
                             </h2>
-                            <Text
+                            <p
                                 style={{
-                                    fontSize: '14px',
-                                    color: 'rgba(255, 255, 255, 0.85)',
+                                    margin: "4px 0 0",
+                                    fontSize: "14px",
+                                    color: "rgba(255, 255, 255, 0.85)",
                                 }}
                             >
                                 Select team members for this lead
-                            </Text>
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleModalSubmit}
-                    initialValues={{ lead_members: selectedMembers }}
-                    style={{ padding: '24px' }}
-                >
-                    <div className="section-title" style={{ marginBottom: '16px' }}>
-                        <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Member Information</Text>
-                    </div>
-
-                    <div className="form-section" style={{
-                        background: '#f8fafc',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        marginBottom: '24px'
-                    }}>
+                <div style={{ padding: "24px" }}>
+                    <Form
+                        form={form}
+                        layout="vertical"
+                        onFinish={handleModalSubmit}
+                        initialValues={{ lead_members: selectedMembers }}
+                        style={{
+                            background: "#ffffff",
+                            borderRadius: "8px",
+                        }}
+                    >
                         <Form.Item
                             name="lead_members"
-                            label={<span style={formItemStyle}>Select Members</span>}
-                            style={{ marginBottom: '16px' }}
+                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Select Members <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                            rules={[{ required: true, message: 'Please select at least one member' }]}
                         >
                             <Select
                                 mode="multiple"
                                 placeholder="Select team members"
                                 style={{
-                                    width: '100%',
-                                    height: 'auto',
-                                    minHeight: '48px',
-                                    maxHeight: '120px',
-                                    // overflowY: 'auto'
+                                    width: "100%",
+                                    height: "auto",
+                                    minHeight: "40px",
                                 }}
                                 listHeight={300}
                                 maxTagCount="responsive"
                                 maxTagTextLength={15}
+                                getPopupContainer={(triggerNode) => triggerNode.parentNode}
                                 dropdownStyle={{
-                                    maxHeight: '400px',
-                                    overflowY: 'auto',
-                                    scrollbarWidth: 'thin',
-                                    scrollBehavior: 'smooth'
+                                    borderRadius: "8px",
+                                    padding: "8px",
                                 }}
                                 popupClassName="team-members-dropdown"
                                 showSearch
@@ -524,7 +534,7 @@ const LeadMembers = ({ leadId }) => {
                                 )}
                             >
                                 {Array.isArray(users) && users.map(user => {
-                                    const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+                                    const userRole = user.Role || rolesData?.data?.find(role => role.id === user.role_id);
                                     const roleStyle = getRoleColor(userRole?.role_name);
 
                                     return (
@@ -563,8 +573,8 @@ const LeadMembers = ({ leadId }) => {
                                                         user.username?.charAt(0) || <FiUser />
                                                     )}
                                                 </div>
-                                                    <div style={{
-                                                        display: 'flex',
+                                                <div style={{
+                                                    display: 'flex',
                                                     flexDirection: 'row',
                                                     gap: '4px'
                                                 }}>
@@ -602,8 +612,8 @@ const LeadMembers = ({ leadId }) => {
                                                         border: `1px solid ${roleStyle.border}`,
                                                         fontWeight: 500,
                                                         textTransform: 'capitalize'
-                                                }}>
-                                                    {userRole?.role_name || 'User'}
+                                                    }}>
+                                                        {userRole?.role_name || 'User'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -612,51 +622,62 @@ const LeadMembers = ({ leadId }) => {
                                 })}
                             </Select>
                         </Form.Item>
-                    </div>
 
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        padding: '0 24px 24px',
-                        gap: '12px'
-                    }}>
-                        <Button
-                            onClick={() => {
-                                setIsModalVisible(false);
-                                form.resetFields();
-                            }}
-                            style={{
-                                padding: '8px 24px',
-                                height: '44px',
-                                borderRadius: '10px',
-                                border: '1px solid #e6e8eb',
-                                fontWeight: '500',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            style={{
-                                padding: '8px 24px',
-                                height: '44px',
-                                borderRadius: '10px',
-                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                                border: 'none',
-                                fontWeight: '500',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            Update Members
-                        </Button>
-                    </div>
-                </Form>
+                        <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                                <Button
+                                    onClick={() => {
+                                        setIsModalVisible(false);
+                                        form.resetFields();
+                                    }}
+                                    style={{
+                                        borderRadius: "8px",
+                                        border: "1px solid #d9d9d9",
+                                        boxShadow: "none",
+                                        height: "40px",
+                                        padding: "0 24px",
+                                        fontSize: "14px",
+                                        fontWeight: 500,
+                                        transition: "all 0.3s ease",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = "#40a9ff";
+                                        e.currentTarget.style.color = "#40a9ff";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = "#d9d9d9";
+                                        e.currentTarget.style.color = "rgba(0, 0, 0, 0.88)";
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    style={{
+                                        borderRadius: "8px",
+                                        boxShadow: "none",
+                                        height: "40px",
+                                        padding: "0 24px",
+                                        fontSize: "14px",
+                                        fontWeight: 500,
+                                        background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                                        border: "none",
+                                        transition: "all 0.3s ease",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.opacity = "0.85";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.opacity = "1";
+                                    }}
+                                >
+                                    Update Members
+                                </Button>
+                            </div>
+                        </Form.Item>
+                    </Form>
+                </div>
             </Modal>
 
             <CreateUser
@@ -700,77 +721,75 @@ const LeadMembers = ({ leadId }) => {
                     .ant-table-tbody > tr:hover > td {
                         background: #f8fafc;
                     }
+                }
+
+                .custom-modal {
+                    .ant-modal-content {
+                        border-radius: 16px !important;
+                        overflow: hidden !important;
+                        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+                    }
 
                     .ant-select:not(.ant-select-customize-input) .ant-select-selector {
                         background-color: #ffffff !important;
-                        border: 1px solid #d1d5db !important;
-                        border-radius: 8px !important;
-                        min-height: 42px !important;
+                        border: 1px solid #e2e8f0 !important;
+                        border-radius: 10px !important;
+                        min-height: 48px !important;
                         height: auto !important;
-                        max-height: 120px !important;
-                        overflow-y: auto !important;
-                        padding: 4px 8px !important;
+                        padding: 6px 12px !important;
                         display: flex !important;
-                        align-items: flex-start !important;
+                        align-items: center !important;
                         flex-wrap: wrap !important;
-                        gap: 4px !important;
+                        gap: 6px !important;
+                        transition: all 0.2s ease-in-out !important;
                     }
 
                     .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
                         border-color: #1890ff !important;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+                        box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.15) !important;
                     }
 
                     .ant-select-multiple {
                         .ant-select-selection-overflow {
                             flex-wrap: wrap !important;
-                            gap: 4px !important;
+                            gap: 6px !important;
                             padding: 2px !important;
-                            max-height: 110px !important;
-                            overflow-y: auto !important;
                         }
 
                         .ant-select-selection-overflow-item {
                             margin: 0 !important;
-                            height: 48px !important;
                         }
 
                         .ant-select-selection-placeholder {
                             padding: 0 8px !important;
                         }
                     }
+                }
 
-                    .ant-select-dropdown {
-                        padding: 8px !important;
-                        border-radius: 12px !important;
-                        border: 1px solid #e5e7eb !important;
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+                .team-members-dropdown {
+                    padding: 8px !important;
+                    border-radius: 12px !important;
+                    border: 1px solid #f1f5f9 !important;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+                    
+                    .ant-select-item {
+                        padding: 10px 12px !important;
+                        border-radius: 8px !important;
+                        margin: 4px 0 !important;
+                        transition: all 0.15s ease-in-out !important;
                         
-                        .ant-select-item {
-                            padding: 8px !important;
-                            border-radius: 8px !important;
-                            margin: 2px 0 !important;
-                            
-                            
-                            &-option-selected {
-                                background-color: #E6F4FF !important;
-                                font-weight: 500 !important;
-                            }
-                            
-                            &-option-active {
-                                background-color: #F0F7FF !important;
-                            }
-                            
-                            &:hover {
-                                background-color: #F0F7FF !important;
-                            }
+                        &-option-selected {
+                            background-color: #e6f4ff !important;
+                            font-weight: 600 !important;
+                            color: #1890ff !important;
                         }
-                    }
-
-                    .custom-dropdown {
-                        .ant-select-item-option-content {
-                            white-space: normal !important;
-                            word-break: break-word !important;
+                        
+                        &-option-active {
+                            background-color: #f0f7ff !important;
+                        }
+                        
+                        &:hover {
+                            background-color: #f0f7ff !important;
                         }
                     }
 
@@ -785,15 +804,15 @@ const LeadMembers = ({ leadId }) => {
 
                     @keyframes pulse {
                         0% {
-                            transform: translateY(-50%) scale(1);
+                            transform: scale(1);
                             opacity: 1;
                         }
                         50% {
-                            transform: translateY(-50%) scale(1.2);
+                            transform: scale(1.2);
                             opacity: 0.8;
                         }
                         100% {
-                            transform: translateY(-50%) scale(1);
+                            transform: scale(1);
                             opacity: 1;
                         }
                     }
@@ -803,4 +822,4 @@ const LeadMembers = ({ leadId }) => {
     );
 };
 
-export default LeadMembers; 
+export default LeadMembers;

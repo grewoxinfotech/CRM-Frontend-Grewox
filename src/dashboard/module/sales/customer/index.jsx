@@ -16,6 +16,9 @@ import EditCustomer from "./EditCustomer";
 import "./customer.scss";
 import {
   useGetCustomersQuery,
+  useCreateCustomerMutation,
+  useUpdateCustomerMutation,
+  useDeleteCustomerMutation,
 } from "./services/custApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
@@ -61,6 +64,41 @@ const Customer = () => {
     search: searchText
   });
 
+  const [createCustomer, { isLoading: isCreating }] = useCreateCustomerMutation();
+  const [updateCustomer, { isLoading: isUpdating }] = useUpdateCustomerMutation();
+  const [deleteCustomer] = useDeleteCustomerMutation();
+
+  const handleCreateCustomer = async (data) => {
+    try {
+      const response = await createCustomer(data).unwrap();
+      if (response.success) {
+        message.success("Customer created successfully");
+        setIsCreateModalOpen(false);
+      } else {
+        throw new Error(response.message || "Failed to create customer");
+      }
+    } catch (error) {
+      console.error("Create Customer Error:", error);
+      throw error; // Propagate error for LimitReachedModal handling in CreateCustomer
+    }
+  };
+
+  const handleEditCustomer = async (data) => {
+    try {
+      const response = await updateCustomer({ id: selectedCustomer.id, data }).unwrap();
+      if (response.success) {
+        message.success("Customer updated successfully");
+        setIsEditModalOpen(false);
+        setSelectedCustomer(null);
+      } else {
+        throw new Error(response.message || "Failed to update customer");
+      }
+    } catch (error) {
+      console.error("Edit Customer Error:", error);
+      throw error;
+    }
+  };
+
   const handleExport = async (type) => {
     message.info(`Exporting as ${type.toUpperCase()}...`);
   };
@@ -100,8 +138,22 @@ const Customer = () => {
           onDelete={(record) => {
             Modal.confirm({
               title: "Delete Customer",
-              content: "Are you sure?",
-              onOk: () => message.success("Deleted successfully")
+              content: `Are you sure you want to delete customer "${record.name}"? This action cannot be undone.`,
+              okText: "Yes, Delete",
+              okType: "danger",
+              cancelText: "No",
+              onOk: async () => {
+                try {
+                  const response = await deleteCustomer(record.id).unwrap();
+                  if (response.success) {
+                    message.success("Customer deleted successfully");
+                  } else {
+                    message.error(response.message || "Failed to delete customer");
+                  }
+                } catch (error) {
+                  message.error("Failed to delete customer");
+                }
+              }
             });
           }}
           onView={(record) => console.log("View:", record)}
@@ -115,6 +167,8 @@ const Customer = () => {
       <CreateCustomer
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateCustomer}
+        loading={isCreating}
       />
 
       <EditCustomer
@@ -124,6 +178,8 @@ const Customer = () => {
           setSelectedCustomer(null);
         }}
         initialValues={selectedCustomer}
+        onSubmit={handleEditCustomer}
+        loading={isUpdating}
       />
     </div>
   );

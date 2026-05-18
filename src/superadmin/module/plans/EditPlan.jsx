@@ -35,6 +35,9 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
 
             setStorageUnit(displayStorageUnit);
 
+            const customFeaturesArray = initialValues.features?.custom_features || [];
+            const customFeaturesText = Array.isArray(customFeaturesArray) ? customFeaturesArray.join('\n') : '';
+
             // Set form values immediately
             const formValues = {
                 name: initialValues.name,
@@ -46,13 +49,16 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 _storage_limit_mb: storageLimitMB?.toString(),
                 trial_period: initialValues.trial_period?.toString(),
                 max_users: initialValues.max_users?.toString(),
-                max_clients: initialValues.max_clients?.toString(),
                 max_vendors: initialValues.max_vendors?.toString(),
                 max_customers: initialValues.max_customers?.toString(),
+                ai_credits: initialValues.ai_credits || 0,
                 status: initialValues.status === 'active',
                 is_default: initialValues.is_default || false,
                 duration: initialValues.duration,
-                features: initialValues.features || {}
+                features: {
+                    ...(initialValues.features || {}),
+                    custom_features_text: customFeaturesText
+                }
             };
 
             console.log('Setting form values:', formValues);
@@ -110,6 +116,12 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
 
             const priceGroup = form.getFieldValue('price_group') || {};
 
+            const customFeaturesText = values.features?.custom_features_text || '';
+            const customFeatures = customFeaturesText
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
             const updateData = {
                 name: values.name,
                 price: priceGroup.price?.toString(),
@@ -120,9 +132,13 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 max_users: values.max_users?.toString(),
                 max_vendors: values.max_vendors?.toString(),
                 max_customers: values.max_customers?.toString(),
+                ai_credits: Number(values.ai_credits || 0),
                 status: values.status ? 'active' : 'inactive',
                 is_default: values.is_default || false,
-                features: values.features || {}
+                features: {
+                    ...values.features,
+                    custom_features: customFeatures
+                }
             };
 
             const response = await updatePlan({ idd, updateData }).unwrap();
@@ -348,7 +364,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                     is_default: false,
                     trial_period: '7',
                     max_users: '5',
-                    max_clients: '10',
                     max_customers: '50',
                     max_vendors: '20',
                     storage_limit: '10',
@@ -643,6 +658,32 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                             onChange={(value) => form.setFieldsValue({ max_users: value?.toString() })}
                         />
                     </Form.Item>
+
+                    <Form.Item
+                        name="ai_credits"
+                        label={
+                            <span style={{
+                                fontSize: '14px',
+                                fontWeight: '500',
+                            }}>
+                                AI Credits (Limit)
+                            </span>
+                        }
+                        rules={[{ required: true, message: 'Please enter AI credits limit' }]}
+                        style={{ flex: 1, marginTop: "22px" }}
+                    >
+                        <InputNumber
+                            prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
+                            size="large"
+                            style={{
+                                width: '100%',
+                                borderRadius: '10px',
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e6e8eb',
+                            }}
+                            min={0}
+                        />
+                    </Form.Item>
                 </div>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
@@ -801,6 +842,41 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                         style={{ marginBottom: 0 }}
                     >
                         <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+                </div>
+
+                <Divider orientation="left" style={{ margin: '24px 0' }}>
+                    <span style={{ fontSize: '16px', fontWeight: '600', color: '#1890ff' }}>Custom Plan Settings</span>
+                </Divider>
+
+                <div style={{
+                    backgroundColor: '#f8fafc',
+                    padding: '20px',
+                    borderRadius: '12px',
+                    border: '1px solid #e6e8eb',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '20px'
+                }}>
+                    <Form.Item
+                        name={['features', 'is_recommended']}
+                        label={<span style={{ fontWeight: '500' }}>Mark Plan as Recommended</span>}
+                        valuePropName="checked"
+                        initialValue={false}
+                    >
+                        <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'custom_features_text']}
+                        label={<span style={{ fontWeight: '500' }}>Custom Features Checklist (One feature per line)</span>}
+                        help="Enter any extra custom features to display as checklist items under this plan, one per line."
+                    >
+                        <Input.TextArea 
+                            rows={4} 
+                            placeholder="Priority 24/7 Support&#10;Dedicated Account Manager&#10;Custom API Integrations" 
+                            style={{ borderRadius: '8px' }}
+                        />
                     </Form.Item>
                 </div>
 

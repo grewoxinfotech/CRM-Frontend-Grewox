@@ -15,6 +15,7 @@ import {
   Col,
   Descriptions,
   Tooltip,
+  Skeleton,
 } from "antd";
 import {
   FiArrowLeft,
@@ -317,7 +318,7 @@ const LeadOverviewContent = ({
 console.log("leaddata", initialLeadData)
   
   const loggedInUser = useSelector(selectCurrentUser);
-  const { hasFeature } = useFeatureAccess();
+  const { hasFeature, isLoading: isFeatureLoading } = useFeatureAccess();
 
   const [localLeadData, setLocalLeadData] = useState(initialLeadData);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
@@ -1198,7 +1199,9 @@ console.log("leaddata", initialLeadData)
                 <div className="detail-info">
                   <div className="detail-label">Lead Score</div>
                   <div className="detail-value">
-                    {!hasFeature('ai_features') ? (
+                    {isFeatureLoading ? (
+                      <Skeleton.Button active size="small" style={{ width: 80, height: 20 }} />
+                    ) : !hasFeature('ai_features') ? (
                       <span style={{ fontSize: '13px', fontWeight: '600', color: '#d48806', display: 'flex', alignItems: 'center' }}>
                         <FiLock style={{ marginRight: '4px', color: '#faad14' }} /> Locked 
                         <span style={{ fontSize: '8px', background: '#faad14', color: '#fff', padding: '1px 3px', borderRadius: '4px', marginLeft: '4px', fontWeight: 'bold' }}>PRO</span>
@@ -1223,7 +1226,7 @@ console.log("leaddata", initialLeadData)
 const LeadOverview = () => {
   const { leadId } = useParams();
   const navigate = useNavigate();
-  const { hasFeature } = useFeatureAccess();
+  const { hasFeature, isLoading: isFeatureLoading } = useFeatureAccess();
   const { data: lead, isLoading: isLoadingLead } = useGetLeadQuery(leadId,{
     page: 1,
     pageSize: -1,
@@ -1497,7 +1500,7 @@ const LeadOverview = () => {
           <span style={{ display: 'flex', alignItems: 'center' }}>
             <FiCpu style={{ marginRight: '8px' }} /> 
             AI Assistant
-            {!hasFeature('ai_features') ? (
+            {isFeatureLoading ? null : !hasFeature('ai_features') ? (
               <span style={{ display: 'flex', alignItems: 'center', marginLeft: '4px' }}>
                 <FiLock style={{ color: '#faad14', marginLeft: '4px' }} />
                 <span style={{ fontSize: '9px', background: 'linear-gradient(135deg, #faad14 0%, #d48806 100%)', color: '#fff', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px', fontWeight: 'bold', lineHeight: '1', boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)' }}>PRO</span>
@@ -1520,7 +1523,11 @@ const LeadOverview = () => {
             )}
           </span>
         ),
-        children: hasFeature('ai_features') ? (
+        children: isFeatureLoading ? (
+          <div style={{ textAlign: 'center', padding: '60px 20px', background: '#f8fafc', borderRadius: '12px' }}>
+            <Skeleton active paragraph={{ rows: 4 }} />
+          </div>
+        ) : hasFeature('ai_features') ? (
           <LeadAI leadId={leadId} leadData={localLeadData} />
         ) : (
           <div style={{ textAlign: 'center', padding: '60px 20px', background: '#f8fafc', borderRadius: '12px' }}>
@@ -1547,15 +1554,19 @@ const LeadOverview = () => {
         label: (
           <span>
             <FaWhatsapp style={{ color: '#25D366', marginRight: '6px' }} /> WhatsApp
-            {!hasFeature('whatsapp') && (
+            {isFeatureLoading ? null : !hasFeature('whatsapp') ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '4px' }}>
                 <FiLock style={{ color: '#faad14', marginLeft: '4px' }} />
                 <span style={{ fontSize: '9px', background: 'linear-gradient(135deg, #faad14 0%, #d48806 100%)', color: '#fff', padding: '2px 6px', borderRadius: '10px', marginLeft: '6px', fontWeight: 'bold', lineHeight: '1', boxShadow: '0 2px 4px rgba(250, 173, 20, 0.3)' }}>PRO</span>
               </span>
-            )}
+            ) : null}
           </span>
         ),
-        children: hasFeature('whatsapp') ? (
+        children: isFeatureLoading ? (
+          <div style={{ textAlign: 'center', padding: '60px 20px', background: '#f8fafc', borderRadius: '12px' }}>
+            <Skeleton active paragraph={{ rows: 4 }} />
+          </div>
+        ) : hasFeature('whatsapp') ? (
           <LeadWhatsapp 
             leadId={leadId} 
             phone={associatedContact?.phone || localLeadData?.telephone} 
@@ -1593,7 +1604,9 @@ const LeadOverview = () => {
         title={
           <Space size="middle">
             {localLeadData?.leadTitle || "Lead Details"}
-            {hasFeature('ai_features') ? (
+            {isFeatureLoading ? (
+              <Skeleton.Button active size="small" style={{ width: 150, height: 26, borderRadius: 20 }} />
+            ) : hasFeature('ai_features') ? (
               <Tooltip title={(!localLeadData?.lead_score) ? "AI Analysis pending or low interest" : `AI Lead Score: ${localLeadData.lead_score}%`}>
                 <div style={{
                   display: 'flex',

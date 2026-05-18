@@ -39,9 +39,13 @@ import {
   FiCpu,
   FiLink,
   FiZap,
+  FiActivity,
+  FiLayout,
+  FiPlusSquare,
 } from "react-icons/fi";
 
 export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired, checkFeature = () => true, userRole = '') => {
+  const isEmployee = userRole && userRole !== 'super-admin' && userRole !== 'super admin' && userRole !== 'client';
   const items = [
     { title: "Dashboard", icon: <FiHome />, path: "/dashboard" },
   {
@@ -50,19 +54,19 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired, ch
     isDropdown: true,
     permission: 'dashboards-crm',
     subItems: [
-      { title: "Project", icon: <FiBriefcase />, path: "/dashboard/crm/project", permission: "dashboards-project-list" },
       { title: "Leads", icon: <FiTarget />, path: "/dashboard/crm/leads", permission: "dashboards-lead" },
+      { title: "Deals", icon: <FiShoppingBag />, path: "/dashboard/crm/deals", permission: "dashboards-deal" },
+      { title: "Contact", icon: <FiFileText />, path: "/dashboard/crm/contact", permission: "dashboards-crm-contact" },
+      { title: "Company", icon: <FiBriefcase />, path: "/dashboard/crm/company-account", permission: "dashboards-crm-company-account" },
+      { title: "Proposal", icon: <FiFileText />, path: "/dashboard/crm/proposal", permission: "dashboards-proposal" },
+      { title: "Project", icon: <FiBriefcase />, path: "/dashboard/crm/project", permission: "dashboards-project-list" },
       { title: "Task", icon: <FiCheckSquare />, path: "/dashboard/crm/tasks", permission: "dashboards-task" },
       { title: "Follow-up", icon: <FiClock />, path: "/dashboard/crm/followups", permission: "dashboards-lead" },
+      { title: "Calendar", icon: <FiCalendar />, path: "/dashboard/crm/task-calendar", permission: "dashboards-TaskCalendar" },
+      { title: "Automation", icon: <FiSliders />, path: "/dashboard/crm/automation", permission: "dashboards-automation", feature: "workflows" },
       { title: "Reports", icon: <FiFileText />, path: "/dashboard/crm/reports", feature: "reports", permission: "dashboards-reports" },
       { title: "Analytics", icon: <FiTrendingUp />, path: "/dashboard/crm/analytics", feature: "reports", permission: "dashboards-analytics" },
       { title: "Custom Form", icon: <FiFileText />, path: "/dashboard/crm/custom-form", permission: "dashboards-custom-form" },
-      { title: "Deals", icon: <FiShoppingBag />, path: "/dashboard/crm/deals", permission: "dashboards-deal" },
-      { title: "Proposal", icon: <FiFileText />, path: "/dashboard/crm/proposal", permission: "dashboards-proposal" },
-      { title: "Company", icon: <FiBriefcase />, path: "/dashboard/crm/company-account", permission: "dashboards-crm-company-account" },
-      { title: "Automation", icon: <FiSliders />, path: "/dashboard/crm/automation", permission: "dashboards-automation", feature: "workflows" },
-      { title: "Calendar", icon: <FiCalendar />, path: "/dashboard/crm/task-calendar", permission: "dashboards-TaskCalendar" },
-      { title: "Contact", icon: <FiFileText />, path: "/dashboard/crm/contact", permission: "dashboards-crm-contact" },
       { title: "CRM System Setup", icon: <FiSettings />, path: "/dashboard/crm-setup", permission: "dashboards-systemsetup" }
     ].map(item => {
       const isLocked = item.feature ? !checkFeature(item.feature) : false;
@@ -111,6 +115,7 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired, ch
     icon: <FiUsers />,
     isDropdown: true,
     permission: 'extra-users',
+    hidden: isEmployee,
     subItems: [
       { title: "Users", icon: <FiUserCheck />, path: "/dashboard/user-management/users", permission: "extra-users-list" },
       { title: "Role", icon: <FiShield />, path: "/dashboard/hrm/role", permission: "extra-hrm-role" }
@@ -134,16 +139,17 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired, ch
     badge: !checkFeature("whatsapp") ? "PRO" : "",
     subItems: [
       { title: "WhatsApp Chat", icon: <FiMessageSquare />, path: "/dashboard/whatsapp-chat", permission: "dashboards-communication" },
+      { title: "Message Templates", icon: <FiLayout />, path: "/dashboard/whatsapp/templates", permission: "dashboards-communication" },
       { title: "Broadcast", icon: <FiZap />, path: "/dashboard/whatsapp/broadcast", permission: "dashboards-communication" },
       { title: "Message log", icon: <FiList />, path: "/dashboard/whatsapp/messages", permission: "dashboards-communication" }
     ].filter(item => !item.permission || checkPermission(item.permission))
      .map(item => {
-       const isLocked = !checkFeature("whatsapp");
-       return {
-         ...item,
-         isLocked,
-         badge: isLocked ? "PRO" : item.badge
-       };
+        const isLocked = !checkFeature("whatsapp");
+        return {
+          ...item,
+          isLocked,
+          badge: isLocked ? "PRO" : item.badge
+        };
      })
   },
   {
@@ -174,6 +180,7 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired, ch
     isDropdown: true,
     permission: 'extra-hrm',
     subItems: [
+      { title: "HRM Analytics", icon: <FiTrendingUp />, path: "/dashboard/hrm/analytics", permission: "extra-hrm-analytics", feature: "reports" },
       { title: "Employee", icon: <FiUsers />, path: "/dashboard/hrm/employee", permission: "extra-hrm-employee" },
       { title: "PayRoll", icon: <FiDollarSign />, path: "/dashboard/hrm/payroll", permission: "extra-hrm-payroll" },
       { title: "Branch", icon: <FiMapPin />, path: "/dashboard/hrm/branch", permission: "extra-hrm-branch" },
@@ -182,12 +189,20 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired, ch
       { title: "Attendance", icon: <FiClock />, path: "/dashboard/hrm/attendance", permission: "extra-hrm-attendance-attendancelist" },
       { title: "Holiday", icon: <FiCalendar />, path: "/dashboard/hrm/holiday", permission: "extra-hrm-holiday" },
       { title: "Leave Management", icon: <FiCalendar />, path: "/dashboard/hrm/leave", permission: "extra-hrm-leave-leavelist" },
+      { title: "Calendar", icon: <FiCalendar />, path: "/dashboard/hrm/calendar", permission: "extra-hrm-calendar" },
 
       { title: "Meeting", icon: <FiVideo />, path: "/dashboard/hrm/meeting", permission: "extra-hrm-meeting" },
       { title: "Announcement", icon: <FiBell />, path: "/dashboard/hrm/announcement", permission: "extra-hrm-announcement" },
       { title: "Document", icon: <FiFile />, path: "/dashboard/hrm/document", permission: "extra-hrm-document" },
       { title: "Training Setup", icon: <FiBookOpen />, path: "/dashboard/hrm/training", permission: "extra-hrm-trainingSetup" }
-    ].filter(item => !item.permission || checkPermission(item.permission))
+    ].map(item => {
+      const isLocked = item.feature ? !checkFeature(item.feature) : false;
+      return {
+        ...item,
+        isLocked,
+        badge: isLocked ? "PRO" : item.badge
+      };
+    }).filter(item => !item.permission || checkPermission(item.permission))
   },
   {
     title: "Job",
@@ -207,15 +222,21 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired, ch
     title: 'Setting',
     icon: <FiSettings />,
     isDropdown: true,
+    hidden: isEmployee,
     subItems: [
       { title: 'General', icon: <FiSliders />, path: '/dashboard/settings/general' },
-      { title: 'Plan', icon: <FiBookOpen />, path: '/dashboard/settings/plan' },
       { title: 'Payment', icon: <FiDollarSign />, path: '/dashboard/settings/payment' },
       { title: 'Countries', icon: <FiGlobe />, path: '/dashboard/settings/countries' },
       { title: 'Currencies', icon: <FiCreditCard />, path: '/dashboard/settings/currencies' },
       { title: 'Tax', icon: <FiPercent />, path: '/dashboard/settings/tax' },
       { title: 'ESignature', icon: <FiEdit3 />, path: '/dashboard/settings/esignature' }
-    ].filter(sub => isSubscriptionExpired ? sub.title === 'Plan' : true)
+    ].filter(sub => true)
+  },
+  {
+    title: "Subscription",
+    icon: <FiCreditCard />,
+    path: "/dashboard/settings/plan",
+    hidden: isEmployee
   },
   {
     title: "Support",
@@ -231,7 +252,7 @@ export const getDashboardMenuItems = (checkPermission, isSubscriptionExpired, ch
     icon: <FiZap style={{ color: '#faad14' }} />,
     path: "/dashboard/settings/plan",
     badge: "PRO",
-    hidden: userRole === 'super-admin'
+    hidden: true // Hiding redundant Upgrade Plan button since top-level Subscription is active
   }
 ];
 
@@ -243,6 +264,11 @@ export const getSuperAdminMenuItems = () => [
     title: 'Dashboard',
     icon: <FiHome />,
     path: '/superadmin/dashboard'
+  },
+  {
+    title: 'Analytics',
+    icon: <FiTrendingUp />,
+    path: '/superadmin/analytics'
   },
   {
     title: 'Company',
@@ -298,18 +324,23 @@ export const getSuperAdminMenuItems = () => [
         title: 'Payment Gateway',
         icon: <FiDollarSign />,
         path: '/superadmin/settings/payment-gateway'
-      },
-      {
-        title: 'Maintenance Mode',
-        icon: <FiSliders />,
-        path: '/superadmin/settings/maintenance'
       }
     ]
+  },
+  {
+    title: 'Maintenance Mode',
+    icon: <FiSliders />,
+    path: '/superadmin/settings/maintenance'
   },
   {
     title: 'AI Management',
     icon: <FiCpu />,
     path: '/superadmin/settings/ai'
+  },
+  {
+    title: 'Error Tracking & Logs',
+    icon: <FiActivity />,
+    path: '/superadmin/system-logs'
   },
   {
     title: 'Inquiry',

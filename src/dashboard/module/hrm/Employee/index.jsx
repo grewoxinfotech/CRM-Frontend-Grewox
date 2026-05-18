@@ -31,7 +31,7 @@ import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import EditEmployee from "./EditEmployee";
 import ResetPasswordModal from "../../../../superadmin/module/company/ResetPasswordModal";
 import PageHeader from "../../../../components/PageHeader";
-import { useGetRolesQuery } from "../../role/services/roleApi";
+import { useGetRolesQuery } from "../role/services/roleApi";
 
 const Employee = () => {
   // States

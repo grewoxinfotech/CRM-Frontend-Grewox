@@ -25,9 +25,19 @@ export const useFeatureAccess = () => {
             try { features = JSON.parse(features); } catch (e) { features = null; }
         }
 
-        if (!features) return false;
+        if (!features) {
+            // Fallback to true during loading to prevent jarring "Locked Pro" flashes in the UI.
+            return isLoading;
+        }
         
-        return !!features[featureKey];
+        let hasAccess = !!features[featureKey];
+        if (featureKey === 'ai_features' && !hasAccess) {
+            hasAccess = !!features['ai'];
+        }
+        if (featureKey === 'ai' && !hasAccess) {
+            hasAccess = !!features['ai_features'];
+        }
+        return hasAccess;
     };
 
     return { hasFeature, subscriptionData, isLoading };

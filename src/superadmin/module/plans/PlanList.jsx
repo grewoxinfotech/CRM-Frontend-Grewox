@@ -195,7 +195,11 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
 
     const getAssignedUsersCount = (planId) => {
         if (!subscribedUsers || !Array.isArray(subscribedUsers)) return 0;
-        return subscribedUsers.filter(user => user.plan_id === planId && user.status !== 'cancelled').length;
+        return subscribedUsers.filter(sub => 
+            sub.plan_id === planId && 
+            sub.status !== 'cancelled' && 
+            (sub.isCurrentActive === undefined ? true : sub.isCurrentActive)
+        ).length;
     };
 
     const columns = [
@@ -211,7 +215,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             ...getColumnSearchProps('name'),
             filters: planTypes,
             onFilter: (value, record) => record.is_default === value,
-            width: '25%',
+            width: '20%',
             
             render: (_, record) => (
                 <div className="name-cell" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -260,7 +264,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                     </div>
                 </div>
             ),
-            width: '25%',
+            width: '12%',
         },
         {
             title: (
@@ -280,11 +284,6 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                                 <FiUsers className="tag-icon" /> {record.max_users || 0} Users
                             </Tag>
                         </Tooltip>
-                        <Tooltip title="Clients Limit">
-                            <Tag className="limit-tag clients">
-                                <FiUsers className="tag-icon" /> {record.max_clients || 0} Clients
-                            </Tag>
-                        </Tooltip>
                     </div>
                     <div className="limits-group">
                         <Tooltip title="Vendors Limit">
@@ -300,7 +299,70 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                     </div>
                 </div>
             ),
-            width: '30%',
+            width: '20%',
+        },
+        {
+            title: (
+                <div className="column-header">
+                    <span>Plan Features</span>
+                </div>
+            ),
+            key: 'features',
+            render: (_, record) => {
+                const features = typeof record.features === 'string' 
+                    ? JSON.parse(record.features) 
+                    : (record.features || {});
+                
+                const enabledFeatures = [];
+                if (features.whatsapp) enabledFeatures.push({ name: 'WhatsApp', color: '#10b981' });
+                if (features.ai_features) enabledFeatures.push({ name: 'AI Features', color: '#8b5cf6' });
+                if (features.reports) enabledFeatures.push({ name: 'Reports', color: '#3b82f6' });
+                if (features.bulk_operations) enabledFeatures.push({ name: 'Bulk Ops', color: '#f59e0b' });
+                if (features.workflows) enabledFeatures.push({ name: 'Workflows', color: '#ec4899' });
+                
+                const customFeatures = features.custom_features || [];
+                
+                return (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxWidth: '280px' }}>
+                        {enabledFeatures.map(f => (
+                            <Tag 
+                                key={f.name} 
+                                style={{ 
+                                    background: `${f.color}10`, 
+                                    border: `1px solid ${f.color}50`, 
+                                    color: f.color,
+                                    borderRadius: '6px',
+                                    fontWeight: '600',
+                                    fontSize: '11px',
+                                    margin: 0
+                                }}
+                            >
+                                {f.name}
+                            </Tag>
+                        ))}
+                        {customFeatures.map((f, i) => (
+                            <Tag 
+                                key={i} 
+                                style={{ 
+                                    background: 'rgba(0,0,0,0.02)', 
+                                    border: '1px solid #94a3b8', 
+                                    color: '#475569',
+                                    borderRadius: '6px',
+                                    fontWeight: '500',
+                                    fontSize: '11px',
+                                    margin: 0
+                                }}
+                            >
+                                {f}
+                            </Tag>
+                        ))}
+                        {enabledFeatures.length === 0 && customFeatures.length === 0 && (
+                            <span style={{ color: '#94a3b8', fontSize: '12px', fontStyle: 'italic' }}>No features enabled</span>
+                        )}
+                    </div>
+                );
+            },
+            width: '25%',
         },
         {
             title: (
@@ -326,7 +388,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                     </Tooltip>
                 </div>
             ),
-            width: '20%',
+            width: '15%',
         },
         {
             title: (
@@ -349,23 +411,23 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                     </Tag>
                 );
             },
-            width: '12%',
+            width: '10%',
         },
         {
             title: (
                 <div className="column-header">
                     {/* <FiUserCheck className="header-icon" /> */}
-                    <span>Assigned Users</span>
+                    <span>Assigned Companies</span>
                 </div>
             ),
             key: 'assigned_users',
-            width: '20%',
+            width: '15%',
             render: (_, record) => {
                 const count = getAssignedUsersCount(record.id);
                 return (
-                    <Tooltip title="Number of users assigned to this plan">
+                    <Tooltip title="Number of companies currently active on this plan">
                         <Tag className="assigned-users-tag">
-                            <FiUsers className="tag-icon" /> {count} Users
+                            <FiUsers className="tag-icon" /> {count} {count === 1 ? 'Company' : 'Companies'}
                         </Tag>
                     </Tooltip>
                 );

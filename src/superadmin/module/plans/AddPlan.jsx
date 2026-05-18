@@ -76,17 +76,28 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                 formattedDuration = `${selectedYear} Year${selectedYear > 1 ? 's' : ''}`;
             }
 
+            const customFeaturesText = values.features?.custom_features_text || '';
+            const customFeatures = customFeaturesText
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
             const formattedValues = {
                 ...values,
                 duration: formattedDuration,
                 trial_period: values.trial_period?.toString() || '0',
-                features: values.features || {},
+                features: {
+                    ...values.features,
+                    custom_features: customFeatures
+                },
                 status: values.status ? 'active' : 'inactive',
                 is_default: values.is_default || false,
                 max_users: values.max_users?.toString(),
+                max_clients: values.max_clients?.toString(),
                 max_customers: values.max_customers?.toString(),
                 max_vendors: values.max_vendors?.toString(),
                 storage_limit: form.getFieldValue('_storage_limit_mb')?.toString() || values.storage_limit?.toString(),
+                ai_credits: Number(values.ai_credits || 0),
                 price: values.price.toString(),
                 currency: values.currency
             };
@@ -335,10 +346,10 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                     duration: 'Per Month',
                     trial_period: '7',
                     max_users: '5',
-                    max_clients: '10',
                     max_customers: '50',
                     max_vendors: '20',
                     storage_limit: '10',
+                    ai_credits: 500,
                     ...initialValues
                 }}
                 requiredMark={false}
@@ -637,6 +648,33 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             min={1}
                         />
                     </Form.Item>
+
+                    <Form.Item
+                        name="ai_credits"
+                        label={
+                            <span style={{
+                                fontSize: '14px',
+                                fontWeight: '500',
+                            }}>
+                                AI Credits (Limit)
+                            </span>
+                        }
+                        rules={[{ required: true, message: 'Please enter AI credits limit' }]}
+                        style={{ flex: 1, marginTop: "22px" }}
+                    >
+                        <InputNumber
+                            prefix={<FiTag style={{ color: '#1890ff', fontSize: '16px' }} />}
+                            size="large"
+                            style={{
+                                width: '100%',
+                                borderRadius: '10px',
+                                height: '48px',
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e6e8eb',
+                            }}
+                            min={0}
+                        />
+                    </Form.Item>
                 </div>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
@@ -800,6 +838,41 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                         style={{ marginBottom: 0 }}
                     >
                         <Switch checkedChildren="ON" unCheckedChildren="OFF" />
+                    </Form.Item>
+                </div>
+
+                <Divider orientation="left" style={{ margin: '24px 0' }}>
+                    <span style={{ fontSize: '16px', fontWeight: '600', color: '#1890ff' }}>Custom Plan Settings</span>
+                </Divider>
+
+                <div style={{
+                    backgroundColor: '#f8fafc',
+                    padding: '20px',
+                    borderRadius: '12px',
+                    border: '1px solid #e6e8eb',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '20px'
+                }}>
+                    <Form.Item
+                        name={['features', 'is_recommended']}
+                        label={<span style={{ fontWeight: '500' }}>Mark Plan as Recommended</span>}
+                        valuePropName="checked"
+                        initialValue={false}
+                    >
+                        <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name={['features', 'custom_features_text']}
+                        label={<span style={{ fontWeight: '500' }}>Custom Features Checklist (One feature per line)</span>}
+                        help="Enter any extra custom features to display as checklist items under this plan, one per line."
+                    >
+                        <Input.TextArea 
+                            rows={4} 
+                            placeholder="Priority 24/7 Support&#10;Dedicated Account Manager&#10;Custom API Integrations" 
+                            style={{ borderRadius: '8px' }}
+                        />
                     </Form.Item>
                 </div>
 

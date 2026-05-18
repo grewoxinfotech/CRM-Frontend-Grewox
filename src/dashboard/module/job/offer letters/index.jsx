@@ -16,7 +16,7 @@ import { useGetAllOfferLettersQuery, useDeleteOfferLetterMutation } from './serv
 import PageHeader from '../../../../components/PageHeader';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
-import { useGetRolesQuery } from "../../role/services/roleApi";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 
 const OfferLetters = () => {
     const [searchText, setSearchText] = useState('');

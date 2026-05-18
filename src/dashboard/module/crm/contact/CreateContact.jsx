@@ -39,6 +39,7 @@ import {
   useDeleteSourceMutation,
 } from "../crmsystem/souce/services/SourceApi";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
+import indianStatesAndCities from "../../../../utils/Indian_Cities_In_States_JSON.json";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -58,6 +59,13 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
   const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const selectedState = Form.useWatch('state', form);
+
+  const availableCities = React.useMemo(() => {
+    if (!selectedState) return [];
+    return indianStatesAndCities[selectedState] || [];
+  }, [selectedState]);
 
   // Get countries data
   const { data: countries = [] } = useGetAllCountriesQuery();
@@ -701,10 +709,19 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
                     </span>
                   }
                 >
-                  <Input
-                    placeholder="Enter city"
+                  <Select
+                    showSearch
+                    placeholder="Select city"
                     size="large"
                     className="form-input"
+                    disabled={!selectedState}
+                    filterOption={(input, option) =>
+                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                    options={availableCities.map(cityName => ({
+                      label: cityName,
+                      value: cityName
+                    }))}
                   />
                 </Form.Item>
               </Col>
@@ -719,10 +736,22 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
                     </span>
                   }
                 >
-                  <Input
-                    placeholder="Enter state"
+                  <Select
+                    showSearch
+                    placeholder="Select state"
                     size="large"
                     className="form-input"
+                    onChange={() => {
+                      form.setFieldValue('city', undefined);
+                      form.setFieldValue('country', 'India');
+                    }}
+                    filterOption={(input, option) =>
+                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                    options={Object.keys(indianStatesAndCities).map(stateName => ({
+                      label: stateName,
+                      value: stateName
+                    }))}
                   />
                 </Form.Item>
               </Col>
