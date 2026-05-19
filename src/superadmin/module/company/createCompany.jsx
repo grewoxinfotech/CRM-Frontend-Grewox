@@ -386,17 +386,17 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading, onSu
                             </span>
                         }
                         rules={[{ required: true, message: 'Please enter username' },
-                            {
-                                validator: (_, value) => {
-                                  if (!value) return Promise.resolve();
-                                  if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                        {
+                            validator: (_, value) => {
+                                if (!value) return Promise.resolve();
+                                if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
                                     return Promise.reject(
-                                    new Error('Username must contain both uppercase or lowercase English letters')
+                                        new Error('Username must contain both uppercase or lowercase English letters')
                                     );
                                 }
                                 return Promise.resolve();
-                                }
-                              }
+                            }
+                        }
                         ]}
                     >
                         <Input
