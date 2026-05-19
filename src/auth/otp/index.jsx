@@ -350,6 +350,7 @@ export default function OTPVerification() {
     };
 
     const onFinish = async () => {
+        if (loading) return;
         const otpString = otp.join('');
         if (otpString.length !== 4) {
             message.error('Please enter a valid verification code');
@@ -518,6 +519,7 @@ export default function OTPVerification() {
                             type="primary"
                             onClick={onFinish}
                             loading={loading}
+                            disabled={loading}
                             className="submit-register-button"
                             block
                             style={{ height: '48px', fontSize: '15px', fontWeight: '600', borderRadius: '10px', marginBottom: '24px' }}

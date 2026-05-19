@@ -158,11 +158,30 @@ const DashboardLayout = () => {
       skip: !shouldFetchSubscription
     });
   
-    const isSubscriptionExpired = React.useMemo(() => {
-      if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return false;
-      if (!subscriptionData?.data?.end_date) return false;
-      return moment(subscriptionData.data.end_date).isBefore(moment());
-    }, [subscriptionData, userRole, isSuperAdminCompanyLogin]);
+    const hasNoActivePlan = React.useMemo(() => {
+        if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return false;
+        
+        // 1. No plan assigned
+        if (!subscriptionId) return true;
+        
+        // Wait for loading to finish
+        if (isSubscriptionLoading) return false;
+        
+        // 2. Empty data
+        if (!subscriptionData?.data) return true;
+        
+        // 3. Cancelled status
+        if (subscriptionData.data.status === 'cancelled') return true;
+        
+        // 4. Expired plan
+        if (subscriptionData.data.end_date) {
+            return moment(subscriptionData.data.end_date).isBefore(moment());
+        }
+        
+        return false;
+    }, [subscriptionId, subscriptionData, isSubscriptionLoading, userRole, isSuperAdminCompanyLogin]);
+
+    const isSubscriptionExpired = hasNoActivePlan;
 
     const checkFeature = (featureKey) => {
         if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return true;
@@ -178,13 +197,15 @@ const DashboardLayout = () => {
 
     // Global subscription route gate/protection
     useEffect(() => {
-        if (isSubscriptionLoading || !subscriptionData) return;
         if (userRole === 'super-admin' || isSuperAdminCompanyLogin) return;
+        
+        // Wait for subscription data to load if we are supposed to fetch it
+        if (shouldFetchSubscription && isSubscriptionLoading) return;
 
         const path = location.pathname.toLowerCase();
 
-        // If subscription is expired, force redirect to settings plan page
-        if (isSubscriptionExpired && path !== '/dashboard/settings/plan') {
+        // If subscription is expired or not active, force redirect to settings plan page
+        if (hasNoActivePlan && path !== '/dashboard/settings/plan') {
             navigate('/dashboard/settings/plan');
             return;
         }
@@ -226,7 +247,7 @@ const DashboardLayout = () => {
 
     const shouldShowMenuItem = (item) => {
         if (item.hidden) return false;
-        if (isSubscriptionExpired) return ['Dashboard', 'Setting', 'Subscription'].includes(item.title);
+        if (hasNoActivePlan) return ['Subscription'].includes(item.title);
         if (item.subItems && item.subItems.length === 0) return false;
         if (['Setting', 'Communication', 'Support', 'Subscription'].includes(item.title)) return true;
         if (userRole?.toLowerCase() === 'client') return true;

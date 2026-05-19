@@ -357,6 +357,7 @@ const Company = () => {
                     open={isFormVisible}
                     onCancel={() => setIsFormVisible(false)}
                     onSubmit={handleFormSubmit}
+                    onSuccess={refetch}
                     initialValues={selectedCompany}
                     loading={isLoadingCompanies || isDeleting}
                 />

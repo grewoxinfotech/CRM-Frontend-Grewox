@@ -39,10 +39,10 @@ const SubscribedUser = () => {
         
         return subscribedUsersData.data.filter(user => {
             const matchesSearch = !searchTerm || 
-                (user.client_name?.toLowerCase() || '').includes(searchTerm) ||
-                (user.plan_name?.toLowerCase() || '').includes(searchTerm) ||
+                (user.clientUsername?.toLowerCase() || '').includes(searchTerm) ||
+                (user.Plan?.name?.toLowerCase() || '').includes(searchTerm) ||
                 String(user.current_clients_count || '').includes(searchTerm) ||
-                String(user.current_storage_used || '').includes(searchTerm) ||
+                String(user.storage?.used || '').includes(searchTerm) ||
                 String(user.current_users_count || '').includes(searchTerm) ||
                 (user.payment_status?.toLowerCase() || '').includes(searchTerm) ||
                 (user.status?.toLowerCase() || '').includes(searchTerm);
@@ -92,13 +92,13 @@ const SubscribedUser = () => {
             }
 
             const data = subscribedUsersData.data.map(user => ({
-                'Client Name': user.client_name,
-                'Plan Name': user.plan_name,
-                'Total Client Count': user.current_clients_count,
-                'Total Storage Used': `${user.current_storage_used} GB`,
-                'Total Users Count': user.current_users_count,
-                'Payment Status': user.payment_status,
-                'Status': user.status,
+                'Client Name': user.clientUsername || 'N/A',
+                'Plan Name': user.Plan?.name || 'N/A',
+                'Total Client Count': user.current_clients_count || 0,
+                'Total Storage Used': user.storage?.used >= 1024 ? `${(user.storage.used / 1024).toFixed(2)} GB` : `${(user.storage?.used || 0).toFixed(1)} MB`,
+                'Total Users Count': user.current_users_count || 0,
+                'Payment Status': user.payment_status || 'N/A',
+                'Status': user.status || 'N/A',
                 'Start Date': moment(user.start_date).format('DD-MM-YYYY'),
                 'End Date': moment(user.end_date).format('DD-MM-YYYY')
             }));

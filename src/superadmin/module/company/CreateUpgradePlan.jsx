@@ -11,7 +11,7 @@ import {
 } from 'antd';
 import { FiPackage, FiX, FiCalendar, FiToggleRight, FiDollarSign } from 'react-icons/fi';
 import { useGetAllPlansQuery } from '../plans/services/planApi';
-import { useAssignPlanMutation } from './services/companyApi';
+import { useAssignPlanMutation, useUpdateAssignedPlanMutation, useGetAllAssignedPlansQuery } from './services/companyApi';
 import moment from 'moment';
 import { useSelector } from 'react-redux';
 import { selectCurrentToken } from '../../../auth/services/authSlice';
@@ -33,8 +33,25 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
         limit: 100,
     });
 
-    // Assign upgrade plan mutation
+    // Mutations and queries
     const [assignUpgradePlan] = useAssignPlanMutation();
+    const [updateAssignedPlan] = useUpdateAssignedPlanMutation();
+
+    // Fetch assigned plans to see if company already has an active subscription
+    const { data: assignedPlansData } = useGetAllAssignedPlansQuery(undefined, {
+        skip: !open || !companyId
+    });
+
+    const activeSubscription = React.useMemo(() => {
+        if (!assignedPlansData?.data || !companyId) return null;
+        return assignedPlansData.data.find(
+            sub => sub.client_id === companyId && sub.status !== 'cancelled'
+        );
+    }, [assignedPlansData, companyId]);
+
+    const isEditing = !!activeSubscription;
+    const finalModalTitle = isEditing ? 'Update Assigned Plan' : modalTitle;
+    const finalButtonText = isEditing ? 'Update Plan' : buttonText;
 
     // Extract plans from the API response
     const plans = React.useMemo(() => {
@@ -92,27 +109,47 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
     // Reset form when modal closes - handled by destroyOnClose in Modal
     // No need for useEffect resetFields here as it causes "not connected" warnings
     
-    // Set initial values when modal opens with preselected plan
+    // Set initial values when modal opens with active subscription or defaults
     useEffect(() => {
         if (open) {
-            const activePlanId = preselectedPlanId || preselectedPlan?.id;
-            form.setFieldsValue({
-                plan: activePlanId,
-                startDate: initialStartDate || moment(),
-                status: initialStatus || 'active',
-                paymentStatus: initialPaymentStatus || 'unpaid'
-            });
-            
-            // Auto-calculate end date for preselected plan
-            const activePlanList = plans.length > 0 ? plans : (preselectedPlan ? [preselectedPlan] : []);
-            const selectedPlan = activePlanList.find(p => p.id === activePlanId);
-            if (selectedPlan) {
-                const startDate = initialStartDate || moment();
-                const endDate = calculateEndDate(startDate, selectedPlan.duration);
-                form.setFieldValue('endDate', endDate);
+            if (activeSubscription) {
+                const planId = activeSubscription.plan_id;
+                const startDate = activeSubscription.start_date && moment(activeSubscription.start_date).isValid()
+                    ? moment(activeSubscription.start_date)
+                    : moment();
+                const endDate = activeSubscription.end_date && moment(activeSubscription.end_date).isValid()
+                    ? moment(activeSubscription.end_date)
+                    : null;
+                const status = activeSubscription.status || 'active';
+                const paymentStatus = activeSubscription.payment_status || 'unpaid';
+
+                form.setFieldsValue({
+                    plan: planId,
+                    startDate,
+                    endDate,
+                    status,
+                    paymentStatus
+                });
+            } else {
+                const activePlanId = preselectedPlanId || preselectedPlan?.id;
+                form.setFieldsValue({
+                    plan: activePlanId,
+                    startDate: initialStartDate || moment(),
+                    status: initialStatus || 'active',
+                    paymentStatus: initialPaymentStatus || 'unpaid'
+                });
+                
+                // Auto-calculate end date for preselected plan
+                const activePlanList = plans.length > 0 ? plans : (preselectedPlan ? [preselectedPlan] : []);
+                const selectedPlan = activePlanList.find(p => p.id === activePlanId);
+                if (selectedPlan) {
+                    const startDate = initialStartDate || moment();
+                    const endDate = calculateEndDate(startDate, selectedPlan.duration);
+                    form.setFieldValue('endDate', endDate);
+                }
             }
         }
-    }, [open, preselectedPlanId, preselectedPlan, plans, initialStartDate, initialStatus, initialPaymentStatus, form]);
+    }, [open, activeSubscription, preselectedPlanId, preselectedPlan, plans, initialStartDate, initialStatus, initialPaymentStatus, form]);
 
     // Handle modal close
     const handleCancel = () => {
@@ -274,14 +311,23 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                 razorpay.open();
                 console.log('Razorpay modal opened successfully');
             } else {
-                console.log('Step 3: Direct assignment (no payment required)');
-                // Direct subscription creation without payment (for superadmin)
-                const response = await assignUpgradePlan(formattedValues).unwrap();
+                console.log('Step 3: Direct assignment/update (no payment required)');
+                let response;
+                if (activeSubscription) {
+                    console.log('Call updateAssignedPlan mutation with ID:', activeSubscription.id);
+                    response = await updateAssignedPlan({
+                        id: activeSubscription.id,
+                        data: formattedValues
+                    }).unwrap();
+                } else {
+                    console.log('Call assignUpgradePlan mutation');
+                    response = await assignUpgradePlan(formattedValues).unwrap();
+                }
                 console.log('Assignment response:', response);
 
                 if (response.success) {
                     console.log('=== ASSIGNMENT SUCCESSFUL ===');
-                    message.success('Upgrade plan assigned successfully');
+                    message.success(activeSubscription ? 'Assigned plan updated successfully' : 'Upgrade plan assigned successfully');
                     form.resetFields();
                     handleCancel();
                 } else {
@@ -410,7 +456,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                             fontWeight: '600',
                             color: '#ffffff',
                         }}>
-                            {modalTitle}
+                            {finalModalTitle}
                         </h2>
                         <Text style={{
                             fontSize: '14px',
@@ -629,7 +675,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, preselectedPlanId = null
                             justifyContent: 'center',
                         }}
                     >
-                        {buttonText}
+                        {finalButtonText}
                     </Button>
                 </div>
 

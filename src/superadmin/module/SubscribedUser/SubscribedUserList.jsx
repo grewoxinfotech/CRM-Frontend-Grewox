@@ -93,7 +93,7 @@ const SubscribedUserList = ({ data, loading }) => {
             ),
             onFilter: (value, record) =>
                 record.plan_id.toLowerCase().includes(value.toLowerCase()),
-            render: (planId) => getPlanName(planId),
+            render: (_, record) => record.Plan?.name || getPlanName(record.plan_id),
         },
         {
             title: 'Client Name',
@@ -125,7 +125,7 @@ const SubscribedUserList = ({ data, loading }) => {
             ),
             onFilter: (value, record) =>
                 record.client_id.toLowerCase().includes(value.toLowerCase()),
-            render: (clientId) => getCompanyName(clientId),
+            render: (_, record) => record.clientUsername || getCompanyName(record.client_id),
         },
         {
             title: 'Storage Usage',

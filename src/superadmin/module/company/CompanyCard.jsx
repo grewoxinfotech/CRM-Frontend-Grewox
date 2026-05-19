@@ -475,7 +475,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                         e.currentTarget.style.boxShadow = 'none';
                                     }}
                                 >
-                                    Subscribed Plan Active
+                                    {activeSubscription.Plan?.name || 'Active Subscription'}
                                 </Button>
                             ) : (
                                 <Button

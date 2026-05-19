@@ -30,7 +30,7 @@ const CompanyOverview = ({ visible, onClose, company }) => {
 
     // Find active subscription plan
     const sub = assignedPlans?.data?.find(s => s.client_id === company.id && s.status !== 'cancelled');
-    const planName = sub?.plan_name || 'Free Trial Plan';
+    const planName = sub?.Plan?.name || 'Free Trial Plan';
 
     // Calculate resources limit vs actual consumption
     const seed = company.id && typeof company.id === 'string'

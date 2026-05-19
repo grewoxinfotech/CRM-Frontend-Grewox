@@ -231,13 +231,13 @@ const CreateUser = ({ visible, onCancel }) => {
                         name="otp"
                         rules={[
                             { required: true, message: 'Please enter OTP' },
-                            { len: 6, message: 'OTP must be 6 digits' },
+                            { len: 4, message: 'OTP must be 4 digits' },
                             { pattern: /^[0-9]+$/, message: 'OTP must contain only numbers' }
                         ]}
                     >
                         <Input
-                            placeholder="Enter 6-digit OTP"
-                            maxLength={6}
+                            placeholder="Enter 4-digit OTP"
+                            maxLength={4}
                             style={{
                                 borderRadius: "8px",
                                 height: "40px",

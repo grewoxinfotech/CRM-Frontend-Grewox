@@ -59,8 +59,11 @@ const Plan = () => {
         return size >= 1024 ? `${(size / 1024).toFixed(2)} GB` : `${Math.round(size)} MB`;
     };
 
+    const userRole = loggedInUser?.role_name || loggedInUser?.Role?.role_name;
+    const isEmployee = userRole && userRole !== 'super-admin' && userRole !== 'super admin' && userRole !== 'client';
     const daysLeft = subscription?.end_date ? moment(subscription.end_date).diff(moment(), 'days') : 0;
-    const isExpired = subscription?.end_date ? moment(subscription.end_date).isBefore(moment()) : true;
+    const isExpired = subscription?.end_date ? moment(subscription.end_date).isBefore(moment()) : false;
+    const hasNoActivePlan = !subscription || isExpired || subscription?.status === 'cancelled';
 
     return (
         <div className="plan-page standard-page-container" style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '40px' }}>
@@ -71,9 +74,9 @@ const Plan = () => {
                     { title: <Link to="/dashboard"><FiHome style={{ marginRight: '4px' }} /> Home</Link> },
                     { title: "Subscription" },
                 ]}
-                extraActions={isExpired ? [
+                extraActions={isEmployee ? [] : hasNoActivePlan ? [
                     <Button key="renew" type="primary" icon={<FiRefreshCw />} onClick={() => setIsRenewModalOpen(true)} style={{ borderRadius: '8px', background: '#4f46e5', borderColor: '#4f46e5' }}>
-                        Renew Plan
+                        Renew / Upgrade Plan
                     </Button>
                 ] : [
                     <Button key="upgrade" type="primary" icon={<FiRefreshCw />} onClick={() => setIsRenewModalOpen(true)} style={{ borderRadius: '8px', background: '#4f46e5', borderColor: '#4f46e5' }}>
@@ -84,7 +87,7 @@ const Plan = () => {
 
             {/* Premium Active Plan Hero Banner */}
             <div style={{
-                background: isExpired ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                background: hasNoActivePlan ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
                 borderRadius: '16px',
                 padding: '32px',
                 color: 'white',
@@ -118,27 +121,33 @@ const Plan = () => {
                 <Row gutter={[24, 24]} align="middle">
                     <Col xs={24} md={16}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                            <Tag color={isExpired ? 'error' : 'success'} style={{
+                            <Tag color={hasNoActivePlan ? 'error' : 'success'} style={{
                                 borderRadius: '20px',
                                 padding: '4px 16px',
                                 fontWeight: 700,
                                 fontSize: '12px',
                                 border: 'none',
                                 background: 'white',
-                                color: isExpired ? '#ef4444' : '#10b981',
+                                color: hasNoActivePlan ? '#ef4444' : '#10b981',
                                 boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
                             }}>
-                                {isExpired ? 'EXPIRED' : 'ACTIVE PLAN'}
+                                {!subscription ? 'NO ACTIVE PLAN' : isExpired ? 'EXPIRED' : 'ACTIVE PLAN'}
                             </Tag>
-                            <span style={{ fontSize: '14px', opacity: 0.9, fontWeight: 500 }}>
-                                billing cycle: {subscription?.Plan?.duration || 'yearly'}
-                            </span>
+                            {subscription?.Plan && (
+                                <span style={{ fontSize: '14px', opacity: 0.9, fontWeight: 500 }}>
+                                    billing cycle: {subscription?.Plan?.duration || 'yearly'}
+                                </span>
+                            )}
                         </div>
                         <Title level={1} style={{ color: 'white', margin: 0, fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px' }}>
-                            {subscription?.Plan?.name || 'Default Plan'}
+                            {subscription?.Plan?.name || 'No Plan Active'}
                         </Title>
                         <p style={{ margin: '8px 0 0 0', opacity: 0.9, fontSize: '15px', fontWeight: 500 }}>
-                            {isExpired ? 'Your plan has expired. Please renew below to continue using premium features.' : `Your subscription will auto-renew or expire on ${moment(subscription?.end_date).format('MMMM DD, YYYY')}.`}
+                            {!subscription 
+                                ? 'You do not have any subscription plan assigned. Please purchase or choose a plan below to continue.' 
+                                : isExpired 
+                                    ? 'Your plan has expired. Please renew or upgrade now to restore all features.' 
+                                    : `Your subscription is active and will auto-renew or expire on ${moment(subscription?.end_date).format('MMMM DD, YYYY')}.`}
                         </p>
                     </Col>
                     <Col xs={24} md={8} style={{ textAlign: 'right' }}>
@@ -156,10 +165,10 @@ const Plan = () => {
                                 Time Remaining
                             </Text>
                             <span style={{ fontSize: '32px', fontWeight: 800, color: 'white', display: 'block', lineHeight: 1.2, margin: '4px 0' }}>
-                                {isExpired ? 0 : daysLeft} <span style={{ fontSize: '18px', fontWeight: 500 }}>Days</span>
+                                {hasNoActivePlan ? 0 : daysLeft} <span style={{ fontSize: '18px', fontWeight: 500 }}>Days</span>
                             </span>
                             <Progress 
-                                percent={isExpired ? 0 : Math.min(100, Math.round((daysLeft / 365) * 100))} 
+                                percent={hasNoActivePlan ? 0 : Math.min(100, Math.round((daysLeft / 365) * 100))} 
                                 showInfo={false} 
                                 strokeColor="white" 
                                 trailColor="rgba(255,255,255,0.2)"
@@ -589,26 +598,38 @@ const Plan = () => {
                                         <Button 
                                             type={isCurrentPlan ? 'default' : 'primary'} 
                                             block 
+                                            disabled={isEmployee}
                                             onClick={() => { setSelectedPlanToBuy(plan); setIsBuyPlanModalOpen(true); }}
                                             style={{ 
                                                 borderRadius: '8px', 
                                                 fontWeight: 600, 
                                                 height: '40px',
                                                 marginTop: '24px',
-                                                background: isCurrentPlan 
-                                                    ? '#ffffff' 
-                                                    : (isRecommended 
-                                                        ? 'linear-gradient(135deg, #2563eb, #3b82f6)' 
-                                                        : '#2563eb'),
-                                                borderColor: isCurrentPlan 
-                                                    ? '#16a34a' 
-                                                    : '#2563eb',
-                                                color: isCurrentPlan ? '#16a34a' : '#ffffff',
-                                                boxShadow: isCurrentPlan ? 'none' : '0 4px 10px rgba(37, 99, 235, 0.15)',
-                                                transition: 'all 0.3s ease'
+                                                background: isEmployee
+                                                    ? '#e2e8f0'
+                                                    : isCurrentPlan 
+                                                        ? '#ffffff' 
+                                                        : (isRecommended 
+                                                            ? 'linear-gradient(135deg, #2563eb, #3b82f6)' 
+                                                            : '#2563eb'),
+                                                borderColor: isEmployee
+                                                    ? '#cbd5e1'
+                                                    : isCurrentPlan 
+                                                        ? '#16a34a' 
+                                                        : '#2563eb',
+                                                color: isEmployee
+                                                    ? '#94a3b8'
+                                                    : isCurrentPlan ? '#16a34a' : '#ffffff',
+                                                boxShadow: isCurrentPlan || isEmployee ? 'none' : '0 4px 10px rgba(37, 99, 235, 0.15)',
+                                                transition: 'all 0.3s ease',
+                                                cursor: isEmployee ? 'not-allowed' : 'pointer'
                                             }}
                                         >
-                                            {isCurrentPlan ? 'Buy / Extend Plan' : 'Upgrade Plan'}
+                                            {isEmployee 
+                                                ? 'Contact Admin to Upgrade' 
+                                                : isCurrentPlan 
+                                                    ? 'Buy / Extend Plan' 
+                                                    : 'Upgrade Plan'}
                                         </Button>
                                     </div>
                                 </Card>
