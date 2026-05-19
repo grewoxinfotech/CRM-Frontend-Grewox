@@ -527,8 +527,13 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading, onSu
                         <Col span={12}>
                             <Form.Item
                                 name="phone"
-                                label={<span style={{ fontSize: '13px', fontWeight: '500' }}>Phone Number</span>}
+                                label={
+                                    <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                                        Phone Number <span style={{ color: "#ff4d4f" }}>*</span>
+                                    </span>
+                                }
                                 rules={[
+                                    { required: true, message: 'Please enter phone number' },
                                     { pattern: /^[0-9]+$/, message: 'Please enter a valid numeric phone number' }
                                 ]}
                             >
