@@ -1,0 +1,219 @@
+// Demo Request Premium Styling
+@import '../../../styles/theme/theme';
+
+.demo-request-page {
+    background: #f8fafc;
+    min-height: 100vh;
+
+    .demo-request-table-card {
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+        background: #ffffff;
+        overflow: hidden;
+
+        .ant-table-wrapper {
+            .ant-table {
+                background: #ffffff;
+
+                .ant-table-thead>tr>th {
+                    background: #f8fafc;
+                    color: #475569;
+                    font-weight: 600;
+                    border-bottom: 1px solid #e2e8f0;
+                    padding: 16px;
+                }
+
+                .ant-table-tbody>tr>td {
+                    border-bottom: 1px solid #f1f5f9;
+                    padding: 16px;
+                    transition: all 0.3s ease;
+                }
+
+                .ant-table-tbody>tr:hover>td {
+                    background: #f8fafc !important;
+                }
+            }
+        }
+    }
+
+    .requirements-tags-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .demo-status-tag {
+        border-radius: 6px;
+        font-weight: 600;
+        padding: 4px 10px;
+        font-size: 11px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+
+        &.pending {
+            background: #fffbeb;
+            color: #d97706;
+            border-color: #fef3c7;
+        }
+
+        &.scheduled {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #dbeafe;
+        }
+
+        &.completed {
+            background: #ecfdf5;
+            color: #059669;
+            border-color: #d1fae5;
+        }
+
+        &.cancelled {
+            background: #f1f5f9;
+            color: #64748b;
+            border-color: #e2e8f0;
+        }
+
+        &.onboarded {
+            background: #fdf4ff;
+            color: #d946ef;
+            border-color: #f5d0fe;
+        }
+    }
+}
+
+// Details Modal & Drawer Premium Styling
+.demo-details-drawer {
+    .ant-drawer-content-wrapper {
+        box-shadow: -10px 0 40px rgba(15, 23, 42, 0.08) !important;
+    }
+    .ant-drawer-content {
+        background: #ffffff;
+    }
+    .ant-drawer-body {
+        padding: 0 !important;
+    }
+}
+
+.demo-details-modal {
+    .ant-modal-content {
+        border-radius: 20px !important;
+        overflow: hidden;
+        padding: 0 !important;
+    }
+}
+
+.demo-details-modal, .demo-details-drawer {
+
+    .modal-banner {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        padding: 28px;
+        position: relative;
+
+        .banner-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            margin: 4px 0 0;
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+    }
+
+    .modal-body-content {
+        padding: 28px;
+
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f1f5f9;
+
+            .company-initials {
+                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            }
+
+            .info-block {
+                h3 {
+                    margin: 0;
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #0f172a;
+                }
+
+                .business-subtitle {
+                    font-size: 14px;
+                    color: #64748b;
+                    margin-top: 2px;
+                    font-weight: 500;
+                }
+            }
+        }
+
+        .ant-descriptions {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+
+            .ant-descriptions-row {
+                border-bottom: 1px solid #e2e8f0;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+            }
+
+            .ant-descriptions-item-label {
+                background: #f8fafc;
+                color: #475569;
+                font-weight: 600;
+                width: 160px;
+                padding: 14px 18px;
+            }
+
+            .ant-descriptions-item-content {
+                color: #0f172a;
+                font-weight: 500;
+                padding: 14px 18px;
+            }
+        }
+
+        .notes-text-area {
+            border-radius: 10px;
+            border-color: #cbd5e1;
+            padding: 10px 12px;
+            font-size: 14px;
+
+            &:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+            }
+        }
+    }
+}

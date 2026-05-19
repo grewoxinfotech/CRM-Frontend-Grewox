@@ -1,281 +1,245 @@
 @use 'sass:color';
 @use '../../styles/theme/theme' as *;
+@import '../register/register';
 
-.otp-container {
-    min-height: 100vh;
-    @include flex-center;
-    background: $background-color;
-    @include gradient-background;
-    padding: 20px;
+// OTP Specific Input Redesigns matching form-panel style
+.otp-input-field {
+    border: 1.5px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 
-    .otp-split {
-        display: flex;
+    &:hover {
+        border-color: #94a3b8 !important;
+    }
+
+    &:focus, &.ant-input-focused {
+        border-color: #3b82f6 !important;
+        box-shadow: 
+            0 0 0 2px rgba(59, 130, 246, 0.15),
+            0 4px 12px rgba(59, 130, 246, 0.08) !important;
+        background: #ffffff !important;
+        transform: scale(1.04);
+    }
+}
+
+// Adjust form panel height & responsive layout for OTP
+.form-panel {
+    .otp-form-panel-content {
         width: 100%;
-        max-width: 1200px;
-        min-height: 600px;
-        background: white;
-        border-radius: 24px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-        overflow: hidden;
-        backdrop-filter: blur(10px);
+        max-width: 420px;
+        margin: 0 auto;
+    }
+    
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #64748b;
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 32px;
+        transition: all 0.3s ease;
+        padding: 8px 0;
+        text-decoration: none;
 
-        .illustration-side {
-            flex: 1;
-            @include primary-gradient;
-            padding: 48px;
+        svg {
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        &:hover {
+            color: #3b82f6;
+
+            svg {
+                transform: translateX(-4px);
+            }
+        }
+    }
+}
+
+// Premium Workspace Setup Modal Redesign
+.workspace-setup-modal {
+    .ant-modal-content {
+        background: #ffffff !important;
+        border-radius: 24px !important;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12) !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        padding: 32px !important;
+        overflow: hidden !important;
+    }
+
+    .modal-setup-header {
+        text-align: center;
+        margin-bottom: 24px;
+
+        .brand-icon-wrapper {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 16px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: white;
-            position: relative;
-            overflow: hidden;
+            color: #ffffff;
+            font-size: 24px;
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+            animation: floatIcon 3s ease-in-out infinite;
+        }
 
-            &::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
-                z-index: 1;
-            }
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
 
-            .brand {
+        p {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+        }
+    }
+
+    .progress-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 28px;
+        position: relative;
+
+        &::after {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: rgba(59, 130, 246, 0.1);
+            filter: blur(24px);
+            z-index: 0;
+            border-radius: 50%;
+        }
+
+        .ant-progress {
+            z-index: 1;
+        }
+    }
+
+    .setup-steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+
+        .setup-step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            transition: all 0.3s ease;
+
+            .step-icon-box {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                background: #f1f5f9;
+                color: #64748b;
                 display: flex;
                 align-items: center;
-                gap: 14px;
-                margin-bottom: 48px;
-                position: relative;
-                z-index: 2;
-
-                .logo {
-                    font-size: 28px;
-                    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-                }
-
-                .brand-name {
-                    font-size: 26px;
-                    font-weight: 700;
-                    letter-spacing: -0.5px;
-                }
+                justify-content: center;
+                font-size: 15px;
+                transition: all 0.3s ease;
             }
 
-            .illustration {
-                width: 100%;
-                max-width: 440px;
-                margin: 20px 0;
-                position: relative;
-                z-index: 2;
-                filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.15));
-                @include hover-transform;
-            }
-
-            .illustration-text {
-                text-align: center;
-                margin-top: 32px;
-                z-index: 2;
-
-                h2 {
-                    color: white;
-                    font-size: 28px;
-                    font-weight: 700;
-                    margin-bottom: 8px;
-                }
-
-                p {
-                    color: rgba(255, 255, 255, 0.9);
-                    font-size: 16px;
-                    margin: 0;
-                }
-            }
-        }
-
-        .form-side {
-            flex: 1;
-            padding: 48px 64px;
-            display: flex;
-            flex-direction: column;
-            background: white;
-            position: relative;
-
-            .back-link {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                color: #64748b;
+            .step-label {
+                font-size: 13.5px;
                 font-weight: 500;
-                margin-bottom: 32px;
-                transition: all 0.2s ease;
+                color: #475569;
+                flex: 1;
+                transition: all 0.3s ease;
+            }
 
-                svg {
-                    font-size: 18px;
+            .step-badge {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 4px 10px;
+                border-radius: 20px;
+                letter-spacing: 0.3px;
+                
+                &.pending {
+                    background: #f1f5f9;
+                    color: #94a3b8;
                 }
 
-                &:hover {
-                    color: $primary-color;
+                &.running {
+                    background: rgba(59, 130, 246, 0.1);
+                    color: #3b82f6;
+                    animation: pulseBadge 1.5s infinite ease-in-out;
+                }
+
+                &.done {
+                    background: rgba(16, 185, 129, 0.1);
+                    color: #10b981;
                 }
             }
 
-            .otp-header {
-                margin-bottom: 40px;
-
-                h1 {
-                    font-size: 32px;
-                    color: $text-color;
-                    margin-bottom: 12px;
-                    font-weight: 700;
-                    letter-spacing: -0.5px;
-                    line-height: 1.2;
+            &.active {
+                border-color: rgba(59, 130, 246, 0.3);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.04);
+                
+                .step-icon-box {
+                    background: rgba(59, 130, 246, 0.1);
+                    color: #3b82f6;
                 }
 
-                p {
+                .step-label {
+                    color: #0f172a;
+                    font-weight: 600;
+                }
+            }
+
+            &.completed {
+                background: #fafcfb;
+                border-color: rgba(16, 185, 129, 0.15);
+
+                .step-icon-box {
+                    background: rgba(16, 185, 129, 0.1);
+                    color: #10b981;
+                }
+
+                .step-label {
                     color: #64748b;
-                    font-size: 16px;
-                    margin: 0;
-                    line-height: 1.6;
-                }
-            }
-
-            .otp-form {
-                .otp-inputs {
-                    display: flex;
-                    gap: 12px;
-                    margin-bottom: 32px;
-                    justify-content: center;
-
-                    .otp-input {
-                        width: 56px;
-                        height: 56px;
-                        font-size: 24px;
-                        font-weight: 600;
-                        text-align: center;
-                        padding: 0;
-                        border: 2px solid $border-color;
-                        border-radius: 12px;
-                        transition: all 0.3s ease;
-
-                        &:hover {
-                            border-color: $secondary-color;
-                        }
-
-                        &:focus {
-                            border-color: $primary-color;
-                            box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
-                        }
-                    }
-                }
-
-                .verify-button {
-                    @include primary-button;
-                    width: 100%;
-                    margin-bottom: 32px;
-                }
-
-                .resend-section {
-                    text-align: center;
-
-                    p {
-                        color: #64748b;
-                        font-size: 15px;
-                        margin-bottom: 8px;
-                    }
-
-                    .resend-button {
-                        @include text-button;
-                        color: $primary-color;
-                        font-weight: 500;
-
-                        &:hover {
-                            color: darken-color($primary-color);
-                        }
-                    }
                 }
             }
         }
     }
 }
 
-@media (max-width: 992px) {
-    .otp-container {
-        .otp-split {
-            flex-direction: column;
-            max-width: 500px;
-            margin: 20px;
-
-            .illustration-side {
-                padding: 40px;
-                min-height: 300px;
-
-                .illustration {
-                    max-width: 280px;
-                }
-            }
-
-            .form-side {
-                padding: 40px 32px;
-
-                .otp-inputs {
-                    gap: 8px;
-
-                    .otp-input {
-                        width: 48px;
-                        height: 48px;
-                        font-size: 20px;
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Enhanced animations
-.fade-up {
-    opacity: 0;
-    transform: translateY(20px);
-
-    &.visible {
-        opacity: 1;
+@keyframes floatIcon {
+    0%, 100% {
         transform: translateY(0);
-        transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    50% {
+        transform: translateY(-4px);
     }
 }
 
-// Add loading state animation
-.ant-btn-loading {
-    position: relative;
-    cursor: default;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: -1px;
-        right: -1px;
-        bottom: -1px;
-        left: -1px;
-        z-index: 1;
-        background: inherit;
-        border-radius: inherit;
-        opacity: 0.35;
+@keyframes pulseBadge {
+    0%, 100% {
+        opacity: 1;
     }
-}
-
-// Message styles
-.success-icon {
-    color: $success-color;
-    font-weight: bold;
-    margin-right: 8px;
-}
-
-.error-icon {
-    color: $error-color;
-    font-weight: bold;
-    margin-right: 8px;
-}
-
-.info-icon {
-    color: $info-color;
-    font-weight: bold;
-    margin-right: 8px;
+    50% {
+        opacity: 0.6;
+    }
 }

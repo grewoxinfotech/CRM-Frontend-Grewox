@@ -76,6 +76,7 @@ import { supportAiApi } from "../components/AISupport/services/supportAiApi";
 import { automationApi } from "../dashboard/module/crm/automation/services/automationApi";
 import { maintenanceApi } from "../superadmin/module/settings/services/maintenanceApi";
 import { systemLogApi } from "../superadmin/module/settings/services/systemLogApi";
+import { demoRequestApi } from "../superadmin/module/demo-request/services/demoRequestApi";
 
 import { RESET_STATE, RESET_API_STATE } from './actions';
 
@@ -202,6 +203,7 @@ const rootReducer = (state, action) => {
     [automationApi.reducerPath]: automationApi.reducer,
     [maintenanceApi.reducerPath]: maintenanceApi.reducer,
     [systemLogApi.reducerPath]: systemLogApi.reducer,
+    [demoRequestApi.reducerPath]: demoRequestApi.reducer,
 
   })(state, action);
 };
@@ -291,7 +293,8 @@ export const store = configureStore({
       .concat(supportAiApi.middleware)
       .concat(automationApi.middleware)
       .concat(maintenanceApi.middleware)
-      .concat(systemLogApi.middleware),
+      .concat(systemLogApi.middleware)
+      .concat(demoRequestApi.middleware),
 
 });
 

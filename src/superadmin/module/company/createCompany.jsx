@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Button, Typography, Divider, message, Row, Col, Select } from 'antd';
+import { Modal, Drawer, Form, Input, Button, Typography, Divider, message, Row, Col, Select } from 'antd';
 import { FiUser, FiMail, FiLock, FiBriefcase, FiX, FiPhone, FiMapPin } from 'react-icons/fi';
 import { useCreateCompanyMutation, useUpdateCompanyMutation, useVerifySignupMutation, useResendSignupOtpMutation } from './services/companyApi';
 import indianStatesAndCities from '../../../utils/Indian_Cities_In_States_JSON.json';
@@ -7,7 +7,7 @@ import industriesData from '../../../utils/industries.json';
 
 const { Text } = Typography;
 
-const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) => {
+const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading, onSuccess }) => {
     const [form] = Form.useForm();
     const [otpForm] = Form.useForm();
     const [createCompany, { isLoading: isCreating }] = useCreateCompanyMutation();
@@ -31,7 +31,11 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                 await updateCompany({ id: initialValues.id, data: values }).unwrap();
                 message.success('Company updated successfully');
                 form.resetFields();
-                onCancel();
+                if (onSuccess) {
+                    onSuccess();
+                } else {
+                    onCancel();
+                }
             } else {
                 setCompanyFormData(values);
                 const response = await createCompany(values).unwrap();
@@ -63,7 +67,11 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                 setIsOtpModalVisible(false);
                 otpForm.resetFields();
                 form.resetFields();
-                onCancel();
+                if (onSuccess) {
+                    onSuccess();
+                } else {
+                    onCancel();
+                }
             } else {
                 message.error(verifyResponse.message || 'Failed to verify OTP');
             }
@@ -271,24 +279,18 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
 
     return (
         <>
-            <Modal
+            <Drawer
                 title={null}
                 open={open}
-                onCancel={onCancel}
+                onClose={onCancel}
                 footer={null}
-                width={680}
+                width={720}
                 destroyOnClose={true}
-                centered
                 closeIcon={null}
-                className="pro-modal custom-modal"
-                style={{
-                    '--antd-arrow-background-color': '#ffffff'
-                }}
+                className="pro-drawer custom-drawer"
                 styles={{
                     body: {
                         padding: 0,
-                        borderRadius: '8px',
-                        overflow: 'hidden'
                     }
                 }}
             >
@@ -728,7 +730,7 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                         </Button>
                     </div>
                 </Form>
-            </Modal>
+            </Drawer>
 
             <OtpModal />
         </>

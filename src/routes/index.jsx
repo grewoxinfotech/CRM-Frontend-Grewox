@@ -15,6 +15,7 @@ import SuperAdminCountries from "../superadmin/module/settings/countries/index.j
 import SuperAdminESignature from "../superadmin/module/settings/eSignature/index.jsx";
 import SuperAdminPaymentGateway from "../superadmin/module/settings/payment-gateway/index.jsx";
 import AiManagement from "../superadmin/module/settings/ai-management/AiManagement.jsx";
+import OtpSettings from "../superadmin/module/settings/otp-settings/OtpSettings.jsx";
 import Currencies from "../dashboard/module/settings/currencies/index.jsx";
 import Countries from "../dashboard/module/settings/countries/index.jsx";
 import ESignature from "../dashboard/module/settings/eSignature/index.jsx";
@@ -27,6 +28,7 @@ import ResetPassword from "../auth/resend";
 import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
 import Inquiry from "../superadmin/module/inquary/index.jsx";
+import DemoRequestList from "../superadmin/module/demo-request/index.jsx";
 import FormSubmitted from "../dashboard/module/crm/generate-link/FormSubmitted.jsx";
 import Designation from "../dashboard/module/hrm/Designation";
 import Department from "../dashboard/module/hrm/Department";
@@ -641,8 +643,16 @@ const routes = createBrowserRouter([
         element: <AiManagement />,
       },
       {
+        path: "settings/otp",
+        element: <OtpSettings />,
+      },
+      {
         path: "inquiry",
         element: <Inquiry />,
+      },
+      {
+        path: "demo-requests",
+        element: <DemoRequestList />,
       },
       {
         path: "support",

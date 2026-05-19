@@ -13,7 +13,7 @@ export const settingsApi = createApi({
             return headers;
         },
     }),
-    tagTypes: ['WhatsappSettings', 'WhatsappInbox', 'Currencies', 'AiSettings', 'AiUsage', 'WhatsappBroadcast'],
+    tagTypes: ['WhatsappSettings', 'WhatsappInbox', 'Currencies', 'AiSettings', 'AiUsage', 'WhatsappBroadcast', 'OtpSettings'],
     endpoints: (builder) => ({
         // ... (existing endpoints)
         getWhatsappBroadcasts: builder.query({
@@ -219,6 +219,22 @@ export const settingsApi = createApi({
             }),
             invalidatesTags: ['WhatsappInbox'],
         }),
+        getOtpSettings: builder.query({
+            query: () => ({
+                url: '/super-admin/otp/settings',
+                method: 'GET',
+            }),
+            transformResponse: (response) => response.data,
+            providesTags: ['OtpSettings'],
+        }),
+        updateOtpSettings: builder.mutation({
+            query: (data) => ({
+                url: '/super-admin/otp/settings',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['OtpSettings'],
+        }),
     }),
 });
 
@@ -247,4 +263,6 @@ export const {
     usePauseWhatsappBroadcastMutation,
     useResumeWhatsappBroadcastMutation,
     useRetryWhatsappBroadcastMutation,
+    useGetOtpSettingsQuery,
+    useUpdateOtpSettingsMutation,
 } = settingsApi;

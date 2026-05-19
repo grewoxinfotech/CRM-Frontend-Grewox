@@ -14,12 +14,16 @@ export const useFirebaseNotifications = () => {
         const initFirebase = async () => {
             try {
                 if (Notification.permission === 'denied') {
-                    notification.warning({
-                        message: 'Notifications Blocked',
-                        description: 'Please enable notifications in your browser settings to receive real-time updates and alerts.',
-                        placement: 'topRight',
-                        duration: 10,
-                    });
+                    const hasWarned = localStorage.getItem('notificationBlockedWarned');
+                    if (!hasWarned) {
+                        notification.warning({
+                            message: 'Notifications Blocked',
+                            description: 'Please enable notifications in your browser settings to receive real-time updates and alerts.',
+                            placement: 'topRight',
+                            duration: 8,
+                        });
+                        localStorage.setItem('notificationBlockedWarned', 'true');
+                    }
                     return;
                 }
 

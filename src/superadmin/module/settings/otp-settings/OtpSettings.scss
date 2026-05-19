@@ -1,0 +1,50 @@
+@import '../../../../styles/theme/theme.scss';
+
+.otp-settings-pages {
+    &.dashboard-container {
+        padding: 0;
+        background: transparent;
+        width: 100%;
+    }
+
+    .otp-settings-content {
+        .ant-row {
+            margin: -6px;
+            
+            & > .ant-col {
+                padding: 6px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            padding: 8px;
+        }
+    }
+
+    .settings-card,
+    .info-card {
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+        .ant-card-head {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 0 24px;
+
+            .ant-card-head-title {
+                font-weight: 600;
+                font-size: 16px;
+                color: #1f2937;
+            }
+        }
+    }
+
+    .otp-settings-loading {
+        height: 60vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 16px;
+    }
+}

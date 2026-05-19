@@ -11,7 +11,7 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
     const [passwordForm] = Form.useForm();
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [otp, setOtp] = useState(['', '', '', '']);
     const [timer, setTimer] = useState(30);
     const inputRefs = React.useRef([]);
 
@@ -35,7 +35,7 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
     React.useEffect(() => {
         if (visible) {
             setCurrentStep(0);
-            setOtp(['', '', '', '', '', '']);
+            setOtp(['', '', '', '']);
             setTimer(30);
             form.resetFields();
             otpForm.resetFields();
@@ -54,7 +54,7 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
         setOtp(newOtp);
 
         // Move to next input if value is entered
-        if (value !== '' && index < 5) {
+        if (value !== '' && index < 3) {
             inputRefs.current[index + 1].focus();
         }
     };
@@ -68,18 +68,18 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
 
     const handlePaste = (e) => {
         e.preventDefault();
-        const pastedData = e.clipboardData.getData('text').slice(0, 6);
+        const pastedData = e.clipboardData.getData('text').slice(0, 4);
         const newOtp = [...otp];
 
         for (let i = 0; i < pastedData.length; i++) {
-            if (i < 6) {
+            if (i < 4) {
                 newOtp[i] = pastedData[i];
             }
         }
 
         setOtp(newOtp);
-        if (newOtp[5]) {
-            inputRefs.current[5].focus();
+        if (newOtp[3]) {
+            inputRefs.current[3].focus();
         }
     };
 
@@ -135,7 +135,7 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
     // Step 2: Verify OTP
     const handleVerifyOtp = async () => {
         const otpString = otp.join('');
-        if (otpString.length !== 6) {
+        if (otpString.length !== 4) {
             message.error({
                 content: 'Please enter complete verification code',
                 icon: <span className="error-icon">×</span>
@@ -191,7 +191,7 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
                     icon: <span className="error-icon">×</span>,
                     duration: 5
                 });
-                setOtp(['', '', '', '', '', '']);
+                setOtp(['', '', '', '']);
                 inputRefs.current[0]?.focus();
             } else if (error.isOtpExpired) {
                 message.error({
@@ -200,14 +200,14 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
                     duration: 5
                 });
                 setTimer(0);
-                setOtp(['', '', '', '', '', '']);
+                setOtp(['', '', '', '']);
             } else {
                 message.error({
                     content: error.error || 'Verification failed. Please try again.',
                     icon: <span className="error-icon">×</span>,
                     duration: 5
                 });
-                setOtp(['', '', '', '', '', '']);
+                setOtp(['', '', '', '']);
                 inputRefs.current[0]?.focus();
             }
         } finally {
@@ -314,7 +314,7 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
                                     {company?.email ? ` (${company.email})` : ''}
                                 </p>
                                 <p style={{ margin: '8px 0 0', fontSize: '14px' }}>
-                                    Verification code will be sent to: <strong>{currentUserEmail || 'company email'}</strong>
+                                    Verification code will be sent to: <strong>registered mobile number</strong>
                                 </p>
                             </div>
                         )}
@@ -373,7 +373,7 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
                         <div className="otp-header" style={{ marginBottom: '24px', textAlign: 'center' }}>
                             <h3 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 8px' }}>Enter Verification Code</h3>
                             <p style={{ fontSize: '14px', color: '#8c8c8c', margin: 0 }}>
-                                We've sent a 6-digit code to <span style={{ fontWeight: 'bold', color: '#1890ff' }}>{currentUserEmail || form.getFieldValue('email')}</span>. Enter the code below to verify.
+                                We've sent a 4-digit code to your registered mobile number. Enter the code below to verify.
                             </p>
                             {company?.email && company.email !== (currentUserEmail || form.getFieldValue('email')) && (
                                 <p style={{ fontSize: '14px', color: '#8c8c8c', marginTop: '8px' }}>
@@ -565,8 +565,8 @@ const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) =>
         const adminEmail = currentUserEmail || form?.getFieldValue('email') || '';
         
         switch (currentStep) {
-            case 0: return adminEmail ? `Send verification code to ${adminEmail}` : 'Enter your email to send verification code';
-            case 1: return `Enter the code sent to your email`;
+            case 0: return adminEmail ? `Send verification code to registered mobile number` : 'Enter your email to search account and send code';
+            case 1: return `Enter the code sent to your mobile number`;
             case 2: return 'Create a new secure password for ' + (company?.name || company?.username || 'the user');
             default: return 'Reset your password';
         }

@@ -15,7 +15,11 @@ import {
     FiHardDrive,
     FiHelpCircle,
     FiCpu,
-    FiActivity
+    FiActivity,
+    FiLink,
+    FiCalendar,
+    FiTrendingUp,
+    FiAlertCircle
 } from 'react-icons/fi';
 import CommonSidebar from '../../../components/Sidebar/Sidebar';
 
@@ -25,6 +29,11 @@ const SuperAdminSidebar = ({ collapsed, onCollapsedChange }) => {
             title: 'Dashboard',
             icon: <FiHome />,
             path: '/superadmin/dashboard'
+        },
+        {
+            title: 'Analytics',
+            icon: <FiTrendingUp />,
+            path: '/superadmin/analytics'
         },
         {
             title: 'Company',
@@ -84,12 +93,29 @@ const SuperAdminSidebar = ({ collapsed, onCollapsedChange }) => {
             ]
         },
         {
-            title: 'AI Management',
-            icon: <FiCpu />,
-            path: '/superadmin/settings/ai'
+            title: 'Third Party Settings',
+            icon: <FiLink />,
+            isDropdown: true,
+            subItems: [
+                {
+                    title: 'AI Management',
+                    icon: <FiCpu />,
+                    path: '/superadmin/settings/ai'
+                },
+                {
+                    title: 'OTP Settings',
+                    icon: <FiSettings />,
+                    path: '/superadmin/settings/otp'
+                },
+                {
+                    title: 'Maintenance Mode',
+                    icon: <FiAlertCircle />,
+                    path: '/superadmin/settings/maintenance'
+                }
+            ]
         },
         {
-            title: 'System Logs',
+            title: 'Error Tracking & Logs',
             icon: <FiActivity />,
             path: '/superadmin/system-logs'
         },
@@ -97,6 +123,11 @@ const SuperAdminSidebar = ({ collapsed, onCollapsedChange }) => {
             title: 'Inquiry',
             icon: <FiMessageSquare />,
             path: '/superadmin/inquiry'
+        },
+        {
+            title: 'Demo Requests',
+            icon: <FiCalendar />,
+            path: '/superadmin/demo-requests'
         },
         {
             title: 'Company Tickets',

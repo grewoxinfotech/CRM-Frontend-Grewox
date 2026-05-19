@@ -32,13 +32,14 @@ import CreateCompany from './createCompany';
 import CompanyCard from './CompanyCard';
 import CompanyList from './CompanyList';
 import { useGetAllCompaniesQuery, useDeleteCompanyMutation } from './services/companyApi';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import EditCompany from './EditCompany';
 import CompanyOverview from './CompanyOverview';
 
 const { Title, Text } = Typography;
 
 const Company = () => {
+    const location = useLocation();
     // States
     const [searchText, setSearchText] = useState('');
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -55,6 +56,15 @@ const Company = () => {
 
     const { data: companiesData, isLoading: isLoadingCompanies, refetch } = useGetAllCompaniesQuery();
     const [deleteCompany, { isLoading: isDeleting }] = useDeleteCompanyMutation();
+
+    useEffect(() => {
+        if (location.state?.onboardFromDemo) {
+            setSelectedCompany(location.state.onboardFromDemo);
+            setIsFormVisible(true);
+            // Clear location state to prevent repeating on refresh
+            window.history.replaceState(null, '');
+        }
+    }, [location]);
 
     useEffect(() => {
         if (companiesData?.data) {

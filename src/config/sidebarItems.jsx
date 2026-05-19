@@ -328,14 +328,26 @@ export const getSuperAdminMenuItems = () => [
     ]
   },
   {
-    title: 'Maintenance Mode',
-    icon: <FiSliders />,
-    path: '/superadmin/settings/maintenance'
-  },
-  {
-    title: 'AI Management',
-    icon: <FiCpu />,
-    path: '/superadmin/settings/ai'
+    title: 'Third Party Settings',
+    icon: <FiLink />,
+    isDropdown: true,
+    subItems: [
+      {
+        title: 'AI Management',
+        icon: <FiCpu />,
+        path: '/superadmin/settings/ai'
+      },
+      {
+        title: 'OTP Settings',
+        icon: <FiSettings />,
+        path: '/superadmin/settings/otp'
+      },
+      {
+        title: 'Maintenance Mode',
+        icon: <FiSliders />,
+        path: '/superadmin/settings/maintenance'
+      }
+    ]
   },
   {
     title: 'Error Tracking & Logs',
@@ -346,6 +358,11 @@ export const getSuperAdminMenuItems = () => [
     title: 'Inquiry',
     icon: <FiMessageSquare />,
     path: '/superadmin/inquiry'
+  },
+  {
+    title: 'Demo Requests',
+    icon: <FiCalendar />,
+    path: '/superadmin/demo-requests'
   },
   {
     title: 'Company Tickets',

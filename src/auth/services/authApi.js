@@ -34,11 +34,7 @@ export const authApi = createApi({
             query: (userData) => ({
                 url: '/auth/register',
                 method: 'POST',
-                body: {
-                    username: userData.username,
-                    email: userData.email,
-                    password: userData.password
-                },
+                body: userData,
             }),
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 dispatch(registerStart());
@@ -56,6 +52,21 @@ export const authApi = createApi({
                     dispatch(registerFailure(error.error?.message || 'Registration failed'));
                 }
             },
+        }),
+
+        checkAvailability: builder.mutation({
+            query: (availabilityData) => ({
+                url: '/auth/check-availability',
+                method: 'POST',
+                body: availabilityData,
+            }),
+        }),
+
+        getAllCountries: builder.query({
+            query: () => ({
+                url: '/countries',
+                method: 'GET'
+            }),
         }),
 
         login: builder.mutation({
@@ -139,5 +150,7 @@ export const authApi = createApi({
 export const {
     useLoginMutation,
     useAdminLoginMutation,
-    useRegisterMutation
+    useRegisterMutation,
+    useCheckAvailabilityMutation,
+    useGetAllCountriesQuery
 } = authApi;

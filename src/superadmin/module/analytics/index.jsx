@@ -25,9 +25,11 @@ import { useGetAllCompaniesQuery } from '../company/services/companyApi';
 import { useGetAllPlansQuery } from '../plans/services/planApi';
 import { useGetAllSubscribedUsersQuery } from '../SubscribedUser/services/SubscribedUserApi';
 import { useGetClientStorageQuery } from '../storage/services/storageApi';
+import { useGetAllDemoRequestsQuery } from '../demo-request/services/demoRequestApi';
 import PageHeader from '../../../components/PageHeader';
 import StatCard from '../../../components/StatCard';
 import moment from 'moment';
+import industriesData from '../../../utils/industries.json';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -64,6 +66,32 @@ const SuperAdminAnalytics = () => {
     const { data: plansData } = useGetAllPlansQuery({ page: 1, limit: 100 });
     const { data: subscribedUsersData } = useGetAllSubscribedUsersQuery();
     const { data: storageData } = useGetClientStorageQuery();
+    const { data: demoRequestsData } = useGetAllDemoRequestsQuery({ page: 1, limit: 100 });
+
+    const demoStats = React.useMemo(() => {
+        const stats = {
+            total: demoRequestsData?.data?.stats?.total || demoRequestsData?.data?.pagination?.total || 0,
+            pending: demoRequestsData?.data?.stats?.pending || 0,
+            scheduled: demoRequestsData?.data?.stats?.scheduled || 0,
+            completed: demoRequestsData?.data?.stats?.completed || 0
+        };
+        return stats;
+    }, [demoRequestsData]);
+
+    const demoStatusPieData = React.useMemo(() => {
+        return [
+            { name: 'Pending Review', value: demoStats.pending, color: '#f97316' },
+            { name: 'Scheduled Demos', value: demoStats.scheduled, color: '#8b5cf6' },
+            { name: 'Completed Demos', value: demoStats.completed, color: '#10b981' }
+        ].filter(item => item.value > 0);
+    }, [demoStats]);
+
+    const recentDemos = React.useMemo(() => {
+        if (!demoRequestsData?.data?.requests) return [];
+        return [...demoRequestsData.data.requests]
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 3);
+    }, [demoRequestsData]);
 
     // Calculate actual best selling plan
     const planCounts = React.useMemo(() => {
@@ -194,8 +222,13 @@ const SuperAdminAnalytics = () => {
         if (!companiesData?.data) return [];
         
         const counts = {};
+        const standardIndustriesSet = new Set(industriesData.industries);
+
         companiesData.data.forEach(c => {
-            const ind = c.industry || 'Unspecified';
+            let ind = c.industry?.trim() || 'Unspecified';
+            if (ind !== 'Unspecified' && !standardIndustriesSet.has(ind)) {
+                ind = 'Other';
+            }
             counts[ind] = (counts[ind] || 0) + 1;
         });
 
@@ -430,6 +463,7 @@ const SuperAdminAnalytics = () => {
                     gradient="linear-gradient(145deg, #ffffff, #f0fdf4)"
                     iconGradient="linear-gradient(135deg, #10b981, #059669)"
                     color="#10b981"
+                    colSpan={{ xs: 24, sm: 12, lg: 6 }}
                 />
                 <StatCard 
                     icon={<FiAward />}
@@ -440,6 +474,7 @@ const SuperAdminAnalytics = () => {
                     gradient="linear-gradient(145deg, #ffffff, #fef3c7)"
                     iconGradient="linear-gradient(135deg, #f59e0b, #d97706)"
                     color="#f59e0b"
+                    colSpan={{ xs: 24, sm: 12, lg: 6 }}
                 />
                 <StatCard 
                     icon={<FiDollarSign />}
@@ -450,6 +485,18 @@ const SuperAdminAnalytics = () => {
                     gradient="linear-gradient(145deg, #ffffff, #eff6ff)"
                     iconGradient="linear-gradient(135deg, #3b82f6, #2563eb)"
                     color="#3b82f6"
+                    colSpan={{ xs: 24, sm: 12, lg: 6 }}
+                />
+                <StatCard 
+                    icon={<FiClock />}
+                    title="Demo Requests"
+                    value={demoStats.total}
+                    subtitle="Client onboarding demos"
+                    tag={`Pending: ${demoStats.pending} | Scheduled: ${demoStats.scheduled}`}
+                    gradient="linear-gradient(145deg, #ffffff, #f5f3ff)"
+                    iconGradient="linear-gradient(135deg, #8b5cf6, #7c3aed)"
+                    color="#8b5cf6"
+                    colSpan={{ xs: 24, sm: 12, lg: 6 }}
                 />
             </Row>
 
@@ -492,6 +539,128 @@ const SuperAdminAnalytics = () => {
                         <div style={{ marginTop: '16px' }}>
                             <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '15px' }}>Monthly Uptime SLA</span>
                             <span style={{ color: '#64748b', fontSize: '12px' }}>Last 30 Days Target Availability</span>
+                        </div>
+                    </Card>
+                </Col>
+            </Row>
+
+            {/* Section: Demo Requests Analysis */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', marginTop: '24px' }}>
+                <div style={{ background: '#f5f3ff', color: '#8b5cf6', padding: '8px', borderRadius: '10px', display: 'flex' }}>
+                    <FiClock size={18} />
+                </div>
+                <div>
+                    <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Demo Requests Overview & Conversion</h2>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Client product demonstrations and pipeline conversion rates</p>
+                </div>
+            </div>
+
+            <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+                {/* Status breakdown Donut PieChart */}
+                <Col xs={24} lg={10}>
+                    <Card
+                        bordered={false}
+                        style={{
+                            borderRadius: '16px',
+                            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
+                            border: '1px solid #e2e8f0',
+                            height: '100%'
+                        }}
+                        title={
+                            <span style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b' }}>Demo Status Ratio</span>
+                        }
+                    >
+                        <div style={{ width: '100%', height: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            {demoStatusPieData.length === 0 ? (
+                                <div style={{ textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                                    No demo request metrics available yet.
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-around', gap: '10px' }}>
+                                    <div style={{ width: '50%', height: 180 }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={demoStatusPieData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={50}
+                                                    outerRadius={70}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {demoStatusPieData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip content={<CustomTooltip />} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        {demoStatusPieData.map((entry) => (
+                                            <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Badge color={entry.color} />
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>{entry.name}</span>
+                                                    <span style={{ fontSize: '14px', color: '#1e293b', fontWeight: 700 }}>{entry.value} requests</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                </Col>
+
+                {/* Recent Demo Requests List */}
+                <Col xs={24} lg={14}>
+                    <Card
+                        bordered={false}
+                        style={{
+                            borderRadius: '16px',
+                            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
+                            border: '1px solid #e2e8f0',
+                            height: '100%'
+                        }}
+                        title={
+                            <span style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b' }}>Recent Demos Pipeline</span>
+                        }
+                    >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {recentDemos.length === 0 ? (
+                                <div style={{ textAlign: 'center', color: '#64748b', padding: '30px 0' }}>
+                                    No recent demo pipeline to show.
+                                </div>
+                            ) : (
+                                recentDemos.map((demo) => {
+                                    return (
+                                        <div key={demo.id} style={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'space-between', 
+                                            padding: '12px 16px', 
+                                            borderRadius: '12px', 
+                                            background: '#f8fafc',
+                                            border: '1px solid #f1f5f9'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <Avatar style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', fontWeight: 600 }}>
+                                                    {demo.businessName?.charAt(0).toUpperCase()}
+                                                </Avatar>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '13px' }}>{demo.businessName}</span>
+                                                    <span style={{ color: '#64748b', fontSize: '11px' }}>{demo.fullName} • {demo.mobileNumber}</span>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Badge status={demo.status === 'completed' ? 'success' : demo.status === 'scheduled' ? 'processing' : 'warning'} text={demo.status?.toUpperCase()} style={{ fontWeight: 600, fontSize: '11px' }} />
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </Card>
                 </Col>
