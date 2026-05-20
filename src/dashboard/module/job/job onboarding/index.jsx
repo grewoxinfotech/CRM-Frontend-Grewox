@@ -17,6 +17,7 @@ import PageHeader from '../../../../components/PageHeader';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const JobOnboarding = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -70,6 +71,8 @@ const JobOnboarding = () => {
         message.info(`Exporting as ${type.toUpperCase()}...`);
     };
 
+    const { data: currenciesData } = useGetAllCurrenciesQuery();
+
     return (
         <div className="job-onboarding-page standard-page-container">
             <PageHeader
@@ -116,6 +119,7 @@ const JobOnboarding = () => {
                         onChange: (page, size) => { setCurrentPage(page); setPageSize(size); }
                     }}
                     hasPermission={hasPermission}
+                    currenciesData={currenciesData}
                 />
             </Card>
 

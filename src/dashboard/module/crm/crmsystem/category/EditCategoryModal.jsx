@@ -24,28 +24,31 @@ import { selectCurrentUser } from "../../../../../auth/services/authSlice";
 const { Text } = Typography;
 const { Option } = Select;
 
-const EditCategoryModal = ({ visible, onCancel, category }) => {
+const EditCategoryModal = ({ visible, onCancel, initialValues }) => {
   const [form] = Form.useForm();
   const [updateCategory, { isLoading }] = useUpdateCategoryMutation();
   const currentUser = useSelector(selectCurrentUser);
 
   useEffect(() => {
-    if (category) {
+    if (initialValues) {
       form.setFieldsValue({
-        name: category.name,
-        description: category.description,
-        color: category.color,
+        name: initialValues.name,
+        description: initialValues.description,
+        color: initialValues.color,
+        status: initialValues.status || "active",
       });
 
     }
-  }, [category, form]);
+  }, [initialValues, form]);
 
   const handleSubmit = async (values) => {
     try {
       await updateCategory({
-        id: category?._id,
-        ...values,
-        updated_by: currentUser?.username,
+        id: initialValues?.id,
+        data: {
+          ...values,
+          updated_by: currentUser?.username,
+        }
       }).unwrap();
       
       message.success("Category updated successfully");

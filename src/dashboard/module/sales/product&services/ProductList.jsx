@@ -25,6 +25,7 @@ const ProductList = ({
   pagination,
   onChange,
   currenciesData,
+  categoriesData,
   hasPermission
 }) => {
   const [deleteProduct] = useDeleteProductMutation();
@@ -32,6 +33,11 @@ const ProductList = ({
   const getCurrencyIcon = (currencyId) => {
     const currency = currenciesData?.find((c) => c.id === currencyId);
     return currency?.currencyIcon || "₹";
+  };
+
+  const getCategoryName = (categoryId) => {
+    const category = categoriesData?.find((c) => c.id === categoryId);
+    return category?.name || categoryId;
   };
 
   const handleDelete = (id) => {
@@ -78,7 +84,7 @@ const ProductList = ({
       title: "Category",
       dataIndex: "category",
       key: "category",
-      render: (cat) => cat ? <Tag style={{ borderRadius: '4px', border: 'none' }}>{cat}</Tag> : '-'
+      render: (cat) => cat ? <Tag style={{ borderRadius: '4px', border: 'none' }}>{getCategoryName(cat)}</Tag> : '-'
     },
     {
       title: "Stock Status",

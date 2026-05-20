@@ -128,29 +128,6 @@ const Categories = ({ isModalOpen, setIsModalOpen, hasPermission }) => {
       render: (text) => text || "-",
     },
 
-    {
-      title: "Action",
-      key: "action",
-      width: 100,
-      align: "center",
-      render: (_, record) => {
-        const { items } = getDropdownItems(record);
-        if (items.length === 0) return null;
-        return (
-          <Dropdown
-            menu={{ items }}
-            trigger={["click"]}
-            placement="bottomRight"
-          >
-            <Button
-              type="text"
-              icon={<FiMoreVertical />}
-              className="action-button"
-            />
-          </Dropdown>
-        );
-      },
-    },
   ];
 
   return (

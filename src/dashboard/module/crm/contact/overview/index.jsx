@@ -32,6 +32,7 @@ import {
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
 import { useGetRolesQuery } from "../../../hrm/role/services/roleApi";
+import { formatCurrency } from "../../../../utils/currencyUtils.js";
 import EditContact from '../EditContact';
 
 const { Title, Text } = Typography;
@@ -41,8 +42,8 @@ const ContactDetails = () => {
     const navigate = useNavigate();
     const loggedInUser = useSelector(selectCurrentUser);
     const { data: contact, isLoading: isContactLoading } = useGetContactByIdQuery(contactId);
-    const { data: lead } = useGetLeadsQuery();
-    const { data: deal } = useGetDealsQuery();
+    const { data: lead } = useGetLeadsQuery({ contact_id: contactId, page: 1, pageSize: -1 });
+    const { data: deal } = useGetDealsQuery({ contact_id: contactId, page: 1, pageSize: -1 });
     const { data: companyAccounts } = useGetCompanyAccountsQuery();
     const { data: usersData } = useGetUsersQuery();
     const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.client_id || loggedInUser?.id);
@@ -78,14 +79,20 @@ const ContactDetails = () => {
 
     // Get all leads and separate converted/non-converted
     const allLeads = leadsData?.filter(lead => lead.contact_id === contactId) || [];
-    const convertedLeads = allLeads.filter(lead => lead.is_converted);
-    const activeLeads = allLeads.filter(lead => !lead.is_converted);
+    const convertedLeads = allLeads.filter(lead => lead.is_converted === true || lead.is_converted === 'true' || lead.is_converted === 1 || lead.is_converted === '1');
+    const activeLeads = allLeads.filter(lead => !lead.is_converted || lead.is_converted === false || lead.is_converted === 'false' || lead.is_converted === 0 || lead.is_converted === '0');
     const deals = dealsData?.filter(deal => deal.contact_id === contactId) || [];
 
     const latestLead = activeLeads[0] || allLeads[0] || null;
 
-    const totalLeadValue = activeLeads.reduce((sum, lead) => sum + (Number(lead.leadValue) || 0), 0);
-    const totalDealValue = deals.reduce((sum, deal) => sum + (Number(deal.value) || 0), 0);
+    const totalLeadValue = activeLeads.reduce((sum, lead) => {
+        const val = String(lead.leadValue || "0").replace(/[^0-9.-]+/g, "");
+        return sum + (Number(val) || 0);
+    }, 0);
+    const totalDealValue = deals.reduce((sum, deal) => {
+        const val = String(deal.value || "0").replace(/[^0-9.-]+/g, "");
+        return sum + (Number(val) || 0);
+    }, 0);
     const totalRevenue = totalLeadValue + totalDealValue;
 
     // Find company details if company_name exists
@@ -104,18 +111,7 @@ const ContactDetails = () => {
     };
 
     const formatCurrencyValue = (value, currencyId) => {
-        const currencyDetails = currencies?.find(
-            (c) => c.id === currencyId || c.currencyCode === currencyId
-        );
-        if (!currencyDetails) return `${value}`;
-
-        return new Intl.NumberFormat("en-US", {
-            style: "decimal",
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        })
-        .format(value)
-        .replace(/^/, currencyDetails.currencyIcon + " ");
+        return formatCurrency(value, currencyId, currencies);
     };
 
     return (

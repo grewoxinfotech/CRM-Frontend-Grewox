@@ -146,8 +146,16 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 return (
                     <Avatar.Group maxCount={3}>
                         {assignedUsers.map(user => (
-                            <Tooltip key={user.id} title={user.username}>
-                                <Avatar src={user.profilePic} />
+                            <Tooltip key={user.id} title={user.first_name ? `${user.first_name} ${user.lastName || ''}`.trim() : (user.username || user.email)}>
+                                <Avatar 
+                                    src={user.profilePic || undefined}
+                                    style={{
+                                        backgroundColor: user.profilePic ? 'transparent' : '#1890ff',
+                                        color: '#fff'
+                                    }}
+                                >
+                                    {!user.profilePic && (user.first_name?.[0] || user.username?.[0] || user.email?.[0] || '').toUpperCase()}
+                                </Avatar>
                             </Tooltip>
                         ))}
                     </Avatar.Group>

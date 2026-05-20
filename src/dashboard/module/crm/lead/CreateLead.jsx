@@ -160,7 +160,9 @@ const CreateLead = ({
   const othersCategory = categoriesData?.data?.find(cat => cat.name.toLowerCase() === "others") || null;
 
   // Filter stages to only show lead type stages
-  const stages = (Array.isArray(stagesData) ? stagesData : (stagesData?.data || [])).filter(stage => stage.stageType === "lead") || [];
+  const stages = React.useMemo(() => {
+    return (Array.isArray(stagesData) ? stagesData : (stagesData?.data || [])).filter(stage => stage.stageType === "lead") || [];
+  }, [stagesData]);
 
   const normalizeId = (value) => {
     if (!value) return undefined;
@@ -275,28 +277,41 @@ const CreateLead = ({
       });
     }
   };
+  const hasInitializedRef = React.useRef(false);
 
   useEffect(() => {
-    if (open) {
-      const { defaultCurrency } = findIndianDefaults(currencies, countries);
+    if (!open) {
+      hasInitializedRef.current = false;
+      return;
+    }
+
+    if (open && !hasInitializedRef.current) {
+      const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
 
       const updates = {
         currency: defaultCurrency,
+        phoneCode: defaultPhoneCode,
         leadValue: 0,
       };
 
-      // Auto-select first pipeline and stage if available
-      if (pipelines?.length > 0 && !form.getFieldValue('pipeline')) {
-        const firstPipelineId = pipelines[0].id;
-        updates.pipeline = firstPipelineId;
-        setSelectedPipeline(firstPipelineId);
+      let initializedFully = true;
 
-        // Find first stage for this pipeline
-        const firstStage = stages.find(s => normalizeId(s.pipeline) === normalizeId(firstPipelineId));
-        if (firstStage) {
-          updates.stage = firstStage.id;
-          updates.leadStage = firstStage.id; // Also set leadStage for fallback form
+      // Auto-select first pipeline and stage if available
+      if (pipelines?.length > 0) {
+        if (!form.getFieldValue('pipeline')) {
+          const firstPipelineId = pipelines[0].id;
+          updates.pipeline = firstPipelineId;
+          setSelectedPipeline(firstPipelineId);
+
+          // Find first stage for this pipeline
+          const firstStage = stages.find(s => normalizeId(s.pipeline) === normalizeId(firstPipelineId));
+          if (firstStage) {
+            updates.stage = firstStage.id;
+            updates.leadStage = firstStage.id; // Also set leadStage for fallback form
+          }
         }
+      } else {
+        initializedFully = false;
       }
 
       // Only set defaults if initialValues are NOT providing them
@@ -304,13 +319,16 @@ const CreateLead = ({
         const manualSource = sourcesData.data.find(s => s.name.trim().toLowerCase() === 'manual');
         if (manualSource) {
           updates.source = manualSource.id;
-        } else {
-          // If no "Manual" source found, don't set a default in the UI to avoid confusion
-          // Backend or handleSubmit will handle the ultimate fallback
         }
+      } else if (!sourcesData?.data?.length) {
+        initializedFully = false;
       }
 
       form.setFieldsValue(updates);
+
+      if (initializedFully) {
+        hasInitializedRef.current = true;
+      }
     }
   }, [open, pipelines, sourcesData, stages, currencies, countries, form, initialValues]);
 
@@ -808,10 +826,10 @@ const CreateLead = ({
                         style={{ gridColumn: 'span 2', marginBottom: '0px' }}
                       >
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          <Form.Item name="currency" noStyle initialValue={defaultCurrency}>
+                          <Form.Item name="currency" noStyle>
                             <CommonSelect style={{ width: '120px' }} options={currencies?.map(c => ({ id: c.id, name: c.currencyIcon === c.currencyCode ? c.currencyCode : `${c.currencyIcon} ${c.currencyCode}` }))} allowClear={false} />
                           </Form.Item>
-                          <Form.Item name="leadValue" noStyle initialValue={0}>
+                          <Form.Item name="leadValue" noStyle>
                             <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder={field.placeholder || "Enter amount"} min={0} />
                           </Form.Item>
                         </div>
@@ -854,7 +872,7 @@ const CreateLead = ({
                         style={{ gridColumn: 'span 1', marginBottom: '0px' }}
                       >
                         <Space.Compact style={{ width: '100%' }}>
-                          <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
+                          <Form.Item name="phoneCode" noStyle>
                             <Select 
                               showSearch
                               optionFilterProp="children"
@@ -1187,15 +1205,14 @@ const CreateLead = ({
 
             {!isQuick && (
               <Form.Item
-                name="leadValue"
                 label={<span style={formItemStyle}>Lead Value</span>}
                 style={{ gridColumn: 'span 2', marginBottom: '0px' }}
               >
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <Form.Item name="currency" noStyle initialValue={defaultCurrency}>
+                   <Form.Item name="currency" noStyle>
                     <CommonSelect style={{ width: '120px' }} options={currencies?.map(c => ({ id: c.id, name: c.currencyCode }))} allowClear={false} />
                   </Form.Item>
-                  <Form.Item name="leadValue" noStyle initialValue={0}>
+                  <Form.Item name="leadValue" noStyle>
                     <InputNumber style={{ ...inputStyle, width: '100%' }} placeholder="Enter amount" min={0} />
                   </Form.Item>
                 </div>

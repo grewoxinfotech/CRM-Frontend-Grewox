@@ -56,9 +56,10 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
 
   // Fetch currencies from the API
   const currencyOptions = currencies.map(currency => ({
-    value: currency.currencyCode,
+    value: currency.id,
     label: `${currency.currencyCode} - ${currency.currencyName} ${currency.currencyIcon}`,
-    symbol: currency.currencyIcon
+    symbol: currency.currencyIcon,
+    code: currency.currencyCode
   }));
 
   // Fetch leads from the API
@@ -175,9 +176,10 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
       }
 
       // Set currency symbol
-      const selectedCurrency = currencies.find(c => c.currencyCode === initialValues.currency);
+      const selectedCurrency = currencies.find(c => c.id === initialValues.currency || c.currencyCode === initialValues.currency);
       if (selectedCurrency) {
         setSelectedCurrencySymbol(selectedCurrency.currencyIcon);
+        form.setFieldsValue({ currency: selectedCurrency.id });
       }
 
       // Set totals from initialValues
@@ -307,9 +309,10 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
       form.setFieldsValue({ currency: selectedLead.currency });
 
       // Find and update currency symbol
-      const selectedCurrency = currencies.find(c => c.currencyCode === selectedLead.currency);
+      const selectedCurrency = currencies.find(c => c.id === selectedLead.currency || c.currencyCode === selectedLead.currency);
       if (selectedCurrency) {
         setSelectedCurrencySymbol(selectedCurrency.currencyIcon);
+        form.setFieldsValue({ currency: selectedCurrency.id });
       }
     }
   };

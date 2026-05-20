@@ -36,7 +36,7 @@ import {
   FiInfo,
   FiTrash2,
 } from "react-icons/fi";
-import { useCreateDealMutation, useGetDealsQuery } from "./services/DealApi";
+import { useCreateDealMutation } from "./services/DealApi";
 import { useGetCustomFormsQuery } from "../generate-link/services/customFormApi";
 import { PlusOutlined } from "@ant-design/icons";
 
@@ -52,6 +52,7 @@ import { useUpdateLeadMutation } from "../lead/services/LeadApi";
 import {
   useGetContactsQuery,
   useCreateContactMutation,
+  useGetContactByIdQuery,
 } from "../contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 import AddCompanyModal from "../companyacoount/CreateCompanyAccount";
@@ -84,6 +85,22 @@ const findIndianDefaults = (currencies, countries) => {
 
 const CreateDeal = ({ open, onCancel, leadData }) => {
   const loggedInUser = useSelector(selectCurrentUser);
+
+  const stripPhoneCode = (phone, codeId) => {
+    if (!phone) return "";
+    const country = countries?.find((c) => c.id === codeId);
+    if (!country) return phone;
+    const cleanCode = country.phoneCode.toString().replace(/\D/g, "");
+    const cleanPhone = phone.toString().replace(/\D/g, "");
+    if (cleanPhone.startsWith(cleanCode)) {
+      return cleanPhone.slice(cleanCode.length);
+    }
+    const plusCleanCode = "+" + cleanCode;
+    if (phone.startsWith(plusCleanCode)) {
+      return phone.replace(plusCleanCode, "").trim();
+    }
+    return phone;
+  };
 
 
   const [form] = Form.useForm();
@@ -140,7 +157,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     data: contactsResponse,
     isLoading: isContactsLoading,
     error,
-  } = useGetContactsQuery();
+  } = useGetContactsQuery({ page: 1, pageSize: 1000 });
+
+  const { data: leadContact } = useGetContactByIdQuery(leadData?.contact_id, {
+    skip: !leadData?.contact_id || !open,
+  });
   const { data: currencies = [] } = useGetAllCurrenciesQuery({
     page: 1,
     limit: 100,
@@ -349,7 +370,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   useEffect(() => {
     if (leadData && open) {
       // Find the contact if contact_id exists
-      const existingContact = contactsResponse?.data?.find(
+      const existingContact = leadContact || contactsResponse?.data?.find(
         (c) => c.id === leadData.contact_id
       );
 
@@ -381,11 +402,10 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         formValues.firstName = existingContact.first_name || "";
         formValues.lastName = existingContact.last_name || "";
         formValues.email = existingContact.email || "";
-        formValues.telephone = existingContact.phone
-          ? existingContact.phone.replace(/^\+\d+\s/, "")
-          : "";
         formValues.phoneCode = existingContact.phone_code || defaultPhoneCode;
+        formValues.telephone = stripPhoneCode(existingContact.phone, formValues.phoneCode);
         formValues.address = existingContact.address || "";
+        formValues.contact_id = existingContact.id;
         
         // If lead has no company but contact DOES, use contact's company
         if (!formValues.company_id && existingContact.company_name) {
@@ -428,6 +448,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     }
   }, [
     leadData,
+    leadContact,
     form,
     open,
     dealStages,
@@ -485,21 +506,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     }
   }, [open, statusesData, form]);
 
-  const { data: dealsData } = useGetDealsQuery();
-
   const handleSubmit = async (values) => {
     try {
-      // Check if deal with same title already exists
-      const dealExists = dealsData?.data?.some(
-        (deal) =>
-          deal.dealTitle.toLowerCase() === values.dealTitle.toLowerCase()
-      );
-
-      if (dealExists) {
-        message.error("A deal with this title already exists");
-        return;
-      }
-
       let contactId; // Debug log
 
       // Only proceed with contact creation if deal name is unique
@@ -559,7 +567,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
           return;
         }
       } else if (contactMode === "existing") {
-        contactId = values.firstName; // In existing mode, firstName field contains the contact ID
+        contactId = values.contact_id || selectedContact?.id || leadData?.contact_id || values.firstName;
       }
 
       // Format phone number for deal - strip any leading code if it's already there
@@ -627,7 +635,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
             id: leadData.id,
             data: {
               is_converted: true,
-              dealId: dealResponse.id,
+              dealId: dealResponse.data?.id || dealResponse.id,
             },
           }).unwrap();
         } catch (updateError) {

@@ -29,8 +29,8 @@ const CreateHoliday = ({ open, onCancel, onSubmit }) => {
       const formattedValues = {
         ...values,
         section: "holiday",
-        start_date: values.start_date?.toISOString(),
-        end_date: values.end_date?.toISOString(),
+        start_date: values.start_date ? values.start_date.format('YYYY-MM-DD') : null,
+        end_date: values.end_date ? values.end_date.format('YYYY-MM-DD') : null,
       };
 
       const response = await createHoliday(formattedValues).unwrap();

@@ -56,9 +56,10 @@ const CreateProposal = ({ open, onCancel, onSuccess }) => {
 
   // Fetch currencies from the API
   const currencyOptions = currencies.map(currency => ({
-    value: currency.currencyCode,
+    value: currency.id,
     label: `${currency.currencyCode} - ${currency.currencyName} ${currency.currencyIcon}`,
-    symbol: currency.currencyIcon
+    symbol: currency.currencyIcon,
+    code: currency.currencyCode
   }));
 
   // Fetch leads from the API
@@ -151,7 +152,10 @@ const CreateProposal = ({ open, onCancel, onSuccess }) => {
       const inrCurrency = currencies.find(curr => curr.currencyCode === 'INR');
       if (inrCurrency) {
         setSelectedCurrencySymbol(inrCurrency.currencyIcon);
-        form.setFieldsValue({ currency: 'INR' });
+        // Only set default if currency is not already set
+        if (!form.getFieldValue('currency')) {
+          form.setFieldsValue({ currency: inrCurrency.id });
+        }
       }
     }
   }, [currencies, form]);
@@ -171,10 +175,12 @@ const CreateProposal = ({ open, onCancel, onSuccess }) => {
       // Update currency when lead is selected
       form.setFieldsValue({ currency: selectedLead.currency });
       
-      // Find and update currency symbol
-      const selectedCurrency = currencies.find(c => c.currencyCode === selectedLead.currency);
+      // Find and update currency symbol (Lead stores currency ID or sometimes currencyCode depending on legacy data)
+      const selectedCurrency = currencies.find(c => c.id === selectedLead.currency || c.currencyCode === selectedLead.currency);
       if (selectedCurrency) {
         setSelectedCurrencySymbol(selectedCurrency.currencyIcon);
+        // Ensure form always holds the ID
+        form.setFieldsValue({ currency: selectedCurrency.id });
       }
       
       // Update the first item with lead details

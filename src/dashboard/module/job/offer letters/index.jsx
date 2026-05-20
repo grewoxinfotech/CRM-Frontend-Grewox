@@ -10,6 +10,7 @@ import {
 } from 'react-icons/fi';
 import './offerLetters.scss';
 import CreateOfferLetter from './CreateOfferLetter';
+import EditOfferLetter from './EditOfferLetter';
 import OfferLetterList from './OfferLetterList';
 import { Link } from 'react-router-dom';
 import { useGetAllOfferLettersQuery, useDeleteOfferLetterMutation } from './services/offerLetterApi';
@@ -17,6 +18,7 @@ import PageHeader from '../../../../components/PageHeader';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const OfferLetters = () => {
     const [searchText, setSearchText] = useState('');
@@ -31,6 +33,8 @@ const OfferLetters = () => {
         pageSize,
         search: searchText,
     });
+
+    const { data: currenciesData } = useGetAllCurrenciesQuery();
 
     const [deleteOfferLetter] = useDeleteOfferLetterMutation();
 
@@ -116,17 +120,28 @@ const OfferLetters = () => {
                         onChange: (page, size) => { setCurrentPage(page); setPageSize(size); }
                     }}
                     hasPermission={hasPermission}
+                    currenciesData={currenciesData}
                 />
             </Card>
 
             {isFormVisible && (
-                <CreateOfferLetter
-                    open={isFormVisible}
-                    onCancel={() => setIsFormVisible(false)}
-                    onSubmit={() => { setIsFormVisible(false); refetch(); }}
-                    initialValues={selectedLetter}
-                    isEditing={isEditing}
-                />
+                isEditing ? (
+                    <EditOfferLetter
+                        open={isFormVisible}
+                        onCancel={() => setIsFormVisible(false)}
+                        onSubmit={() => { setIsFormVisible(false); refetch(); }}
+                        initialValues={selectedLetter}
+                        loading={isLoading}
+                    />
+                ) : (
+                    <CreateOfferLetter
+                        open={isFormVisible}
+                        onCancel={() => setIsFormVisible(false)}
+                        onSubmit={() => { setIsFormVisible(false); refetch(); }}
+                        initialValues={selectedLetter}
+                        loading={isLoading}
+                    />
+                )
             )}
         </div>
     );

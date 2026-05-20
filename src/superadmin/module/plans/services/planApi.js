@@ -47,7 +47,7 @@ export const planApi = createApi({
                 body: updateData
             }),
             invalidatesTags: (result, error, { idd }) => [
-                { type: 'Subscriptions', idd },
+                { type: 'Subscriptions', id: idd },
                 'Subscriptions'
             ]
         }),

@@ -118,6 +118,24 @@ export const settingsApi = createApi({
                 body: data,
             }),
         }),
+        getFacebookPages: builder.query({
+            query: (params) => ({
+                url: '/whatsapp/facebook/pages',
+                method: 'GET',
+                params: {
+                    accessToken: params.accessToken
+                }
+            }),
+            transformResponse: (response) => response.data,
+        }),
+        subscribeFacebookPage: builder.mutation({
+            query: (data) => ({
+                url: '/whatsapp/facebook/subscribe',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ['WhatsappSettings'],
+        }),
         getWhatsappTemplates: builder.query({
             query: () => ({
                 url: '/whatsapp/templates',
@@ -249,6 +267,9 @@ export const {
     useSendBulkCampaignMutation,
     useSetDefaultCurrencyMutation,
     useWhatsappEmbeddedSignupMutation,
+    useGetFacebookPagesQuery,
+    useLazyGetFacebookPagesQuery,
+    useSubscribeFacebookPageMutation,
     useSyncWhatsappTemplatesMutation,
     useGetWhatsappTemplatesQuery,
     useCreateWhatsappTemplateMutation,

@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 
 const { Text } = Typography;
 
-const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagination, hasPermission }) => {
+const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagination, hasPermission, currenciesData }) => {
     const getDropdownItems = (record) => {
         const items = [];
         if (!hasPermission || hasPermission('update')) {
@@ -21,6 +21,11 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
             items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record.id) });
         }
         return items;
+    };
+
+    const getCurrencyIcon = (currencyId) => {
+        const currency = currenciesData?.find((c) => c.id === currencyId);
+        return currency?.currencyIcon || "₹";
     };
 
     const columns = [
@@ -52,7 +57,7 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
             title: 'Salary',
             dataIndex: 'Salary',
             key: 'Salary',
-            render: (salary, record) => <Text strong style={{ fontSize: '13px', color: '#059669' }}>{record.Currency} {salary}</Text>
+            render: (salary, record) => <Text strong style={{ fontSize: '13px', color: '#059669' }}>{getCurrencyIcon(record.Currency)} {salary}</Text>
         },
         {
             title: 'Salary Type',

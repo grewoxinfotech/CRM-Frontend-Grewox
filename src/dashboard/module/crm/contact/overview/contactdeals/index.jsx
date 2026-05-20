@@ -59,17 +59,17 @@ const ContactDealList = () => {
     search: ''
   });
   const [deleteDeal, { isLoading: isDeleting }] = useDeleteDealMutation();
-  const { data: dataaa, isLoading, error } = useGetDealsQuery({
-    page: 1,
-    pageSize: -1,
-    search: ''
-  });
   const idd = useParams();
   const id = idd.contactId;
 
-  const dataa = dataaa?.data;
+  const { data: dataaa, isLoading, error } = useGetDealsQuery({
+    page: 1,
+    pageSize: -1,
+    search: '',
+    contact_id: id
+  });
 
-  const data = dataa?.filter((deal) => deal.contact_id === id);
+  const data = dataaa?.data || [];
 
   // Filter deals based on search text
   const filteredDeals = React.useMemo(() => {

@@ -110,14 +110,15 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                     return (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Avatar
-                                src={user.profilePic}
+                                src={user.profilePic || undefined}
                                 style={{
-                                    backgroundColor: user.profilePic ? 'transparent' : '#1890ff'
+                                    backgroundColor: user.profilePic ? 'transparent' : '#1890ff',
+                                    color: '#fff'
                                 }}
                             >
-                                {!user.profilePic && (user.username?.[0] || user.email?.[0] || '').toUpperCase()}
+                                {!user.profilePic && (user.first_name?.[0] || user.username?.[0] || user.email?.[0] || '').toUpperCase()}
                             </Avatar>
-                            <span>{user.username || user.email}</span>
+                            <span>{user.first_name ? `${user.first_name} ${user.lastName || ''}`.trim() : (user.username || user.email)}</span>
                         </div>
                     );
                 }
@@ -134,12 +135,13 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                             {assignedUsers.map((user) => (
                                 <Tooltip key={user.id} title={user.username || user.email}>
                                     <Avatar
-                                        src={user.profilePic}
+                                        src={user.profilePic || undefined}
                                         style={{
-                                            backgroundColor: user.profilePic ? 'transparent' : '#1890ff'
+                                            backgroundColor: user.profilePic ? 'transparent' : '#1890ff',
+                                            color: '#fff'
                                         }}
                                     >
-                                        {!user.profilePic && (user.username?.[0] || user.email?.[0] || '').toUpperCase()}
+                                        {!user.profilePic && (user.first_name?.[0] || user.username?.[0] || user.email?.[0] || '').toUpperCase()}
                                     </Avatar>
                                 </Tooltip>
                             ))}
@@ -159,14 +161,15 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Avatar
-                            src={user.profilePic}
+                            src={user.profilePic || undefined}
                             style={{
-                                backgroundColor: user.profilePic ? 'transparent' : '#1890ff'
+                                backgroundColor: user.profilePic ? 'transparent' : '#1890ff',
+                                color: '#fff'
                             }}
                         >
-                            {!user.profilePic && (user.username?.[0] || user.email?.[0] || '').toUpperCase()}
+                            {!user.profilePic && (user.first_name?.[0] || user.username?.[0] || user.email?.[0] || '').toUpperCase()}
                         </Avatar>
-                        <span>{user.username || user.email}</span>
+                        <span>{user.first_name ? `${user.first_name} ${user.lastName || ''}`.trim() : (user.username || user.email)}</span>
                     </div>
                 );
             },

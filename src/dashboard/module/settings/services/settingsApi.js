@@ -10,6 +10,8 @@ export {
     useSendBulkCampaignMutation,
     useSetDefaultCurrencyMutation,
     useWhatsappEmbeddedSignupMutation,
+    useLazyGetFacebookPagesQuery,
+    useSubscribeFacebookPageMutation,
     useSyncWhatsappTemplatesMutation,
     useGetWhatsappTemplatesQuery,
     useCreateWhatsappTemplateMutation,

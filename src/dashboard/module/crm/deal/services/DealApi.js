@@ -11,11 +11,12 @@ export const dealApi = createApi({
 
 
     getDeals: builder.query({
-      query: ({ page = 1, pageSize = 10, search = '', ...rest } = {}) => {
+      query: ({ page = 1, pageSize = 10, search = '', contact_id = '', ...rest } = {}) => {
         const queryParams = new URLSearchParams({
           page: page.toString(),
           pageSize: pageSize.toString(),
           ...(search && { search }),
+          ...(contact_id && { contact_id }),
           ...rest
         }).toString();
         return {

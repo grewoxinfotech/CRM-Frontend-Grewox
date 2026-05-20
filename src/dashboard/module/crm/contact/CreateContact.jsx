@@ -153,7 +153,8 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse, 
     try {
       // Get the selected country's phone code
       const selectedCountry = countries.find(c => c.id === values.phoneCode);
-      const phoneNumber = values.phone ? values.phone.replace(/^0+/, '') : '';
+      const cleanPhone = values.phone ? values.phone.replace(/^0+/, '') : '';
+      const phoneNumber = cleanPhone && selectedCountry ? `+${selectedCountry.phoneCode.replace('+', '')}${cleanPhone}` : cleanPhone;
 
       const contactData = {
         contact_owner: loggedInUser?.id || "",

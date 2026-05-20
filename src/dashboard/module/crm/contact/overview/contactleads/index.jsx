@@ -66,10 +66,14 @@ const ContactLeadsList = () => {
   const [searchText, setSearchText] = useState("");
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteLead, { isLoading: isDeleteLoading }] = useDeleteLeadMutation();
+  const idd = useParams();
+  const id = idd.contactId;
+
   const { data: leadss, isLoading } = useGetLeadsQuery({
     page: 1,
     pageSize: -1,
-    search: ''
+    search: '',
+    contact_id: id
   });
   const { data: pipelines = [] } = useGetPipelinesQuery({
     page: 1,
@@ -84,10 +88,7 @@ const ContactLeadsList = () => {
   const { data: stagesData } = useGetLeadStagesQuery();
   const [initialFormData, setInitialFormData] = useState(null);
 
-  const idd = useParams();
-  const id = idd.contactId;
-
-  const leads = leadss?.data?.filter((lead) => lead.contact_id === id) || [];
+  const leads = leadss?.data || [];
 
   // Handle automatic form opening
   useEffect(() => {

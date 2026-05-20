@@ -17,6 +17,7 @@ import PageHeader from '../../../../components/PageHeader';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
+import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 
 const Job = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -52,6 +53,8 @@ const Job = () => {
         if (!perms || perms.length === 0) return false;
         return (perms[0]?.permissions || []).includes(action);
     }, [loggedInUser, userPermissions]);
+
+    const { data: currenciesData } = useGetAllCurrenciesQuery();
 
     const handleAddJob = () => {
         setSelectedJob(null);
@@ -115,6 +118,7 @@ const Job = () => {
                         onChange: (page, size) => { setCurrentPage(page); setPageSize(size); }
                     }}
                     hasPermission={hasPermission}
+                    currenciesData={currenciesData}
                 />
             </Card>
 

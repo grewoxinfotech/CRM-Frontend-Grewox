@@ -20,6 +20,7 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
+import { useGetCategoriesQuery } from "../../crm/crmsystem/souce/services/SourceApi";
 import PageHeader from "../../../../components/PageHeader";
 
 const ProductServices = () => {
@@ -69,6 +70,7 @@ const ProductServices = () => {
 
   const [createProduct] = useCreateProductMutation();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
+  const { data: categoriesResponse } = useGetCategoriesQuery(currentUser?.id);
 
   const handleCreateSubmit = async (formData) => {
     try {
@@ -120,6 +122,7 @@ const ProductServices = () => {
           onEdit={(record) => { setSelectedProduct(record); setEditModalVisible(true); }}
           onProductRevenueClick={(product) => navigate(`/dashboard/sales/revenue`, { state: { selectedProduct: product } })}
           currenciesData={currenciesData}
+          categoriesData={categoriesResponse?.data}
           searchText={searchText}
           pagination={pagination}
           onChange={(newPagination) => setPagination(prev => ({ ...prev, current: newPagination.current, pageSize: newPagination.pageSize }))}

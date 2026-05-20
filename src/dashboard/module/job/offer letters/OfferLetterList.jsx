@@ -13,7 +13,7 @@ import { useGetAllJobApplicationsQuery } from '../job applications/services/jobA
 
 const { Text } = Typography;
 
-const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, loading, pagination, hasPermission }) => {
+const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, loading, pagination, hasPermission, currenciesData }) => {
     const { data: jobsData } = useGetAllJobsQuery();
     const { data: applicationsData } = useGetAllJobApplicationsQuery();
 
@@ -36,6 +36,11 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, loading, paginat
             items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record) });
         }
         return items;
+    };
+
+    const getCurrencyIcon = (currencyId) => {
+        const currency = currenciesData?.find((c) => c.id === currencyId);
+        return currency?.currencyIcon || "₹";
     };
 
     const columns = [
@@ -85,7 +90,7 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, loading, paginat
             title: 'Salary',
             dataIndex: 'salary',
             key: 'salary',
-            render: (salary, record) => <Text strong style={{ fontSize: '13px', color: '#059669' }}>{record.currency} {salary}</Text>
+            render: (salary, record) => <Text strong style={{ fontSize: '13px', color: '#059669' }}>{getCurrencyIcon(record.currency)} {salary}</Text>
         },
         {
             title: 'Status',

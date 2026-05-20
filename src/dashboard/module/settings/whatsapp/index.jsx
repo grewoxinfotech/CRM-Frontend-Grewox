@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Form, Input, Switch, Button, message, Row, Col, Typography, Breadcrumb, Spin, Divider, List, Tag, Alert, Steps, Space, Tooltip } from 'antd';
+import { Card, Form, Input, Switch, Button, message, Row, Col, Typography, Breadcrumb, Spin, Divider, List, Tag, Alert, Steps, Space, Tooltip, Modal, Avatar } from 'antd';
 import { 
     SaveOutlined, ReloadOutlined, WhatsAppOutlined, CheckCircleOutlined, 
     InfoCircleOutlined, LayoutOutlined, EditOutlined, LockOutlined, 
     CopyOutlined, LinkOutlined, SettingOutlined, SendOutlined,
-    SyncOutlined, ClockCircleOutlined, CloseCircleOutlined, PlusOutlined
+    SyncOutlined, ClockCircleOutlined, CloseCircleOutlined, PlusOutlined,
+    FacebookOutlined
 } from '@ant-design/icons';
 import { FiHome } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
@@ -17,7 +18,9 @@ import {
     useSaveWhatsappSettingsMutation, 
     useWhatsappEmbeddedSignupMutation, 
     useSyncWhatsappTemplatesMutation,
-    useGetWhatsappTemplatesQuery
+    useGetWhatsappTemplatesQuery,
+    useLazyGetFacebookPagesQuery,
+    useSubscribeFacebookPageMutation
 } from '../services/settingsApi';
 import { FB_APP_ID, FB_CONFIG_ID, WHATSAPP_WEBHOOK_URL } from '../../../../config/config';
 import './whatsapp.scss';
@@ -50,6 +53,11 @@ const WhatsappSettings = () => {
     const [saveSettings, { isLoading: isSaving }] = useSaveWhatsappSettingsMutation();
     const [embeddedSignup, { isLoading: isConnecting }] = useWhatsappEmbeddedSignupMutation();
     const [syncTemplates, { isLoading: isSyncing }] = useSyncWhatsappTemplatesMutation();
+
+    const [fetchFacebookPages, { isLoading: isFetchingPages }] = useLazyGetFacebookPagesQuery();
+    const [subscribeFacebookPage, { isLoading: isSubscribingPage }] = useSubscribeFacebookPageMutation();
+    const [facebookPages, setFacebookPages] = useState([]);
+    const [isPageModalOpen, setIsPageModalOpen] = useState(false);
     
 
     
@@ -118,6 +126,68 @@ const WhatsappSettings = () => {
             message.success(`Successfully connected ${res.data.display_phone_number || res.data.business_name}!`);
         } catch (error) {
             message.error(error?.data?.message || 'Failed to fetch WhatsApp details');
+        }
+    };
+
+    const handleFacebookOAuth = () => {
+        if (!FB_APP_ID) return message.error('Facebook App ID is not configured.');
+        if (!window.FB) return message.error('Facebook SDK not loaded yet. Please refresh.');
+
+        window.FB.login((response) => {
+            if (response.authResponse) {
+                const userAccessToken = response.authResponse.accessToken;
+                processFacebookOAuth(userAccessToken);
+            } else {
+                message.error('User cancelled login or did not fully authorize.');
+            }
+        }, {
+            scope: 'pages_show_list,pages_read_engagement,leads_retrieval,pages_manage_metadata',
+        });
+    };
+
+    const processFacebookOAuth = async (userAccessToken) => {
+        const hideLoading = message.loading('Fetching your Facebook Pages...', 0);
+        try {
+            const res = await fetchFacebookPages({ accessToken: userAccessToken }).unwrap();
+            hideLoading();
+            if (res.pages && res.pages.length > 0) {
+                setFacebookPages(res.pages);
+                setIsPageModalOpen(true);
+                message.success('Facebook Pages loaded successfully!');
+            } else {
+                message.warning('No Facebook Pages found under this account. Make sure you are the Admin of at least one Page.');
+            }
+        } catch (error) {
+            hideLoading();
+            message.error(error?.data?.message || 'Failed to fetch Facebook Pages');
+        }
+    };
+
+    const handleSelectPage = async (page) => {
+        const hideLoading = message.loading(`Connecting Facebook Page: ${page.name}...`, 0);
+        try {
+            const res = await subscribeFacebookPage({
+                facebook_page_id: page.id,
+                facebook_page_name: page.name,
+                page_access_token: page.accessToken,
+                ai_auto_reply: form.getFieldValue('ai_auto_reply') || false,
+                is_active: true
+            }).unwrap();
+
+            hideLoading();
+            setIsEditing(false); // Lock config since it is successfully saved
+            
+            form.setFieldsValue({
+                facebook_page_id: page.id,
+                access_token: page.accessToken,
+                is_active: true
+            });
+
+            setIsPageModalOpen(false);
+            message.success(`Successfully connected ${page.name} for automatic lead capture!`);
+        } catch (error) {
+            hideLoading();
+            message.error(error?.data?.message || `Failed to connect Facebook Page ${page.name}`);
         }
     };
 
@@ -200,12 +270,13 @@ const WhatsappSettings = () => {
 
             <div className="page-header">
                 <div className="page-title">
-                    <Title level={2}>WhatsApp Business API</Title>
-                    <Text type="secondary">Automate your customer communication with official WhatsApp integration</Text>
+                    <Title level={2}>WhatsApp & Facebook Integrations</Title>
+                    <Text type="secondary">Manage your Facebook Lead Ads and WhatsApp Business API customer communications.</Text>
                 </div>
                 <div className="header-actions">
                     {settings && (
                         <Button 
+                            type={isEditing ? 'primary' : 'default'}
                             icon={isEditing ? <LockOutlined /> : <EditOutlined />} 
                             onClick={() => setIsEditing(!isEditing)}
                             size="large"
@@ -214,17 +285,6 @@ const WhatsappSettings = () => {
                             {isEditing ? 'Lock Config' : 'Edit Config'}
                         </Button>
                     )}
-                    <Button 
-                        type="primary" 
-                        icon={<WhatsAppOutlined />} 
-                        size="large"
-                        onClick={handleEmbeddedSignup}
-                        loading={isConnecting}
-                        className="btn-connect"
-                        disabled={isLocked && !isEditing}
-                    >
-                        Connect WhatsApp
-                    </Button>
                 </div>
             </div>
 
@@ -232,32 +292,95 @@ const WhatsappSettings = () => {
                 <Form form={form} layout="vertical" onFinish={handleSave} className="settings-form">
                     <Row gutter={[24, 24]}>
                         <Col xs={24} lg={16}>
-                            <Card className={`settings-card shadow-sm ${isLocked ? 'card-locked' : ''}`} title={
-                                <Space>
-                                    <SettingOutlined />
-                                    <span>API Credentials</span>
-                                    {isLocked && <Tag color="blue" variant="soft">Secured</Tag>}
-                                </Space>
-                            }>
+                            {/* Card 1: Facebook Lead Ads Integration (SaaS Connect) */}
+                            <Card 
+                                className="settings-card shadow-sm" 
+                                style={{ marginBottom: '24px', borderLeft: '4px solid #1877f2' }}
+                                title={
+                                    <Space>
+                                        <FacebookOutlined style={{ color: '#1877f2', fontSize: '18px' }} />
+                                        <span style={{ fontWeight: 600 }}>Facebook Lead Ads Capture (SaaS Integration)</span>
+                                    </Space>
+                                }
+                            >
+                                <div style={{ marginBottom: '20px', padding: '16px', background: '#f0f7ff', borderRadius: '8px', border: '1px solid #d0e7ff' }}>
+                                    <Text strong style={{ color: '#003a8c', display: 'block', marginBottom: '4px' }}>
+                                        ⚡ 100% Automatic Connection
+                                    </Text>
+                                    <Text type="secondary" style={{ fontSize: '13px' }}>
+                                        Simply click the button below to authorize Leadgoes CRM to automatically capture your Facebook leads. No manual keys, apps, or complex developer configurations required!
+                                    </Text>
+                                </div>
+
+                                <Row gutter={24} align="middle">
+                                    <Col xs={24} md={12}>
+                                        <Form.Item label="Connected Facebook Page ID" name="facebook_page_id">
+                                            <Input placeholder="Not connected. Click the button to link Page" disabled readOnly style={{ background: '#fafafa' }} />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col xs={24} md={12}>
+                                        <div style={{ marginTop: '8px', marginBottom: '24px' }}>
+                                            <Button 
+                                                type="primary" 
+                                                icon={<FacebookOutlined />} 
+                                                size="large"
+                                                onClick={handleFacebookOAuth}
+                                                loading={isFetchingPages}
+                                                style={{ backgroundColor: '#1877f2', borderColor: '#1877f2' }}
+                                                disabled={isLocked && !isEditing}
+                                                block
+                                            >
+                                                {form.getFieldValue('facebook_page_id') ? 'Change Connected Page' : 'Connect Facebook Page'}
+                                            </Button>
+                                        </div>
+                                    </Col>
+                                </Row>
+
+                                {form.getFieldValue('facebook_page_id') && (
+                                    <div style={{ padding: '8px 12px', background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '6px', display: 'inline-block' }}>
+                                        <Text type="success" strong style={{ fontSize: '12px' }}>
+                                            ✓ Webhook Live & Subscribed to Meta Page
+                                        </Text>
+                                    </div>
+                                )}
+                            </Card>
+
+                            {/* Card 2: WhatsApp Business API Setup (Manual BYOA) */}
+                            <Card 
+                                className={`settings-card shadow-sm ${isLocked ? 'card-locked' : ''}`}
+                                style={{ borderLeft: '4px solid #52c41a' }}
+                                title={
+                                    <Space>
+                                        <WhatsAppOutlined style={{ color: '#52c41a', fontSize: '18px' }} />
+                                        <span style={{ fontWeight: 600 }}>WhatsApp Business API (Manual BYOA Setup)</span>
+                                        {isLocked && <Tag color="blue" variant="soft">Secured</Tag>}
+                                    </Space>
+                                }
+                            >
+                                <div style={{ marginBottom: '20px', padding: '16px', background: '#f6ffed', borderRadius: '8px', border: '1px solid #d9f7be' }}>
+                                    <Text strong style={{ color: '#237804', display: 'block', marginBottom: '4px' }}>
+                                        ⚙️ Bring Your Own App (BYOA)
+                                    </Text>
+                                    <Text type="secondary" style={{ fontSize: '13px' }}>
+                                        Paste your official Meta WhatsApp Business API details here. This allows you to sync messaging templates and manage customer chats within Leadgoes CRM.
+                                    </Text>
+                                </div>
+
                                 <Row gutter={16}>
                                     <Col span={12}>
-                                        <Form.Item label="Phone Number ID" name="phone_number_id" rules={[{ required: true }]}>
+                                        <Form.Item label="WhatsApp Phone Number ID" name="phone_number_id">
                                             <Input placeholder="e.g. 106123456789012" disabled={isLocked} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={12}>
-                                        <Form.Item label="Business Account ID" name="business_id" rules={[{ required: true }]}>
+                                        <Form.Item label="WhatsApp Business Account ID" name="business_id">
                                             <Input placeholder="e.g. 102123456789012" disabled={isLocked} />
                                         </Form.Item>
                                     </Col>
                                 </Row>
 
-                                <Form.Item label="Facebook Page ID" name="facebook_page_id" rules={[{ required: true }]}>
-                                    <Input placeholder="e.g. 104567890123456" disabled={isLocked} />
-                                </Form.Item>
-
-                                <Form.Item label="Permanent Access Token" name="access_token" rules={[{ required: true }]}>
-                                    <Input.TextArea placeholder="Enter your system user access token" rows={3} disabled={isLocked} />
+                                <Form.Item label="WhatsApp Access Token (System User Token)" name="access_token">
+                                    <Input.TextArea placeholder="Enter your WhatsApp permanent system user access token" rows={3} disabled={isLocked} />
                                 </Form.Item>
 
                                 <Divider style={{ margin: '12px 0 24px' }} />
@@ -302,7 +425,7 @@ const WhatsappSettings = () => {
                                 </Row>
 
                                 {isEditing && (
-                                    <div className="form-actions">
+                                    <div className="form-actions" style={{ marginTop: '20px' }}>
                                         <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={isSaving} size="large" block>
                                             Save & Update Configuration
                                         </Button>
@@ -348,10 +471,10 @@ const WhatsappSettings = () => {
                                         onClick={handleSyncTemplates} 
                                         loading={isSyncing}
                                         size="large"
-                                        disabled={!settings}
+                                        disabled={!settings || !settings.business_id}
                                         className="btn-sync"
                                     >
-                                        Sync Templates to Meta Account
+                                        {!settings?.business_id ? 'Connect WhatsApp WABA to Sync Templates' : 'Sync Templates to Meta Account'}
                                     </Button>
                                 </div>
                             </Card>
@@ -378,19 +501,19 @@ const WhatsappSettings = () => {
                                     className="setup-steps-visual"
                                     items={[
                                         {
-                                            title: 'Meta App Configuration',
-                                            description: <Text type="secondary" size="small">Go to Meta Developers, set Callback URL and Verify Token. Subscribe to <Text code>messages</Text> field.</Text>,
-                                            icon: <SettingOutlined />,
+                                            title: 'Facebook Leads (Auto)',
+                                            description: <Text type="secondary" size="small">Click <Text strong>Connect Facebook Page</Text> to instantly sync your forms and leads.</Text>,
+                                            icon: <FacebookOutlined />,
                                         },
                                         {
-                                            title: 'Lead Ads Integration',
-                                            description: <Text type="secondary" size="small">In Meta Business Suite, link your Page to the App and subscribe to <Text code>leadgen</Text> field.</Text>,
-                                            icon: <LinkOutlined />,
+                                            title: 'WhatsApp Setup (Manual)',
+                                            description: <Text type="secondary" size="small">Paste your <Text strong>WABA IDs</Text> and <Text strong>System User Token</Text> in the fields below.</Text>,
+                                            icon: <WhatsAppOutlined />,
                                         },
                                         {
-                                            title: 'Verify & Go Live',
-                                            description: <Text type="secondary" size="small">Use the Testing Tool to send a lead. Check logs below to verify data arrival.</Text>,
-                                            icon: <SendOutlined />,
+                                            title: 'Sync Templates',
+                                            description: <Text type="secondary" size="small">Click <Text strong>Sync Templates</Text> to fetch your approved WhatsApp messages.</Text>,
+                                            icon: <SyncOutlined />,
                                         },
                                     ]}
                                 />
@@ -413,11 +536,55 @@ const WhatsappSettings = () => {
                         </Col>
                     </Row>
                 </Form>
+            </div>
+
+            {/* Modal for Facebook Page Selection */}
+            <Modal
+                title={
+                    <Space>
+                        <FacebookOutlined style={{ color: '#1877F2', fontSize: '20px' }} />
+                        <span>Select Facebook Page for Lead Capture</span>
+                    </Space>
+                }
+                open={isPageModalOpen}
+                onCancel={() => setIsPageModalOpen(false)}
+                footer={null}
+                width={500}
+                centered
+            >
+                <div style={{ margin: '12px 0 20px' }}>
+                    <Text type="secondary">
+                        Choose the Facebook Page you want to connect to Leadgoes CRM. When users submit forms on this Page, leads will be captured automatically.
+                    </Text>
+                </div>
+                <List
+                    loading={isSubscribingPage}
+                    dataSource={facebookPages}
+                    renderItem={page => (
+                        <List.Item
+                            actions={[
+                                <Button 
+                                    type="primary" 
+                                    key="connect-page" 
+                                    onClick={() => handleSelectPage(page)}
+                                >
+                                    Connect
+                                </Button>
+                            ]}
+                        >
+                            <List.Item.Meta
+                                avatar={
+                                    <Avatar src={page.picture} icon={<FacebookOutlined />} />
+                                }
+                                title={<Text strong>{page.name}</Text>}
+                                description={<Text type="secondary" style={{ fontSize: '12px' }}>Page ID: {page.id}</Text>}
+                            />
+                        </List.Item>
+                    )}
+                />
+            </Modal>
         </div>
-
-
-    </div>
-);
+    );
 };
 
 export default WhatsappSettings;

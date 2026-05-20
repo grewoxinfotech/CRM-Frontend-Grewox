@@ -64,6 +64,9 @@ const Plan = () => {
     const daysLeft = subscription?.end_date ? moment(subscription.end_date).diff(moment(), 'days') : 0;
     const isExpired = subscription?.end_date ? moment(subscription.end_date).isBefore(moment()) : false;
     const hasNoActivePlan = !subscription || isExpired || subscription?.status === 'cancelled';
+    const totalDays = subscription?.start_date && subscription?.end_date 
+        ? Math.max(1, moment(subscription.end_date).diff(moment(subscription.start_date), 'days'))
+        : 365;
 
     return (
         <div className="plan-page standard-page-container" style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: '40px' }}>
@@ -168,7 +171,7 @@ const Plan = () => {
                                 {hasNoActivePlan ? 0 : daysLeft} <span style={{ fontSize: '18px', fontWeight: 500 }}>Days</span>
                             </span>
                             <Progress 
-                                percent={hasNoActivePlan ? 0 : Math.min(100, Math.round((daysLeft / 365) * 100))} 
+                                percent={hasNoActivePlan ? 0 : Math.min(100, Math.round((daysLeft / totalDays) * 100))} 
                                 showInfo={false} 
                                 strokeColor="white" 
                                 trailColor="rgba(255,255,255,0.2)"

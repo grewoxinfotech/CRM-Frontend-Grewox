@@ -85,24 +85,6 @@ const Lable = ({ isModalOpen, setIsModalOpen, hasPermission }) => {
         <code style={{ fontSize: '12px', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{color}</code>
       ),
     },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: 80,
-      render: (_, record) => {
-        const items = getDropdownItems(record);
-        if (items.length === 0) return null;
-        return (
-          <Dropdown
-            menu={{ items }}
-            trigger={['click']}
-            placement="bottomRight"
-          >
-            <Button type="text" icon={<FiMoreVertical />} className="action-dropdown-button" />
-          </Dropdown>
-        );
-      },
-    },
   ];
 
   return (

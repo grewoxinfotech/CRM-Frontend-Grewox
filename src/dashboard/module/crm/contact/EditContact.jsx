@@ -123,6 +123,18 @@ const EditContact = ({ open, onCancel, contactData }) => {
     return [];
   }, [companyAccountsResponse]);
 
+  const stripCode = (phone, codeId) => {
+    if (!phone) return '';
+    const country = countries?.find(c => c.id === codeId);
+    if (!country) return phone;
+    const cleanCode = country.phoneCode.toString().replace(/\D/g, '');
+    const cleanPhone = phone.toString().replace(/\D/g, '');
+    if (cleanPhone.startsWith(cleanCode)) {
+      return cleanPhone.slice(cleanCode.length);
+    }
+    return phone;
+  };
+
   React.useEffect(() => {
     if (contactData) {
       // Find the contact owner's name from users data
@@ -138,16 +150,26 @@ const EditContact = ({ open, onCancel, contactData }) => {
         ...contactData,
         contact_owner: contactOwnerName,
         phoneCode: contactData.phone_code || defaultPhoneCode,
-        phone: contactData.phone
+        phone: stripCode(contactData.phone, contactData.phone_code || defaultPhoneCode)
       });
     }
-  }, [contactData, form, usersData, defaultPhoneCode]);
+  }, [contactData, form, usersData, defaultPhoneCode, countries]);
 
   const handleSubmit = async (values) => {
     try {
-      // Get the selected country's phone code
-      const selectedCountry = countries.find(c => c.id === values.phoneCode);
-      const phoneNumber = values.phone ? values.phone.replace(/^0+/, '') : '';
+      let phoneNumber = values.phone || "";
+      let phoneCodeId = values.phoneCode || defaultPhoneCode;
+
+      const selectedCountry = countries.find(c => c.id === phoneCodeId);
+      let cleanPhone = phoneNumber.toString().replace(/^0+/, '');
+      if (selectedCountry) {
+        const cleanCode = selectedCountry.phoneCode.replace(/\D/g, '');
+        const digitsOnly = cleanPhone.replace(/\D/g, '');
+        if (digitsOnly.startsWith(cleanCode)) {
+          cleanPhone = digitsOnly.slice(cleanCode.length);
+        }
+      }
+      phoneNumber = cleanPhone && selectedCountry ? `+${selectedCountry.phoneCode.replace('+', '')}${cleanPhone}` : cleanPhone;
 
       const updatedContactData = {
         id: contactData.id,
@@ -156,7 +178,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
         last_name: values.last_name || "",
         email: values.email || "",
         website: values.website || "",
-        phone_code: selectedCountry?.id || "",
+        phone_code: phoneCodeId,
         phone: phoneNumber,
         company_name: values.company_name || "",
         contact_source: values.contact_source || "",

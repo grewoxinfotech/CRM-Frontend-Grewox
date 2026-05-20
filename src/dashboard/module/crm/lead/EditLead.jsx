@@ -95,6 +95,18 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     }
   }, [activeCustomForm]);
 
+  const stripCode = (phone, codeId) => {
+    if (!phone) return '';
+    const country = countries?.find(c => c.id === codeId);
+    if (!country) return phone;
+    const cleanCode = country.phoneCode.toString().replace(/\D/g, '');
+    const cleanPhone = phone.toString().replace(/\D/g, '');
+    if (cleanPhone.startsWith(cleanCode)) {
+      return cleanPhone.slice(cleanCode.length);
+    }
+    return phone;
+  };
+
   const normalizeCompanyId = (value) => {
     if (!value) return undefined;
     if (typeof value === 'object') return value.id || value._id || value.value;
@@ -256,37 +268,12 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       // Find contact and its company if contact_id exists
       const existingContact = contactsData?.data?.find(c => c.id === initialValues.contact_id);
 
-      // Parse phone number from existingContact
-      const contactPhone = existingContact?.phone || '';
-      let phoneNumber = contactPhone;
-      let phoneCode = existingContact?.phone_code || '';
+      // Get phone number directly and strip country code for input display
+      const contactPhone = existingContact?.phone || initialValues.telephone || '';
+      let phoneCode = existingContact?.phone_code || initialValues.phoneCode || defaultPhoneCode;
+      let phoneNumber = stripCode(contactPhone, phoneCode);
 
-      if (contactPhone.startsWith('+')) {
-        // Try space-based first
-        const spaceMatch = contactPhone.match(/^\+(\d+)\s(.*)$/);
-        if (spaceMatch) {
-          phoneCode = spaceMatch[1];
-          phoneNumber = spaceMatch[2];
-        } else {
-          // If no space, try to match against known countries
-          const digitsOnly = contactPhone.substring(1);
-          // Sort countries by phone code length descending to match the longest code first (e.g. +1242 vs +1)
-          const sortedCountries = [...(countries || [])].sort((a, b) => b.phoneCode.length - a.phoneCode.length);
-
-          for (const country of sortedCountries) {
-            const codeDigits = country.phoneCode.replace(/\D/g, '');
-            if (digitsOnly.startsWith(codeDigits)) {
-              phoneCode = codeDigits;
-              phoneNumber = digitsOnly.substring(codeDigits.length);
-              break;
-            }
-          }
-        }
-      }
-
-      // Find country by phone code
-      const country = countries?.find(c => c.phoneCode.replace(/\D/g, '') === phoneCode.replace(/\D/g, ''));
-      const countryId = country?.id || defaultPhoneCode;
+      const countryId = phoneCode;
 
       const company_id = existingContact?.company_name || initialValues.company_id || null;
 
@@ -374,17 +361,6 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     }
   }, [initialValues, form, defaultPhoneCode, defaultCurrency, countries, currencies, contactsData, usersResponse, loggedInUser, stagesData]);
 
-    const stripCode = (phone, codeId) => {
-      if (!phone) return '';
-      const country = countries?.find(c => c.id === codeId);
-      if (!country) return phone;
-      const cleanCode = country.phoneCode.toString().replace(/\D/g, '');
-      const cleanPhone = phone.toString().replace(/\D/g, '');
-      if (cleanPhone.startsWith(cleanCode)) {
-        return cleanPhone.slice(cleanCode.length);
-      }
-      return phone;
-    };
 
     useEffect(() => {
     const pendingId = pendingLeadStageIdRef.current;
@@ -404,10 +380,20 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       const selectedCountry = countries.find(c => c.id === values.phoneCode);
 
       // Format phone number with country code
-      const cleanTelephone = stripCode(values.telephone, values.phoneCode || defaultPhoneCode);
-      const formattedPhone = cleanTelephone ?
-        `+${selectedCountry?.phoneCode?.replace('+', '')} ${cleanTelephone}` :
-        null;
+      let formattedPhone = values.telephone || null;
+      if (formattedPhone) {
+        let cleanTelephone = formattedPhone.toString().replace(/^0+/, '');
+        if (selectedCountry) {
+          const cleanCode = selectedCountry.phoneCode.replace(/\D/g, '');
+          const digitsOnly = cleanTelephone.replace(/\D/g, '');
+          if (digitsOnly.startsWith(cleanCode)) {
+            cleanTelephone = digitsOnly.slice(cleanCode.length);
+          }
+        }
+        formattedPhone = cleanTelephone && selectedCountry ?
+          `+${selectedCountry.phoneCode.replace('+', '')}${cleanTelephone}` :
+          cleanTelephone;
+      }
 
       // Get the selected currency
       const selectedCurrency = currencies.find(c => c.id === values.currency);
@@ -427,13 +413,17 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         lead_members: memberIds
       };
 
+      // Check if the phone number has changed from the original contact's phone
+      const isPhoneChanged = watchedContact && formattedPhone && watchedContact.phone !== formattedPhone;
+
       // A new contact should be created ONLY if NO existing contact is selected
+      // OR the selected contact's phone number has been changed
       // AND there is enough information to create a contact
       const hasManualContactInfo = (values.firstName || values.lastName || values.telephone || values.email);
       // Auto-create should only happen when we have the minimum required fields.
       // If user typed partial info, do NOT block lead save with validation errors.
       const canAutoCreateContact = Boolean(values.firstName && values.telephone);
-      const shouldCreateContact = !values.contact_id && hasManualContactInfo && canAutoCreateContact;
+      const shouldCreateContact = (!values.contact_id || isPhoneChanged) && hasManualContactInfo && canAutoCreateContact;
 
       if (shouldCreateContact) {
         try {
@@ -445,9 +435,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             company_name: values.company_id || "",
             email: values.email || "",
             phone_code: values.phoneCode || defaultPhoneCode,
-            phone: values.telephone ? values.telephone.toString() : "",
+            phone: formattedPhone || "",
             contact_source: values.source || "website",
-            description: `Contact created automatically during lead edit by ${loggedInUser?.name} on ${new Date().toLocaleDateString()}`,
+            description: `Contact created automatically during lead edit ${isPhoneChanged ? '(phone number changed)' : ''} by ${loggedInUser?.name} on ${new Date().toLocaleDateString()}`,
             address: values.address || "",
             client_id: loggedInUser.client_id
           };
@@ -514,7 +504,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             last_name: values.lastName || "",
             email: values.email || "",
             phone_code: values.phoneCode || defaultPhoneCode,
-            phone: values.telephone ? values.telephone.toString() : "",
+            phone: formattedPhone || "",
             address: values.address || "",
             city: values.city || "",
             state: values.state || "",
@@ -535,7 +525,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             company_name: watchedCompany?.company_name || "",
             email: values.email || "",
             phone_code: values.phoneCode || defaultPhoneCode,
-            phone_number: values.telephone ? values.telephone.toString() : "",
+            phone_number: formattedPhone || "",
             billing_address: values.address || "",
             billing_city: values.city || "",
             billing_state: values.state || "",
@@ -620,13 +610,15 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     // Get the selected contact's data
     const contact = contactsData?.data?.find(c => c.id === contactId);
     if (contact) {
+      const contactPhoneCode = contact.phone_code || form.getFieldValue('phoneCode') || defaultPhoneCode;
       // Update form with contact details
       form.setFieldsValue({
         contact_id: contact.id,
         firstName: contact.first_name || '',
         lastName: contact.last_name || '',
         email: contact.email || '',
-        telephone: contact.phone ? contact.phone.replace(/^\+\d+\s/, '') : '',
+        telephone: stripCode(contact.phone, contactPhoneCode),
+        phoneCode: contactPhoneCode,
         address: contact.address || '',
         city: contact.city || '',
         state: contact.state || '',
@@ -707,13 +699,15 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   useEffect(() => {
     if (watchedContact) {
       const currentValues = form.getFieldsValue();
+      const contactPhoneCode = watchedContact.phone_code || currentValues.phoneCode || defaultPhoneCode;
 
       // We only want to auto-fill if the fields are currently empty
       form.setFieldsValue({
         firstName: currentValues.firstName || watchedContact.first_name || '',
         lastName: currentValues.lastName || watchedContact.last_name || '',
         email: currentValues.email || watchedContact.email || '',
-        telephone: currentValues.telephone || (watchedContact.phone ? watchedContact.phone.replace(/^\+\d+\s/, '') : ''),
+        telephone: currentValues.telephone || stripCode(watchedContact.phone, contactPhoneCode),
+        phoneCode: currentValues.phoneCode || contactPhoneCode,
         address: currentValues.address || watchedContact.address || '',
         city: currentValues.city || watchedContact.city || '',
         state: currentValues.state || watchedContact.state || '',

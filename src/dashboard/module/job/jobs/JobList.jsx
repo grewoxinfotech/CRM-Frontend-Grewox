@@ -10,7 +10,7 @@ import dayjs from "dayjs";
 
 const { Text } = Typography;
 
-const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination, hasPermission }) => {
+const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination, hasPermission, currenciesData }) => {
     const getDropdownItems = (record) => {
         const items = [];
         if (!hasPermission || hasPermission('update')) {
@@ -20,6 +20,11 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination, hasPermissi
             items.push({ key: 'delete', icon: <FiTrash2 />, label: 'Delete', danger: true, onClick: () => onDelete(record.id) });
         }
         return items;
+    };
+
+    const getCurrencyIcon = (currencyId) => {
+        const currency = currenciesData?.find((c) => c.id === currencyId);
+        return currency?.currencyIcon || "₹";
     };
 
     const columns = [
@@ -56,7 +61,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination, hasPermissi
             title: "Salary",
             dataIndex: "expectedSalary",
             key: "expectedSalary",
-            render: (salary, record) => <Text strong style={{ color: '#059669', fontSize: '13px' }}>{record.currency} {salary}</Text>
+            render: (salary, record) => <Text strong style={{ color: '#059669', fontSize: '13px' }}>{getCurrencyIcon(record.currency)} {salary}</Text>
         },
         {
             title: "Posted",
