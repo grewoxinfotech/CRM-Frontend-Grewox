@@ -9,7 +9,8 @@ import {
     DatePicker,
     Typography,
 } from "antd";
-import { useCreateDemoRequestMutation, useUpdateDemoRequestMutation } from './services/demoRequestApi';
+import { useCreateDemoRequestMutation, useUpdateDemoRequestMutation, useCreatePublicDemoRequestMutation } from './services/demoRequestApi';
+import { useSelector } from 'react-redux';
 import moment from "moment";
 import {
     FiX,
@@ -33,10 +34,12 @@ const CreateDemoRequestModal = ({
     onCancel, 
     onSubmit, 
     isEditing, 
-    initialValues = {}
+    initialValues
 }) => {
     const [form] = Form.useForm();
+    const currentUser = useSelector((state) => state.auth?.user || state.auth?.token);
     const [createDemoRequest] = useCreateDemoRequestMutation();
+    const [createPublicDemoRequest] = useCreatePublicDemoRequestMutation();
     const [updateDemoRequest] = useUpdateDemoRequestMutation();
 
     React.useEffect(() => {
@@ -50,7 +53,7 @@ const CreateDemoRequestModal = ({
                 form.resetFields();
             }
         }
-    }, [open, isEditing, initialValues, form]);
+    }, [open, isEditing, form]);
 
     const handleCancel = () => {
         form.resetFields();
@@ -79,7 +82,11 @@ const CreateDemoRequestModal = ({
                 }).unwrap();
                 message.success("Demo request updated successfully");
             } else {
-                await createDemoRequest(formattedValues).unwrap();
+                if (currentUser) {
+                    await createDemoRequest(formattedValues).unwrap();
+                } else {
+                    await createPublicDemoRequest(formattedValues).unwrap();
+                }
                 message.success("Demo request created successfully");
             }
 

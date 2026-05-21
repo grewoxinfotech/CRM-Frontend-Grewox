@@ -78,6 +78,35 @@ const ESignature = () => {
         });
     };
 
+    const handleDownloadSignature = async (record) => {
+        const url = record.e_signatures;
+        if (!url) {
+            message.error('No signature image available to download');
+            return;
+        }
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `${record.esignature_name || 'signature'}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download error:', error);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${record.esignature_name || 'signature'}.png`;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="loading-container">
@@ -119,6 +148,7 @@ const ESignature = () => {
                     signatures={signatures}
                     onEdit={(signature) => handleOpenModal('edit', signature)}
                     onDelete={handleDeleteSignature}
+                    onDownload={handleDownloadSignature}
                     loading={isLoading || isDeleting}
                 />
             </Card>

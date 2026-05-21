@@ -4,7 +4,7 @@ import {
     Typography, Space, Spin, Input, Dropdown
 } from 'antd';
 import {
-    FiTrash2,
+    FiTrash2, FiDownload,
     FiCalendar, FiEye,
     FiMoreVertical
 } from 'react-icons/fi';
@@ -40,7 +40,7 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
         items: [
             {
                 key: 'download',
-                icon: <FiEye />,
+                icon: <FiDownload />,
                 label: 'Download',
                 onClick: () => onDownload(record),
             },

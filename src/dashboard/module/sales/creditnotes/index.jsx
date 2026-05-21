@@ -160,7 +160,7 @@ const CreditNotes = () => {
           setSelectedCreditNote(null);
         }}
         onSubmit={handleEditSubmit}
-        creditNote={selectedCreditNote}
+        initialValues={selectedCreditNote}
         loading={loading}
       />
     </div>

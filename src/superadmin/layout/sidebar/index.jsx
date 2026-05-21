@@ -56,11 +56,6 @@ const SuperAdminSidebar = ({ collapsed, onCollapsedChange }) => {
             path: '/superadmin/subscribed-user'
         },
         {
-            title: 'Notes',
-            icon: <FiFileText />,
-            path: '/superadmin/notes'
-        },
-        {
             title: 'Policy',
             icon: <FiShield />,
             path: '/superadmin/policy'

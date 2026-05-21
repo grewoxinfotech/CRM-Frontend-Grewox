@@ -22,6 +22,13 @@ export const demoRequestApi = createApi({
             }),
             invalidatesTags: ['demo-request'],
         }),
+        createPublicDemoRequest: builder.mutation({
+            query: (data) => ({
+                url: '/demo-requests',
+                method: 'POST',
+                body: data,
+            }),
+        }),
         updateDemoRequest: builder.mutation({
             query: ({ id, ...data }) => ({
                 url: `/demo-requests/admin/${id}`,
@@ -43,6 +50,7 @@ export const demoRequestApi = createApi({
 export const {
     useGetAllDemoRequestsQuery,
     useCreateDemoRequestMutation,
+    useCreatePublicDemoRequestMutation,
     useUpdateDemoRequestMutation,
     useDeleteDemoRequestMutation
 } = demoRequestApi;

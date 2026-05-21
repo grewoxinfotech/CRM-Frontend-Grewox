@@ -54,7 +54,7 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
   );
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
-  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true);
+  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
   const [createVendor] = useCreateVendorMutation();
   const [updateBilling] = useUpdateBillingMutation();

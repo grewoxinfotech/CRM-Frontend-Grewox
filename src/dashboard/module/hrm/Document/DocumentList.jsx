@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Table, Button, Space, Tag, Dropdown, Modal, message, Menu } from "antd";
+import { Table, Button, Space, Tag, Dropdown, Modal, message, Menu, Typography } from "antd";
 import { FiEdit2, FiTrash2, FiMoreVertical, FiFile, FiUserCheck, FiFileText, FiImage, FiVideo, FiMusic, FiArchive, FiCode } from "react-icons/fi";
 import moment from "moment";
 import './document.scss';
+
+const { Text } = Typography;
 
 const DocumentList = ({
   loading,

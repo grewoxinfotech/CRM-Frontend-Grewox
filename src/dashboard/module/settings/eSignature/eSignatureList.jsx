@@ -4,7 +4,7 @@ import {
     Typography, Space, Spin, Dropdown, Input    
 } from 'antd';
 import {
-    FiTrash2,
+    FiTrash2, FiDownload,
     FiCalendar, FiEye,
     FiMoreVertical
 } from 'react-icons/fi';
@@ -141,6 +141,12 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             fixed: 'right',
             render: (_, record) => {
                 const items = [
+                    {
+                        key: 'download',
+                        icon: <FiDownload style={{ fontSize: '14px', color: '#1890ff' }} />,
+                        label: 'Download',
+                        onClick: () => onDownload(record),
+                    },
                     {
                         key: 'delete',
                         icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,

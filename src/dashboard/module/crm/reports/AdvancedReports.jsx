@@ -54,7 +54,7 @@ import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStage
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
-import { useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetSourcesQuery, useGetCategoriesQuery } from '../crmsystem/souce/services/SourceApi';
 import DealsAnalytics from '../../../DashboardComponents/Analytics/DealsAnalytics';
 import LeadsAnalytics from '../../../DashboardComponents/Analytics/LeadsAnalytics';
 import indianStatesAndCities from '../../../../utils/Indian_Cities_In_States_JSON.json';
@@ -128,6 +128,41 @@ const cleanSourceName = (name) => {
   return trimmed;
 };
 
+const filterByDate = (data, timeRange, dateRange) => {
+  if (!data || !Array.isArray(data)) return [];
+  
+  if (dateRange && dateRange.length === 2 && dateRange[0] && dateRange[1]) {
+    const start = moment(dateRange[0]).startOf('day');
+    const end = moment(dateRange[1]).endOf('day');
+    return data.filter(item => {
+      const itemDate = moment(item.createdAt || item.date);
+      return itemDate.isValid() && itemDate.isBetween(start, end, null, '[]');
+    });
+  }
+
+  if (timeRange && timeRange !== 'all') {
+    let start;
+    if (timeRange === '7days') {
+      start = moment().subtract(7, 'days').startOf('day');
+    } else if (timeRange === '30days') {
+      start = moment().subtract(30, 'days').startOf('day');
+    } else if (timeRange === '90days') {
+      start = moment().subtract(90, 'days').startOf('day');
+    } else if (timeRange === 'ytd') {
+      start = moment().startOf('year');
+    }
+    
+    if (start) {
+      return data.filter(item => {
+        const itemDate = moment(item.createdAt || item.date);
+        return itemDate.isValid() && itemDate.isSameOrAfter(start);
+      });
+    }
+  }
+  
+  return data;
+};
+
 const AdvancedReports = () => {
   const [activeView, setActiveView] = useState('overview'); // 'overview' | 'lead_deep' | 'deal_deep'
   const [activeType, setActiveType] = useState('lead'); // 'lead' | 'deal'
@@ -162,11 +197,12 @@ const AdvancedReports = () => {
   const { data: followupsResponse } = useGetGlobalFollowupsQuery();
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.client_id || loggedInUser?.id);
+  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.client_id || loggedInUser?.id);
 
-  const realLeads = leadsResponse?.data || [];
-  const realDeals = dealsResponse?.data || [];
-  const realRevenue = revenueResponse?.data || [];
-  const realFollowups = followupsResponse?.data || [];
+  const realLeads = useMemo(() => filterByDate(leadsResponse?.data || [], timeRange, dateRange), [leadsResponse, timeRange, dateRange]);
+  const realDeals = useMemo(() => filterByDate(dealsResponse?.data || [], timeRange, dateRange), [dealsResponse, timeRange, dateRange]);
+  const realRevenue = useMemo(() => filterByDate(revenueResponse?.data || [], timeRange, dateRange), [revenueResponse, timeRange, dateRange]);
+  const realFollowups = useMemo(() => filterByDate(followupsResponse?.data || [], timeRange, dateRange), [followupsResponse, timeRange, dateRange]);
 
   // Dynamic currency detection from real leads / deals
   const currencySymbol = useMemo(() => {
@@ -213,6 +249,18 @@ const AdvancedReports = () => {
     });
     return map;
   }, [sourcesData]);
+
+  // Create category ID to Category Name map
+  const categoryMap = useMemo(() => {
+    const map = {};
+    const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || []);
+    categories.forEach(category => {
+      if (category.id && category.name) {
+        map[category.id] = category.name;
+      }
+    });
+    return map;
+  }, [categoriesData]);
 
   // ==========================================
   // DEALS ANALYTICS DATA CALCULATIONS
@@ -311,7 +359,8 @@ const AdvancedReports = () => {
     const counts = {};
 
     dealMetrics.deals.forEach(d => {
-      const cat = d.category || 'Consulting';
+      const rawCat = d.category || 'Consulting';
+      const cat = categoryMap[rawCat] || rawCat;
       categories[cat] = (categories[cat] || 0) + (Number(d.value) || 0);
       counts[cat] = (counts[cat] || 0) + 1;
     });
@@ -321,7 +370,7 @@ const AdvancedReports = () => {
       'Avg Deal Value': Math.round(categories[k] / counts[k]),
       'Total Value': categories[k]
     }));
-  }, [dealMetrics]);
+  }, [dealMetrics, categoryMap]);
 
   // Deals by Stage
   const dealsByStageData = useMemo(() => {
